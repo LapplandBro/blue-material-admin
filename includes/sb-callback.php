@@ -184,7 +184,7 @@ function Plogin($username, $password, $remember, $redirect, $nopass)
 	}
 	else if($q[2] > 0 && $q[2] < time())
 	{
-		$objResponse->addScript('ShowBox("Превышение полномочий", "Запись администратора истёкла, или сработала защита сайта, обратитесь к владельцу сайта WOLFA22.", "red", "", true);');
+		$objResponse->addScript('ShowBox("Превышение полномочий", "Запись администратора истёкла, или сработала защита сайта, обратитесь к владельцу сайта.", "red", "", true);');
 		return $objResponse;
 	}
 	else {

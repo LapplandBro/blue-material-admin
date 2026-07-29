@@ -76,7 +76,7 @@ else {
     else if ($AdminsNum == 0)
     {
         if ($ExpiredAdmin)
-            RedirectToSite(SB_WP_URL, 'Запись администратора истёкла, или сработала защита сайта, обратитесь к владельцу сайта WOLFA22.', true);
+            RedirectToSite(SB_WP_URL, 'Запись администратора истёкла, или сработала защита сайта, обратитесь к владельцу сайта.', true);
         RedirectToSite(SB_WP_URL, 'По предоставленным данным, не найдено ни одного администратора.', true);
     }
     else {
