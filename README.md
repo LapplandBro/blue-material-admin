@@ -8,11 +8,11 @@
 
 ## About (коротко для GitHub)
 
-> Material Admin panel for SourceBans++ — bans, mutes, servers, RCON, modern installer. PHP 7.1+.
+> Material Admin panel for SourceBans++ — bans, mutes, servers, RCON, modern installer. Target PHP 7.1.33.
 
 Или по-русски:
 
-> Веб-панель SourceBans++ (Material Admin): баны, муты, серверы, RCON, современный установщик. PHP 7.1+.
+> Веб-панель SourceBans++ (Material Admin): баны, муты, серверы, RCON, современный установщик. Целевая PHP 7.1.33.
 
 **Topics:** `sourcebans` `sourcemod` `csgo` `cs2` `tf2` `php` `moderation` `material-admin`
 
@@ -37,7 +37,7 @@
 
 | | Минимум | Рекомендуется |
 |---|---|---|
-| PHP | 7.1 |
+| PHP | 7.1 | **7.1.33** (на 8.x не рассчитана) |
 | MySQL / MariaDB | 5.0 | 5.5+ / 10.x |
 | Расширения | mysqli, bcmath, xml, json, mbstring, openssl, curl | gd, gmp |
 
