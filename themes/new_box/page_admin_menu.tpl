@@ -124,17 +124,7 @@
 						<div id="priora_link.msg"></div>
 					</div>
 				</div>
-				<div class="form-group m-b-5">
-					<label for="on_link" class="col-sm-3 control-label"> Статус</label>
-					<div class="col-sm-9">
-						<div class="checkbox m-b-15">
-							<label for="on_link">
-									<input type="checkbox" name="on_link" id="on_link" hidden="hidden" />
-								<i class="input-helper"></i> Включить?
-							</label>
-						</div>
-					</div>
-				</div>
+				{display_material_checkbox name="on_link" help_title="Статус" help_text="Показывать пункт в боковом меню SourceBans."}
 				{display_material_checkbox name="onNewTab" help_title="Открывать в новой вкладке" help_text="При щелчке по пункту в меню, он будет открываться в новой вкладке браузера, если здесь установлена галочка."}
 				
 			</div>

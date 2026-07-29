@@ -16,7 +16,11 @@ global $userbank, $theme;
 				$menu_group = isset($_POST['menu_group']) ? sb_menu_normalize_group($_POST['menu_group']) : '';
 				$names_link = sb_menu_compose_title(isset($_POST['names_link']) ? $_POST['names_link'] : '', $menu_icon);
 				
-				$add = $GLOBALS['db']->Execute("UPDATE `" . DB_PREFIX . "_menu` SET `text` = ?, `description` = ?, `url` = ?, `system` = ?, `enabled` = ?, `priority` = ?, `newtab` = ?, `menu_group` = ? WHERE `id` = ?", array($names_link, $_POST['des_link'], ((int) $system['system']!=0)?$_POST['url_link']:$system['url'], $system['system'], $on_act, $_POST['priora_link'], (($_POST['onNewTab']=="on")?"1":"0"), $menu_group, (int) $_GET['id']));
+				// system=1: URL не меняем. system=0: берём из формы (раньше ternary был перевёрнут — URL кастомных ссылок не сохранялся).
+				$url_to_save = ((int)$system['system'] === 1)
+					? $system['url']
+					: (isset($_POST['url_link']) ? $_POST['url_link'] : $system['url']);
+				$add = $GLOBALS['db']->Execute("UPDATE `" . DB_PREFIX . "_menu` SET `text` = ?, `description` = ?, `url` = ?, `system` = ?, `enabled` = ?, `priority` = ?, `newtab` = ?, `menu_group` = ? WHERE `id` = ?", array($names_link, $_POST['des_link'], $url_to_save, $system['system'], $on_act, $_POST['priora_link'], ((isset($_POST['onNewTab']) && $_POST['onNewTab']=="on")?"1":"0"), $menu_group, (int) $_GET['id']));
 
 				// БАГ-ФИКС: результат Execute() раньше не проверялся - "Успешно сохранена" писалось
 				// всегда, даже если UPDATE реально провалился. Теперь при ошибке показываем её текст.
@@ -48,7 +52,8 @@ global $userbank, $theme;
 			$theme->left_delimiter = "{";
 			$theme->right_delimiter = "}";
 			$theme->display('page_admin_menu_edit.tpl');
-			echo "<script>$('on_link').checked = ".(int)$list_menu['enabled'].";</script>";
-			echo "<script>$('onNewTab').checked = ".(int)$list_menu['newtab']."</script>";
+			$en = (int)$list_menu['enabled'];
+			$nt = (int)$list_menu['newtab'];
+			echo "<script>(function(){function setChk(id,on){if(typeof sbSetChecked==='function'){sbSetChecked(id,!!on);return;}var el=document.getElementById(id);if(el)el.checked=!!on;}setChk('on_link',{$en});setChk('onNewTab',{$nt});})();</script>";
 		}
 	}

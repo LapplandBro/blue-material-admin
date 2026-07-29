@@ -508,12 +508,31 @@ function AddTab($title, $url, $desc, $newtab=false, $active=false)
 	}
 	else
 	{
-		$p = isset($_GET['p']) ? $_GET['p'] : '';
+		// Active только по точному p (+ c, если есть в URL пункта).
+		// Иначе на p=admin&c=menu синели и «Админ-панель», и любой deep-link с p=admin.
+		$p = isset($_GET['p']) ? (string)$_GET['p'] : '';
+		$c = isset($_GET['c']) ? (string)$_GET['c'] : '';
 		$active_match = false;
-		if ($p != '' && $p != 'default' && preg_match('/(?:\?|&)p='.preg_quote($p, '/').'\b/', $url))
-			$active_match = true;
-		elseif ($p != "default" && strlen($url) > 12 && substr($url, 12) == $p)
-			$active_match = true;
+		if ($p !== '' && $p !== 'default')
+		{
+			$qs = array();
+			$qpos = strpos($url, '?');
+			if ($qpos !== false)
+			{
+				$query = html_entity_decode(substr($url, $qpos + 1), ENT_QUOTES, 'UTF-8');
+				if ($query !== '')
+					parse_str($query, $qs);
+			}
+			if (!empty($qs['p']) && (string)$qs['p'] === $p)
+			{
+				if (!empty($qs['c']))
+					$active_match = ($c !== '' && (string)$qs['c'] === $c);
+				else
+					$active_match = ($c === '');
+			}
+			elseif ($c === '' && strlen($url) > 12 && substr($url, 12) == $p)
+				$active_match = true;
+		}
 
 		if($active_match)
 		{
