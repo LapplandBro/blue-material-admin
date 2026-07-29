@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+  <!-- Gag: chat bubble + slash -->
+  <path fill="#4A9FE8" d="M5 6.5h22a2.5 2.5 0 0 1 2.5 2.5v12A2.5 2.5 0 0 1 27 23.5H14.5L8 28.5V23.5H5A2.5 2.5 0 0 1 2.5 21V9A2.5 2.5 0 0 1 5 6.5z"/>
+  <path fill="#C8E4FF" d="M8.5 12h15v2.2H8.5zm0 4.5h11v2.2h-11z"/>
+  <path stroke="#E8F4FF" stroke-width="2.6" stroke-linecap="round" d="M6.5 6.5l19 19"/>
+  <path stroke="#0d1a2a" stroke-width="1.2" stroke-linecap="round" d="M6.5 6.5l19 19"/>
+</svg>

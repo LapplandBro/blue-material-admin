@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+  <!-- Four-pane window mark, transparent bg -->
+  <path fill="#00A4EF" d="M4 6.5l11-1.6v12.1H4V6.5z"/>
+  <path fill="#7FBA00" d="M17 4.7l11-1.6v13.9H17V4.7z"/>
+  <path fill="#FFB900" d="M4 18.5h11V30L4 28.5V18.5z"/>
+  <path fill="#F25022" d="M17 18.5h11v11.5l-11-1.5V18.5z"/>
+</svg>

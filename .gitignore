@@ -1,0 +1,22 @@
+# Secrets / generated
+config.php
+data/db.php
+remove_setup.php
+
+# Smarty compile cache
+themes_c/*
+!themes_c/.gitkeep
+
+# Runtime uploads
+demos/*
+!demos/.gitkeep
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+*.log
+.idea/
+.vscode/
+
+# Local debug helpers (not for public dist)
+sb_debug_connection.php

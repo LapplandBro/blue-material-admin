@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" role="img" aria-hidden="true">
+  <defs>
+    <linearGradient id="maMark" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8EC8FF"/>
+      <stop offset="1" stop-color="#1E90FF"/>
+    </linearGradient>
+  </defs>
+  <rect width="40" height="40" rx="10" fill="url(#maMark)"/>
+  <path fill="#0A1225" d="M9.5 31V12.5L20 24.2 30.5 12.5V31h-5.2V21.8L20 27.6l-5.3-5.8V31H9.5z"/>
+</svg>

@@ -1,0 +1,154 @@
+/**
+ * Установщик SourceBans — тёмная тема new_box.
+ * Базовый Material даёт белые ms-menu / lv-header-alt; dark-blue-theme их не трогает.
+ */
+
+body {
+  background: #07101f;
+}
+
+#content .block-header h2 {
+  color: #e8f0ff;
+}
+
+#messages-main {
+  overflow: hidden;
+  border: 1px solid #152040;
+  min-height: 520px;
+}
+
+#messages-main .ms-menu {
+  background: #0a1225 !important;
+  border-right: 1px solid #152040 !important;
+  padding-bottom: 24px;
+}
+
+#messages-main .ms-block {
+  padding: 18px 20px 8px !important;
+  border-bottom: 1px solid #152040;
+  margin-bottom: 4px;
+}
+
+#messages-main .ms-block b,
+#messages-main .ms-block .c-black,
+#messages-main .c-black {
+  color: #e8f0ff !important;
+}
+
+#messages-main .ms-menu .lv-item {
+  border-bottom: 1px solid #12203a;
+}
+
+#messages-main .ms-menu .lv-item.active {
+  background: #122848 !important;
+}
+
+#messages-main .ms-menu .lv-item:not(.active):hover {
+  background: #101c34 !important;
+}
+
+#messages-main .ms-menu .lv-title,
+#messages-main .ms-menu .lv-title del {
+  color: #ddeeff !important;
+}
+
+#messages-main .ms-menu .lv-small,
+#messages-main .ms-menu .lv-small del {
+  color: #5a80a8 !important;
+}
+
+#messages-main .ms-menu .lv-avatar {
+  color: #fff;
+  font-weight: 600;
+  line-height: 36px;
+  text-align: center;
+}
+
+.lv-header-alt {
+  background: #0a1225 !important;
+  border-bottom: 1px solid #152040;
+  padding: 12px 18px !important;
+}
+
+.lv-header-alt .lvh-label,
+.lv-header-alt .lvh-label span,
+.lv-header-alt .c-black {
+  color: #9ec0e8 !important;
+  font-weight: 600;
+}
+
+#messages-main .lv-body {
+  color: #c8d8f0;
+  background: transparent !important;
+  min-height: 0 !important;
+}
+
+#messages-main .lv-body a {
+  color: #4da3ff;
+}
+
+#messages-main .lv-body a:hover {
+  color: #7ec0ff;
+}
+
+#messages-main .form-group {
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+#messages-main .form-group .row {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+#messages-main .control-label {
+  padding-top: 8px;
+}
+
+#messages-main .form-control,
+#messages-main textarea.form-control,
+#messages-main #license {
+  background-color: #111c30 !important;
+  border: 1px solid #1a2d50 !important;
+  color: #ddeeff !important;
+  box-shadow: none !important;
+}
+
+#messages-main .form-control:focus,
+#messages-main textarea.form-control:focus {
+  border-color: #1e90ff !important;
+}
+
+#messages-main .fg-line:after {
+  background: #1e90ff;
+}
+
+#messages-main table {
+  color: #ddeeff;
+}
+
+#messages-main table td,
+#messages-main table th {
+  border-color: #152040 !important;
+}
+
+#messages-main pre,
+#messages-main code {
+  background: #111c30 !important;
+  color: #ddeeff !important;
+  border-color: #1a2d50 !important;
+}
+
+#messages-main .btn-primary {
+  background: #1e90ff;
+  border-color: #1e90ff;
+}
+
+#footer {
+  color: #5a80a8;
+}
+
+#footer a,
+#footer .footer_link {
+  color: #7ea8d4;
+}

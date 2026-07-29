@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+  <!-- Silence: mic + chat combined, amber badge -->
+  <circle cx="16" cy="16" r="14.5" fill="#E8B84A"/>
+  <circle cx="16" cy="16" r="14.5" fill="none" stroke="#C9922E" stroke-width="1"/>
+  <!-- mini mic -->
+  <rect x="8.2" y="9" width="4.2" height="7.2" rx="2.1" fill="#3D2A10"/>
+  <path fill="#3D2A10" d="M6.8 15.2a4 4 0 0 0 7 0h-1.3a2.7 2.7 0 0 1-5.4 0H6.8z"/>
+  <path fill="#3D2A10" d="M9.4 20h1.8v2H9.4zM7.5 22h5.6v1.3H7.5z"/>
+  <!-- mini chat -->
+  <path fill="#3D2A10" d="M17.2 10.2h8.2a1.4 1.4 0 0 1 1.4 1.4v5.2a1.4 1.4 0 0 1-1.4 1.4h-3.2l-2.4 2.2v-2.2h-2.6a1.4 1.4 0 0 1-1.4-1.4v-5.2a1.4 1.4 0 0 1 1.4-1.4z"/>
+  <path fill="#E8B84A" d="M18.8 12.6h5v1.2h-5zm0 2.4h3.6v1.2H18.8z"/>
+  <!-- slash -->
+  <path stroke="#FFF8E0" stroke-width="2.4" stroke-linecap="round" d="M7.5 7.5l17 17"/>
+</svg>

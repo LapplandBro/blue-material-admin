@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 64" role="img" aria-label="Material Admin | SourceBans">
+  <defs>
+    <linearGradient id="maBlue" x1="0" y1="0" x2="52" y2="52" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8EC8FF"/>
+      <stop offset="1" stop-color="#1E90FF"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="6" width="52" height="52" rx="12" fill="url(#maBlue)"/>
+  <path fill="#0A1225" d="M12 48V22.5L26 38.2 40 22.5V48h-6.8V34.4L26 42.2l-7.2-7.8V48H12z"/>
+  <text x="68" y="42" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="700" fill="#E8F0FF">Material Admin</text>
+  <text x="302" y="42" font-family="Arial, Helvetica, sans-serif" font-size="26" font-weight="400" fill="#5A80A8">|</text>
+  <text x="322" y="42" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="600" fill="#7EA8D4">SourceBans</text>
+</svg>

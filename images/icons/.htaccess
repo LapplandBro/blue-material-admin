@@ -1,0 +1,12 @@
+# Статика: запрет исполнения скриптов из папки иконок.
+<IfModule mod_authz_core.c>
+	<FilesMatch "\.(php|php[0-9]?|phtml|pl|py|cgi|asp|aspx|sh|exe)$">
+		Require all denied
+	</FilesMatch>
+</IfModule>
+<IfModule !mod_authz_core.c>
+	<FilesMatch "\.(php|php[0-9]?|phtml|pl|py|cgi|asp|aspx|sh|exe)$">
+		Order allow,deny
+		Deny from all
+	</FilesMatch>
+</IfModule>

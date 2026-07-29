@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+  <!-- Mute: microphone + slash -->
+  <rect x="12" y="4" width="8" height="14" rx="4" fill="#E07A28"/>
+  <path fill="#E07A28" d="M8.5 15.5a7.5 7.5 0 0 0 15 0h-2.2a5.3 5.3 0 0 1-10.6 0H8.5z"/>
+  <path fill="#E07A28" d="M14.5 24h3v3.5h-3z"/>
+  <path fill="#E07A28" d="M10 27.5h12v2H10z"/>
+  <path stroke="#FFB090" stroke-width="2.6" stroke-linecap="round" d="M7 7l18 18"/>
+  <path stroke="#1a1220" stroke-width="1.2" stroke-linecap="round" d="M7 7l18 18"/>
+</svg>

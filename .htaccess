@@ -1,0 +1,66 @@
+# Запрет directory listing (сканеры ругаются на открытый /images/ и т.п.).
+# Если AllowOverride не даёт Options — продублируй Options -Indexes в vhost Apache.
+Options -Indexes
+
+# Несуществующие URL → настоящий 404, а не 500 из-за битого ErrorDocument.
+ErrorDocument 404 /404.html
+
+<IfModule mod_rewrite.c>
+	RewriteEngine On
+
+	# Блокировка AI/мусорных ботов.
+	# НЕ блокируем поисковики и SEO-аудиторы (Google/Yandex/Bing/Semrush/Ahrefs/DataForSeo/
+	# facebookexternalhit/Twitterbot) — иначе сканеры пишут «canonical/OG не найден».
+	RewriteCond %{HTTP_USER_AGENT} (Amazonbot|GPTBot|GPT-Bot|DotBot|MJ12bot|Bytespider|CCBot|ClaudeBot|Claude-Web) [NC]
+	RewriteRule .* - [F,L]
+
+	# Блокировка страницы Edit Permissions (Material Admin 1.1.5.4)
+	# Предотвращает перезапись прав групп через p=admin&c=admins&o=editpermissions
+	RewriteCond %{QUERY_STRING} (^|&)c=admins(&|$) [NC]
+	RewriteCond %{QUERY_STRING} (^|&)o=editpermissions(&|$) [NC]
+	RewriteRule ^index\.php$ - [F,L]
+</IfModule>
+
+# Security-заголовки
+<IfModule mod_headers.c>
+	Header always set X-Content-Type-Options "nosniff"
+	Header always set X-Frame-Options "SAMEORIGIN"
+	Header always set Referrer-Policy "strict-origin-when-cross-origin"
+	# 0 — правильно. "1; mode=block" устарело: XSS-фильтр браузеров убран, mode=block
+	# сам создавал уязвимости. Сканеры часто требуют mode=block по старым чеклистам — игнор.
+	Header always set X-XSS-Protection "0"
+	Header always set Permissions-Policy "geolocation=(), microphone=(), camera=(), payment=(), usb=()"
+	# allow-popups нужен для Steam OpenID / внешних окон; same-origin ломает логин.
+	Header always set Cross-Origin-Opener-Policy "same-origin-allow-popups"
+	Header always set Cross-Origin-Resource-Policy "same-site"
+	# COEP: require-corp сломает Steam/внешние картинки. unsafe-none = явный opt-out.
+	Header always set Cross-Origin-Embedder-Policy "unsafe-none"
+	# CSP: unsafe-inline/unsafe-eval обязательны (xajax, MooTools, Summernote, inline в теме).
+	# Убрать без nonce/hash-рефакторинга всего JS = развал админки. Не трогаем.
+	Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: http:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'"
+	Header unset X-Powered-By
+</IfModule>
+<IfModule mod_php7.c>
+	php_flag expose_php off
+</IfModule>
+
+# Кэширование статических файлов браузером
+<IfModule mod_expires.c>
+	ExpiresActive On
+	ExpiresByType image/jpg "access plus 30 days"
+	ExpiresByType image/jpeg "access plus 30 days"
+	ExpiresByType image/gif "access plus 30 days"
+	ExpiresByType image/png "access plus 30 days"
+	ExpiresByType image/webp "access plus 30 days"
+	ExpiresByType image/svg+xml "access plus 30 days"
+	ExpiresByType image/x-icon "access plus 30 days"
+	ExpiresByType text/css "access plus 7 days"
+	ExpiresByType application/javascript "access plus 7 days"
+	ExpiresByType text/javascript "access plus 7 days"
+	ExpiresByType font/woff2 "access plus 30 days"
+</IfModule>
+<IfModule mod_headers.c>
+	<FilesMatch "\.(jpg|jpeg|png|gif|webp|svg|ico|css|js|woff2)$">
+		Header set Cache-Control "public, max-age=604800"
+	</FilesMatch>
+</IfModule>

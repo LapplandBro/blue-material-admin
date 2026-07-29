@@ -1,0 +1,12 @@
+# Эта папка содержит служебный код приложения (классы, конфигурацию,
+# сторонние библиотеки ADOdb/Smarty/SourceQuery и т.д.) и не должна быть
+# доступна напрямую через браузер - только через include/require из PHP.
+# Блокируем прямой HTTP-доступ ко всей папке целиком.
+
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+</IfModule>
