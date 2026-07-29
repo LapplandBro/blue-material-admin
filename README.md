@@ -37,7 +37,7 @@
 
 | | Минимум | Рекомендуется |
 |---|---|---|
-| PHP | 7.1 | 8.0+ |
+| PHP | 7.1 |
 | MySQL / MariaDB | 5.0 | 5.5+ / 10.x |
 | Расширения | mysqli, bcmath, xml, json, mbstring, openssl, curl | gd, gmp |
 
