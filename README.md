@@ -66,7 +66,6 @@ php install/dry_run.php
 ## Лицензия
 
 Исходный SourceBans / SourceBans++ — **GNU GPL v3**.  
-Этот форк сохраняет ту же лицензию. Сохраняй копирайты upstream при распространении.
 
 ## Credits
 
