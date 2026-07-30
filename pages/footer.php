@@ -79,7 +79,6 @@ if(defined('DEVELOPER_MODE')) {
 	 	echo('</pre></div></div></div>');
 }
 ?>
-</div>
 <script>
 	function notify(message, type, fro, alig, animIn, adnimOut, delay){
         jQuery.growl({
