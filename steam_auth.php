@@ -9,7 +9,12 @@ if (defined('DEVELOPER_MODE')) {
     ini_set('display_startup_errors', true);
 }
 
-function RedirectToSite($url = SB_WP_URL, $text = "", $NotJS = false) {
+/**
+ * @param string $url
+ * @param string $text  Текст ShowBox (пустой = без flash)
+ * @param bool   $ok    true = успех (зелёный), false = ошибка (красный). Не гадать по тексту.
+ */
+function RedirectToSite($url = SB_WP_URL, $text = "", $ok = false) {
     // Сообщение через ShowBox сайта (flash), без браузерного alert().
     if ($text !== "" && $text !== null) {
         if (function_exists('sb_session_start'))
@@ -17,17 +22,12 @@ function RedirectToSite($url = SB_WP_URL, $text = "", $NotJS = false) {
         elseif (session_status() === PHP_SESSION_NONE)
             @session_start();
 
-        $msg = (string)$text;
-        $isOk = (stripos($msg, 'вход выполнен') !== false)
-            || stripos($msg, 'переадресация') !== false
-            || (stripos($msg, 'найден') !== false && stripos($msg, 'не найдено') === false
-                && stripos($msg, 'не найдено ни одного') === false);
+        $ok = (bool)$ok;
         $_SESSION['sb_ui_flash'] = array(
-            'title' => $isOk ? 'Вход' : 'Ошибка входа',
-            'msg' => $msg,
-            'color' => $isOk ? 'green' : 'red',
-            // Успех: автозакрытие ShowBox; ошибка — ждёт OK.
-            'timer' => $isOk ? 1600 : 0,
+            'title' => $ok ? 'Вход' : 'Ошибка входа',
+            'msg' => (string)$text,
+            'color' => $ok ? 'green' : 'red',
+            'timer' => $ok ? 1600 : 0,
         );
     }
 
@@ -76,12 +76,12 @@ else {
     }
     
     if ($AdminsNum > 1)
-        RedirectToSite(SB_WP_URL, "Найдено более одного администратора. Свяжитесь с главным администратором.", true);
+        RedirectToSite(SB_WP_URL, "Найдено более одного администратора. Свяжитесь с главным администратором.", false);
     else if ($AdminsNum == 0)
     {
         if ($ExpiredAdmin)
-            RedirectToSite(SB_WP_URL, 'Запись администратора истёкла, или сработала защита сайта, обратитесь к владельцу сайта.', true);
-        RedirectToSite(SB_WP_URL, 'По предоставленным данным, не найдено ни одного администратора.', true);
+            RedirectToSite(SB_WP_URL, 'Запись администратора истёкла, или сработала защита сайта, обратитесь к владельцу сайта.', false);
+        RedirectToSite(SB_WP_URL, 'По предоставленным данным, не найдено ни одного администратора.', false);
     }
     else {
         sb_set_auth_cookie("aid", $aid, time()+LOGIN_COOKIE_LIFETIME);
@@ -96,6 +96,6 @@ else {
             $log->WriteLog();
         }
 
-        RedirectToSite(SB_WP_URL, 'Вход выполнен.');
+        RedirectToSite(SB_WP_URL, 'Вход выполнен.', true);
     }
 }
