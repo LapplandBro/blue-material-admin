@@ -6,7 +6,6 @@
 	<title>Обновление SourceBans</title>
 	<link rel="shortcut icon" href="../images/favicon.ico" />
 	<link href="../themes/new_box/css/rubik.css" rel="stylesheet" />
-	<link href="../themes/new_box/vendors/bower_components/animate.css/animate.min.css" rel="stylesheet" />
 	<link href="../themes/new_box/vendors/bower_components/bootstrap-sweetalert/lib/sweet-alert.css" rel="stylesheet" />
 	<link href="../themes/new_box/vendors/bower_components/material-design-iconic-font/dist/css/material-design-iconic-font.min.css" rel="stylesheet" />
 	<link href="../themes/new_box/css/app.min.1.css" rel="stylesheet" />
@@ -50,7 +49,7 @@
 					<div class="card-body card-padding">
 						<p>{$setup}</p>
 						{if $progress}<br /><p>{$progress}</p>{/if}
-						<p class="m-t-20 c-gray">После успешного обновления удалите папки <code>install/</code> и <code>updater/</code>.</p>
+						<p class="m-t-20 c-gray">После успешного обновления удалите папки <code>install/</code> и <code>updater/</code>. Предпочтительно обновлять файлы вручную (см. README).</p>
 					</div>
 				</div>
 			</div>
@@ -63,7 +62,5 @@
 
 	<script src="../themes/new_box/vendors/bower_components/jquery/dist/jquery.min.js"></script>
 	<script src="../themes/new_box/vendors/bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
-	<script src="../themes/new_box/vendors/bower_components/Waves/dist/waves.min.js"></script>
-	<script src="../themes/new_box/js/functions.js"></script>
 </body>
 </html>

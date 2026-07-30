@@ -8,7 +8,6 @@
 	<link rel="shortcut icon" href="../images/favicon.ico" />
 
 	<link href="../themes/new_box/css/rubik.css" rel="stylesheet" />
-	<link href="../themes/new_box/vendors/bower_components/animate.css/animate.min.css" rel="stylesheet" />
 	<link href="../themes/new_box/vendors/bower_components/bootstrap-sweetalert/lib/sweet-alert.css" rel="stylesheet" />
 	<link href="../themes/new_box/vendors/bower_components/material-design-iconic-font/dist/css/material-design-iconic-font.min.css" rel="stylesheet" />
 	<link href="../themes/new_box/css/app.min.1.css" rel="stylesheet" />

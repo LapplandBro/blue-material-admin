@@ -82,6 +82,7 @@ foreach ($junk as $rel) {
 
 // --- theme assets ---
 $theme = dirname(ROOT) . '/themes/new_box';
+$rootSite = dirname(ROOT);
 if (is_dir($theme))
 	dry_ok('themes/new_box exists');
 else
@@ -90,13 +91,38 @@ else
 $assets = array(
 	'css/app.min.1.css', 'css/dark-blue-theme.css',
 	'vendors/bower_components/jquery/dist/jquery.min.js',
+	'vendors/bower_components/bootstrap/dist/js/bootstrap.min.js',
 	'vendors/bower_components/bootstrap-sweetalert/lib/sweet-alert.min.js',
+	'vendors/bower_components/Waves/dist/waves.min.js',
+	'vendors/bower_components/material-design-iconic-font/dist/css/material-design-iconic-font.min.css',
 );
 foreach ($assets as $a) {
 	if (is_file($theme . '/' . $a))
 		dry_ok("asset $a");
 	else
 		dry_fail("asset missing $a");
+}
+
+// Демо-мусор Material / мёртвые редакторы — не должны возвращаться в дистрибутив.
+$themeJunk = array(
+	'includes/tinymce',
+	'includes/pChart',
+	'themes/new_box/vendors/summernote/dist----',
+	'themes/new_box/vendors/bower_components/flot',
+	'themes/new_box/vendors/bower_components/fullcalendar',
+	'themes/new_box/vendors/bower_components/simpleWeather',
+	'themes/new_box/vendors/bower_components/mediaelement',
+	'themes/new_box/vendors/bower_components/chosen',
+	'themes/new_box/vendors/sparklines',
+	'themes/new_box/js/demo.js',
+	'themes/new_box/js/charts.js',
+);
+foreach ($themeJunk as $rel) {
+	$path = $rootSite . '/' . $rel;
+	if (!file_exists($path))
+		dry_ok("theme junk gone: $rel");
+	else
+		dry_fail("theme junk still present: $rel");
 }
 
 // --- syntax lint all install PHP (except _php_dryrun) ---

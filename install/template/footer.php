@@ -16,13 +16,16 @@
 	<script src="../themes/new_box/vendors/bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
 	<script src="../themes/new_box/vendors/bower_components/Waves/dist/waves.min.js"></script>
 	<script src="../themes/new_box/vendors/bower_components/bootstrap-sweetalert/lib/sweet-alert.min.js"></script>
-	<script>window.$ = window.jQuery;</script>
-	<script src="../themes/new_box/js/functions.js"></script>
 	<script>
 		(function ($) {
+			// Installer does not load themes/.../functions.js (Material demo glue).
 			var title = <?php echo json_encode(isset($GLOBALS['TitleRewrite']) ? $GLOBALS['TitleRewrite'] : '', JSON_UNESCAPED_UNICODE); ?>;
 			if (title) $('#content_title').text(title);
 			if ($.fn.popover) $('[data-toggle="popover"]').popover();
+			if (window.Waves) {
+				Waves.attach('.btn:not(.btn-icon)');
+				Waves.init();
+			}
 		})(jQuery);
 	</script>
 </body>

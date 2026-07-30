@@ -1219,14 +1219,55 @@ function ShowBox(title, msg, color, redir, noclose, timer)
 		}
 	}, 40);
 
-	// Auto-redirect only for simple notices (not server-sync modals — they redirect themselves)
-	if (redir && !noclose && !hasSrvFrame)
-		setTimeout(function () { window.location = redir; }, 2500);
+	// Auto-redirect only for simple notices (not server-sync modals — they redirect themselves).
+	// Same path+query (типично settings#^N после POST) — location= не перезагружает страницу,
+	// а $GLOBALS['config'] на этом запросе ещё старый → галочки «откатываются» без reload.
+	if (redir && !noclose && !hasSrvFrame) {
+		var delay = (parseInt(timer, 10) > 0) ? parseInt(timer, 10) : 2500;
+		setTimeout(function () { sbNavigateOrReload(redir); }, delay);
+	}
 }
+/**
+ * Navigate to redir. Same path+query (settings tabs #^N) must NOT use location.reload():
+ * after a POST save, reload() re-submits the form → infinite save/reload loop.
+ * Force a fresh GET instead (one-shot _sb= busts the "same URL" no-op).
+ */
+function sbNavigateOrReload(redir)
+{
+	if (!redir || redir === "undefined")
+		return;
+	try {
+		var a = document.createElement("a");
+		a.href = redir;
+		var targetBase = a.href.split("#")[0];
+		var curBase = window.location.href.split("#")[0];
+		var hash = a.hash || "";
+		if (targetBase === curBase) {
+			var clean = targetBase.replace(/([?&])_sb=\d+/g, "$1").replace(/[?&]$/, "").replace(/\?&/, "?");
+			if (clean.slice(-1) === "?") clean = clean.slice(0, -1);
+			var sep = clean.indexOf("?") >= 0 ? "&" : "?";
+			window.location.replace(clean + sep + "_sb=" + Date.now() + hash);
+			return;
+		}
+		window.location.replace(a.href);
+		return;
+	} catch (e) {}
+	window.location = redir;
+}
+// Убрать одноразовый _sb= из адресной строки после принудительного GET.
+(function () {
+	try {
+		if (!/[?&]_sb=\d+/.test(window.location.search))
+			return;
+		var q = window.location.search.replace(/([?&])_sb=\d+/g, "$1").replace(/[?&]$/, "").replace(/\?&/, "?");
+		if (q === "?") q = "";
+		history.replaceState(null, "", window.location.pathname + q + window.location.hash);
+	} catch (e) {}
+})();
 function closeMsg(redir)
 {
 	if(redir.toString().length > 0 && redir != "undefined")
-		window.location = redir;
+		sbNavigateOrReload(redir);
 	else
 	{
 		FadeElOut('dialog-placement', 750);
