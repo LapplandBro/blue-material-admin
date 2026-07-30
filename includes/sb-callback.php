@@ -1950,9 +1950,6 @@ function ServerHostPlayers($sid, $type="servers", $obId="", $tplsid="", $open=""
 							if($needAddPlayerManaging) {
 								$dl = "a";
 								$dl2 = 'var i_i = document.createElement("i");
-										//var img = document.createElement("img");
-										//img.src = "themes/new_box/img/inn.png";
-										//img.className = "m-r-5";
 										i_i.className = "zmdi zmdi-label c-lightblue p-r-10 p-l-5";
 										i_i.style = "font-size: 17px;";
 										//img.style.width = "20px";

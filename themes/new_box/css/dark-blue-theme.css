@@ -108,7 +108,7 @@ hr {
 }
 
 .profile-menu > a {
-  background: linear-gradient(135deg, #080f1f 0%, #0f1e3a 100%) !important;
+  background: url(../img/profile-menu.png) no-repeat left top / 100% auto !important;
 }
 
 .profile-menu > a .profile-info {
