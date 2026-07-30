@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>503 · Сервис недоступен — MATERIAL ADMIN</title>
+<style>
+:root {
+  --bg-base: #070d1a;
+  --bg-card: #0c1528;
+  --bg-alt: #101d35;
+  --border: rgba(30, 100, 200, 0.18);
+  --border-glow: rgba(30, 144, 255, 0.35);
+  --blue: #1e90ff;
+  --blue-hot: #4ea8ff;
+  --blue-dim: rgba(30, 144, 255, 0.12);
+  --text: #ddeeff;
+  --text-2: #7ea8d4;
+  --text-3: #3d607f;
+  --warn: #ffc857;
+  --bad: #ff5c5c;
+  --radius: 12px;
+  --font: "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono: ui-monospace, "Cascadia Code", "Consolas", monospace;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { height: 100%; }
+body {
+  min-height: 100%;
+  font-family: var(--font);
+  color: var(--text);
+  background:
+    radial-gradient(ellipse 70% 50% at 50% -10%, rgba(30, 144, 255, 0.16), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 100% 100%, rgba(10, 79, 160, 0.18), transparent 50%),
+    var(--bg-base);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+  line-height: 1.55;
+}
+.noise {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  z-index: 0;
+}
+.wrap {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 480px;
+  animation: rise 0.45s ease both;
+}
+@keyframes rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 22px;
+  text-decoration: none;
+  color: inherit;
+}
+.brand__mark {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 9px;
+  box-shadow: 0 0 0 1px rgba(30, 144, 255, 0.25), 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+.brand__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.brand__name {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--text);
+}
+.brand__sub {
+  font-size: 11px;
+  color: var(--text-3);
+  letter-spacing: 0.04em;
+}
+.card {
+  background: linear-gradient(180deg, var(--bg-alt) 0%, var(--bg-card) 100%);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px 28px 24px;
+  box-shadow:
+    0 0 0 1px rgba(30, 144, 255, 0.06) inset,
+    0 18px 48px rgba(0, 0, 0, 0.45);
+}
+.card--warn { border-color: rgba(255, 200, 87, 0.28); }
+.card--bad { border-color: rgba(255, 92, 92, 0.28); }
+.code {
+  font-family: var(--mono);
+  font-size: clamp(3.2rem, 12vw, 4.4rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: var(--blue);
+  text-shadow: 0 0 40px rgba(30, 144, 255, 0.35);
+  margin-bottom: 8px;
+}
+.card--warn .code { color: var(--warn); text-shadow: 0 0 40px rgba(255, 200, 87, 0.25); }
+.card--bad .code { color: var(--bad); text-shadow: 0 0 40px rgba(255, 92, 92, 0.28); }
+h1 {
+  font-size: 1.35rem;
+  font-weight: 650;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+.lead {
+  color: var(--text-2);
+  font-size: 0.98rem;
+  margin-bottom: 8px;
+}
+.hint {
+  color: var(--text-3);
+  font-size: 0.88rem;
+  margin-bottom: 22px;
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.btn--primary {
+  background: var(--blue);
+  color: #fff;
+  box-shadow: 0 6px 20px rgba(30, 144, 255, 0.28);
+}
+.btn--primary:hover,
+.btn--primary:focus {
+  background: var(--blue-hot);
+  color: #fff;
+}
+.btn--ghost {
+  background: var(--blue-dim);
+  color: var(--blue-hot);
+  border-color: var(--border);
+}
+.btn--ghost:hover,
+.btn--ghost:focus {
+  border-color: var(--border-glow);
+  color: #fff;
+}
+.foot {
+  margin-top: 18px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-3);
+}
+.foot a {
+  color: var(--text-2);
+  text-decoration: none;
+}
+.foot a:hover { color: var(--blue-hot); }
+@media (max-width: 480px) {
+  .card { padding: 22px 18px 18px; }
+  h1 { font-size: 1.2rem; }
+}
+</style>
+</head>
+<body>
+<div class="noise" aria-hidden="true"></div>
+<main class="wrap">
+  <a class="brand" href="/" title="На главную">
+    <svg class="brand__mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" aria-hidden="true">
+  <defs>
+    <linearGradient id="maMark" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8EC8FF"/>
+      <stop offset="1" stop-color="#1E90FF"/>
+    </linearGradient>
+  </defs>
+  <rect width="40" height="40" rx="10" fill="url(#maMark)"/>
+  <path fill="#0A1225" d="M9.5 31V12.5L20 24.2 30.5 12.5V31h-5.2V21.8L20 27.6l-5.3-5.8V31H9.5z"/>
+</svg>
+    <span class="brand__text">
+      <span class="brand__name">MATERIAL ADMIN</span>
+      <span class="brand__sub">SourceBans · deep blue</span>
+    </span>
+  </a>
+  <section class="card card--warn" aria-labelledby="err-title">
+    <div class="code" aria-hidden="true">503</div>
+    <h1 id="err-title">Сервис недоступен</h1>
+    <p class="lead">Сайт временно на обслуживании или перегружен.</p>
+    <p class="hint">Подождите немного и обновите страницу.</p>
+    <div class="actions">
+      <a class="btn btn--primary" href="/">На главную</a>
+      <a class="btn btn--ghost" href="javascript:location.reload()">Обновить</a>
+    </div>
+  </section>
+  <p class="foot"><a href="/">Material Admin</a></p>
+</main>
+</body>
+</html>

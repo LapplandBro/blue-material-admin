@@ -2,8 +2,21 @@
 # Если AllowOverride не даёт Options — продублируй Options -Indexes в vhost Apache.
 Options -Indexes
 
-# Несуществующие URL → настоящий 404, а не 500 из-за битого ErrorDocument.
-ErrorDocument 404 /404.html
+# Страницы ошибок (deep blue, папка /errors/). Только локальные пути —
+# полный https:// в ErrorDocument превращает ответ в редирект (302).
+ErrorDocument 400 /errors/400.html
+ErrorDocument 401 /errors/401.html
+ErrorDocument 402 /errors/error.html
+ErrorDocument 403 /errors/403.html
+ErrorDocument 404 /errors/404.html
+ErrorDocument 405 /errors/error.html
+ErrorDocument 406 /errors/error.html
+ErrorDocument 407 /errors/error.html
+ErrorDocument 408 /errors/error.html
+ErrorDocument 500 /errors/500.html
+ErrorDocument 502 /errors/502.html
+ErrorDocument 503 /errors/503.html
+ErrorDocument 504 /errors/504.html
 
 <IfModule mod_rewrite.c>
 	RewriteEngine On
