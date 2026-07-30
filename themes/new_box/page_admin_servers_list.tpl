@@ -35,7 +35,7 @@
 					<td id="host_{$server.sid}"><span class="parsec-muted">Загрузка…</span></td>
 					<td class="text-right" id="players_{$server.sid}"><span class="parsec-muted">—</span></td>
 					<td class="text-center banlist-td-mod">
-						<img src="images/games/{$server.icon}" width="18" height="18" alt="" loading="lazy">
+						{game_icon file=$server.icon size=18 alt="Мод"}
 					</td>
 					<td class="text-right">
 						<span class="admin-actions">

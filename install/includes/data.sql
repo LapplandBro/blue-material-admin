@@ -23,7 +23,8 @@ INSERT INTO `{prefix}_mods` (`mid`, `name`, `icon`, `modfolder`, `steam_universe
 (22, "Counter-Strike: Global Offensive", 'csgo.png', 'csgo', '1'),
 (23, 'Synergy', 'synergy.png', 'synergy', '0'),
 (24, 'No More Room in Hell', 'nmrih.png', 'nmrih', '0'),
-(25, 'Codename CURE', 'cure.png', 'cure', '0');
+(25, 'Codename CURE', 'cure.png', 'cure', '0'),
+(26, 'Counter-Strike 2', 'cs2.png', 'cs2', '1');
 
 UPDATE `{prefix}_mods` SET `mid` = '0' WHERE `name` = 'Web';
 

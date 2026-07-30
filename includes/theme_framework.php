@@ -3,12 +3,14 @@ global $theme;
 
 // Подгрузка самого нужного плагина
 require_once(INCLUDES_PATH . "/smarty/plugins/function.help_icon.php");
+require_once(INCLUDES_PATH . "/smarty/plugins/function.game_icon.php");
 
 // Регистрация функций
 $theme->register_function("display_material_checkbox", "materialdesign_checkbox");
 $theme->register_function("display_material_input", "materialdesign_input");
 $theme->register_function("display_header", "materialdesign_cardheader");
 $theme->register_function("display_alert", "materialdesign_alert");
+$theme->register_function("game_icon", "smarty_function_game_icon");
 $theme->register_block("render_material_body", "materialdesign_body");
 
 // Создание каллбэков функций

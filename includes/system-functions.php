@@ -1337,15 +1337,83 @@ function sb_tripwire_punish_actor($objResponse = null, $log_detail = '')
 }
 
 /**
- * Маппинг старых PNG иконок модов → SVG в images/icons/games/.
+ * Маппинг старых PNG/GIF иконок модов → SVG в images/icons/games/.
  * Ключ — basename файла из mods.icon (как в БД), значение — путь от корня сайта.
  */
 function sb_game_icon_svg_map()
 {
-	static $map = array(
-		'tf2.png' => 'images/icons/games/tf2.svg',
-		'tf2.gif' => 'images/icons/games/tf2.svg',
-		'tf2.svg' => 'images/icons/games/tf2.svg',
+	static $map = null;
+	if ($map !== null)
+		return $map;
+
+	$base = 'images/icons/games/';
+	$map = array(
+		// Web / generic
+		'web.png' => $base . 'web.svg',
+		'web.svg' => $base . 'web.svg',
+		// Counter-Strike
+		'csgo.png' => $base . 'csgo.svg',
+		'csgo.svg' => $base . 'csgo.svg',
+		'cs2.png' => $base . 'cs2.svg',
+		'cs2.svg' => $base . 'cs2.svg',
+		'csource.png' => $base . 'csource.svg',
+		'csource.svg' => $base . 'csource.svg',
+		'cspromod.png' => $base . 'cspromod.svg',
+		'cspromod.svg' => $base . 'cspromod.svg',
+		// TF / HL2 family
+		'tf2.png' => $base . 'tf2.svg',
+		'tf2.gif' => $base . 'tf2.svg',
+		'tf2.svg' => $base . 'tf2.svg',
+		'hl2dm.png' => $base . 'hl2dm.svg',
+		'hl2dm.svg' => $base . 'hl2dm.svg',
+		'hl2ctf.png' => $base . 'hl2ctf.svg',
+		'hl2ctf.svg' => $base . 'hl2ctf.svg',
+		'hl2-fortressforever.png' => $base . 'hl2-fortressforever.svg',
+		'hl2-fortressforever.gif' => $base . 'hl2-fortressforever.svg',
+		'hl2-fortressforever.svg' => $base . 'hl2-fortressforever.svg',
+		// Other Source
+		'dods.png' => $base . 'dods.svg',
+		'dods.svg' => $base . 'dods.svg',
+		'ins.png' => $base . 'ins.svg',
+		'ins.gif' => $base . 'ins.svg',
+		'ins.svg' => $base . 'ins.svg',
+		'gmod.png' => $base . 'gmod.svg',
+		'gmod.svg' => $base . 'gmod.svg',
+		'l4d.png' => $base . 'l4d.svg',
+		'l4d.svg' => $base . 'l4d.svg',
+		'l4d2.png' => $base . 'l4d2.svg',
+		'l4d2.svg' => $base . 'l4d2.svg',
+		'nmrih.png' => $base . 'nmrih.svg',
+		'nmrih.svg' => $base . 'nmrih.svg',
+		'alienswarm.png' => $base . 'alienswarm.svg',
+		'alienswarm.svg' => $base . 'alienswarm.svg',
+		'cure.png' => $base . 'cure.svg',
+		'cure.svg' => $base . 'cure.svg',
+		'nucleardawn.png' => $base . 'nucleardawn.svg',
+		'nucleardawn.svg' => $base . 'nucleardawn.svg',
+		'synergy.png' => $base . 'synergy.svg',
+		'synergy.svg' => $base . 'synergy.svg',
+		'zps.png' => $base . 'zps.svg',
+		'zps.gif' => $base . 'zps.svg',
+		'zps.svg' => $base . 'zps.svg',
+		'dys.png' => $base . 'dys.svg',
+		'dys.gif' => $base . 'dys.svg',
+		'dys.svg' => $base . 'dys.svg',
+		'hidden.png' => $base . 'hidden.svg',
+		'hidden.svg' => $base . 'hidden.svg',
+		'pvkii.png' => $base . 'pvkii.svg',
+		'pvkii.gif' => $base . 'pvkii.svg',
+		'pvkii.svg' => $base . 'pvkii.svg',
+		'pdark.png' => $base . 'pdark.svg',
+		'pdark.gif' => $base . 'pdark.svg',
+		'pdark.svg' => $base . 'pdark.svg',
+		'ship.png' => $base . 'ship.svg',
+		'ship.gif' => $base . 'ship.svg',
+		'ship.svg' => $base . 'ship.svg',
+		'eye.png' => $base . 'eye.svg',
+		'eye.svg' => $base . 'eye.svg',
+		'SourceForts.png' => $base . 'SourceForts.svg',
+		'SourceForts.svg' => $base . 'SourceForts.svg',
 	);
 	return $map;
 }
@@ -1359,7 +1427,14 @@ function sb_game_icon_html($iconFile, $alt = 'Игра', $size = 18)
 	if ($iconFile === '' || $iconFile === '.' || $iconFile === '..')
 		$iconFile = 'web.png';
 	$map = sb_game_icon_svg_map();
-	$src = isset($map[$iconFile]) ? $map[$iconFile] : ('images/games/' . $iconFile);
+	if (isset($map[$iconFile]))
+		$src = $map[$iconFile];
+	else
+	{
+		$root = defined('ROOT') ? rtrim(str_replace('\\', '/', ROOT), '/') . '/' : '';
+		$legacy = 'images/games/' . $iconFile;
+		$src = ($root !== '' && is_file($root . $legacy)) ? $legacy : 'images/icons/unknown.svg';
+	}
 	$size = (int)$size;
 	if ($size < 12) $size = 12;
 	if ($size > 64) $size = 64;

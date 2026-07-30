@@ -4,7 +4,7 @@
 <div class="card banlist-panel adminlist-panel">
 	<div class="card-header">
 		<h2>
-			<img class="adminlist-game-ico" src="images/games/{$game.icon}" alt="" />
+			{game_icon file=$game.icon size=22 alt=$game.name}
 			{$game.name}
 			<small>Админы по серверам · {$game.servers} {if $game.servers == 1}сервер{elseif $game.servers < 5}сервера{else}серверов{/if}</small>
 		</h2>

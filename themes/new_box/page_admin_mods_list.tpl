@@ -28,7 +28,7 @@
 					<td>{$mod.name|htmlspecialchars}</td>
 					<td><code class="admin-manage-code">{$mod.modfolder|htmlspecialchars}</code></td>
 					<td class="text-center banlist-td-mod">
-						<img src="images/games/{$mod.icon}" width="18" height="18" alt="" loading="lazy">
+						{game_icon file=$mod.icon size=18 alt=$mod.name}
 					</td>
 					<td class="text-center">{$mod.steam_universe|htmlspecialchars}</td>
 					{if $permission_editmods || $permission_deletemods}
