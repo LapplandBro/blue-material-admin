@@ -18,6 +18,32 @@ ErrorDocument 502 /errors/502.html
 ErrorDocument 503 /errors/503.html
 ErrorDocument 504 /errors/504.html
 
+# =============================================================================
+# Безопасность: листинг выкл.; чувствительное не скачивается.
+# Разрешено по HTTP: PHP-вход (index.php и т.п.), картинки, css/js/шрифты,
+# errors/*.html, robots.txt. Демки — только через getdemo.php (см. demos/).
+# =============================================================================
+<IfModule mod_authz_core.c>
+	# Бэкапы, дампы, архивы, шаблоны Smarty, логи, env
+	<FilesMatch "(?i)\.(sql|bak|old|orig|save|swp|dist|env|log|yml|yaml|phar|zip|rar|7z|tar|gz|tgz|bz2|tpl|md)$">
+		Require all denied
+	</FilesMatch>
+	# Конфиг и служебные файлы в корне (include по FS работает, HTTP — 403)
+	<FilesMatch "(?i)^(config\.php|composer\.(json|lock)|package(-lock)?\.json|requirements\.txt|\.gitignore|\.gitattributes|sb_debug_connection\.php)$">
+		Require all denied
+	</FilesMatch>
+</IfModule>
+<IfModule !mod_authz_core.c>
+	<FilesMatch "(?i)\.(sql|bak|old|orig|save|swp|dist|env|log|yml|yaml|phar|zip|rar|7z|tar|gz|tgz|bz2|tpl|md)$">
+		Order allow,deny
+		Deny from all
+	</FilesMatch>
+	<FilesMatch "(?i)^(config\.php|composer\.(json|lock)|package(-lock)?\.json|requirements\.txt|\.gitignore|\.gitattributes|sb_debug_connection\.php)$">
+		Order allow,deny
+		Deny from all
+	</FilesMatch>
+</IfModule>
+
 <IfModule mod_rewrite.c>
 	RewriteEngine On
 

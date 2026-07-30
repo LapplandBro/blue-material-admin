@@ -1,0 +1,23 @@
+# Тема: css/js/картинки нужны браузеру; .tpl скачивать нельзя.
+Options -Indexes
+
+<IfModule mod_authz_core.c>
+	<FilesMatch "(?i)\.(tpl|php|php[0-9]?|phtml|inc)$">
+		Require all denied
+	</FilesMatch>
+</IfModule>
+<IfModule !mod_authz_core.c>
+	<FilesMatch "(?i)\.(tpl|php|php[0-9]?|phtml|inc)$">
+		Order allow,deny
+		Deny from all
+	</FilesMatch>
+</IfModule>
+
+<IfModule mod_php7.c>
+	php_flag engine off
+</IfModule>
+<IfModule mod_php5.c>
+	php_flag engine off
+</IfModule>
+RemoveHandler .php .php3 .php4 .php5 .phtml
+RemoveType .php .php3 .php4 .php5 .phtml
