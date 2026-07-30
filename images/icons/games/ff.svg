@@ -1,14 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" aria-hidden="true">
   <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="128" y2="128" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#e67e22" stop-opacity="0.35"/>
+    <radialGradient id="fill" cx="36%" cy="30%" r="72%">
+      <stop offset="0" stop-color="#eeab6f" stop-opacity="0.55"/>
+      <stop offset="0.45" stop-color="#413b34"/>
+      <stop offset="1" stop-color="#181008"/>
+    </radialGradient>
+    <linearGradient id="rim" x1="20" y1="12" x2="110" y2="118" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#eeab6f"/>
+      <stop offset="0.55" stop-color="#e67e22"/>
       <stop offset="1" stop-color="#181008"/>
     </linearGradient>
   </defs>
-  <circle cx="64" cy="64" r="60" fill="#181008"/>
-  <circle cx="64" cy="64" r="54" fill="url(#g)" stroke="#e67e22" stroke-width="3" stroke-opacity="0.55"/>
-  <text x="64" y="68" text-anchor="middle"
-        font-family="Segoe UI, Rubik, Arial, sans-serif" font-weight="700"
-        font-size="52" fill="#e8f0ff" letter-spacing="-0.5"
-        textLength="78" lengthAdjust="spacingAndGlyphs">FF</text>
+  <circle cx="64" cy="64" r="62" fill="#03070f"/>
+  <circle cx="64" cy="64" r="58.5" fill="url(#fill)" stroke="url(#rim)" stroke-width="3"/>
+  <circle cx="64" cy="64" r="51" fill="none" stroke="#e67e22" stroke-opacity="0.28" stroke-width="1.5"/>
+  <path d="M30 38 A40 40 0 0 1 92 30" fill="none" stroke="#ffffff" stroke-opacity="0.14" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M62.194375 53.359375H50.335V61.609375H61.2334375V67.75H50.335V80.8046875H42.7646875V47.1953125H62.194375ZM85.2353125 53.359375H73.3759375V61.609375H84.274375V67.75H73.3759375V80.8046875H65.805625V47.1953125H85.2353125Z" fill="#000000" fill-opacity="0.35" transform="translate(0 1.25)"/>
+  <path d="M62.194375 53.359375H50.335V61.609375H61.2334375V67.75H50.335V80.8046875H42.7646875V47.1953125H62.194375ZM85.2353125 53.359375H73.3759375V61.609375H84.274375V67.75H73.3759375V80.8046875H65.805625V47.1953125H85.2353125Z" fill="#f5f8ff"/>
 </svg>
