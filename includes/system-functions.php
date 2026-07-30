@@ -1231,6 +1231,8 @@ function sb_ui_flash_set($title, $msg, $color = 'red')
 
 /**
  * ShowBox из session-flash. $key — ключ сессии (по умолчанию sb_ui_flash).
+ * Зелёные/успешные — автозакрытие (timer); ошибки ждут OK.
+ * Опционально: $f['timer'] (мс), $f['noclose'] (bool).
  */
 function sb_ui_flash_script($key = 'sb_ui_flash')
 {
@@ -1243,9 +1245,14 @@ function sb_ui_flash_script($key = 'sb_ui_flash')
 	$title = isset($f['title']) ? $f['title'] : '';
 	$msg = isset($f['msg']) ? $f['msg'] : '';
 	$color = isset($f['color']) ? $f['color'] : 'green';
+	$noclose = !empty($f['noclose']) ? 'true' : 'false';
+	$timer = isset($f['timer']) ? (int)$f['timer'] : 0;
+	if ($timer <= 0 && $color === 'green')
+		$timer = 1800;
+	$timerJs = $timer > 0 ? (string)$timer : 'undefined';
 	return '<script>setTimeout(function(){ if(typeof ShowBox==="function") ShowBox('
 		. json_encode($title) . ',' . json_encode($msg) . ',' . json_encode($color)
-		. ',"",false); }, 300);</script>';
+		. ',"",' . $noclose . ',' . $timerJs . '); }, 300);</script>';
 }
 
 /** Список SteamID из SB_PROTECTED_STEAMIDS. */

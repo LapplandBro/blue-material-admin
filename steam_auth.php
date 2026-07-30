@@ -24,6 +24,8 @@ function RedirectToSite($url = SB_WP_URL, $text = "", $NotJS = false) {
             'title' => $isOk ? 'Вход' : 'Ошибка входа',
             'msg' => $msg,
             'color' => $isOk ? 'green' : 'red',
+            // Успех: автозакрытие ShowBox; ошибка — ждёт OK.
+            'timer' => $isOk ? 1600 : 0,
         );
     }
 
