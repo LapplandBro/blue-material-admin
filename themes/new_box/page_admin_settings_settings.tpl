@@ -115,7 +115,7 @@
 					</div>
 				</div>*}
 				<div class="form-group m-b-5">
-					<label for="config_debug" class="col-sm-3 control-label">{help_icon title="Режим отладки" message="Включить режим отладки."} Режим отладки</label>
+					<label for="config_debug" class="col-sm-3 control-label">{help_icon title="Режим отладки" message="Показывает ошибки PHP и компактную debug-панель владельцу (без хэшей паролей). Не оставляйте включённым на проде."} Режим отладки</label>
 					<div class="col-sm-9">
 						<div class="checkbox m-b-15">
 							<label for="config_debug">

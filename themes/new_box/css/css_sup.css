@@ -318,6 +318,18 @@
 		padding-left: 20px !important;
 	}
 }
+
+/* Debug-панель в footer.php рендерится вне #content — нужен тот же сдвиг, что у #footer. */
+.sb-debug-panel {
+	padding: 16px 15px 90px;
+	box-sizing: border-box;
+	width: 100%;
+}
+@media (min-width: 1199px) {
+	body.sw-toggled .sb-debug-panel {
+		padding-left: 268px;
+	}
+}
 .clickable-row {
 	cursor: pointer;
 }

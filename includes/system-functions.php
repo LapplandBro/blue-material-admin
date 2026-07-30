@@ -1005,6 +1005,103 @@ function PrintArray($array)
 	echo "</pre>";
 }
 
+/**
+ * Рекурсивно маскирует секреты в массивах для debug-панели.
+ */
+function sb_debug_scrub($data, $depth = 0)
+{
+	if ($depth > 8)
+		return '...';
+	if (!is_array($data))
+		return $data;
+
+	$sensitive = array(
+		'password', 'passwd', 'pass', 'srv_password', 'smtp.password', 'smtp_password',
+		'token', 'secret', 'csrf', 'phpsessid',
+	);
+	$out = array();
+	foreach ($data as $k => $v) {
+		$key = strtolower((string)$k);
+		$redact = false;
+		foreach ($sensitive as $s) {
+			if ($key === $s || strpos($key, $s) !== false) {
+				$redact = true;
+				break;
+			}
+		}
+		if ($redact && (is_string($v) || is_numeric($v)))
+			$out[$k] = '[redacted]';
+		elseif (is_array($v))
+			$out[$k] = sb_debug_scrub($v, $depth + 1);
+		elseif (is_object($v))
+			$out[$k] = '[object ' . get_class($v) . ']';
+		else
+			$out[$k] = $v;
+	}
+	return $out;
+}
+
+/**
+ * Компактная debug-панель вместо print_r всего CUserManager (там password hash).
+ * Только ADMIN_OWNER; гостям и обычным админам не светим сессии/куки.
+ */
+function sb_render_developer_debug_panel($userbank)
+{
+	if (!defined('DEVELOPER_MODE'))
+		return;
+	if (!is_object($userbank) || !method_exists($userbank, 'is_logged_in') || !$userbank->is_logged_in())
+		return;
+	if (!method_exists($userbank, 'HasAccess') || !$userbank->HasAccess(ADMIN_OWNER))
+		return;
+
+	$safeUser = array(
+		'aid' => method_exists($userbank, 'GetAid') ? $userbank->GetAid() : null,
+		'user' => $userbank->GetProperty('user'),
+		'authid' => $userbank->GetProperty('authid'),
+		'gid' => $userbank->GetProperty('gid'),
+		'email' => $userbank->GetProperty('email'),
+		'extraflags' => $userbank->GetProperty('extraflags'),
+		'srv_group' => $userbank->GetProperty('srv_group'),
+	);
+
+	$meta = array(
+		'php' => PHP_VERSION,
+		'sb_version' => defined('SB_VERSION') ? SB_VERSION : '?',
+		'page' => isset($_GET['p']) ? (string)$_GET['p'] : '',
+		'c' => isset($_GET['c']) ? (string)$_GET['c'] : '',
+		'queries' => (isset($GLOBALS['db']) && is_object($GLOBALS['db']) && isset($GLOBALS['db']->Queries)) ? $GLOBALS['db']->Queries : '?',
+		'memory_peak' => function_exists('memory_get_peak_usage') ? round(memory_get_peak_usage(true) / 1048576, 2) . ' MB' : '?',
+		'display_errors' => ini_get('display_errors'),
+	);
+
+	$esc = function ($s) {
+		return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8');
+	};
+	$dump = function ($label, $data) use ($esc) {
+		$json = print_r($data, true);
+		echo '<details class="sb-debug-block" style="margin:10px 0;">';
+		echo '<summary style="cursor:pointer;font-weight:600;">' . $esc($label) . '</summary>';
+		echo '<pre style="max-height:280px;overflow:auto;margin:8px 0 0;white-space:pre-wrap;word-break:break-word;">';
+		echo $esc($json);
+		echo '</pre></details>';
+	};
+
+	// Вне #content — без отступа сайдбара панель уезжает под меню (как #footer: padding-left 268px).
+	echo '<div class="sb-debug-panel">';
+	echo '<div class="container">';
+	echo '<div class="card" style="border:1px solid rgba(255,193,7,.45);">';
+	echo '<div class="card-header"><h2>Режим отладки <small>только владелец · секреты скрыты</small></h2></div>';
+	echo '<div class="card-body card-padding">';
+	echo '<p class="m-b-10">Включены PHP <code>display_errors</code> и принудительная компиляция Smarty. ';
+	echo 'Отключить: настройки → «Режим отладки» или закомментировать <code>define(\'DEVELOPER_MODE\', true);</code> в <code>config.php</code>.</p>';
+	$dump('Сводка', $meta);
+	$dump('Текущий админ (без паролей)', $safeUser);
+	$dump('POST', sb_debug_scrub($_POST));
+	$dump('SESSION', sb_debug_scrub($_SESSION));
+	$dump('COOKIE', sb_debug_scrub($_COOKIE));
+	echo '</div></div></div></div>';
+}
+
 function NextGid()
 {
 	$gid = $GLOBALS['db']->GetRow("SELECT MAX(gid) AS next_gid FROM `" . DB_PREFIX . "_groups`");
