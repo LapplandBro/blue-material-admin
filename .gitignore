@@ -6,10 +6,12 @@ remove_setup.php
 # Smarty compile cache
 themes_c/*
 !themes_c/.gitkeep
+!themes_c/.htaccess
 
 # Runtime uploads
 demos/*
 !demos/.gitkeep
+!demos/.htaccess
 
 # OS / IDE
 .DS_Store
