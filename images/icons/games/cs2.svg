@@ -5,9 +5,10 @@
       <stop offset="1" stop-color="#0a1628"/>
     </linearGradient>
   </defs>
-  <circle cx="64" cy="64" r="64" fill="#0a1628"/>
-  <circle cx="64" cy="64" r="58" fill="url(#g)" stroke="#f0a020" stroke-width="3" stroke-opacity="0.55"/>
-  <text x="64" y="64" text-anchor="middle" dominant-baseline="central"
+  <circle cx="64" cy="64" r="60" fill="#0a1628"/>
+  <circle cx="64" cy="64" r="54" fill="url(#g)" stroke="#f0a020" stroke-width="3" stroke-opacity="0.55"/>
+  <text x="64" y="68" text-anchor="middle"
         font-family="Segoe UI, Rubik, Arial, sans-serif" font-weight="700"
-        font-size="96" fill="#e8f0ff" letter-spacing="-1">CS2</text>
+        font-size="40" fill="#e8f0ff" letter-spacing="-0.5"
+        textLength="88" lengthAdjust="spacingAndGlyphs">CS2</text>
 </svg>
