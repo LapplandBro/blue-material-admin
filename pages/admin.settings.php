@@ -189,8 +189,6 @@ else
 					$protest = 0;
 				}
 
-				$lognopopup = (isset($_POST['dash_nopopup']) && $_POST['dash_nopopup'] == "on" ? 1 : 0);
-				
 				$debugmode = (isset($_POST['config_debug']) && $_POST['config_debug'] == "on" ? 1 : 0);
 				
 				$summertime = (isset($_POST['config_summertime']) && $_POST['config_summertime'] == "on" ? 1 : 0);
@@ -237,7 +235,6 @@ else
 												(" . (int)$hideplayerips . ", 'banlist.hideplayerips'),
 												(" . (int)$nocountryfetch . ", 'banlist.nocountryfetch'),
 												(?, 'dash.intro.text'),
-												(" . (int)$lognopopup . ", 'dash.lognopopup'),
 												(" . (int)$protest . ", 'config.enableprotest'),
 												(" . (int)$submit . ", 'config.enablesubmit'),
 												(" . (int)$onlyinvolved . ", 'protest.emailonlyinvolved'),
@@ -412,7 +409,6 @@ else
 	setChecked('enable_protest', <?php echo $sbCfgInt('config.enableprotest'); ?>);
 	setChecked('enable_kickit', <?php echo $sbCfgInt('config.enablekickit', 1); ?>);
 	setChecked('export_public', <?php echo $sbCfgInt('config.exportpublic'); ?>);
-	setChecked('dash_nopopup', <?php echo $sbCfgInt('dash.lognopopup'); ?>);
 	setValue('default_page', <?php echo $sbCfgInt('config.defaultpage'); ?>);
 	setValue('block_home', <?php echo $sbCfgInt('config.home.comms', 1); ?>);
 	setChecked('protest_emailonlyinvolved', <?php echo $sbCfgInt('protest.emailonlyinvolved'); ?>);

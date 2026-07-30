@@ -109,7 +109,7 @@
 						<div class="checkbox m-b-15">
 							<label for="config_summertime">
 								<input type="checkbox" name="config_summertime" id="config_summertime" value="on" />
-								<i class="input-helper"></i> Включить?
+								<i class="input-helper"></i><span class="sr-only">вкл.</span>
 							</label>
 						</div>
 					</div>
@@ -120,7 +120,7 @@
 						<div class="checkbox m-b-15">
 							<label for="config_debug">
 								<input type="checkbox" name="config_debug" id="config_debug" value="on" />
-								<i class="input-helper"></i> Включить?
+								<i class="input-helper"></i><span class="sr-only">вкл.</span>
 							</label>
 						</div>
 					</div>
@@ -169,17 +169,6 @@
 						<textarea TABINDEX=6 cols="80" rows="20" id="dash_intro_text" name="dash_intro_text" class="html-editor">{$config_dash_text}</textarea>
 					</div>
 				</div>
-				<div class="form-group m-b-5">
-					<label for="dash_nopopup" class="col-sm-3 control-label">{help_icon title="Выключить всплывающие окна" message="Установите этот флажок, чтобы отключить всплывающие подсказки и использовать прямые ссылки."} Выключить всплывающие окна</label>
-					<div class="col-sm-9">
-						<div class="checkbox m-b-15">
-							<label for="dash_nopopup">
-								<input type="checkbox" name="dash_nopopup" id="dash_nopopup" value="on" />
-								<i class="input-helper"></i> Включить?
-							</label>
-						</div>
-					</div>
-				</div>
 				
 			</div>
 			
@@ -192,56 +181,56 @@
 			<div class="card-body card-padding p-b-0">
 				
 				<div class="form-group m-b-5">
-					<label for="enable_protest" class="col-sm-3 control-label">{help_icon title="Включить протест банов" message="Поставьте галку чтобы включить страницу протеста банов."} Включить протест банов</label>
+					<label for="enable_protest" class="col-sm-3 control-label">{help_icon title="Протест банов" message="Страница протеста бана в меню и по прямой ссылке."} Протест банов</label>
 					<div class="col-sm-9">
 						<div class="checkbox m-b-15">
 							<label for="enable_protest">
 								<input type="checkbox" name="enable_protest" id="enable_protest" value="on" />
-								<i class="input-helper"></i> Включить?
+								<i class="input-helper"></i><span class="sr-only">вкл.</span>
 							</label>
 						</div>
 					</div>
 				</div>
 				<div class="form-group m-b-5">
-					<label for="admin_list_t" class="col-sm-3 control-label">{help_icon title="Включить админлист" message="Поставьте галку чтобы включить страницу с списком админов."} Включить админлист</label>
+					<label for="admin_list_t" class="col-sm-3 control-label">{help_icon title="Админлист" message="Публичная страница со списком администраторов."} Админлист</label>
 					<div class="col-sm-9">
 						<div class="checkbox m-b-15">
 							<label for="admin_list_t">
 								<input type="checkbox" name="admin_list_t" id="admin_list_t" value="on" />
-								<i class="input-helper"></i> Включить?
+								<i class="input-helper"></i><span class="sr-only">вкл.</span>
 							</label>
 						</div>
 					</div>
 				</div>
 				<div class="form-group m-b-5">
-					<label for="vay4_t" class="col-sm-3 control-label">{help_icon title="Включить Ваучеры" message="Поставьте галку чтобы включить систему ваучеров."} Включить ваучеры</label>
+					<label for="vay4_t" class="col-sm-3 control-label">{help_icon title="Ваучеры" message="Вкл.: пункт «Активировать ваучер» в меню сайта (index.php?p=pay) и плитка «Ваучеры» в админ-панели (выпуск ключей, только владелец)."} Ваучеры</label>
 					<div class="col-sm-9">
 						<div class="checkbox m-b-15">
 							<label for="vay4_t">
 								<input type="checkbox" name="vay4_t" id="vay4_t" value="on" />
-								<i class="input-helper"></i> Включить?
+								<i class="input-helper"></i><span class="sr-only">вкл.</span>
 							</label>
 						</div>
 					</div>
 				</div>
 				<div class="form-group m-b-5">
-					<label for="protest_emailonlyinvolved" class="col-sm-3 control-label">{help_icon title="Только отправка e-mail" message="Если включено - при протесте бана будет только отправляться e-mail админу."} Только отправка e-mail</label>
+					<label for="protest_emailonlyinvolved" class="col-sm-3 control-label">{help_icon title="Протест только на e-mail" message="При протесте бана не создавать заявку в панели — только письмо админу."} Протест только на e-mail</label>
 					<div class="col-sm-9">
 						<div class="checkbox m-b-15">
 							<label for="protest_emailonlyinvolved">
 								<input type="checkbox" name="protest_emailonlyinvolved" id="protest_emailonlyinvolved" value="on" />
-								<i class="input-helper"></i> Включить?
+								<i class="input-helper"></i><span class="sr-only">вкл.</span>
 							</label>
 						</div>
 					</div>
 				</div>
 				<div class="form-group m-b-5">
-					<label for="enable_submit" class="col-sm-3 control-label">{help_icon title="Предложение бана" message="Поставьте галку чтобы включить страницу запроса банов."} Предложение бана</label>
+					<label for="enable_submit" class="col-sm-3 control-label">{help_icon title="Предложение бана" message="Страница жалобы / предложения бана."} Предложение бана</label>
 					<div class="col-sm-9">
 						<div class="checkbox m-b-15">
 							<label for="enable_submit">
 								<input type="checkbox" name="enable_submit" id="enable_submit" value="on" />
-								<i class="input-helper"></i> Включить?
+								<i class="input-helper"></i><span class="sr-only">вкл.</span>
 							</label>
 						</div>
 					</div>
@@ -295,7 +284,7 @@
 						<div class="checkbox m-b-15">
 							<label for="banlist_hideadmname">
 								<input type="checkbox" name="banlist_hideadmname" id="banlist_hideadmname" value="on" />
-								<i class="input-helper"></i> Включить?
+								<i class="input-helper"></i><span class="sr-only">вкл.</span>
 							</label>
 						</div>
 						<div id="banlist_hideadmname.msg"></div>
@@ -307,7 +296,7 @@
 						<div class="checkbox m-b-15">
 							<label for="banlist_nocountryfetch">
 								<input type="checkbox" name="banlist_nocountryfetch" id="banlist_nocountryfetch" value="on" />
-								<i class="input-helper"></i> Включить?
+								<i class="input-helper"></i><span class="sr-only">вкл.</span>
 							</label>
 						</div>
 						<div id="banlist_nocountryfetch.msg"></div>
@@ -319,7 +308,7 @@
 						<div class="checkbox m-b-15">
 							<label for="banlist_hideplayerips">
 								<input type="checkbox" name="banlist_hideplayerips" id="banlist_hideplayerips" value="on" />
-								<i class="input-helper"></i> Включить?
+								<i class="input-helper"></i><span class="sr-only">вкл.</span>
 							</label>
 						</div>
 						<div id="banlist_hideplayerips.msg"></div>

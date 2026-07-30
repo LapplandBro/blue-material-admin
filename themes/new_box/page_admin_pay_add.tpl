@@ -8,7 +8,7 @@
 		<h2>Ваучеры <small>Ваучер - ключ, с помощью которого происходит автоматическое добавление администратора при активации.</small></h2>
 		</div>
 		
-		<div class="alert alert-info" role="alert">Перед заполнением форм, наведите на знак <img class="sb-ico sb-ico-help" src="images/icons/help.svg" width="18" height="18" alt="Справка" /> , для полного ознакомления с Системой Ваучеров!</div>
+		<div class="alert alert-info" role="alert">Наведите на <img class="sb-ico sb-ico-help" src="images/icons/help.svg" width="18" height="18" alt="?" /> у каждого поля — там описание. Готовый ключ активируют на <code>index.php?p=pay</code> (пункт «Активировать ваучер» в меню).</div>
 		<div class="form-horizontal" role="form">
 		<div class="card-body card-padding p-b-0">
 			<div class="form-group m-b-5">
@@ -18,7 +18,7 @@
 						<input type="text" TABINDEX=1 class="form-control input-mask" id="card_key" name="card_key" data-mask="0000000000000000" placeholder="Пример: 2000209805000188" />
 					</div>
 				</div>
-                    <button type="button" class="btn btn-primary waves-effect m-t-5 btn-icon-text" onclick="$('card_key').value = getPassword(16);"><i class="zmdi zmdi-refresh-alt"></i> Cгенерировать</button>
+                    <button type="button" class="btn btn-primary waves-effect m-t-5 btn-icon-text" onclick="var el=$id('card_key'); if(el) el.value=getPassword(16);"><i class="zmdi zmdi-refresh-alt"></i> Сгенерировать</button>
 			</div>
 			<div class="form-group m-b-5">
 				<label for="card_exp" class="col-sm-3 control-label text-right">{help_icon title="Срок" message="Введите '0', чтобы активировать срок - навсегда. Срок указывается в днях."} Срок админки</label>
@@ -36,7 +36,7 @@
 								<tr>
 										<td>
 											<label for="dd_{$server_wg.id}_dd" class="radio radio-inline m-r-20 p-t-0">
-												<input type="radio" value="{$server_wg.name}" id="dd_{$server_wg.id}_dd" name="inlineRadioOptions_srv" hidden="hidden" onchange="$('card_gr_srv').value = this.value;" />
+												<input type="radio" value="{$server_wg.name}" id="dd_{$server_wg.id}_dd" name="inlineRadioOptions_srv" hidden="hidden" onchange="var el=$id('card_gr_srv'); if(el) el.value=this.value;" />
 												<i class="input-helper"></i> {$server_wg.name}
 											</label>
 										</td>
@@ -45,7 +45,7 @@
 								<tr>
 										<td>
 											<label for="no_group_web" class="radio radio-inline m-r-20 p-t-0">
-												<input type="radio" value="" id="no_group_web" name="inlineRadioOptions_srv" hidden="hidden" onchange="$('card_gr_srv').value = this.value;" />
+												<input type="radio" value="" id="no_group_web" name="inlineRadioOptions_srv" hidden="hidden" onchange="var el=$id('card_gr_srv'); if(el) el.value=this.value;" />
 												<i class="input-helper"></i> <span class="c-red">Без группы</span>
 											</label>
 										</td>
@@ -61,7 +61,7 @@
 								<tr>
 										<td>
 											<label for="dp_{$server_g.gid}_pd" class="radio radio-inline m-r-20 p-t-0">
-												<input type="radio" value="{$server_g.name}" id="dp_{$server_g.gid}_pd" name="inlineRadioOptions_web" hidden="hidden" onchange="$('card_gr_web').value = this.value;" />
+												<input type="radio" value="{$server_g.name}" id="dp_{$server_g.gid}_pd" name="inlineRadioOptions_web" hidden="hidden" onchange="var el=$id('card_gr_web'); if(el) el.value=this.value;" />
 												<i class="input-helper"></i> {$server_g.name}
 											</label>
 										</td>
@@ -70,7 +70,7 @@
 								<tr>
 									<td>
 										<label for="no_group_srv" class="radio radio-inline m-r-20 p-t-0">
-											<input type="radio" value="0" id="no_group_srv" name="inlineRadioOptions_web" hidden="hidden" onchange="$('card_gr_web').value = this.value;" />
+											<input type="radio" value="0" id="no_group_srv" name="inlineRadioOptions_web" hidden="hidden" onchange="var el=$id('card_gr_web'); if(el) el.value=this.value;" />
 											<i class="input-helper"></i> <span class="c-red">Без группы</span>
 										</label>
 									</td>

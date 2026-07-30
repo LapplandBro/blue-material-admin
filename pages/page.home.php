@@ -225,7 +225,6 @@ $theme->assign('listing_block',  $GLOBALS['config']['config.home.comms']);
 
 require(TEMPLATES_PATH . "/page.servers.php"); //Set theme vars from servers page
 
-$theme->assign('dashboard_lognopopup', (isset($GLOBALS['config']['dash.lognopopup']) && $GLOBALS['config']['dash.lognopopup'] == "1"));
 $theme->assign('dashboard_title',  stripslashes($GLOBALS['config']['dash.intro.title']));
 
 $dashboard_text = stripslashes($GLOBALS['config']['dash.intro.text']);

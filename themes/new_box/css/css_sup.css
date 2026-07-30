@@ -105,6 +105,35 @@
 	height: 18px !important;
 	max-width: 18px !important;
 	max-height: 18px !important;
+	display: inline-block !important;
+	float: none !important;
+	vertical-align: -3px;
+	margin-right: 6px;
+	cursor: help;
+	position: relative;
+	z-index: 2;
+	pointer-events: auto !important;
+}
+.form-horizontal .control-label .sb-ico-help {
+	float: none !important;
+}
+
+/* Активация ваучера */
+.voucher-captcha-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 10px;
+}
+.voucher-captcha-img {
+	display: block;
+	border: 1px solid #1a2d50;
+	border-radius: 2px;
+	background: #0c1528;
+}
+.voucher-captcha-input {
+	flex: 1 1 140px;
+	min-width: 120px;
 }
 /*
  * Бренд в зоне шапки (~36px внутри padding:17px).

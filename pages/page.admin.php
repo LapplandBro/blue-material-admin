@@ -57,6 +57,8 @@ $theme->assign('access_parsec', function_exists('ParsecPanelCanView') ? ParsecPa
 $theme->assign('access_groups', 	$userbank->HasAccess( ADMIN_OWNER|ADMIN_LIST_GROUPS|ADMIN_ADD_GROUP|ADMIN_EDIT_GROUPS|ADMIN_DELETE_GROUPS ));
 $theme->assign('access_settings', 	$userbank->HasAccess(ADMIN_OWNER|ADMIN_WEB_SETTINGS));
 $theme->assign('access_mods', 		$userbank->HasAccess(ADMIN_OWNER|ADMIN_LIST_MODS|ADMIN_ADD_MODS|ADMIN_EDIT_MODS|ADMIN_DELETE_MODS ));
+// Выпуск ваучеров — только владелец и только если система включена в настройках.
+$theme->assign('access_vouchers',	$userbank->HasAccess(ADMIN_OWNER) && isset($GLOBALS['config']['page.vay4er']) && (string)$GLOBALS['config']['page.vay4er'] === '1');
 
 $theme->assign('demosize', sizeFormat($demsi['size']));
 $theme->assign('total_admins', $counts['admins']);

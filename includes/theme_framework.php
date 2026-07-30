@@ -18,6 +18,9 @@ function materialdesign_checkbox($params, &$smarty) {
     if (!isset($params["name"]) || !isset($params["help_title"]) || !isset($params["help_text"]))
         return "";
 
+    // Подпись справа от галочки не нужна: смысл уже в левом label (иначе «Выключить X» + «Включить?»).
+    $checkLabel = isset($params['check_label']) ? (string)$params['check_label'] : '';
+
     $str  = '<div class="form-group m-b-5">';
     $str .= '<label for="'.$params['name'].'" class="col-sm-3 control-label">'.smarty_function_help_icon(['title' => $params['help_title'], 'message' => $params['help_text']], $smarty)." ".$params["help_title"]."</label>";
     $str .= '<div class="col-sm-9"><div class="checkbox m-b-15">';
@@ -25,7 +28,11 @@ function materialdesign_checkbox($params, &$smarty) {
     // Не ставить HTML-атрибут hidden: [hidden]{display:none} ломает Material-галочки.
     // Визуально скрывает .checkbox input { opacity:0 } в теме.
     $str .= '<input type="checkbox" name="'.$params['name'].'" id="'.$params['name'].'" value="on" />';
-    $str .= '<i class="input-helper"></i> Включить?';
+    $str .= '<i class="input-helper"></i>';
+    if ($checkLabel !== '')
+        $str .= ' ' . htmlspecialchars($checkLabel, ENT_QUOTES, 'UTF-8');
+    else
+        $str .= '<span class="sr-only">вкл.</span>';
     $str .= '</label></div></div></div>';
 
     return $str;

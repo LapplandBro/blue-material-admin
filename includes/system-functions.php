@@ -445,6 +445,8 @@ function sb_menu_icon($url, $title)
 		return 'zmdi zmdi-flag';
 	if (preg_match('/(?:\?|&)p=protest\b/', $url_l) || strpos($title_l, 'апелля') !== false)
 		return 'zmdi zmdi-balance';
+	if (preg_match('/(?:\?|&)p=pay\b/', $url_l) || strpos($title_l, 'ваучер') !== false)
+		return 'zmdi zmdi-shopping-cart-plus';
 	if (preg_match('/vk\.com/i', $url_l) || preg_match('/\bvk\b/', $title_l))
 		return 'zmdi zmdi-vk';
 	if (preg_match('/discord/i', $url_l) || strpos($title_l, 'discord') !== false)
@@ -594,6 +596,32 @@ function BuildPageTabs()
 			'newtab' => $pay_newtab,
 		);
 		$groups['site'][] = $pay_item;
+	}
+
+	// Ваучеры: при включении в настройках — пункт в боковом меню (не только в профиле гостя).
+	if (isset($GLOBALS['config']['page.vay4er']) && (string)$GLOBALS['config']['page.vay4er'] === '1')
+	{
+		$has_voucher = false;
+		foreach ($groups as $glist)
+		{
+			foreach ($glist as $it)
+			{
+				if (!empty($it['url']) && preg_match('/(?:\?|&)p=pay\b/', $it['url']))
+				{
+					$has_voucher = true;
+					break 2;
+				}
+			}
+		}
+		if (!$has_voucher)
+		{
+			$groups['site'][] = array(
+				'text' => 'Активировать ваучер',
+				'url' => 'index.php?p=pay',
+				'description' => 'Активация ваучера для получения админки',
+				'newtab' => '0',
+			);
+		}
 	}
 
 	if ($userbank->is_admin())
@@ -790,11 +818,13 @@ function CreateLinkR($title, $url, $tooltip="", $target="_self", $wide=false, $o
 
 function HelpIcon($title, $text)
 {
-	// Uses the same markup as the {help_icon} Smarty plugin (blue icon + Bootstrap
-	// popover) instead of the old grey "themes/.../admin/help.png" + MooTools "tip"
-	// class, which was visually inconsistent with the rest of the panel and whose
-	// tooltip no longer triggers reliably.
-	return '<img class="sb-ico sb-ico-help" src="images/icons/help.svg" width="18" height="18" alt="Справка" style="float:left;margin-right:6px;" data-trigger="hover" data-toggle="popover" data-placement="top" data-content="' .  $text . '" title="" data-original-title="' .  $title . '">';
+	// Тот же markup, что {help_icon}: Bootstrap popover, container=body.
+	$t = htmlspecialchars((string)$title, ENT_QUOTES, 'UTF-8');
+	$m = htmlspecialchars((string)$text, ENT_QUOTES, 'UTF-8');
+	return '<img class="sb-ico sb-ico-help" src="images/icons/help.svg" width="18" height="18" alt="Справка"'
+		. ' tabindex="0" role="button"'
+		. ' data-toggle="popover" data-trigger="hover focus" data-placement="top" data-container="body"'
+		. ' title="' . $t . '" data-content="' . $m . '">';
 }
 
 /**

@@ -10,58 +10,58 @@
 			<div class="card-body card-padding p-b-0">
 			
 				<div class="form-group m-b-5">
-					<label for="export_public" class="col-sm-3 control-label">{help_icon title="Включить публичный список банов" message="Установите этот флажок, чтобы все могли скачать список банов."} Разрешить экспорт банов</label>
+					<label for="export_public" class="col-sm-3 control-label">{help_icon title="Экспорт банов" message="Публичная выгрузка списка банов для скачивания."} Экспорт банов</label>
 					<div class="col-sm-9">
 						<div class="checkbox m-b-15">
 							<label for="export_public">
 								<input type="checkbox" name="export_public" id="export_public" value="on" />
-								<i class="input-helper"></i> Включить?
+								<i class="input-helper"></i><span class="sr-only">вкл.</span>
 							</label>
 						</div>
 					</div>
 				</div>
 				<div class="form-group m-b-5">
-					<label for="enable_kickit" class="col-sm-3 control-label">{help_icon title="Включить кик" message="Установите этот флажок, чтобы кикнуть игрока, когда бан добавлен в базу."} Включить кик</label>
+					<label for="enable_kickit" class="col-sm-3 control-label">{help_icon title="Кик при бане" message="Кикать игрока с сервера сразу после добавления бана в базу."} Кик при бане</label>
 					<div class="col-sm-9">
 						<div class="checkbox m-b-15">
 							<label for="enable_kickit">
 								<input type="checkbox" name="enable_kickit" id="enable_kickit" value="on" />
-								<i class="input-helper"></i> Включить?
+								<i class="input-helper"></i><span class="sr-only">вкл.</span>
 							</label>
 						</div>
 					</div>
 				</div>
 				<div class="form-group m-b-5">
-					<label for="enable_groupbanning" class="col-sm-3 control-label">{help_icon title="Включить групповые баны" message="Установите этот флажок, если вы хотите включить бан групп."} Включить групповые баны</label>
+					<label for="enable_groupbanning" class="col-sm-3 control-label">{help_icon title="Групповые баны" message="Бан целой Steam-группы игрока."} Групповые баны</label>
 					<div class="col-sm-9">
 						<div class="checkbox m-b-15">
 							<label for="enable_groupbanning">
 								<input type="checkbox" name="enable_groupbanning" id="enable_groupbanning" value="on" />
-								<i class="input-helper"></i> Включить?
+								<i class="input-helper"></i><span class="sr-only">вкл.</span>
 							</label>
 							<div id="enable_groupbanning.msg"></div>
 						</div>
 					</div>
 				</div>
 				<div class="form-group m-b-5">
-					<label for="enable_friendsbanning" class="col-sm-3 control-label">{help_icon title="Включить баны друзей" message="Установите этот флажок, если вы хотите включить бан всех друзей игрока."} Включить баны друзей</label>
+					<label for="enable_friendsbanning" class="col-sm-3 control-label">{help_icon title="Баны друзей" message="Бан всех Steam-друзей выбранного игрока."} Баны друзей</label>
 					<div class="col-sm-9">
 						<div class="checkbox m-b-15">
 							<label for="enable_friendsbanning">
 								<input type="checkbox" name="enable_friendsbanning" id="enable_friendsbanning" value="on" />
-								<i class="input-helper"></i> Включить?
+								<i class="input-helper"></i><span class="sr-only">вкл.</span>
 							</label>
 							<div id="enable_friendsbanning.msg"></div>
 						</div>
 					</div>
 				</div>
 				<div class="form-group m-b-5">
-					<label for="enable_adminrehashing" class="col-sm-3 control-label">{help_icon title="Включить перезагрузку списка администраторов" message="Установите этот флажок, если вы хотите, чтобы права администраторов перезагружались при любом изменении админов.групп."} Включить перезагрузку списка администраторов</label>
+					<label for="enable_adminrehashing" class="col-sm-3 control-label">{help_icon title="Авто-рехеш админов" message="Перезагружать права на серверах при любом изменении админов или групп."} Авто-рехеш админов</label>
 					<div class="col-sm-9">
 						<div class="checkbox m-b-15">
 							<label for="enable_adminrehashing">
 								<input type="checkbox" name="enable_adminrehashing" id="enable_adminrehashing" value="on" />
-								<i class="input-helper"></i> Включить?
+								<i class="input-helper"></i><span class="sr-only">вкл.</span>
 							</label>
 							<div id="enable_adminrehashing.msg"></div>
 						</div>
@@ -73,7 +73,7 @@
 						<div class="checkbox m-b-15">
 							<label for="enable_admininfo">
 								<input type="checkbox" name="enable_admininfo" id="enable_admininfo" value="on" />
-								<i class="input-helper"></i> Включить?
+								<i class="input-helper"></i><span class="sr-only">вкл.</span>
 							</label>
 						</div>
 					</div>
@@ -84,7 +84,7 @@
 						<div class="checkbox m-b-15">
 							<label for="allow_admininfo">
 								<input type="checkbox" name="allow_admininfo" id="allow_admininfo" value="on" />
-								<i class="input-helper"></i> Включить?
+								<i class="input-helper"></i><span class="sr-only">вкл.</span>
 							</label>
 						</div>
 					</div>

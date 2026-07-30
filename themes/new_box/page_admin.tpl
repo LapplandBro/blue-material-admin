@@ -60,7 +60,7 @@
 		</section>
 		{/if}
 
-		{if $access_admins || $access_groups || $access_settings}
+		{if $access_admins || $access_groups || $access_settings || $access_vouchers}
 		<section class="admin-hub-section">
 			<h3 class="admin-hub-section-title">Команда и система</h3>
 			<div class="admin-hub-grid">
@@ -68,6 +68,12 @@
 				<a class="admin-hub-tile" href="index.php?p=admin&amp;c=admins">
 					<span class="admin-hub-tile-title">Админы</span>
 					<span class="admin-hub-tile-desc">Состав, права, переопределения</span>
+				</a>
+				{/if}
+				{if $access_vouchers}
+				<a class="admin-hub-tile" href="index.php?p=admin&amp;c=pay_card">
+					<span class="admin-hub-tile-title">Ваучеры</span>
+					<span class="admin-hub-tile-desc">Выпуск ключей · активация на сайте: «Активировать ваучер»</span>
 				</a>
 				{/if}
 				{if $access_groups}

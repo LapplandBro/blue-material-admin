@@ -1006,9 +1006,11 @@ function AddAdmin_pay($mask, $srv_mask, $a_name, $a_steam, $a_email, $a_password
 		exit();
 	}
 	
-	$pay_days_sql = $GLOBALS['db']->GetOne("SELECT `days` FROM `" . DB_PREFIX . "_vay4er` WHERE `value` = '".$a_code."'");
-	if(!$pay_days_sql == "0"){
-		$pay_days_sql = (time() + $pay_days_sql * 86400);
+	$pay_days_sql = $GLOBALS['db']->GetOne("SELECT `days` FROM `" . DB_PREFIX . "_vay4er` WHERE `value` = ?", array($a_code));
+	if ((string)$pay_days_sql !== "0" && $pay_days_sql !== null && $pay_days_sql !== '') {
+		$pay_days_sql = (time() + ((int)$pay_days_sql) * 86400);
+	} else {
+		$pay_days_sql = 0;
 	}
 	$a_name = RemoveCode($a_name);
 	$a_steam = RemoveCode($a_steam);
@@ -1349,27 +1351,24 @@ function AddAdmin_pay($mask, $srv_mask, $a_name, $a_steam, $a_email, $a_password
 		$server_admin_group_int = -1;
 	}
 
-	//$q_del = $GLOBALS['db']->Execute("DELETE FROM `" . DB_PREFIX . "_vay4er` WHERE `value` = '".$a_code."'");
-	$q_del = $GLOBALS['db']->Execute("UPDATE `" . DB_PREFIX . "_vay4er` SET `value` = ?, `activ` = '0' WHERE `value` = ?", array($a_code, $a_code));
-	if($q_del){
-		// Add the admin
-		$web_gruop_id = $GLOBALS['db']->GetOne("SELECT `group_web` FROM ".DB_PREFIX."_vay4er WHERE `value` = ?", array($a_code));
-		$web_gruop_sql = $GLOBALS['db']->GetOne("SELECT `gid` FROM ".DB_PREFIX."_groups WHERE `name` = ?", array($web_gruop_id));
-		if($web_gruop_id == "" || $web_gruop_sql == "" ){
-			$web_gruop_sql = "0";
-		}
-		$server_admin_group = $GLOBALS['db']->GetOne("SELECT `group_srv` FROM ".DB_PREFIX."_vay4er WHERE `value` = ?", array($a_code));
-		if($server_admin_group == ""){
-			$web_gruop_sql = "";
-		}
-		$aid = $userbank->AddAdmin($a_name, $a_steam, $a_password, $a_email, $web_gruop_sql, $mask, $server_admin_group, $srv_mask, $immunity, $a_serverpass, $pay_days_sql, $discord, '', $vk);
+	// Сначала читаем группы, потом создаём админа, потом гасим ваучер (иначе при ошибке ключ сгорает зря).
+	$web_gruop_id = $GLOBALS['db']->GetOne("SELECT `group_web` FROM ".DB_PREFIX."_vay4er WHERE `value` = ? AND `activ` = '1'", array($a_code));
+	$web_gruop_sql = $GLOBALS['db']->GetOne("SELECT `gid` FROM ".DB_PREFIX."_groups WHERE `name` = ?", array($web_gruop_id));
+	if ($web_gruop_id == "" || $web_gruop_sql == "") {
+		$web_gruop_sql = "0";
+	}
+	$server_admin_group = $GLOBALS['db']->GetOne("SELECT `group_srv` FROM ".DB_PREFIX."_vay4er WHERE `value` = ? AND `activ` = '1'", array($a_code));
+	if ($server_admin_group == "") {
+		$server_admin_group = "";
+	}
+
+	$aid = $userbank->AddAdmin($a_name, $a_steam, $a_password, $a_email, $web_gruop_sql, $mask, $server_admin_group, $srv_mask, $immunity, $a_serverpass, $pay_days_sql, $discord, '', $vk);
+	if ($aid > -1)
+	{
+		$GLOBALS['db']->Execute("UPDATE `" . DB_PREFIX . "_vay4er` SET `activ` = '0' WHERE `value` = ? AND `activ` = '1'", array($a_code));
 		sb_set_auth_cookie("aid", $aid, time()+LOGIN_COOKIE_LIFETIME);
 		sb_set_auth_cookie("password", $GLOBALS['db']->GetOne("SELECT `password` FROM `".DB_PREFIX."_admins` WHERE `aid` = ?", array((int)$aid)), time()+LOGIN_COOKIE_LIFETIME);
-	}else{
-		exit();
-	}
-	if($aid > -1)
-	{
+
 		// Grant permissions to the selected server groups
 		$srv_groups = explode(",", $server);
 		$addtosrvgrp = $GLOBALS['db']->Prepare("INSERT INTO ".DB_PREFIX."_admins_servers_groups(admin_id,group_id,srv_group_id,server_id) VALUES (?,?,?,?)");

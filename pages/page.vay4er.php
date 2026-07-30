@@ -1,130 +1,90 @@
 <?php
-if(!defined("IN_SB")){echo "Ошибка доступа!";die();}
+if (!defined("IN_SB")) { echo "Ошибка доступа!"; die(); }
 global $theme, $userbank;
-	if($GLOBALS['config']['page.vay4er']!="1"){
-		CreateRedBox("Ошибка", "Страница отключена.");
-		PageDie();
-	}
-if(isset($_POST['pay_v4']) && !empty($_POST['pay_v4']))
-{
-	// SECURITY: strict comparison to avoid PHP loose-comparison type-juggling bypass
-	if($_POST['kapcha'] !== $_SESSION['rand_code']){
-		//echo "Капча введена неверно";
-		echo '<div class="alert alert-danger" role="alert" id="msg-red"><h4>Ошибка!</h4><span class="p-l-10">Проверочный код - не верен!</span></div>';
-		require(TEMPLATES_PATH . "/footer.php");
-		exit();
-	}
-	preg_match("@^(?:http://)?([^/]+)@i", $_SERVER['HTTP_HOST'], $match);	
-	if($match[0] != $_SERVER['HTTP_HOST']) 
-	{ 
-		echo '<div class="alert alert-danger" role="alert" id="msg-red"><h4>Ошибка!</h4><span class="p-l-10">Произошла неизвестная ошибка.</span></div>';
-	
-		require(TEMPLATES_PATH . "/footer.php");
-		$log = new CSystemLog("w", "Попытка взлома", "Попытка активации ваучера с использованием: " . $_SERVER['HTTP_HOST']);
-		exit();
-	}
-	
-	$validation = $_POST['pay_v4'];
-	if(strlen($validation) < 19)
-	{
-		echo '<div class="alert alert-danger" role="alert" id="msg-red"><h4>Ошибка!</h4><span class="p-l-10">Ваучер слишком короткий.</span></div>';
-		require(TEMPLATES_PATH . "/footer.php");
-		exit();
-	}
-	
-	$validation = str_replace("-", "", $validation);
-	$validation = RemoveCode($validation);
-	$validation = preg_replace("/[^0-9]/", '', $validation);
-	$qwr = $GLOBALS['db']->GetOne("SELECT `activ` FROM `" . DB_PREFIX . "_vay4er` WHERE `value` = '".$validation."'");
-	if($qwr != "0" && $qwr == "1"){
-		$vaxye_vso = "1";
-		//echo "VSO OK";
-		$user_group_web = $GLOBALS['db']->GetOne("SELECT `group_web` FROM `" . DB_PREFIX . "_vay4er` WHERE `value` = '".$validation."'");
-		if($user_group_web == "" || $user_group_web == "0"){
-			$user_group_web = "Не указана/Нет группы";
-		}
-		$user_group_srv = $GLOBALS['db']->GetOne("SELECT `group_srv` FROM `" . DB_PREFIX . "_vay4er` WHERE `value` = '".$validation."'");
-		if($user_group_srv == "" || $user_group_srv == "0"){
-			$user_group_srv = "Не указана/Нет группы";
-		}
-		$pay_days = $GLOBALS['db']->GetOne("SELECT `days` FROM `" . DB_PREFIX . "_vay4er` WHERE `value` = '".$validation."'");
-		if($pay_days == "0"){
-			$pay_days_t = "Навсегда";
-		}else{
-			$pay_days_t = $pay_days." Дней";
-		}
-		$theme->assign('days', $pay_days_t);
-		$theme->assign('gr_web', $user_group_web);
-		$theme->assign('gr_srv', $user_group_srv);
-		$theme->assign('klu4ik', $validation);
-		
-		$servers_num = $GLOBALS['db']->GetOne("SELECT `servers` FROM `" . DB_PREFIX . "_vay4er` WHERE `value` = '".$validation."'");
-		$add_srv = "";
-		$add_srv_sql = "''";
-		
-		if($servers_num == ""){
-			$add_srv = "
-			var el = document.getElementsByName('servers[]');
-			var svr = '';
-			for(i=0;i<el.length;i++){
-				if(el[i].checked){
-					svr = svr + ',' + el[i].value;
+
+if (!isset($GLOBALS['config']['page.vay4er']) || (string)$GLOBALS['config']['page.vay4er'] !== "1") {
+	CreateRedBox("Ошибка", "Страница активации ваучеров отключена.");
+	PageDie();
+}
+
+if (function_exists('sb_session_start'))
+	sb_session_start();
+elseif (session_status() === PHP_SESSION_NONE)
+	@session_start();
+
+$error_msg = '';
+$vaxye_vso = "0";
+$validation = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['pay_v4'])) {
+	$csrf = isset($_POST['sb_csrf']) ? $_POST['sb_csrf'] : '';
+	if (function_exists('sb_csrf_validate') && !sb_csrf_validate($csrf)) {
+		$error_msg = 'Сессия устарела. Обновите страницу и попробуйте снова.';
+	} elseif (function_exists('sb_rate_limit_hit') && sb_rate_limit_hit('vay4er_form', 20, 900)) {
+		$error_msg = 'Слишком много попыток. Подождите несколько минут.';
+	} else {
+		$kapcha = isset($_POST['kapcha']) ? trim((string)$_POST['kapcha']) : '';
+		$expect = isset($_SESSION['rand_code']) ? (string)$_SESSION['rand_code'] : '';
+		// одноразовый код
+		unset($_SESSION['rand_code']);
+
+		if ($expect === '' || !hash_equals(strtolower($expect), strtolower($kapcha))) {
+			$error_msg = 'Проверочный код неверен. Обновите картинку и введите заново.';
+		} else {
+			$raw = (string)$_POST['pay_v4'];
+			$validation = preg_replace('/[^0-9]/', '', function_exists('RemoveCode') ? RemoveCode($raw) : $raw);
+
+			if (strlen($validation) !== 16) {
+				$error_msg = 'Ваучер должен содержать 16 цифр.';
+			} else {
+				$row = $GLOBALS['db']->GetRow(
+					"SELECT `activ`, `group_web`, `group_srv`, `days`, `servers` FROM `" . DB_PREFIX . "_vay4er` WHERE `value` = ?",
+					array($validation)
+				);
+
+				if (!$row || (string)$row['activ'] !== '1') {
+					$error_msg = 'Ваучер не найден или уже активирован.';
+				} else {
+					$vaxye_vso = "1";
+					$user_group_web = ($row['group_web'] === '' || $row['group_web'] === '0' || $row['group_web'] === null)
+						? 'Не указана / нет группы'
+						: $row['group_web'];
+					$user_group_srv = ($row['group_srv'] === '' || $row['group_srv'] === '0' || $row['group_srv'] === null)
+						? 'Не указана / нет группы'
+						: $row['group_srv'];
+					$pay_days = (string)$row['days'];
+					$pay_days_t = ($pay_days === '0') ? 'Навсегда' : ($pay_days . ' дн.');
+
+					$theme->assign('days', $pay_days_t);
+					$theme->assign('gr_web', $user_group_web);
+					$theme->assign('gr_srv', $user_group_srv);
+					$theme->assign('klu4ik', $validation);
+					$theme->assign('klu4ik_js', json_encode($validation));
+					$theme->assign('servers', isset($row['servers']) ? $row['servers'] : '');
 				}
-			}";
-			$add_srv_sql = "svr";
+			}
 		}
-		
-		echo "<script>		
-		function AddAdmin_pay(){	
-			".$add_srv."
-			xajax_AddAdmin_pay('','', document.getElementById('user_login').value, //Admin name
-							document.getElementById('user_steamid').value, //Admin Steam
-							document.getElementById('user_email').value, // Email
-							document.getElementById('password').value,//passwrds
-							document.getElementById('password2').value,
-							'', //servergroup
-							'', 
-							'-1',
-							0,
-							0,
-							'',
-							".$add_srv_sql.",
-							document.getElementById('discord').value,
-							'',
-							document.getElementById('vk').value,
-							'".$validation."');}</script>";
-		$theme->assign('servers', $servers_num);
-	}else{
-		$vaxye_vso = "0";
-		//echo "VSO NE OK 1";
 	}
 }
-else
-{
-	$vaxye_vso = "0";
-	//echo "VSO NE OK 2";
-}
 
-
-$servers = $GLOBALS['db']->GetAll("SELECT * FROM `" . DB_PREFIX . "_servers`");
+$servers = $GLOBALS['db']->GetAll("SELECT sid, ip, port FROM `" . DB_PREFIX . "_servers` WHERE enabled = 1 ORDER BY sid ASC");
 $server_list = array();
-$serverscript = "<script type=\"text/javascript\">";
-foreach($servers AS $server)
-{
-    $serverscript .= "xajax_ServerHostPlayers('".$server['sid']."', 'id', 'sa".$server['sid']."');";
-	$info['sid'] = $server['sid'];
-	$info['ip'] = $server['ip'];
-	$info['port'] = $server['port'];
-	array_push($server_list, $info);
+$serverscript = '<script type="text/javascript">';
+if (is_array($servers)) {
+	foreach ($servers as $server) {
+		$serverscript .= "xajax_ServerHostPlayers('" . (int)$server['sid'] . "', 'id', 'sa" . (int)$server['sid'] . "');";
+		$server_list[] = array(
+			'sid' => $server['sid'],
+			'ip' => $server['ip'],
+			'port' => $server['port'],
+		);
+	}
 }
-
-
-$serverscript .= "</script>";
+$serverscript .= '</script>';
 
 $theme->assign('server_list', $server_list);
 $theme->assign('server_script', $serverscript);
-
-
 $theme->assign('param', $vaxye_vso);
+$theme->assign('error_msg', $error_msg);
+$theme->assign('sb_csrf', function_exists('sb_csrf_token') ? sb_csrf_token() : '');
 $theme->display('page_vay4er.tpl');
-?>

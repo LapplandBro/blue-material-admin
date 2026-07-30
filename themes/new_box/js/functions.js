@@ -464,10 +464,15 @@ jQuery(document).ready(function(){
     }
 
     /*
-     * Popover
+     * Popover (подсказки «?» — container body, иначе клипаются overflow родителей)
      */
     if (jQuery('[data-toggle="popover"]')[0]) {
-        jQuery('[data-toggle="popover"]').popover();
+        jQuery('[data-toggle="popover"]').popover({
+            container: 'body',
+            trigger: 'hover focus',
+            html: false,
+            placement: 'auto top'
+        });
     }
 
     /*
