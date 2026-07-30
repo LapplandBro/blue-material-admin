@@ -1,6 +1,21 @@
 	<div class="card">
 		<div class="card-header">
-		<h2>Ваучеры <small>Ваучер - ключ, с помощью которого происходит автоматическое добавление администратора при активации.</small></h2>
+		<h2>Ваучеры
+			<small>Выпуск ключей · активирует только гость на <code>index.php?p=pay</code></small>
+		</h2>
+		</div>
+
+		<div class="card-body card-padding p-b-0">
+			<div class="alert alert-info" role="alert">
+				<p class="m-b-5"><b>Как это работает</b></p>
+				<ol class="m-b-0 p-l-20">
+					<li>Владелец выпускает HEX-ключ на вкладке «Добавить» (срок, группы, серверы).</li>
+					<li>Ключ отдаёте покупателю / новому админу.</li>
+					<li>Он заходит <b>без авторизации</b> (гость) → «Активировать ваучер» → вводит ключ и данные аккаунта.</li>
+					<li>Создаётся новый админ; ключ становится «Использованный».</li>
+				</ol>
+				<p class="m-t-10 m-b-0 c-gray">Залогиненный админ активировать ваучер не может — иначе получится путаница с уже существующим аккаунтом.</p>
+			</div>
 		</div>
 
 		<div class="card-body table-responsive">
@@ -30,7 +45,7 @@
 									{if $card.value != ""}{$card.value}{else}<span class="c-red">Нету ключа</span>{/if}
 								</td>
 								<td>
-									{if $card.days == "0"}Навсегда{else}{$card.days} Дней{/if}
+									{if $card.days == "0"}Навсегда{else}{$card.days} дн.{/if}
 								</td>
 								<td>
 									{if $card.group_srv != ""}{$card.group_srv}{else}<span class="c-red">Нету группы</span>{/if}

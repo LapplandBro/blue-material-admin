@@ -1,35 +1,48 @@
 <form action="" method="post">
 	<input type="hidden" name="pay_card_admin" value="pay_card_add" />	
+	{if $sb_csrf}<input type="hidden" name="sb_csrf" value="{$sb_csrf|escape}" />{/if}
 	<input type="hidden" id="card_gr_web" name="card_gr_web" />
 	<input type="hidden" id="card_gr_srv" name="card_gr_srv" />
 	<input type="hidden" id="srv_check_int" name="srv_check_int" />
 	<div class="card">
 		<div class="card-header">
-		<h2>Ваучеры <small>Ваучер - ключ, с помощью которого происходит автоматическое добавление администратора при активации.</small></h2>
+		<h2>Новый ваучер
+			<small>Ключ для гостя · создаёт админа при активации на сайте</small>
+		</h2>
 		</div>
 		
-		<div class="alert alert-info" role="alert">Наведите на <img class="sb-ico sb-ico-help" src="images/icons/help.svg" width="18" height="18" alt="?" /> у каждого поля — там описание. Готовый ключ активируют на <code>index.php?p=pay</code> (пункт «Активировать ваучер» в меню).</div>
+		<div class="alert alert-info m-l-15 m-r-15" role="alert">
+			<p class="m-b-5"><b>Краткая памятка</b></p>
+			<ul class="m-b-5 p-l-20">
+				<li><b>Ключ</b> — 32 hex-символа (16 случайных байт). Жмите «Сгенерировать», не выдумывайте вручную.</li>
+				<li><b>Срок админки</b> — целое число <b>дней</b> (например <code>30</code>). <code>0</code> = навсегда.</li>
+				<li><b>Группа (сервер)</b> — права в игре (SourceMod). «Без группы» — только веб или как настроите дальше.</li>
+				<li><b>Группа (веб)</b> — права в этой панели. Не выдавайте «Главный админ» случайным людям.</li>
+				<li><b>Сервер</b> — на каких серверах будут права. «Без сервера» / ничего не отмечено — гость сам выберет при активации.</li>
+			</ul>
+			<p class="m-b-0">Активирует ключ <b>только гость</b> (не залогиненный): меню «Активировать ваучер» или <code>index.php?p=pay</code>. Подсказки у полей — на <img class="sb-ico sb-ico-help" src="images/icons/help.svg" width="16" height="16" alt="?" />.</p>
+		</div>
 		<div class="form-horizontal" role="form">
 		<div class="card-body card-padding p-b-0">
 			<div class="form-group m-b-5">
-				<label for="card_key" class="col-sm-3 control-label text-right">{help_icon title="Ключ" message="Максимальная длинна символов ключа: 16 символов. Поддерживаются только цифры"} Ключ</label>
-				<div class="col-xs-4">
+				<label for="card_key" class="col-sm-3 control-label text-right">{help_icon title="Ключ" message="32 hex-символа (0-9, a-f), 128 bit энтропии. Нажмите «Сгенерировать» — crypto.getRandomValues / random_bytes."} Ключ</label>
+				<div class="col-xs-6">
 					<div class="fg-line">
-						<input type="text" TABINDEX=1 class="form-control input-mask" id="card_key" name="card_key" data-mask="0000000000000000" placeholder="Пример: 2000209805000188" />
+						<input type="text" TABINDEX=1 class="form-control input-mask" id="card_key" name="card_key" data-mask="AAAA-AAAA-AAAA-AAAA-AAAA-AAAA-AAAA-AAAA" placeholder="a1b2-c3d4-e5f6-7890-abcd-ef01-2345-6789" value="{$card_key_default|escape}" maxlength="39" spellcheck="false" autocomplete="off" />
 					</div>
 				</div>
-                    <button type="button" class="btn btn-primary waves-effect m-t-5 btn-icon-text" onclick="var el=$id('card_key'); if(el) el.value=getPassword(16);"><i class="zmdi zmdi-refresh-alt"></i> Сгенерировать</button>
+                    <button type="button" class="btn btn-primary waves-effect m-t-5 btn-icon-text" onclick="var el=document.getElementById('card_key'); if(el) el.value=sbVoucherGenerateHex(16);"><i class="zmdi zmdi-refresh-alt"></i> Сгенерировать</button>
 			</div>
 			<div class="form-group m-b-5">
-				<label for="card_exp" class="col-sm-3 control-label text-right">{help_icon title="Срок" message="Введите '0', чтобы активировать срок - навсегда. Срок указывается в днях."} Срок админки</label>
+				<label for="card_exp" class="col-sm-3 control-label text-right">{help_icon title="Срок (дни)" message="Число дней действия админки с момента активации. Примеры: 7, 30, 90. Ноль (0) — навсегда, без срока."} Срок админки (дни)</label>
 				<div class="col-xs-4">
 					<div class="fg-line">
-						<input type="text" TABINDEX=1 class="form-control" id="card_exp" name="card_exp" placeholder="Введите данные" />
+						<input type="text" TABINDEX=1 class="form-control" id="card_exp" name="card_exp" placeholder="Например: 30  или  0 = навсегда" />
 					</div>
 				</div>
 			</div>
 			<div class="form-group m-b-5">
-				<label class="col-sm-3 control-label text-right">{help_icon title="Группа" message="Выберите группу. Данная группа будет выдана админу, который активирует данный ваучер."} Группа(сервер)</label>
+				<label class="col-sm-3 control-label text-right">{help_icon title="Серверная группа" message="Группа прав в игре (флаги SourceMod). Будет выдана тому, кто активирует ключ."} Группа (сервер)</label>
 				<div class="col-sm-9 p-t-10">
 						<table>
 								{foreach from="$server_admin_group_list" item="server_wg"}
@@ -54,7 +67,7 @@
 				</div>
 			</div>
 			<div class="form-group m-b-5">
-				<label class="col-sm-3 control-label text-right">{help_icon title="Группа" message="Выберите группу. Данная группа будет выдана админу, который активирует данный ваучер."} Группа(веб)</label>
+				<label class="col-sm-3 control-label text-right">{help_icon title="Веб-группа" message="Права в этой панели (баны, настройки и т.д.). Будет выдана при активации ключа гостем."} Группа (веб)</label>
 				<div class="col-sm-9 p-t-10">
 						<table>
 								{foreach from="$server_group_list" item="server_g"}
@@ -79,7 +92,7 @@
 				</div>
 			</div>
 			<div class="form-group m-b-5">
-				<label class="col-sm-3 control-label text-right">{help_icon title="Сервер" message="Выберите сервер(а), на котором администратор будет иметь права. Если никакой сервер не будет выбран(включая 'Без сервера'), пользователь сам сможет выбрать себе сервер при активации Ваучера."} Сервер</label>
+				<label class="col-sm-3 control-label text-right">{help_icon title="Серверы" message="Отметьте серверы, где будут права. Если ничего не выбрать (или только «Без сервера») — гость сам выберет серверы при активации."} Серверы</label>
 				<div class="col-sm-9 p-t-5">
 						<table>
 								{foreach from="$server_list" item="server"}

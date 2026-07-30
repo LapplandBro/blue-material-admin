@@ -598,8 +598,9 @@ function BuildPageTabs()
 		$groups['site'][] = $pay_item;
 	}
 
-	// Ваучеры: при включении в настройках — пункт в боковом меню (не только в профиле гостя).
-	if (isset($GLOBALS['config']['page.vay4er']) && (string)$GLOBALS['config']['page.vay4er'] === '1')
+	// Ваучеры: пункт активации только гостям (создаёт новый аккаунт; залогиненным не нужен).
+	if (isset($GLOBALS['config']['page.vay4er']) && (string)$GLOBALS['config']['page.vay4er'] === '1'
+		&& (!$userbank->is_logged_in()))
 	{
 		$has_voucher = false;
 		foreach ($groups as $glist)
@@ -618,7 +619,7 @@ function BuildPageTabs()
 			$groups['site'][] = array(
 				'text' => 'Активировать ваучер',
 				'url' => 'index.php?p=pay',
-				'description' => 'Активация ваучера для получения админки',
+				'description' => 'Активация ваучера для получения админки (только для гостей)',
 				'newtab' => '0',
 			);
 		}
@@ -1225,6 +1226,138 @@ function RedirectJS($url)
 function RemoveCode($text)
 {
 	return htmlspecialchars(strip_tags($text));
+}
+
+/** Нормализация ключа ваучера → lowercase hex без разделителей. */
+function sb_voucher_normalize_key($raw)
+{
+	return strtolower(preg_replace('/[^0-9a-fA-F]/', '', (string)$raw));
+}
+
+/** Валидный ключ: 32 hex-символа (16 байт / 128 bit). */
+function sb_voucher_key_valid($key)
+{
+	return is_string($key) && strlen($key) === 32 && ctype_xdigit($key);
+}
+
+/** Криптостойкий HEX-ключ ваучера (по умолчанию 16 байт → 32 hex). */
+function sb_voucher_generate_key($bytes = 16)
+{
+	$bytes = (int)$bytes;
+	if ($bytes < 8)
+		$bytes = 8;
+	if ($bytes > 32)
+		$bytes = 32;
+	if (function_exists('random_bytes'))
+		return bin2hex(random_bytes($bytes));
+	if (function_exists('openssl_random_pseudo_bytes')) {
+		$raw = openssl_random_pseudo_bytes($bytes, $strong);
+		if ($raw !== false && strlen($raw) === $bytes)
+			return bin2hex($raw);
+	}
+	$out = '';
+	for ($i = 0; $i < $bytes; $i++)
+		$out .= sprintf('%02x', mt_rand(0, 255));
+	return $out;
+}
+
+/** Красивый вывод: a1b2c3d4e5f6… → a1b2-c3d4-e5f6-… */
+function sb_voucher_format_key($key)
+{
+	$key = sb_voucher_normalize_key($key);
+	if ($key === '')
+		return '';
+	return implode('-', str_split($key, 4));
+}
+
+/**
+ * После успешной капчи + проверки ключа — одноразовый «разблокированный» код в сессии.
+ * AddAdmin_pay принимает только его (нельзя скипнуть капчу прямым xajax).
+ */
+function sb_voucher_unlock_set($key)
+{
+	$key = sb_voucher_normalize_key($key);
+	if (!sb_voucher_key_valid($key))
+		return false;
+	if (function_exists('sb_session_start'))
+		sb_session_start();
+	elseif (session_status() === PHP_SESSION_NONE)
+		@session_start();
+	$_SESSION['sb_voucher_unlock'] = array(
+		'code' => $key,
+		'exp' => time() + 1800,
+		'token' => function_exists('random_bytes') ? bin2hex(random_bytes(16)) : md5(uniqid((string)mt_rand(), true)),
+	);
+	return $_SESSION['sb_voucher_unlock']['token'];
+}
+
+function sb_voucher_unlock_check($key)
+{
+	$key = sb_voucher_normalize_key($key);
+	if (!sb_voucher_key_valid($key))
+		return false;
+	if (function_exists('sb_session_start'))
+		sb_session_start();
+	elseif (session_status() === PHP_SESSION_NONE)
+		@session_start();
+	if (empty($_SESSION['sb_voucher_unlock']) || !is_array($_SESSION['sb_voucher_unlock']))
+		return false;
+	$u = $_SESSION['sb_voucher_unlock'];
+	if (empty($u['code']) || empty($u['exp']) || (int)$u['exp'] < time())
+		return false;
+	return hash_equals((string)$u['code'], $key);
+}
+
+function sb_voucher_unlock_clear()
+{
+	if (function_exists('sb_session_start'))
+		sb_session_start();
+	elseif (session_status() === PHP_SESSION_NONE)
+		@session_start();
+	unset($_SESSION['sb_voucher_unlock']);
+}
+
+/** После успешной активации — короткое окно на RCON rehash (ваучер уже activ=0). */
+function sb_voucher_rehash_set($key)
+{
+	$key = sb_voucher_normalize_key($key);
+	if (!sb_voucher_key_valid($key))
+		return false;
+	if (function_exists('sb_session_start'))
+		sb_session_start();
+	elseif (session_status() === PHP_SESSION_NONE)
+		@session_start();
+	$_SESSION['sb_voucher_rehash'] = array(
+		'code' => $key,
+		'exp' => time() + 600,
+	);
+	return true;
+}
+
+function sb_voucher_rehash_check($key)
+{
+	$key = sb_voucher_normalize_key($key);
+	if (!sb_voucher_key_valid($key))
+		return false;
+	if (function_exists('sb_session_start'))
+		sb_session_start();
+	elseif (session_status() === PHP_SESSION_NONE)
+		@session_start();
+	if (empty($_SESSION['sb_voucher_rehash']) || !is_array($_SESSION['sb_voucher_rehash']))
+		return false;
+	$u = $_SESSION['sb_voucher_rehash'];
+	if (empty($u['code']) || empty($u['exp']) || (int)$u['exp'] < time())
+		return false;
+	return hash_equals((string)$u['code'], $key);
+}
+
+function sb_voucher_rehash_clear()
+{
+	if (function_exists('sb_session_start'))
+		sb_session_start();
+	elseif (session_status() === PHP_SESSION_NONE)
+		@session_start();
+	unset($_SESSION['sb_voucher_rehash']);
 }
 
 function SecondsToString($sec, $textual=true)

@@ -14,10 +14,10 @@
 		{if $sb_csrf}<input type="hidden" name="sb_csrf" value="{$sb_csrf|escape}" />{/if}
 		<div class="card-body card-padding">
 			<div class="form-group m-b-15">
-				<label for="pay_v4" class="col-sm-3 control-label">{help_icon title="Ваучер" message="16 цифр. Можно с дефисами: 2000-2098-0500-0188"} Код ваучера</label>
+				<label for="pay_v4" class="col-sm-3 control-label">{help_icon title="Ваучер" message="32 hex-символа (0-9, a-f). Можно с дефисами: a1b2-c3d4-e5f6-…"} Код ваучера</label>
 				<div class="col-sm-6">
 					<div class="fg-line">
-						<input type="text" class="form-control input-mask" id="pay_v4" name="pay_v4" data-mask="0000-0000-0000-0000" placeholder="2000-2098-0500-0188" required maxlength="19" />
+						<input type="text" class="form-control input-mask" id="pay_v4" name="pay_v4" data-mask="AAAA-AAAA-AAAA-AAAA-AAAA-AAAA-AAAA-AAAA" placeholder="a1b2-c3d4-e5f6-7890-abcd-ef01-2345-6789" required maxlength="39" spellcheck="false" autocomplete="off" />
 					</div>
 				</div>
 			</div>

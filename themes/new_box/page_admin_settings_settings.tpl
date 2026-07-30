@@ -203,7 +203,7 @@
 					</div>
 				</div>
 				<div class="form-group m-b-5">
-					<label for="vay4_t" class="col-sm-3 control-label">{help_icon title="Ваучеры" message="Вкл.: пункт «Активировать ваучер» в меню сайта (index.php?p=pay) и плитка «Ваучеры» в админ-панели (выпуск ключей, только владелец)."} Ваучеры</label>
+					<label for="vay4_t" class="col-sm-3 control-label">{help_icon title="Ваучеры" message="Вкл.: гости видят «Активировать ваучер» (index.php?p=pay). Владелец выпускает ключи в админ-панели → «Ваучеры». Залогиненные активировать не могут."} Ваучеры</label>
 					<div class="col-sm-9">
 						<div class="checkbox m-b-15">
 							<label for="vay4_t">

@@ -970,6 +970,11 @@ function AddAdmin_pay($mask, $srv_mask, $a_name, $a_steam, $a_email, $a_password
 	$objResponse = new xajaxResponse();
 	global $userbank, $username;
 
+	if (isset($userbank) && is_object($userbank) && method_exists($userbank, 'is_logged_in') && $userbank->is_logged_in()) {
+		$objResponse->addScript("ShowBox('Активация недоступна', 'Ваучер может активировать только гость. Выйдите из аккаунта и откройте страницу активации снова.', 'red', 'index.php', true);");
+		return $objResponse;
+	}
+
 	if (function_exists('sb_rate_limit_hit') && sb_rate_limit_hit('vay4er', 10, 900)) {
 		$objResponse->addScript("ShowBox('Слишком много попыток', 'Подождите несколько минут и попробуйте снова.', 'red', '', true);");
 		return $objResponse;
@@ -988,22 +993,33 @@ function AddAdmin_pay($mask, $srv_mask, $a_name, $a_steam, $a_email, $a_password
 	$vk = RemoveCode($vk);
 	$vk = str_replace(array("http://","https://","/","vk.com"), "", $vk);
 	$discord = RemoveCode($discord);
-	$a_code = RemoveCode($a_code);
-	$a_code = preg_replace("/[^0-9]/", '', $a_code);
+	$a_code = function_exists('sb_voucher_normalize_key')
+		? sb_voucher_normalize_key($a_code)
+		: strtolower(preg_replace('/[^0-9a-fA-F]/', '', (string)$a_code));
+
+	if (!function_exists('sb_voucher_key_valid') || !sb_voucher_key_valid($a_code)) {
+		$objResponse->addScript("ShowBox('Активация', 'Некорректный код ваучера.', 'red', 'index.php?p=pay', true);");
+		return $objResponse;
+	}
+
+	// Нельзя скипнуть капчу/шаг 1 прямым вызовом xajax.
+	if (!function_exists('sb_voucher_unlock_check') || !sb_voucher_unlock_check($a_code)) {
+		$objResponse->addScript("ShowBox('Активация', 'Сначала пройдите проверку ваучера и капчу на странице активации.', 'red', 'index.php?p=pay', true);");
+		return $objResponse;
+	}
 	
-	$srv_sql_val = $GLOBALS['db']->GetOne("SELECT `servers` FROM `" . DB_PREFIX . "_vay4er` WHERE `value` = '".$a_code."'");
+	$srv_sql_val = $GLOBALS['db']->GetOne("SELECT `servers` FROM `" . DB_PREFIX . "_vay4er` WHERE `value` = ?", array($a_code));
 	if($srv_sql_val == "-1"){
 		$singlesrv = "";
 	}elseif((stristr($srv_sql_val, ',') && stristr($srv_sql_val, 's')) == TRUE){
 		$singlesrv = $srv_sql_val;
 	}
 	
-	$qwe = $GLOBALS['db']->GetOne("SELECT `activ` FROM `" . DB_PREFIX . "_vay4er` WHERE `value` = '".$a_code."'");
+	$qwe = $GLOBALS['db']->GetOne("SELECT `activ` FROM `" . DB_PREFIX . "_vay4er` WHERE `value` = ?", array($a_code));
 	if($qwe == "0" || $qwe != "1"){
 		$objResponse->addScript("ShowBox('Активация', 'Ваш ваучер уже был успешно активирован! Повторная активация - невозможна. Переадресация...', 'red', 'index.php', false);");
 		$log = new CSystemLog("w", "Ваучер", $a_name . " пытался активировать ваучер повторно.");
 		return $objResponse;
-		exit();
 	}
 	
 	$pay_days_sql = $GLOBALS['db']->GetOne("SELECT `days` FROM `" . DB_PREFIX . "_vay4er` WHERE `value` = ?", array($a_code));
@@ -1366,6 +1382,10 @@ function AddAdmin_pay($mask, $srv_mask, $a_name, $a_steam, $a_email, $a_password
 	if ($aid > -1)
 	{
 		$GLOBALS['db']->Execute("UPDATE `" . DB_PREFIX . "_vay4er` SET `activ` = '0' WHERE `value` = ? AND `activ` = '1'", array($a_code));
+		if (function_exists('sb_voucher_unlock_clear'))
+			sb_voucher_unlock_clear();
+		if (function_exists('sb_voucher_rehash_set'))
+			sb_voucher_rehash_set($a_code);
 		sb_set_auth_cookie("aid", $aid, time()+LOGIN_COOKIE_LIFETIME);
 		sb_set_auth_cookie("password", $GLOBALS['db']->GetOne("SELECT `password` FROM `".DB_PREFIX."_admins` WHERE `aid` = ?", array((int)$aid)), time()+LOGIN_COOKIE_LIFETIME);
 
@@ -1386,6 +1406,8 @@ function AddAdmin_pay($mask, $srv_mask, $a_name, $a_steam, $a_email, $a_password
 			if(!empty($server))
 				$GLOBALS['db']->Execute($addtosrv,array($aid, $server_admin_group_int, '-1', substr($server, 1)));
 		}
+		$safe_name = json_encode((string)$a_name, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
+		$safe_code = json_encode((string)$a_code, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
 		if(isset($GLOBALS['config']['config.enableadminrehashing']) && $GLOBALS['config']['config.enableadminrehashing'] == 1)
 		{
 			// rehash the admins on the servers
@@ -1398,12 +1420,12 @@ function AddAdmin_pay($mask, $srv_mask, $a_name, $a_steam, $a_email, $a_password
 			$allservers = array();
 			foreach($serveraccessq as $access) {
 				if(!in_array($access['sid'], $allservers)) {
-					$allservers[] = $access['sid'];
+					$allservers[] = (int)$access['sid'];
 				}
 			}
-			$objResponse->addScript("ShowRehashBox_pay('".implode(",", $allservers)."','Активация', 'Ваш ваучер был успешно активирован! Администратор (" . $a_name . ") был успешно добавлен!', 'green', 'index.php?p=account', '".$a_code."');TabToReload();");
+			$objResponse->addScript("ShowRehashBox_pay('".implode(",", $allservers)."','Активация', 'Ваш ваучер был успешно активирован! Администратор (' + ".$safe_name." + ') был успешно добавлен!', 'green', 'index.php?p=account', ".$safe_code.");TabToReload();");
 		} else
-			$objResponse->addScript("ShowBox('Активация', 'Ваш ваучер был успешно активирован! Администратор (" . $a_name . ") был успешно добавлен! Его ключ был:".$a_code."', 'green', 'index.php');TabToReload();");
+			$objResponse->addScript("ShowBox('Активация', 'Ваш ваучер был успешно активирован! Администратор (' + ".$safe_name." + ') был успешно добавлен!', 'green', 'index.php');TabToReload();");
 		
 		$log = new CSystemLog("m", "Ваучер", "Ваучер ".$a_code." был успешно активирован! Администратор (" . $a_name . ") был успешно добавлен!");
 		return $objResponse;
@@ -3493,18 +3515,17 @@ function RehashAdmins_pay($server, $do=0, $card)
 	if (function_exists('sb_rate_limit_hit') && sb_rate_limit_hit('vay4er_rehash', 10, 900)) {
 		exit();
 	}
-	$card = RemoveCode($card);
-	$card = preg_replace("/[^0-9]/", "", $card);
-	
-	
-	// SECURITY FIX: раньше здесь, в отличие от AddAdmin_pay, проверялось только наличие
-	// строки ваучера, но не `activ` = 1. Из-за этого уже использованный/просроченный
-	// числовой код ваучера (только цифры, легко подбирается перебором) позволял
-	// неаутентифицированному вызывающему многократно инициировать RCON rehash-команды
-	// на произвольном списке серверов ($server). Добавлена проверка `activ` = '1',
-	// как и в AddAdmin_pay, плюс параметризация запроса.
-	$wfr = $GLOBALS['db']->GetRow("SELECT * FROM `" . DB_PREFIX . "_vay4er` WHERE `value` = ? AND `activ` = '1'", array($card));
-	if($wfr == "" || $wfr == "0" || $card == ""){
+	$card = function_exists('sb_voucher_normalize_key')
+		? sb_voucher_normalize_key($card)
+		: strtolower(preg_replace('/[^0-9a-fA-F]/', '', (string)$card));
+
+	// Ваучер к моменту rehash уже activ=0. Разрешение — только сессионный токен
+	// сразу после успешной AddAdmin_pay (нельзя дергать RCON чужим ключом).
+	if ($card === '' || !function_exists('sb_voucher_rehash_check') || !sb_voucher_rehash_check($card)) {
+		exit();
+	}
+	$wfr = $GLOBALS['db']->GetRow("SELECT `value` FROM `" . DB_PREFIX . "_vay4er` WHERE `value` = ?", array($card));
+	if (!$wfr) {
 		exit();
 	}
 	$objResponse = new xajaxResponse();
@@ -3515,8 +3536,10 @@ function RehashAdmins_pay($server, $do=0, $card)
 	if(sizeof($servers)>0) {
 		if(sizeof($servers)-1 > $do)
 			$objResponse->addScriptCall("xajax_RehashAdmins_pay", $server, $do+1, $card);
+		else if (function_exists('sb_voucher_rehash_clear'))
+			sb_voucher_rehash_clear();
 
-		$serv = $GLOBALS['db']->GetRow("SELECT ip, port, rcon FROM ".DB_PREFIX."_servers WHERE sid = '".(int)$servers[$do]."';");
+		$serv = $GLOBALS['db']->GetRow("SELECT ip, port, rcon FROM ".DB_PREFIX."_servers WHERE sid = ?", array((int)$servers[$do]));
 		if(empty($serv['rcon'])) {
 			$objResponse->addAppend("rehashDiv", "innerHTML", "".$serv['ip'].":".$serv['port']." (".($do+1)."/".sizeof($servers).") <font color='red'>Ошибка: не задан РКОН пароль</font>.<br />");
 			if($do >= sizeof($servers)-1) {

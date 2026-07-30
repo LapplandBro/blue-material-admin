@@ -8,14 +8,14 @@ global $userbank, $theme;
 		echo '<div id="0" style="display:none;">Доступ запрещен!</div>';
 	} else {
 		
-		if(($_GET['o'] == "del") && isset($_GET['o'])){
+		if((isset($_GET['o']) && $_GET['o'] == "del")){
 			if(!isset($_GET['id']) || !is_numeric($_GET['id'])){
 				echo '<script>setTimeout(\'ShowBox("Ошибка", "ID бана не указан!", "red", "index.php");\', 1200);</script>';
 				PageDie();
 			}else{
-				$qwer = $GLOBALS['db']->GetRow("SELECT * FROM `" . DB_PREFIX . "_vay4er` WHERE aid = '".(int)$_GET['id']."'");
+				$qwer = $GLOBALS['db']->GetRow("SELECT * FROM `" . DB_PREFIX . "_vay4er` WHERE aid = ?", array((int)$_GET['id']));
 				if($qwer){
-					$qww = $GLOBALS['db']->Execute("DELETE FROM `" . DB_PREFIX . "_vay4er` WHERE aid = '".(int)$_GET['id']."'");
+					$qww = $GLOBALS['db']->Execute("DELETE FROM `" . DB_PREFIX . "_vay4er` WHERE aid = ?", array((int)$_GET['id']));
 					if($qww){
 						echo '<script>setTimeout(\'ShowBox("Успешно", "Ваучер был успешно удален!", "green", "index.php?p=admin&c=pay_card");\', 1200);</script>';
 						$log = new CSystemLog("m", "Ваучер удалён", $userbank->GetProperty("user") . " удалил ваучер (ключ: " . $qwer['value'] . ", дней: " . $qwer['days'] . ").");
@@ -36,7 +36,9 @@ global $userbank, $theme;
 			{
 				$info['aid'] = $card['aid'];
 				$info['activ'] = $card['activ'];
-				$info['value'] = $card['value'];
+				$info['value'] = function_exists('sb_voucher_format_key')
+					? sb_voucher_format_key($card['value'])
+					: $card['value'];
 				$info['days'] = $card['days'];
 				$info['group_web'] = $card['group_web'];
 				$info['group_srv'] = $card['group_srv'];
@@ -87,18 +89,21 @@ global $userbank, $theme;
 			
 			if(isset($_POST['pay_card_admin'])){
 				if ($_POST['pay_card_admin'] == "pay_card_add"){
-					if(($_POST['card_key'] != "") && ($_POST['card_exp'] >= 0) && ($_POST['card_gr_web'] != "")){
+					$csrf = isset($_POST['sb_csrf']) ? $_POST['sb_csrf'] : '';
+					if (function_exists('sb_csrf_validate') && !sb_csrf_validate($csrf)) {
+						echo "<script>setTimeout(\"ShowBox('Ваучер', 'Сессия устарела. Обновите страницу.', 'red', '', true);\", 1200);</script>";
+					} elseif(($_POST['card_key'] != "") && ($_POST['card_exp'] >= 0) && ($_POST['card_gr_web'] != "")){
 						
-						$key_vr = $_POST['card_key'];
-						$key_vr = preg_replace("/[^0-9]/", '', $key_vr);
-						$exp_vr = $_POST['card_exp'];
-						$exp_vr = preg_replace("/[^0-9]/", '', $exp_vr);
+						$key_vr = function_exists('sb_voucher_normalize_key')
+							? sb_voucher_normalize_key($_POST['card_key'])
+							: strtolower(preg_replace('/[^0-9a-fA-F]/', '', (string)$_POST['card_key']));
+						$exp_vr = preg_replace("/[^0-9]/", '', (string)$_POST['card_exp']);
 						if($exp_vr == ""){
 							$exp_vr = "0";
 						}
 						$gr_web_vr = $_POST['card_gr_web'];
 						$gr_srv_vr = $_POST['card_gr_srv'];
-						$srv_check = $_POST['srv_check_int'];
+						$srv_check = isset($_POST['srv_check_int']) ? $_POST['srv_check_int'] : '';
 						
 						if((stristr($srv_check, ',') && stristr($srv_check, 's')) == FALSE){
 							if($srv_check != "-1"){
@@ -106,10 +111,9 @@ global $userbank, $theme;
 							}
 						}
 						
-						$ifvay4_shon = $GLOBALS['db']->GetOne("SELECT COUNT(`value`) FROM `".DB_PREFIX."_vay4er` WHERE value = '".$key_vr."'");
-						// err
-						if(strlen($key_vr) <= 15){
-							echo "<script>setTimeout(\"ShowBox('Ваучер', 'Ошибка, ключ должен содержать 16 символов!', 'red', 'index.php?p=admin&c=pay_card#^1');\", 1200);</script>";
+						$ifvay4_shon = $GLOBALS['db']->GetOne("SELECT COUNT(`value`) FROM `".DB_PREFIX."_vay4er` WHERE value = ?", array($key_vr));
+						if(!function_exists('sb_voucher_key_valid') || !sb_voucher_key_valid($key_vr)){
+							echo "<script>setTimeout(\"ShowBox('Ваучер', 'Ошибка: ключ должен быть 32 hex-символа (16 байт). Нажмите «Сгенерировать».', 'red', 'index.php?p=admin&c=pay_card#^1');\", 1200);</script>";
 						}elseif($ifvay4_shon == "0" || $ifvay4_shon == "" || $ifvay4_shon < 1){
 							
 							$edit = $GLOBALS['db']->Execute("INSERT INTO `".DB_PREFIX."_vay4er` (`activ`, `value`, `days`, `group_web`, `group_srv`, `servers`)
@@ -129,55 +133,53 @@ global $userbank, $theme;
 					}
 				}
 			}
+			$gen_key = function_exists('sb_voucher_generate_key')
+				? (function_exists('sb_voucher_format_key') ? sb_voucher_format_key(sb_voucher_generate_key(16)) : sb_voucher_generate_key(16))
+				: '';
+			$theme->assign('card_key_default', $gen_key);
+			$theme->assign('sb_csrf', function_exists('sb_csrf_token') ? sb_csrf_token() : '');
 			$theme->display('page_admin_pay_add.tpl');	
 		echo '</div>';
 		#########/[add]###############
 	}
 ?>
 <script>
-			//function getRandomNum(lbound, ubound) {
-            //    return (Math.floor(Math.random() * (ubound - lbound)) + lbound);
-			//}
-			//function getRandomChar() {
-			//	var upperChars = "0123456789";
-			//	var charSet = "";
-			//	charSet += upperChars;
-			//	return charSet.charAt(getRandomNum(0, charSet.length));
-			//}
-			//function getPassword(length) {
-			//	var rc = "";
-			//	if (length > 0)
-			//		for (var idx = 0; idx < length; ++idx) {
-			//			rc = rc + getRandomChar();
-			//		}
-			//	return rc;
-			//	
-			//}
-			function getRandomInt(min, max) {
-				return Math.floor(Math.random() * (max - min)) + min;
-			}
-			function getPassword(length) {
-				var rc = "";
-				if (length > 0)
-					for (var idx = 0; idx < length; ++idx)
-						rc = rc + getRandomInt(0,9);
-				return rc;
-			}
-			$('card_key').value = getPassword(16);
-			
-			function Check_cal(){
-				var el = document.getElementsByName('servers[]');
-				var svr_vv = '';
-				for(i=0;i<el.length;i++){
-					if(el[i].checked){
-						if(el[i].value == "-1"){
-							svr_vv = "-1";
-						}else{
-							svr_vv = svr_vv + ',' + el[i].value;
-						}
-					}
-				}
-				$('srv_check_int').value = svr_vv;
-			}
+function sbVoucherGenerateHex(bytes) {
+	bytes = bytes || 16;
+	var arr = new Uint8Array(bytes);
+	if (window.crypto && window.crypto.getRandomValues) {
+		window.crypto.getRandomValues(arr);
+	} else {
+		for (var i = 0; i < bytes; i++) arr[i] = Math.floor(Math.random() * 256);
+	}
+	var hex = '';
+	for (var i = 0; i < arr.length; i++) {
+		hex += ('0' + arr[i].toString(16)).slice(-2);
+	}
+	return hex.match(/.{1,4}/g).join('-');
+}
+function getPassword(length) {
+	// совместимость со старыми onclick; length игнорируется — всегда 16 байт HEX
+	return sbVoucherGenerateHex(16);
+}
+(function () {
+	var el = document.getElementById('card_key');
+	if (el && (!el.value || el.value === '')) el.value = sbVoucherGenerateHex(16);
+})();
 
+function Check_cal(){
+	var el = document.getElementsByName('servers[]');
+	var svr_vv = '';
+	for(i=0;i<el.length;i++){
+		if(el[i].checked){
+			if(el[i].value == "-1"){
+				svr_vv = "-1";
+			}else{
+				svr_vv = svr_vv + ',' + el[i].value;
+			}
+		}
+	}
+	var h = document.getElementById('srv_check_int');
+	if (h) h.value = svr_vv;
+}
 </script>

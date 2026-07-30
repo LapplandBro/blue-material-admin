@@ -7,6 +7,15 @@ if (!isset($GLOBALS['config']['page.vay4er']) || (string)$GLOBALS['config']['pag
 	PageDie();
 }
 
+// Активация только для гостей: создаёт новый аккаунт админа. Залогиненный уже «в системе».
+if (isset($userbank) && is_object($userbank) && method_exists($userbank, 'is_logged_in') && $userbank->is_logged_in()) {
+	CreateRedBox(
+		"Активация недоступна",
+		"Ваучер активирует только гость (неавторизованный пользователь). Выйдите из аккаунта или откройте ссылку в режиме инкогнито, затем перейдите на страницу активации."
+	);
+	PageDie();
+}
+
 if (function_exists('sb_session_start'))
 	sb_session_start();
 elseif (session_status() === PHP_SESSION_NONE)
@@ -32,10 +41,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['pay_v4'])) {
 			$error_msg = 'Проверочный код неверен. Обновите картинку и введите заново.';
 		} else {
 			$raw = (string)$_POST['pay_v4'];
-			$validation = preg_replace('/[^0-9]/', '', function_exists('RemoveCode') ? RemoveCode($raw) : $raw);
+			$validation = function_exists('sb_voucher_normalize_key')
+				? sb_voucher_normalize_key($raw)
+				: strtolower(preg_replace('/[^0-9a-fA-F]/', '', $raw));
 
-			if (strlen($validation) !== 16) {
-				$error_msg = 'Ваучер должен содержать 16 цифр.';
+			if (!function_exists('sb_voucher_key_valid') || !sb_voucher_key_valid($validation)) {
+				$error_msg = 'Ваучер должен быть 32 hex-символа (16 байт), например a1b2-c3d4-….';
 			} else {
 				$row = $GLOBALS['db']->GetRow(
 					"SELECT `activ`, `group_web`, `group_srv`, `days`, `servers` FROM `" . DB_PREFIX . "_vay4er` WHERE `value` = ?",
@@ -45,6 +56,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['pay_v4'])) {
 				if (!$row || (string)$row['activ'] !== '1') {
 					$error_msg = 'Ваучер не найден или уже активирован.';
 				} else {
+					// Разблокировка шага 2: без неё xajax AddAdmin_pay отклонит код.
+					if (function_exists('sb_voucher_unlock_set'))
+						sb_voucher_unlock_set($validation);
+
 					$vaxye_vso = "1";
 					$user_group_web = ($row['group_web'] === '' || $row['group_web'] === '0' || $row['group_web'] === null)
 						? 'Не указана / нет группы'
@@ -54,11 +69,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['pay_v4'])) {
 						: $row['group_srv'];
 					$pay_days = (string)$row['days'];
 					$pay_days_t = ($pay_days === '0') ? 'Навсегда' : ($pay_days . ' дн.');
+					$display_key = function_exists('sb_voucher_format_key')
+						? sb_voucher_format_key($validation)
+						: $validation;
 
 					$theme->assign('days', $pay_days_t);
 					$theme->assign('gr_web', $user_group_web);
 					$theme->assign('gr_srv', $user_group_srv);
-					$theme->assign('klu4ik', $validation);
+					$theme->assign('klu4ik', $display_key);
 					$theme->assign('klu4ik_js', json_encode($validation));
 					$theme->assign('servers', isset($row['servers']) ? $row['servers'] : '');
 				}

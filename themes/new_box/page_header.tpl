@@ -192,9 +192,6 @@
 <ul class="main-menu">
 {if $logged_in}
 <li><a href="index.php?p=account"><i class="zmdi zmdi-settings"></i> Профиль</a></li>
-{if $vay4er_act == "1"}
-<li><a href="index.php?p=pay"><i class="zmdi zmdi-shopping-cart-plus"></i> Активировать ваучер</a></li>
-{/if}
 <li><a href="index.php?p=logout"><i class="zmdi zmdi-time-restore"></i> Выход</a></li>
 {else}
 <li><a href="index.php?p=login"><i class="zmdi zmdi-input-antenna"></i> Авторизация</a></li>

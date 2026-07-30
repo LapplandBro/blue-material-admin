@@ -73,7 +73,7 @@
 				{if $access_vouchers}
 				<a class="admin-hub-tile" href="index.php?p=admin&amp;c=pay_card">
 					<span class="admin-hub-tile-title">Ваучеры</span>
-					<span class="admin-hub-tile-desc">Выпуск ключей · активация на сайте: «Активировать ваучер»</span>
+					<span class="admin-hub-tile-desc">Выпуск ключей · активирует только гость (не залогиненный)</span>
 				</a>
 				{/if}
 				{if $access_groups}
