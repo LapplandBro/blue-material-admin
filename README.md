@@ -4,6 +4,8 @@
 
 Автор форка: [lapplandbro](https://github.com/lapplandbro)
 
+<img width="1921" height="946" alt="image" src="https://github.com/user-attachments/assets/690db1d7-344c-4724-877a-1f76792c45c7" />
+
 ---
 
 ## About (коротко для GitHub)
