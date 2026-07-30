@@ -62,7 +62,6 @@ html, body {
 </style>
 <script type="text/javascript">
 //<![CDATA[
-window.onload = function() {xajax_LoadServers2('-{$check}-', '-{$type}-', '-{$length}-');}
 var srvcount = 0;
 function set_counter(count)
 {
@@ -103,6 +102,12 @@ function resizeFrame()
 		}
 	} catch (e) {}
 }
+function blockitBoot()
+{
+	resizeFrame();
+	// Не через window.onload + body onload: body onload затирал LoadServers2 → вечный «ждём…».
+	try { xajax_LoadServers2('-{$check}-', '-{$type}-', '-{$length}-'); } catch (e) {}
+}
 try {
 	var dc0 = parent.document.getElementById('dialog-control');
 	if (dc0) dc0.style.display = 'none';
@@ -110,7 +115,7 @@ try {
 //]]>
 </script>
 </head>
-<body onload="resizeFrame();">
+<body>
 <div id="container" class="blockit-wrap" name="container">
 	<div class="blockit-title">Ищем игрока на серверах…</div>
 	<table class="blockit-list" border="0">
@@ -127,6 +132,6 @@ try {
 	</table>
 	<div id="blockit-foot" class="blockit-foot">Готово.</div>
 </div>
-<script type="text/javascript">resizeFrame();</script>
+<script type="text/javascript">blockitBoot();</script>
 </body>
 </html>
