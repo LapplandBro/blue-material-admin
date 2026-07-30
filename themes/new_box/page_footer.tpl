@@ -6,6 +6,14 @@
 			<div id="sm">
 				Создано <a class="footer_link" href="https://github.com/lapplandbro" target="_blank" rel="noopener">lapplandbro</a>
 			</div>
+
+            <ul class="f-menu f-menu-seo">
+                <li><a href="index.php">Главная</a></li>
+                <li><a href="index.php?p=servers">Серверы</a></li>
+                <li><a href="index.php?p=banlist">Банлист</a></li>
+                <li><a href="index.php?p=commslist">Муты</a></li>
+                <li><a href="index.php?p=adminlist">Админы</a></li>
+            </ul>
             
             <ul class="f-menu">
                 <li>Версия <b>{$SB_VERSION}</b></li>

@@ -164,50 +164,64 @@ $seo_brand = $seo_title;
 $seo_page_meta = array(
 	'home' => array(
 		'label' => 'Главная',
-		'desc' => $seo_brand . ' — игровая панель SourceBans: серверы, банлист, муты и админлист.'
+		'desc' => 'Панель SourceBans ' . $seo_brand . ': серверы онлайн, банлист, муты и админлист.'
 	),
 	'servers' => array(
 		'label' => 'Серверы',
-		'desc' => 'Список игровых серверов ' . $seo_brand . ': онлайн, карты, IP и подключение.'
+		'desc' => 'Серверы ' . $seo_brand . ': онлайн, карта, IP и быстрое подключение.'
 	),
 	'banlist' => array(
-		'label' => 'Список банов',
-		'desc' => 'Банлист ' . $seo_brand . ': поиск по SteamID и нику, сроки и история блокировок.'
+		'label' => 'Банлист',
+		'desc' => 'Банлист ' . $seo_brand . ': поиск по SteamID и нику, сроки блокировок.'
 	),
 	'commslist' => array(
-		'label' => 'Список мутов и гагов',
-		'desc' => 'Блокировки голосового и текстового чата на серверах ' . $seo_brand . '.'
+		'label' => 'Муты и гаги',
+		'desc' => 'Муты и гаги на серверах ' . $seo_brand . ': голосовой и текстовый чат.'
 	),
 	'adminlist' => array(
-		'label' => 'Администраторы',
-		'desc' => 'Список администраторов серверов ' . $seo_brand . '.'
+		'label' => 'Админы',
+		'desc' => 'Администраторы серверов ' . $seo_brand . '.'
 	),
 	'login' => array(
-		'label' => 'Авторизация',
+		'label' => 'Вход',
 		'desc' => 'Вход в панель SourceBans ' . $seo_brand . '.'
 	),
 	'submit' => array(
-		'label' => 'Жалоба на игрока',
-		'desc' => 'Отправка жалобы на игрока через панель SourceBans ' . $seo_brand . '.'
+		'label' => 'Жалоба',
+		'desc' => 'Жалоба на игрока через SourceBans ' . $seo_brand . '.'
 	),
 	'protest' => array(
-		'label' => 'Апелляция бана',
-		'desc' => 'Подача апелляции на бан через панель SourceBans ' . $seo_brand . '.'
+		'label' => 'Апелляция',
+		'desc' => 'Апелляция бана через SourceBans ' . $seo_brand . '.'
 	),
 	'account' => array(
 		'label' => 'Профиль',
-		'desc' => 'Личный кабинет администратора панели SourceBans ' . $seo_brand . '.'
+		'desc' => 'Кабинет администратора SourceBans ' . $seo_brand . '.'
 	),
 	'admin' => array(
 		'label' => 'Админ-панель',
-		'desc' => 'Административная панель SourceBans ' . $seo_brand . ': серверы, баны и настройки.'
+		'desc' => 'Админ-панель SourceBans ' . $seo_brand . ': серверы, баны, настройки.'
 	)
 );
 
+$seo_strlen = function ($s) {
+	return function_exists('mb_strlen') ? mb_strlen($s, 'UTF-8') : strlen($s);
+};
+$seo_substr = function ($s, $start, $len) {
+	return function_exists('mb_substr') ? mb_substr($s, $start, $len, 'UTF-8') : substr($s, $start, $len);
+};
+
 $seo_page_label = isset($seo_page_meta[$seo_page]['label']) ? $seo_page_meta[$seo_page]['label'] : '';
-$seo_document_title = ($seo_page_label !== '' && $seo_page !== 'home')
-	? ($seo_page_label . ' | ' . $seo_title)
-	: $seo_title;
+// Сниппет Google ~50–60 символов: бренд на главной, на внутренних — «Раздел | Бренд».
+if ($seo_page_label !== '' && $seo_page !== 'home') {
+	$seo_document_title = $seo_page_label . ' | ' . $seo_title;
+	if ($seo_strlen($seo_document_title) > 60)
+		$seo_document_title = $seo_substr($seo_document_title, 0, 57) . '…';
+} else {
+	$seo_document_title = $seo_title;
+	if ($seo_strlen($seo_document_title) > 60)
+		$seo_document_title = $seo_substr($seo_document_title, 0, 57) . '…';
+}
 
 // Описание: сначала per-page, иначе короткий текст из настроек (не dash.intro.text).
 $seo_description = isset($seo_page_meta[$seo_page]['desc']) ? $seo_page_meta[$seo_page]['desc'] : '';
@@ -219,12 +233,11 @@ if ($seo_description === '') {
 		$seo_desc_src = $GLOBALS['config']['dash.info_block_text_t'];
 	$seo_description = trim(preg_replace('/\s+/u', ' ', html_entity_decode(strip_tags($seo_desc_src), ENT_QUOTES, 'UTF-8')));
 }
-if ($seo_description === '' || (function_exists('mb_strlen') ? mb_strlen($seo_description, 'UTF-8') : strlen($seo_description)) < 50)
-	$seo_description = $seo_brand . ' — панель SourceBans: серверы, банлист, муты и админлист.';
-if (function_exists('mb_substr'))
-	$seo_description = mb_substr($seo_description, 0, 160, 'UTF-8');
-else
-	$seo_description = substr($seo_description, 0, 160);
+if ($seo_description === '' || $seo_strlen($seo_description) < 50)
+	$seo_description = 'Панель SourceBans ' . $seo_brand . ': серверы, банлист, муты и админлист.';
+// Рекомендуемый диапазон сниппета ~120–155.
+if ($seo_strlen($seo_description) > 155)
+	$seo_description = $seo_substr($seo_description, 0, 152) . '…';
 
 // Главная: каноникал без ?p=home, чтобы не плодить дубли.
 if ($seo_page === 'home')
@@ -295,15 +308,27 @@ $seo_jsonld = array(
 	'@graph' => array(
 		array(
 			'@type' => 'Organization',
+			'@id' => $site_base . '/#organization',
 			'name' => $og_site_name,
 			'url' => $site_base . '/',
 			'logo' => $seo_image
 		),
 		array(
 			'@type' => 'WebSite',
+			'@id' => $site_base . '/#website',
 			'name' => $og_site_name,
 			'url' => $site_base . '/',
 			'description' => $og_description,
+			'inLanguage' => 'ru-RU',
+			'publisher' => array('@id' => $site_base . '/#organization')
+		),
+		array(
+			'@type' => 'WebPage',
+			'@id' => $seo_canonical . '#webpage',
+			'url' => $seo_canonical,
+			'name' => $seo_document_title,
+			'description' => $seo_description,
+			'isPartOf' => array('@id' => $site_base . '/#website'),
 			'inLanguage' => 'ru-RU'
 		)
 	)
