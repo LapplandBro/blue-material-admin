@@ -32,7 +32,7 @@ define('theme_name', "SourceBans Theme (DeluxeEdition)");
 define('theme_author', "ASTRO & XaH JoB & Vampir & SAZONISCHE & NoTiCE & CrazyHackGUT & Серый™");
 
 // Set the version of the theme here
-define('theme_version', "2.0.1");
+define('theme_version', "2.0.5");
 
 // Set the link of the theme here
 define('theme_link', "https://discord.gg/BrTP9Cu");
