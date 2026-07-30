@@ -74,6 +74,14 @@ define('SB_HOSTING_PAY_URL', '" . $esc($hostingUrl) . "');
 define('SB_HOSTING_PAY_LABEL', '" . $esc($hostingLabel) . "');
 define('SB_HOSTING_PAY_NEWTAB', '" . $esc($hostingNewtab) . "');
 
+/**
+ * API выпуска ваучеров: api/voucher_create.php
+ * Пустой токен = API выключен. Не пароль админа — отдельная длинная строка (≥32).
+ * Опционально SB_VOUCHER_API_ALLOW_IPS: whitelist IP через запятую.
+ */
+define('SB_VOUCHER_API_TOKEN', '');
+define('SB_VOUCHER_API_ALLOW_IPS', '');
+
 /** Open Graph / Discord / Telegram / Twitter превью.
  *  Обложку меняй файлом images/og-cover.jpg (1200×630) или путём ниже. */
 define('SB_OG_SITE_NAME', '" . $esc($siteLabel) . "');

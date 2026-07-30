@@ -1360,6 +1360,206 @@ function sb_voucher_rehash_clear()
 	unset($_SESSION['sb_voucher_rehash']);
 }
 
+/**
+ * Создать активный ваучер (HEX-ключ). Используется админкой и api/voucher_create.php.
+ * @return array{ok:bool,error?:string,key?:string,key_fmt?:string,days?:int,group_web?:string,group_srv?:string,servers?:string}
+ */
+function sb_voucher_create_record($days, $group_web, $group_srv = '', $servers = '')
+{
+	if (!isset($GLOBALS['db']) || !is_object($GLOBALS['db']))
+		return array('ok' => false, 'error' => 'db');
+
+	$days = (int)$days;
+	if ($days < 0)
+		$days = 0;
+	if ($days > 36500)
+		$days = 36500;
+
+	$group_web = trim(strip_tags((string)$group_web));
+	$group_srv = trim(strip_tags((string)$group_srv));
+	if ($group_web === '')
+		return array('ok' => false, 'error' => 'group_web_required');
+
+	if ($group_web !== '0') {
+		$exists = (int)$GLOBALS['db']->GetOne(
+			"SELECT COUNT(*) FROM `" . DB_PREFIX . "_groups` WHERE `name` = ?",
+			array($group_web)
+		);
+		if ($exists < 1)
+			return array('ok' => false, 'error' => 'group_web_unknown');
+	}
+
+	if ($group_srv !== '' && $group_srv !== '0') {
+		$exists = (int)$GLOBALS['db']->GetOne(
+			"SELECT COUNT(*) FROM `" . DB_PREFIX . "_srvgroups` WHERE `name` = ?",
+			array($group_srv)
+		);
+		if ($exists < 1)
+			return array('ok' => false, 'error' => 'group_srv_unknown');
+	} else {
+		$group_srv = '';
+	}
+
+	$servers = trim((string)$servers);
+	if ($servers !== '' && $servers !== '-1') {
+		$parts = preg_split('/\s*,\s*/', $servers, -1, PREG_SPLIT_NO_EMPTY);
+		$norm = array();
+		if (is_array($parts)) {
+			foreach ($parts as $p) {
+				if (preg_match('/^s?(\d+)$/i', $p, $m)) {
+					$sid = (int)$m[1];
+					$okSid = $GLOBALS['db']->GetOne(
+						"SELECT sid FROM `" . DB_PREFIX . "_servers` WHERE sid = ?",
+						array($sid)
+					);
+					if ($okSid)
+						$norm[] = 's' . $sid;
+				}
+			}
+		}
+		$servers = $norm ? (',' . implode(',', $norm)) : '';
+	}
+
+	for ($i = 0; $i < 8; $i++) {
+		$key = sb_voucher_generate_key(16);
+		if (!sb_voucher_key_valid($key))
+			continue;
+		$cnt = (int)$GLOBALS['db']->GetOne(
+			"SELECT COUNT(*) FROM `" . DB_PREFIX . "_vay4er` WHERE `value` = ?",
+			array($key)
+		);
+		if ($cnt > 0)
+			continue;
+		$ok = $GLOBALS['db']->Execute(
+			"INSERT INTO `" . DB_PREFIX . "_vay4er` (`activ`, `value`, `days`, `group_web`, `group_srv`, `servers`)
+			 VALUES (1, ?, ?, ?, ?, ?)",
+			array($key, (string)$days, $group_web, $group_srv, $servers)
+		);
+		if (!$ok)
+			return array('ok' => false, 'error' => 'insert_failed');
+		return array(
+			'ok' => true,
+			'key' => $key,
+			'key_fmt' => sb_voucher_format_key($key),
+			'days' => $days,
+			'group_web' => $group_web,
+			'group_srv' => $group_srv,
+			'servers' => $servers,
+		);
+	}
+	return array('ok' => false, 'error' => 'key_collision');
+}
+
+/** Токен API задан и не пустой. */
+function sb_voucher_api_enabled()
+{
+	return defined('SB_VOUCHER_API_TOKEN')
+		&& is_string(SB_VOUCHER_API_TOKEN)
+		&& SB_VOUCHER_API_TOKEN !== '';
+}
+
+/**
+ * Живой тест api/voucher_create.php (HTTP POST на свой URL + токен из config).
+ * @param bool $keep true — оставить ваучер в БД; false — удалить после успеха
+ * @return array
+ */
+function sb_voucher_api_self_test($keep = false)
+{
+	if (!sb_voucher_api_enabled())
+		return array('ok' => false, 'error' => 'api_disabled', 'hint' => 'SB_VOUCHER_API_TOKEN пустой');
+
+	$base = (defined('SB_WP_URL') && SB_WP_URL !== '') ? rtrim(SB_WP_URL, '/') : '';
+	if ($base === '')
+		return array('ok' => false, 'error' => 'no_sb_wp_url', 'hint' => 'Задай SB_WP_URL в config.php');
+
+	$url = $base . '/api/voucher_create.php';
+	// token в JSON: Apache/CGI часто выкидывает Authorization; тело надёжнее.
+	$payload = json_encode(array(
+		'token' => SB_VOUCHER_API_TOKEN,
+		'days' => 1,
+		'group_web' => '0',
+		'group_srv' => '',
+		'servers' => '',
+	));
+
+	$httpCode = 0;
+	$body = '';
+	$err = '';
+
+	if (function_exists('curl_init')) {
+		$ch = curl_init($url);
+		curl_setopt_array($ch, array(
+			CURLOPT_POST => true,
+			CURLOPT_POSTFIELDS => $payload,
+			CURLOPT_RETURNTRANSFER => true,
+			CURLOPT_TIMEOUT => 15,
+			CURLOPT_HTTPHEADER => array(
+				'Content-Type: application/json',
+				'Authorization: Bearer ' . SB_VOUCHER_API_TOKEN,
+				'X-SB-Voucher-Token: ' . SB_VOUCHER_API_TOKEN,
+			),
+		));
+		$body = curl_exec($ch);
+		if ($body === false)
+			$err = curl_error($ch);
+		$httpCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+		curl_close($ch);
+	} else {
+		$ctx = stream_context_create(array(
+			'http' => array(
+				'method' => 'POST',
+				'header' => "Content-Type: application/json\r\n"
+					. "Authorization: Bearer " . SB_VOUCHER_API_TOKEN . "\r\n"
+					. "X-SB-Voucher-Token: " . SB_VOUCHER_API_TOKEN . "\r\n",
+				'content' => $payload,
+				'timeout' => 15,
+				'ignore_errors' => true,
+			),
+		));
+		$body = @file_get_contents($url, false, $ctx);
+		if (isset($http_response_header[0]) && preg_match('/\s(\d{3})\s/', $http_response_header[0], $m))
+			$httpCode = (int)$m[1];
+		if ($body === false)
+			$err = 'file_get_contents failed';
+	}
+
+	if ($body === false || $body === '') {
+		return array(
+			'ok' => false,
+			'error' => 'http_failed',
+			'hint' => $err !== '' ? $err : 'Пустой ответ',
+			'url' => $url,
+			'http' => $httpCode,
+		);
+	}
+
+	$data = json_decode($body, true);
+	if (!is_array($data)) {
+		return array(
+			'ok' => false,
+			'error' => 'bad_json',
+			'http' => $httpCode,
+			'raw' => substr($body, 0, 500),
+			'url' => $url,
+		);
+	}
+
+	$data['http'] = $httpCode;
+	$data['url'] = $url;
+
+	if (!empty($data['ok']) && !empty($data['key']) && !$keep && isset($GLOBALS['db'])) {
+		$GLOBALS['db']->Execute(
+			"DELETE FROM `" . DB_PREFIX . "_vay4er` WHERE `value` = ? AND `activ` = '1'",
+			array($data['key'])
+		);
+		$data['cleaned'] = true;
+	} else {
+		$data['cleaned'] = false;
+	}
+
+	return $data;
+}
+
 function SecondsToString($sec, $textual=true)
 {
 	if($textual)

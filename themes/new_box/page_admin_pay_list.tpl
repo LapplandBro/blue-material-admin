@@ -16,6 +16,30 @@
 				</ol>
 				<p class="m-t-10 m-b-0 c-gray">Залогиненный админ активировать ваучер не может — иначе получится путаница с уже существующим аккаунтом.</p>
 			</div>
+			<div class="alert alert-default m-t-10" role="alert">
+				<p class="m-b-5"><b>API для магазина / бота</b>
+					{if $voucher_api_enabled == "1"}
+						<span class="c-green">· включён</span>
+					{else}
+						<span class="c-red">· выключен</span> (пустой <code>SB_VOUCHER_API_TOKEN</code> в <code>config.php</code>)
+					{/if}
+				</p>
+				<p class="m-b-5">Эндпоинт: <code>{$voucher_api_url|escape}</code> · только <b>POST</b> · JSON или form · не пароль админа, а отдельный токен.</p>
+				<p class="m-b-5">В <code>config.php</code>:</p>
+				<pre class="m-b-5" style="white-space:pre-wrap;word-break:break-all;">define('SB_VOUCHER_API_TOKEN', 'сгенерируй_длинную_строку_32plus');
+define('SB_VOUCHER_API_ALLOW_IPS', ''); // опционально: 1.2.3.4,5.6.7.8</pre>
+				<p class="m-b-5">Поля: <code>days</code>, <code>group_web</code> (имя как в панели или <code>0</code>), <code>group_srv</code> (опц.), <code>servers</code> (<code>""</code> / <code>-1</code> / <code>s1,s2</code>). Токен: тело <code>token</code>, заголовок <code>Authorization: Bearer …</code> или <code>X-SB-Voucher-Token</code>.</p>
+{literal}
+				<pre class="m-b-5" style="white-space:pre-wrap;word-break:break-all;">curl -s -X POST '{/literal}{$voucher_api_url|escape}{literal}' \
+  -H 'Content-Type: application/json' \
+  -H 'Authorization: Bearer YOUR_TOKEN' \
+  -d '{"days":30,"group_web":"Admin","group_srv":"","servers":""}'</pre>
+{/literal}
+				<p class="m-b-0">
+					<a class="btn btn-default btn-icon-text waves-effect" href="api/voucher_test.php" target="_blank" rel="noopener"><i class="zmdi zmdi-flare"></i> Тестер API</a>
+					<span class="c-gray m-l-10">или CLI: <code>php api/voucher_test.php</code></span>
+				</p>
+			</div>
 		</div>
 
 		<div class="card-body table-responsive">

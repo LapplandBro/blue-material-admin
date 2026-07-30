@@ -114,6 +114,19 @@ Blue Material Admin — тёмный Firewatch-стиль, свой логоти
 4. Удали `install/` (кнопка на финише)  
 5. При необходимости пропиши `STEAMAPIKEY` и при желании `SB_PROTECTED_STEAMIDS` в `config.php`
 
+### API ваучеров (магазин / бот)
+
+Эндпоинт `api/voucher_create.php` — выпуск HEX-ключа после оплаты. По умолчанию **выключен**.
+
+В `config.php`:
+
+```php
+define('SB_VOUCHER_API_TOKEN', 'длинная_случайная_строка_32plus');
+define('SB_VOUCHER_API_ALLOW_IPS', ''); // опционально: whitelist IP
+```
+
+`POST` JSON: `days`, `group_web` (имя группы как в панели или `"0"`), опционально `group_srv`, `servers`. Токен — в теле `token`, `Authorization: Bearer …` или `X-SB-Voucher-Token`. Справка и пример `curl` — в админке → Ваучеры.
+
 Проверка без браузера:
 
 ```bash

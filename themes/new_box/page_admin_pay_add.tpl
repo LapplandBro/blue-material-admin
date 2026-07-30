@@ -20,7 +20,7 @@
 				<li><b>Группа (веб)</b> — права в этой панели. Не выдавайте «Главный админ» случайным людям.</li>
 				<li><b>Сервер</b> — на каких серверах будут права. «Без сервера» / ничего не отмечено — гость сам выберет при активации.</li>
 			</ul>
-			<p class="m-b-0">Активирует ключ <b>только гость</b> (не залогиненный): меню «Активировать ваучер» или <code>index.php?p=pay</code>. Подсказки у полей — на <img class="sb-ico sb-ico-help" src="images/icons/help.svg" width="16" height="16" alt="?" />.</p>
+			<p class="m-b-0">Активирует ключ <b>только гость</b> (не залогиненный): меню «Активировать ваучер» или <code>index.php?p=pay</code>. Автовыдача из магазина — API <code>api/voucher_create.php</code> (токен в <code>config.php</code>, справка на вкладке списка). Подсказки у полей — на <img class="sb-ico sb-ico-help" src="images/icons/help.svg" width="16" height="16" alt="?" />.</p>
 		</div>
 		<div class="form-horizontal" role="form">
 		<div class="card-body card-padding p-b-0">

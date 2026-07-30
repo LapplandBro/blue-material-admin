@@ -46,8 +46,9 @@ global $userbank, $theme;
 				array_push($card_list, $info);
 			}
 			$theme->assign('card_list', $card_list);
-			
-					
+			$apiBase = (defined('SB_WP_URL') && SB_WP_URL !== '') ? rtrim(SB_WP_URL, '/') : '';
+			$theme->assign('voucher_api_url', ($apiBase !== '' ? $apiBase . '/' : '') . 'api/voucher_create.php');
+			$theme->assign('voucher_api_enabled', (function_exists('sb_voucher_api_enabled') && sb_voucher_api_enabled()) ? '1' : '0');
 			$theme->display('page_admin_pay_list.tpl');	
 		echo '</div>';
 		#########/[list]###############

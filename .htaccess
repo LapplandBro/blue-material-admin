@@ -47,6 +47,10 @@ ErrorDocument 504 /errors/504.html
 <IfModule mod_rewrite.c>
 	RewriteEngine On
 
+	# Прокинуть Authorization в PHP (иначе CGI/Apache часто глотает Bearer).
+	RewriteCond %{HTTP:Authorization} .
+	RewriteRule ^ - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
 	# Блокировка AI/мусорных ботов.
 	# НЕ блокируем поисковики и SEO-аудиторы (Google/Yandex/Bing/Semrush/Ahrefs/DataForSeo/
 	# facebookexternalhit/Twitterbot) — иначе сканеры пишут «canonical/OG не найден».
