@@ -22,3 +22,7 @@ Thumbs.db
 
 # Local debug helpers (not for public dist)
 sb_debug_connection.php
+
+__pycache__/
+*.pyc
+
