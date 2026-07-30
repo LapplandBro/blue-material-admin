@@ -84,6 +84,6 @@ else {
     else {
         sb_set_auth_cookie("aid", $aid, time()+LOGIN_COOKIE_LIFETIME);
         sb_set_auth_cookie("password", $password, time()+LOGIN_COOKIE_LIFETIME);
-        RedirectToSite(SB_WP_URL, 'Администратор найден, переадресация...');
+        RedirectToSite(SB_WP_URL, 'Вход выполнен.');
     }
 }

@@ -137,7 +137,14 @@ def text_path_centered(label, font_size, cx=64.0, cy=64.0, max_width=92.0):
     oy = cy - (ymin + ymax) / 2.0
 
     svg_pen = draw_all(SVGPathPen, ox, oy)
-    return svg_pen.getCommands()
+    d = svg_pen.getCommands()
+
+    def _round_num(m):
+        v = float(m.group(0))
+        s = "{:.2f}".format(v)
+        return s.rstrip("0").rstrip(".")
+
+    return re.sub(r"-?\d+\.\d+", _round_num, d)
 
 
 def lighten(hex_color, amount=0.22):
