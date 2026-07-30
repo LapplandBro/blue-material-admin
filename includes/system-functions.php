@@ -1218,14 +1218,17 @@ function sb_list_action_flash_script()
 }
 
 /** Универсальный UI-flash (Steam-вход, tripwire и т.п.). */
-function sb_ui_flash_set($title, $msg, $color = 'red')
+function sb_ui_flash_set($title, $msg, $color = 'red', $timer = 0)
 {
-	if (session_status() === PHP_SESSION_NONE && function_exists('session_start'))
+	if (function_exists('sb_session_start'))
+		sb_session_start();
+	elseif (session_status() === PHP_SESSION_NONE)
 		@session_start();
 	$_SESSION['sb_ui_flash'] = array(
 		'title' => (string)$title,
 		'msg' => (string)$msg,
 		'color' => (string)$color,
+		'timer' => (int)$timer,
 	);
 }
 

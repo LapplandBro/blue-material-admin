@@ -18,8 +18,10 @@ function RedirectToSite($url = SB_WP_URL, $text = "", $NotJS = false) {
             @session_start();
 
         $msg = (string)$text;
-        $isOk = (stripos($msg, 'найден') !== false && stripos($msg, 'не найдено') === false)
-            || stripos($msg, 'переадресация') !== false;
+        $isOk = (stripos($msg, 'вход выполнен') !== false)
+            || stripos($msg, 'переадресация') !== false
+            || (stripos($msg, 'найден') !== false && stripos($msg, 'не найдено') === false
+                && stripos($msg, 'не найдено ни одного') === false);
         $_SESSION['sb_ui_flash'] = array(
             'title' => $isOk ? 'Вход' : 'Ошибка входа',
             'msg' => $msg,
@@ -84,6 +86,16 @@ else {
     else {
         sb_set_auth_cookie("aid", $aid, time()+LOGIN_COOKIE_LIFETIME);
         sb_set_auth_cookie("password", $password, time()+LOGIN_COOKIE_LIFETIME);
+
+        // Как у Plogin: пишем успешный Steam-вход в системный лог.
+        $adminRow = $GLOBALS['db']->GetRow("SELECT user FROM " . DB_PREFIX . "_admins WHERE aid = ?", array((int)$aid));
+        $adminName = ($adminRow && !empty($adminRow['user'])) ? $adminRow['user'] : ('aid#' . (int)$aid);
+        if (class_exists('CSystemLog')) {
+            $log = new CSystemLog("m", "Успешный вход", "Администратор '" . htmlspecialchars($adminName) . "' вошёл через Steam.", false);
+            $log->aid = (int)$aid;
+            $log->WriteLog();
+        }
+
         RedirectToSite(SB_WP_URL, 'Вход выполнен.');
     }
 }

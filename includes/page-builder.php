@@ -33,17 +33,27 @@ switch ($_GET['p'])
 		$page = TEMPLATES_PATH . "/page.login.php";
 		break;
 	case "logout":
-		// БАГ-ФИКС: выход из системы раньше не логировался вообще - фиксируем факт выхода,
-		// пока $userbank ещё хранит данные о том, кто именно выходит (до очистки сессии/кук).
-		if(isset($GLOBALS['userbank']) && $GLOBALS['userbank']->GetAid() > 0)
+		// Лог + flash пока $userbank ещё знает, кто выходит (до очистки кук/сессии).
+		$logoutFlash = array(
+			'title' => 'Выход',
+			'msg' => 'Вы вышли из системы.',
+			'color' => 'green',
+			'timer' => 1600,
+		);
+		if (isset($GLOBALS['userbank']) && $GLOBALS['userbank']->GetAid() > 0)
 		{
 			$log = new CSystemLog("m", "Выход из системы", "Администратор '" . htmlspecialchars($GLOBALS['userbank']->GetProperty('user')) . "' вышел из системы.", false);
 			$log->aid = (int)$GLOBALS['userbank']->GetAid();
 			$log->WriteLog();
 		}
-		logout();
+		logout(); // session_destroy — flash нужно положить в НОВУЮ сессию
+		if (function_exists('sb_session_start'))
+			sb_session_start();
+		elseif (session_status() === PHP_SESSION_NONE)
+			@session_start();
+		$_SESSION['sb_ui_flash'] = $logoutFlash;
 		Header("Location: index.php");
-		break;
+		exit;
 	case "admin":
 		$page = INCLUDES_PATH . "/admin.php";
 		break;
