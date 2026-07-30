@@ -34,13 +34,11 @@
 <script src="./scripts/mootools.js"></script>
 <script src="./scripts/contextMenoo.js"></script>
 <link href="themes/{$theme_name}/css/rubik.css" rel="stylesheet">
-<link href="themes/{$theme_name}/vendors/bower_components/fullcalendar/dist/fullcalendar.min.css" rel="stylesheet">
 <link href="themes/{$theme_name}/vendors/bower_components/animate.css/animate.min.css" rel="stylesheet">
 <link href="themes/{$theme_name}/vendors/bower_components/bootstrap-sweetalert/lib/sweet-alert.css" rel="stylesheet">
 <link href="themes/{$theme_name}/vendors/bower_components/material-design-iconic-font/dist/css/material-design-iconic-font.min.css" rel="stylesheet">
 <link href="themes/{$theme_name}/vendors/bower_components/malihu-custom-scrollbar-plugin/jquery.mCustomScrollbar.min.css" rel="stylesheet">
 <link href="themes/{$theme_name}/vendors/bower_components/bootstrap-select/dist/css/bootstrap-select.css" rel="stylesheet">
-<link href="themes/{$theme_name}/vendors/bower_components/chosen/chosen.min.css" rel="stylesheet">
 <link href="themes/{$theme_name}/vendors/summernote/dist/summernote.css" rel="stylesheet">
 <link href="themes/{$theme_name}/css/app.min.1.css" rel="stylesheet">
 <link href="themes/{$theme_name}/css/app.min.2.css" rel="stylesheet">
@@ -51,7 +49,6 @@
 {if $theme_css}
 <style>{$theme_css}</style>
 {/if}
-{$tiny_mce_js}
 {$xajax_functions}
 <script>window.SB_CSRF="{$sb_csrf|escape:'javascript'}";</script>
 </head>

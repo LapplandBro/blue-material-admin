@@ -260,99 +260,6 @@ jQuery(document).ready(function(){
     }
 
     /*
-     * Calendar Widget
-     */
-    if(jQuery('#calendar-widget')[0]) {
-        (function(){
-            jQuery('#calendar-widget').fullCalendar({
-		        contentHeight: 'auto',
-		        theme: true,
-                header: {
-                    right: '',
-                    center: 'prev, title, next',
-                    left: ''
-                },
-                defaultDate: '2014-06-12',
-                editable: true,
-                events: [
-                    {
-                        title: 'All Day',
-                        start: '2014-06-01',
-                        className: 'bgm-cyan'
-                    },
-                    {
-                        title: 'Long Event',
-                        start: '2014-06-07',
-                        end: '2014-06-10',
-                        className: 'bgm-orange'
-                    },
-                    {
-                        id: 999,
-                        title: 'Repeat',
-                        start: '2014-06-09',
-                        className: 'bgm-lightgreen'
-                    },
-                    {
-                        id: 999,
-                        title: 'Repeat',
-                        start: '2014-06-16',
-                        className: 'bgm-lightblue'
-                    },
-                    {
-                        title: 'Meet',
-                        start: '2014-06-12',
-                        end: '2014-06-12',
-                        className: 'bgm-green'
-                    },
-                    {
-                        title: 'Lunch',
-                        start: '2014-06-12',
-                        className: 'bgm-cyan'
-                    },
-                    {
-                        title: 'Birthday',
-                        start: '2014-06-13',
-                        className: 'bgm-amber'
-                    },
-                    {
-                        title: 'Google',
-                        url: 'http://google.com/',
-                        start: '2014-06-28',
-                        className: 'bgm-amber'
-                    }
-                ]
-            });
-        })();
-    }
-
-    /*
-     * Weather Widget
-     */
-    if (jQuery('#weather-widget')[0]) {
-        jQuery.simpleWeather({
-            location: 'Austin, TX',
-            woeid: '',
-            unit: 'f',
-            success: function(weather) {
-                html = '<div class="weather-status">'+weather.temp+'&deg;'+weather.units.temp+'</div>';
-                html += '<ul class="weather-info"><li>'+weather.city+', '+weather.region+'</li>';
-                html += '<li class="currently">'+weather.currently+'</li></ul>';
-                html += '<div class="weather-icon wi-'+weather.code+'"></div>';
-                html += '<div class="dash-widget-footer"><div class="weather-list tomorrow">';
-                html += '<span class="weather-list-icon wi-'+weather.forecast[2].code+'"></span><span>'+weather.forecast[1].high+'/'+weather.forecast[1].low+'</span><span>'+weather.forecast[1].text+'</span>';
-                html += '</div>';
-                html += '<div class="weather-list after-tomorrow">';
-                html += '<span class="weather-list-icon wi-'+weather.forecast[2].code+'"></span><span>'+weather.forecast[2].high+'/'+weather.forecast[2].low+'</span><span>'+weather.forecast[2].text+'</span>';
-                html += '</div></div>';
-                jQuery("#weather-widget").html(html);
-            },
-            error: function(error) {
-                jQuery("#weather-widget").html('<p>'+error+'</p>');
-            }
-        });
-    }
-
-    /*
      * Todo Add new item
      */
     if (jQuery('#todo-lists')[0]) {
@@ -433,88 +340,14 @@ jQuery(document).ready(function(){
     }
 
     /*
-     * Audio and Video
-     */
-    if(jQuery('audio, video')[0]) {
-        jQuery('video,audio').mediaelementplayer();
-    }
-
-    /*
-     * Tag Select
-     */
-    if(jQuery('.chosen')[0]) {
-        jQuery('.chosen').chosen({
-            width: '100%',
-            allow_single_deselect: true
-        });
-    }
-
-    /*
-     * Input Slider
-     */
-    //Basic
-    if(jQuery('.input-slider')[0]) {
-        jQuery('.input-slider').each(function(){
-            var isStart = jQuery(this).data('is-start');
-
-            jQuery(this).noUiSlider({
-                start: isStart,
-                range: {
-                    'min': 0,
-                    'max': 100,
-                }
-            });
-        });
-    }
-
-    //Range slider
-    if(jQuery('.input-slider-range')[0]) {
-	jQuery('.input-slider-range').noUiSlider({
-	    start: [30, 60],
-	    range: {
-		    'min': 0,
-		    'max': 100
-	    },
-	    connect: true
-	});
-    }
-
-    //Range slider with value
-    if(jQuery('.input-slider-values')[0]) {
-	jQuery('.input-slider-values').noUiSlider({
-	    start: [ 45, 80 ],
-	    connect: true,
-	    direction: 'rtl',
-	    behaviour: 'tap-drag',
-	    range: {
-		    'min': 0,
-		    'max': 100
-	    }
-	});
-
-	jQuery('.input-slider-values').Link('lower').to(jQuery('#value-lower'));
-        jQuery('.input-slider-values').Link('upper').to(jQuery('#value-upper'), 'html');
-    }
-
-    /*
      * Input Mask
      */
-    if (jQuery('input-mask')[0]) {
+    if (jQuery('.input-mask')[0]) {
         jQuery('.input-mask').mask();
     }
 
     /*
-     * Color Picker
-     */
-    if (jQuery('.color-picker')[0]) {
-	    jQuery('.color-picker').each(function(){
-            var colorOutput = jQuery(this).closest('.cp-container').find('.cp-value');
-            jQuery(this).farbtastic(colorOutput);
-        });
-    }
-
-    /*
-     * HTML Editor
+     * HTML Editor (Summernote)
      */
     if (jQuery('.html-editor')[0]) {
 	   jQuery('.html-editor').each(function () {
@@ -549,41 +382,6 @@ jQuery(document).ready(function(){
         jQuery('.html-editor-airmod').summernote({
             airMode: true
         });
-    }
-
-    /*
-     * Date Time Picker
-     */
-
-    //Date Time Picker
-    if (jQuery('.date-time-picker')[0]) {
-	   jQuery('.date-time-picker').datetimepicker();
-    }
-
-    //Time
-    if (jQuery('.time-picker')[0]) {
-    	jQuery('.time-picker').datetimepicker({
-    	    format: 'LT'
-    	});
-    }
-
-    //Date
-    if (jQuery('.date-picker')[0]) {
-    	jQuery('.date-picker').datetimepicker({
-    	    format: 'DD/MM/YYYY'
-    	});
-    }
-
-    /*
-     * Form Wizard
-     */
-
-    if (jQuery('.form-wizard-basic')[0]) {
-    	jQuery('.form-wizard-basic').bootstrapWizard({
-    	    tabClass: 'fw-nav',
-            'nextSelector': '.next',
-            'previousSelector': '.previous'
-    	});
     }
 
     /*
@@ -846,76 +644,5 @@ jQuery(document).ready(function(){
             window.print();
         })
     }
-
-    /*
-     * Typeahead Auto Complete
-     */
-     if(jQuery('.typeahead')[0]) {
-
-          var statesArray = ['Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California',
-            'Colorado', 'Connecticut', 'Delaware', 'Florida', 'Georgia', 'Hawaii',
-            'Idaho', 'Illinois', 'Indiana', 'Iowa', 'Kansas', 'Kentucky', 'Louisiana',
-            'Maine', 'Maryland', 'Massachusetts', 'Michigan', 'Minnesota',
-            'Mississippi', 'Missouri', 'Montana', 'Nebraska', 'Nevada', 'New Hampshire',
-            'New Jersey', 'New Mexico', 'New York', 'North Carolina', 'North Dakota',
-            'Ohio', 'Oklahoma', 'Oregon', 'Pennsylvania', 'Rhode Island',
-            'South Carolina', 'South Dakota', 'Tennessee', 'Texas', 'Utah', 'Vermont',
-            'Virginia', 'Washington', 'West Virginia', 'Wisconsin', 'Wyoming'
-          ];
-        var states = new Bloodhound({
-            datumTokenizer: Bloodhound.tokenizers.whitespace,
-            queryTokenizer: Bloodhound.tokenizers.whitespace,
-            local: statesArray
-        });
-
-        jQuery('.typeahead').typeahead({
-            hint: true,
-            highlight: true,
-            minLength: 1
-        },
-        {
-          name: 'states',
-          source: states
-        });
-    }
-
-
-    /*
-     * Wall
-     */
-    if (jQuery('.wcc-toggle')[0]) {
-        var z = '<div class="wcc-inner">' +
-                    '<textarea class="wcci-text auto-size" placeholder="Write Something..."></textarea>' +
-                '</div>' +
-                '<div class="m-t-15">' +
-                    '<button class="btn btn-sm btn-primary">Post</button>' +
-                    '<button class="btn btn-sm btn-link wcc-cencel">Cancel</button>' +
-                '</div>'
-
-
-        jQuery('body').on('click', '.wcc-toggle', function() {
-            jQuery(this).parent().html(z);
-            autosize(jQuery('.auto-size')); //Reload Auto size textarea
-        });
-
-        //Cancel
-        jQuery('body').on('click', '.wcc-cencel', function(e) {
-            e.preventDefault();
-
-            jQuery(this).closest('.wc-comment').find('.wcc-inner').addClass('wcc-toggle').html('Write Something...')
-        });
-
-    }
-
-    /*
-     * Skin Change
-     */
-    jQuery('body').on('click', '[data-skin]', function() {
-        var currentSkin = jQuery('[data-current-skin]').data('current-skin');
-        var skin = jQuery(this).data('skin');
-
-        jQuery('[data-current-skin]').attr('data-current-skin', skin)
-
-    });
 
 });
