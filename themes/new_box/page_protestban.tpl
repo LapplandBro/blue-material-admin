@@ -30,7 +30,7 @@
 					<label for="SteamID" class="col-sm-3 control-label">Ваш SteamID</label>
 					<div class="col-sm-9">
 						<div class="fg-line">
-							<input type="text" size="40" class="form-control" maxlength="64" value="{$steam_id}" name="SteamID" placeholder="Введите данные(обязательное поле)">
+							<input type="text" size="40" class="form-control" maxlength="64" value="{$steam_id}" id="SteamID" name="SteamID" placeholder="Введите данные(обязательное поле)">
 						</div>
 					</div>
 				</div>
@@ -38,7 +38,7 @@
 					<label for="IP" class="col-sm-3 control-label">Ваш IP</label>
 					<div class="col-sm-9">
 						<div class="fg-line">
-							<input type="text" size="40" class="form-control" maxlength="64" value="{$ip}" name="IP" placeholder="Введите данные(обязательное поле)">
+							<input type="text" size="40" class="form-control" maxlength="64" value="{$ip}" id="IP" name="IP" placeholder="Введите данные(обязательное поле)">
 						</div>
 					</div>
 				</div>
@@ -46,7 +46,7 @@
 					<label for="PlayerName" class="col-sm-3 control-label">Ник</label>
 					<div class="col-sm-9">
 						<div class="fg-line">
-							<input type="text" size="40" class="form-control" maxlength="70" value="{$player_name}" name="PlayerName" placeholder="Введите данные(обязательное поле)">
+							<input type="text" size="40" class="form-control" maxlength="70" value="{$player_name}" id="PlayerName" name="PlayerName" placeholder="Введите данные(обязательное поле)">
 						</div>
 					</div>
 				</div>
@@ -54,7 +54,7 @@
 					<label for="BanReason" class="col-sm-3 control-label">Причина</label>
 					<div class="col-sm-9 p-t-10">
 						<div class="fg-line">
-							<textarea name="BanReason" cols="30" rows="5" class="form-control p-t-5" placeholder="От информативности/убедительности зависит Ваш разбан(обязательное поле)" >{$reason}</textarea>
+							<textarea id="BanReason" name="BanReason" cols="30" rows="5" class="form-control p-t-5" placeholder="От информативности/убедительности зависит Ваш разбан(обязательное поле)" >{$reason}</textarea>
 						</div>
 					</div>
 				</div>
@@ -62,7 +62,7 @@
 					<label for="EmailAddr" class="col-sm-3 control-label">Ваш Email</label>
 					<div class="col-sm-9">
 						<div class="fg-line">
-							<input type="text" size="40" class="form-control" maxlength="70" value="{$player_email|escape}" name="EmailAddr" placeholder="Введите данные(обязательное поле)">
+							<input type="text" size="40" class="form-control" maxlength="70" value="{$player_email|escape}" id="EmailAddr" name="EmailAddr" placeholder="Введите данные(обязательное поле)">
 						</div>
 					</div>
 				</div>
