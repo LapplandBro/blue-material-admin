@@ -4,7 +4,7 @@
 
 <img width="1921" height="946" alt="Blue Material Admin" src="https://github.com/user-attachments/assets/690db1d7-344c-4724-877a-1f76792c45c7" />
 
-> Target PHP **7.1.33** (на PHP 8.x не рассчитана).
+> Ветка **`php-8.3`**: целевая PHP **8.3.22** (минимум 8.2). Для PHP **7.1.33** бери [`main`](https://github.com/LapplandBro/blue-material-admin/tree/main).
 
 **Topics:** `sourcebans` `sourcemod` `csgo` `cs2` `tf2` `php` `moderation` `material-admin`
 
@@ -101,9 +101,9 @@ Blue Material Admin — тёмный Firewatch-стиль, свой логоти
 
 | | Минимум | Рекомендуется |
 |---|---|---|
-| PHP | 7.1 | **7.1.33** (на 8.x не рассчитана) |
+| PHP | **8.2** | **8.3.22** (эта ветка) |
 | MySQL / MariaDB | 5.0 | 5.5+ / 10.x |
-| Расширения | mysqli, bcmath, xml, json, mbstring, openssl, curl | gd, gmp |
+| Расширения | mysqli, bcmath, xml, json, mbstring, openssl, curl | gd, gmp (или 64-bit PHP) |
 
 Нужны права на запись: `demos/`, `themes_c/`, `data/`, `config.php` (или корень сайта).
 
