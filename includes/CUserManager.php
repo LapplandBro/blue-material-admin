@@ -305,13 +305,13 @@ class CUserManager
 		{
 			sb_set_auth_cookie("aid", $aid, time()+LOGIN_COOKIE_LIFETIME);
 			sb_set_auth_cookie("password", $stored, time()+LOGIN_COOKIE_LIFETIME);
-			setcookie("user", isset($_SESSION['user']['user'])?$_SESSION['user']['user']:null, time()+LOGIN_COOKIE_LIFETIME, COOKIE_PATH, COOKIE_DOMAIN, COOKIE_SECURE, true);
+			setcookie("user", isset($_SESSION['user']['user'])?(string)$_SESSION['user']['user']:'', time()+LOGIN_COOKIE_LIFETIME, COOKIE_PATH, COOKIE_DOMAIN, COOKIE_SECURE, true);
 		}
 		else
 		{
 			sb_set_auth_cookie("aid", $aid, 0);
 			sb_set_auth_cookie("password", $stored, 0);
-			setcookie("user", isset($_SESSION['user']['user'])?$_SESSION['user']['user']:null, 0, COOKIE_PATH, COOKIE_DOMAIN, COOKIE_SECURE, true);
+			setcookie("user", isset($_SESSION['user']['user'])?(string)$_SESSION['user']['user']:'', 0, COOKIE_PATH, COOKIE_DOMAIN, COOKIE_SECURE, true);
 		}
 		return true;
 	}

@@ -548,7 +548,7 @@ function _adodb_pageexecute_all_rows(&$zthis, $sql, $nrows, $page,
 	return $rsreturn;
 }
 
-// Iván Oliva version
+// IvГЎn Oliva version
 function _adodb_pageexecute_no_last_page(&$zthis, $sql, $nrows, $page, $inputarr=false, $secs2cache=0)
 {
 
@@ -1069,7 +1069,7 @@ function _adodb_column_sql(&$zthis, $action, $type, $fname, $fnameq, $arrFields,
 		case "I":
 		case "R":
 		    $val = $arrFields[$fname];
-			if (!is_numeric($val)) $val = (integer) $val;
+			if (!is_numeric($val)) $val = (int) $val;
 		    break;
 
 		default:

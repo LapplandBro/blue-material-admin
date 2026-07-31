@@ -26,7 +26,7 @@ define('ADODB_DB2OCI',1);
 function _colontrack($p)
 {
 global $_COLONARR,$_COLONSZ;
-	$v = (integer) substr($p,1);
+	$v = (int) substr($p,1);
 	if ($v > $_COLONSZ) return $p;
 	$_COLONARR[] = $v;
 	return '?';
@@ -121,7 +121,7 @@ function _colonparser($sql,$arr)
 					$ch2 = $at < $lensql ? $sql[$at] : '';
 				} while ('0' <= $ch && $ch <= '9');
 				#echo "$n $arrsize ] ";
-				$n = (integer) $n;
+				$n = (int) $n;
 				if ($n < $arrsize) {
 					$sql2 .= substr($sql,$nprev,$nat-$nprev-1).'?';
 					$nprev = $at-1;

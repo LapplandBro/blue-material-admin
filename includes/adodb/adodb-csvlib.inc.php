@@ -138,7 +138,7 @@ $ADODB_INCLUDED_CSV = 1;
 					$rs->EOF = true;
 					$rs->_numOfFields = 0;
 					$rs->sql = urldecode($meta[2]);
-					$rs->affectedrows = (integer)$meta[3];
+					$rs->affectedrows = (int)$meta[3];
 					$rs->insertid = $meta[4];
 					return $rs;
 				}
@@ -152,7 +152,7 @@ $ADODB_INCLUDED_CSV = 1;
 			# +0 sec after timeout, give processes 100% chance of timing out
 				if (sizeof($meta) > 1) {
 					if($timeout >0){
-						$tdiff = (integer)( $meta[1]+$timeout - time());
+						$tdiff = (int)( $meta[1]+$timeout - time());
 						if ($tdiff <= 2) {
 							switch($tdiff) {
 							case 4:
@@ -252,7 +252,7 @@ $ADODB_INCLUDED_CSV = 1;
 		//var_dump($arr);
 		if (!is_array($arr)) {
 			$err = "Recordset had unexpected EOF (in serialized recordset)";
-			if (get_magic_quotes_runtime()) $err .= ". Magic Quotes Runtime should be disabled!";
+			if (function_exists('get_magic_quotes_runtime') && get_magic_quotes_runtime()) $err .= ". Magic Quotes Runtime should be disabled!";
 			return $false;
 		}
 		$rs = new $rsclass();

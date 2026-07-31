@@ -248,7 +248,7 @@ class ADODB_ado extends ADOConnection {
 			$oCmd->CommandText = $sql;
 			$oCmd->CommandType = 1;
 
-			while(list(, $val) = each($inputarr)) {
+			foreach ($inputarr as $val) {
 				$type = gettype($val);
 				$len=strlen($val);
 				if ($type == 'boolean')
@@ -446,7 +446,7 @@ class ADORecordSet_ado extends ADORecordSet {
 		//	$rs->AbsolutePosition->$row-2;
 		//	return true;
 		if ($this->_currentRow > $row) return false;
-		@$rs->Move((integer)$row - $this->_currentRow-1); //adBookmarkFirst
+		@$rs->Move((int)$row - $this->_currentRow-1); //adBookmarkFirst
 		return true;
 	}
 

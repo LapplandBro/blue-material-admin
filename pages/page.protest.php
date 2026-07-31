@@ -44,17 +44,14 @@ if (!isset($_POST['subprotest']) || $_POST['subprotest'] != 1)
 else
 {
 	$Type = (int)$_POST['Type'];
-	$SteamID = htmlspecialchars($_POST['SteamID']);
-	$IP = htmlspecialchars($_POST['IP']);
-	$PlayerName = htmlspecialchars($_POST['PlayerName']);
-	$UnbanReason = htmlspecialchars($_POST['BanReason']);
-	$Email = htmlspecialchars($_POST['EmailAddr']);
+	$SteamID = htmlspecialchars((string)($_POST['SteamID'] ?? ''));
+	$IP = htmlspecialchars((string)($_POST['IP'] ?? ''));
+	$PlayerName = htmlspecialchars((string)($_POST['PlayerName'] ?? ''));
+	$UnbanReason = htmlspecialchars((string)($_POST['BanReason'] ?? ''));
+	$Email = htmlspecialchars((string)($_POST['EmailAddr'] ?? ''));
 	$validsubmit = true;
 	$errors = "";
 	$BanId = -1;
-
-	if(get_magic_quotes_gpc())
-		$UnbanReason = stripslashes($UnbanReason);
 
 	if($Type == 0 && !validate_steam($SteamID))
 	{

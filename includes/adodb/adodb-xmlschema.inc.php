@@ -1303,8 +1303,8 @@ class adoSchema {
 	*/
 	function __construct( $db ) {
 		// Initialize the environment
-		$this->mgq = get_magic_quotes_runtime();
-		ini_set("magic_quotes_runtime", 0);
+		$this->mgq = function_exists('get_magic_quotes_runtime') ? get_magic_quotes_runtime() : 0;
+		@ini_set("magic_quotes_runtime", 0);
 		#set_magic_quotes_runtime(0);
 
 		$this->db = $db;

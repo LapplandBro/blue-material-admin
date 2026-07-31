@@ -115,7 +115,7 @@ define('SB_SALT', 'SourceBans');
 
 /**
  * Безопасно выставляет авторизационные куки (aid/password) с флагами
- * HttpOnly, Secure и SameSite=Lax (PHP 7.1: SameSite через суффикс path).
+ * HttpOnly, Secure и SameSite=Lax (PHP 7.3+: массив параметров setcookie).
  */
 function sb_set_auth_cookie($name, $value, $expire)
 {
@@ -161,7 +161,7 @@ function sb_session_start()
 			'samesite' => 'Lax'
 		));
 	} else {
-		// PHP 7.1: SameSite передаётся через path (поддерживается современными браузерами).
+		// Legacy fallback: SameSite через path (до PHP 7.3).
 		session_set_cookie_params(0, '/; samesite=Lax', $domain, $secure, true);
 	}
 	session_start();

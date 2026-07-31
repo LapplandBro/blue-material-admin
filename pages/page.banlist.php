@@ -96,7 +96,7 @@ if (isset($_GET['a']) && $_GET['a'] == "unban" && isset($_GET['id']))
 			}
 			continue;
 		}
-		$unbanReason = htmlspecialchars(trim($_GET['ureason']));
+		$unbanReason = htmlspecialchars(trim((string)($_GET['ureason'] ?? '')));
 		$ins = $GLOBALS['db']->Execute("UPDATE `".DB_PREFIX."_bans` SET
 										`RemovedBy` = ?,
 										`RemoveType` = 'U',
@@ -222,7 +222,7 @@ if(isset($_SESSION["hideinactive"])) {
 
 if (isset($_GET['searchText']))
 {
-	$search = '%'.trim($_GET['searchText']).'%';
+	$search = '%'.trim((string)($_GET['searchText'] ?? '')).'%';
     
     // disable ip search if hiding player ips
     $search_ips = "";
@@ -276,8 +276,8 @@ elseif(!isset($_GET['advSearch']))
 $advcrit = array();
 if(isset($_GET['advSearch']))
 {
-	$value = trim($_GET['advSearch']);
-	$type = $_GET['advType'];
+	$value = trim((string)($_GET['advSearch'] ?? ''));
+	$type = $_GET['advType'] ?? '';
 	switch($type)
 	{
 		case "name":

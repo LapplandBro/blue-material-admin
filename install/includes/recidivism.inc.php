@@ -1,7 +1,7 @@
 <?php
 /**
  * Схема рецидивизма (sb_recid_*) — общая для install/ и install_recidivism.php.
- * PHP 7.1+, безопасно при повторном запуске (IF NOT EXISTS / INSERT IGNORE).
+ * PHP 8.5+, безопасно при повторном запуске (IF NOT EXISTS / INSERT IGNORE).
  */
 if (!defined('IN_SB') && !defined('IN_INSTALL')) {
 	echo 'You should not be here. Only follow links!';

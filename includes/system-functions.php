@@ -1243,7 +1243,7 @@ function RedirectJS($url)
 
 function RemoveCode($text)
 {
-	return htmlspecialchars(strip_tags($text));
+	return htmlspecialchars(strip_tags((string)$text), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 }
 
 /** Нормализация ключа ваучера → lowercase hex без разделителей. */

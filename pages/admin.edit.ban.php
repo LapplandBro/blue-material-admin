@@ -78,7 +78,7 @@ $errorScript = "";
 
 if(isset($_POST['name']))
 {
-	$_POST['steam'] = trim($_POST['steam']);
+	$_POST['steam'] = trim((string)($_POST['steam'] ?? ''));
 	$_POST['type'] = (int)$_POST['type'];
 	$demo_linker = $_POST['demo_link'];
 	if($demo_linker != "")
@@ -192,10 +192,10 @@ if(isset($_POST['name']))
 		}
 	}
 	
-	$_POST['name'] = RemoveCode($_POST['name']);
-	$_POST['ip'] = preg_replace('#[^\d\.]#', '', $_POST['ip']);//strip ip of all but numbers and dots
-	$_POST['dname'] = RemoveCode($_POST['dname']);
-	$reason = RemoveCode(trim($_POST['listReason'] == "other"?$_POST['txtReason']:$_POST['listReason']));
+	$_POST['name'] = RemoveCode($_POST['name'] ?? '');
+	$_POST['ip'] = preg_replace('#[^\d\.]#', '', (string)($_POST['ip'] ?? ''));//strip ip of all but numbers and dots
+	$_POST['dname'] = RemoveCode($_POST['dname'] ?? '');
+	$reason = RemoveCode(trim((($_POST['listReason'] ?? '') == "other" ? ($_POST['txtReason'] ?? '') : ($_POST['listReason'] ?? ''))));
 	
 	if(!$_POST['banlength'])
 		$_POST['banlength'] = 0;

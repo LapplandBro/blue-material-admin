@@ -2,7 +2,7 @@
 /**
  * Генерация одноразового remove_setup.php в корне сайта.
  * Удаляет install/, updater/, install_recidivism.* и себя.
- * PHP 7.1+.
+ * PHP 8.5+.
  */
 if (!defined('IN_SB') && !defined('IN_INSTALL')) {
 	echo 'You should not be here. Only follow links!';

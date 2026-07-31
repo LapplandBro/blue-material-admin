@@ -5,7 +5,7 @@
  * CLI:  php install/dry_run.php
  * Web:  /install/dry_run.php  (только с ?key=install-dry-run)
  *
- * Цель: PHP 7.1+ совместимость, структура файлов, генерация config/SQL.
+ * Цель: PHP 8.5+ совместимость, структура файлов, генерация config/SQL.
  */
 error_reporting(E_ALL);
 ini_set('display_errors', '1');
@@ -46,10 +46,10 @@ function dry_info($msg) {
 }
 
 dry_info('PHP ' . PHP_VERSION . ' (' . PHP_OS . ')');
-if (version_compare(PHP_VERSION, '7.1', '>='))
-	dry_ok('PHP >= 7.1');
+if (version_compare(PHP_VERSION, '8.5', '>='))
+	dry_ok('PHP >= 8.5');
 else
-	dry_fail('Нужен PHP >= 7.1, сейчас ' . PHP_VERSION);
+	dry_fail('Нужен PHP >= 8.5, сейчас ' . PHP_VERSION);
 
 // --- required files ---
 $required = array(
@@ -139,12 +139,10 @@ foreach ($it as $file) {
 }
 
 $badSyntax = array(
-	'/\?\?=/' => '??= (PHP 7.4+)',
-	'/#\[\s*[A-Za-z\\\\]/' => 'Attributes (PHP 8+)',
-	'/(?<![a-zA-Z0-9_])match\s*\(/' => 'match (PHP 8+)',
-	'/(?<![a-zA-Z0-9_])fn\s*\(/' => 'arrow fn (PHP 7.4+)',
-	'/\bpublic\s+(string|int|float|bool|array|object)\s+\$/' => 'typed properties (PHP 7.4+)',
-	'/^\s*enum\s+[A-Za-z_]/m' => 'enum (PHP 8.1+)',
+	// Removed APIs that fatally break on PHP 8+
+	'/\bcreate_function\s*\(/' => 'create_function() (removed in PHP 8)',
+	'/(?<![a-zA-Z0-9_])each\s*\(/' => 'each() (removed in PHP 8)',
+	'/\bget_magic_quotes_gpc\s*\(/' => 'get_magic_quotes_gpc() (removed in PHP 8)',
 );
 
 foreach ($phpFiles as $path) {

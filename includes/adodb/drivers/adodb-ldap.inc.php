@@ -99,13 +99,13 @@ class ADODB_ldap extends ADOConnection {
 /*
 	Valid Domain Values for LDAP Options:
 
-	LDAP_OPT_DEREF (integer)
-	LDAP_OPT_SIZELIMIT (integer)
-	LDAP_OPT_TIMELIMIT (integer)
-	LDAP_OPT_PROTOCOL_VERSION (integer)
-	LDAP_OPT_ERROR_NUMBER (integer)
-	LDAP_OPT_REFERRALS (boolean)
-	LDAP_OPT_RESTART (boolean)
+	LDAP_OPT_DEREF (int)
+	LDAP_OPT_SIZELIMIT (int)
+	LDAP_OPT_TIMELIMIT (int)
+	LDAP_OPT_PROTOCOL_VERSION (int)
+	LDAP_OPT_ERROR_NUMBER (int)
+	LDAP_OPT_REFERRALS (bool)
+	LDAP_OPT_RESTART (bool)
 	LDAP_OPT_HOST_NAME (string)
 	LDAP_OPT_ERROR_STRING (string)
 	LDAP_OPT_MATCHED_DN (string)

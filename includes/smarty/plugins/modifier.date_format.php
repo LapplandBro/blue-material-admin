@@ -9,15 +9,16 @@
  * Include the {@link shared.make_timestamp.php} plugin
  */
 require_once $smarty->_get_plugin_filepath('shared', 'make_timestamp');
+require_once $smarty->_get_plugin_filepath('shared', 'strftime_compat');
 /**
  * Smarty date_format modifier plugin
  *
  * Type:     modifier<br>
  * Name:     date_format<br>
- * Purpose:  format datestamps via strftime<br>
+ * Purpose:  format datestamps (strftime-compatible format via date())<br>
  * Input:<br>
  *         - string: input date string
- *         - format: strftime format for output
+ *         - format: strftime-style format for output
  *         - default_date: default date if $string is empty
  * @link http://smarty.php.net/manual/en/language.modifier.date.format.php
  *          date_format (Smarty online manual)
@@ -37,20 +38,7 @@ function smarty_modifier_date_format($string, $format = '%b %e, %Y', $default_da
     } else {
         return;
     }
-    if (DIRECTORY_SEPARATOR == '\\') {
-        $_win_from = array('%D',       '%h', '%n', '%r',          '%R',    '%t', '%T');
-        $_win_to   = array('%m/%d/%y', '%b', "\n", '%I:%M:%S %p', '%H:%M', "\t", '%H:%M:%S');
-        if (strpos($format, '%e') !== false) {
-            $_win_from[] = '%e';
-            $_win_to[]   = sprintf('%\' 2d', date('j', $timestamp));
-        }
-        if (strpos($format, '%l') !== false) {
-            $_win_from[] = '%l';
-            $_win_to[]   = sprintf('%\' 2d', date('h', $timestamp));
-        }
-        $format = str_replace($_win_from, $_win_to, $format);
-    }
-    return strftime($format, $timestamp);
+    return smarty_strftime_compat($format, $timestamp);
 }
 
 /* vim: set expandtab: */

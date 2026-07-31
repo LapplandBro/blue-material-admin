@@ -67,10 +67,10 @@ $requirements = [
    */
   'Требования PHP' => [
     'Версия PHP'  =>  [
-      'required'    => '7.1',
-      'recommended' => '7.1.33',
+      'required'    => '8.5',
+      'recommended' => '8.5.8',
 
-      'result'      => (version_compare(PHP_VERSION, '7.1') != -1),
+      'result'      => (version_compare(PHP_VERSION, '8.5') != -1),
       /* Так же возможен ключ "is_warning", наличие которого заставляет установщик превратить "ошибку" в "предупреждение", в случае не успешной проверки */
 
       // Если является массивом, то:

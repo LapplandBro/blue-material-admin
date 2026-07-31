@@ -585,14 +585,14 @@ class ADODB_mysql extends ADOConnection {
 	// parameters use PostgreSQL convention, not MySQL
 	function SelectLimit($sql,$nrows=-1,$offset=-1,$inputarr=false,$secs=0)
 	{
-		$offsetStr =($offset>=0) ? ((integer)$offset)."," : '';
+		$offsetStr =($offset>=0) ? ((int)$offset)."," : '';
 		// jason judge, see http://phplens.com/lens/lensforum/msgs.php?id=9220
 		if ($nrows < 0) $nrows = '18446744073709551615';
 
 		if ($secs)
-			$rs = $this->CacheExecute($secs,$sql." LIMIT $offsetStr".((integer)$nrows),$inputarr);
+			$rs = $this->CacheExecute($secs,$sql." LIMIT $offsetStr".((int)$nrows),$inputarr);
 		else
-			$rs = $this->Execute($sql." LIMIT $offsetStr".((integer)$nrows),$inputarr);
+			$rs = $this->Execute($sql." LIMIT $offsetStr".((int)$nrows),$inputarr);
 		return $rs;
 	}
 

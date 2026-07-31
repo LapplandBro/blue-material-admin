@@ -3519,7 +3519,7 @@ function RefreshServer($sid)
 	return $objResponse;
 }
 
-function RehashAdmins_pay($server, $do=0, $card)
+function RehashAdmins_pay($server, $do = 0, $card = '')
 {
 	if (function_exists('sb_rate_limit_hit') && sb_rate_limit_hit('vay4er_rehash', 10, 900)) {
 		exit();

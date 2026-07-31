@@ -60,7 +60,7 @@ $errorScript = "";
 
 if(isset($_POST['name']))
 {
-	$_POST['steam'] = trim($_POST['steam']);
+	$_POST['steam'] = trim((string)($_POST['steam'] ?? ''));
 	$steamResolveErr = '';
 	if ($_POST['steam'] !== '' && function_exists('sb_steam_resolve_to_steamid2'))
 		$_POST['steam'] = sb_steam_resolve_to_steamid2($_POST['steam'], $steamResolveErr);
@@ -130,8 +130,8 @@ if(isset($_POST['name']))
 		}
 	}
 	
-	$_POST['name'] = RemoveCode($_POST['name']);
-	$reason = RemoveCode(trim($_POST['listReason'] == "other"?$_POST['txtReason']:$_POST['listReason']));
+	$_POST['name'] = RemoveCode($_POST['name'] ?? '');
+	$reason = RemoveCode(trim((($_POST['listReason'] ?? '') == "other" ? ($_POST['txtReason'] ?? '') : ($_POST['listReason'] ?? ''))));
 	
 	if(!$_POST['banlength'])
 		$_POST['banlength'] = 0;

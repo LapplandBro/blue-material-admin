@@ -4,7 +4,7 @@
 
 <img width="1921" height="946" alt="Blue Material Admin" src="https://github.com/user-attachments/assets/690db1d7-344c-4724-877a-1f76792c45c7" />
 
-> Target PHP **7.1.33** (на PHP 8.x не рассчитана).
+> Target PHP **8.5.8**.
 
 **Topics:** `sourcebans` `sourcemod` `csgo` `cs2` `tf2` `php` `moderation` `material-admin`
 
@@ -101,7 +101,7 @@ Blue Material Admin — тёмный Firewatch-стиль, свой логоти
 
 | | Минимум | Рекомендуется |
 |---|---|---|
-| PHP | 7.1 | **7.1.33** (на 8.x не рассчитана) |
+| PHP | 8.5 | **8.5.8** |
 | MySQL / MariaDB | 5.0 | 5.5+ / 10.x |
 | Расширения | mysqli, bcmath, xml, json, mbstring, openssl, curl | gd, gmp |
 
@@ -206,7 +206,7 @@ ZIP с ветки `main`: https://github.com/LapplandBro/blue-material-admin
 
 Обычное обновление файлов **не требует** SQL. Миграции — только если явно написано в релизе.
 
-Целевая PHP: **7.1.33**. На PHP 8.x панель не рассчитана — это не «баг обновления».
+Целевая PHP: **8.5.8** (минимум **8.5**).
 
 ---
 

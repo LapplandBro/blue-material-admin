@@ -11,7 +11,7 @@ class SessionManager
         // even over HTTPS.
         $secure = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || ((int)$_SERVER['SERVER_PORT'] === 443);
 
-        // PHP 7.1: SameSite через path; 7.3+: массив параметров.
+        // PHP 7.3+: SameSite через массив параметров; иначе — суффикс path.
         if (defined('PHP_VERSION_ID') && PHP_VERSION_ID >= 70300) {
             session_set_cookie_params(array(
                 'lifetime' => $expires,
