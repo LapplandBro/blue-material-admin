@@ -3583,6 +3583,10 @@ select.page-changer:focus {
   white-space: nowrap;
 }
 
+.parsec-td-actions .admin-actions {
+  justify-content: flex-end;
+}
+
 .parsec-pager {
   color: #7ea8d4;
 }

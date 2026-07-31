@@ -104,7 +104,7 @@ if (!defined('DEVELOPER_MODE') && !defined('IS_UPDATE') && file_exists(ROOT . '/
 // ---------------------------------------------------
 
 if(!defined('SB_VERSION')){
-	define('SB_VERSION', '2.0.5');
+	define('SB_VERSION', '2.0.6');
 }
 define('LOGIN_COOKIE_LIFETIME', (60*60*24*7)*2);
 define('COOKIE_PATH', '/');

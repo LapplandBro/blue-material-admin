@@ -266,11 +266,11 @@
 				<td class="text-right parsec-td-points">{$la.points_display|escape:'html'}</td>
 				<td>{if $la.active_ban}<span class="parsec-badge parsec-badge-danger">забанен</span>{else}<span class="parsec-muted">нет</span>{/if}</td>
 				<td class="text-right parsec-td-actions">
-					<a href="{$la.parsec_url}">Твинки</a>
-					<span class="parsec-sep">·</span>
-					<a href="{$la.view_url}">Нарушения</a>
-					<span class="parsec-sep">·</span>
-					<a href="{$la.banlist_url}">Баны</a>
+					<span class="admin-actions">
+						<a class="admin-action" href="{$la.parsec_url}">Твинки</a>
+						<a class="admin-action" href="{$la.view_url}">Нарушения</a>
+						<a class="admin-action" href="{$la.banlist_url}">Баны</a>
+					</span>
 				</td>
 			</tr>
 			{/foreach}

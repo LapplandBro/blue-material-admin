@@ -64,6 +64,20 @@ if (!$useDefault && !preg_match('/^[a-zA-Z0-9_]+$/', $pRaw)) {
 			Header("Location: index.php");
 			exit;
 		case "admin":
+			// Ранняя проверка c= — до BuildBreadcrumbs/UI, иначе unknown /admin/x
+			// раньше мог «съесть» $_GET['c'] и показать хаб вместо 404.
+			$adminCEarly = isset($_GET['c']) ? trim((string)$_GET['c']) : '';
+			if ($adminCEarly !== '') {
+				$adminKnownEarly = array(
+					'groups', 'admins', 'servers', 'bans', 'comms', 'recidivism',
+					'parsec', 'mods', 'settings', 'pay_card', 'menu',
+				);
+				if (!preg_match('/^[a-zA-Z0-9_]+$/', $adminCEarly) || !in_array($adminCEarly, $adminKnownEarly, true)) {
+					$pageNotFound = true;
+					break;
+				}
+				$_GET['c'] = $adminCEarly;
+			}
 			$page = INCLUDES_PATH . "/admin.php";
 			break;
 		case "submit":

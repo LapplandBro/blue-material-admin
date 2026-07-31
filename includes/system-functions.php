@@ -748,7 +748,10 @@ function BuildBreadcrumbs()
 				$cat = "Управление меню";
 				break;
 			default:
-				unset($_GET['c']);
+				// Не трогаем $_GET['c']: иначе unknown /admin/hooy сбрасывается в хаб
+				// до includes/admin.php, и проверка known-разделов не срабатывает.
+				$cat = '';
+				break;
 		}
 	}
 
