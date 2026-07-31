@@ -35,7 +35,7 @@
 					{/if}
 					<input type="hidden" name="page" id="page" value="{$page}">
 					{sb_button text="$commenttype комментарий" onclick="ProcessComment();" class="m-t-15 btn-primary btn-sm" id="acom" submit=false}&nbsp;
-					{sb_button text="Назад" onclick="window.location.href='commslist'" class="m-t-15 btn btn-sm" id="aback"}
+					{sb_button text="Назад" onclick="sbGo('commslist')" class="m-t-15 btn btn-sm" id="aback"}
 				</li>
 			</ul>
 		</div>

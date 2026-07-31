@@ -15,6 +15,6 @@
 		</div>
 	</div>
 	<div class="card-body card-padding text-center admin-manage-footer">
-		{sb_button text="Назад" onclick="window.location.href='index.php?p=admin&c=servers'" icon="<i class='zmdi zmdi-undo'></i>" class="bgm-bluegray btn-icon-text" id="aconf" submit=false}
+		{sb_button text="Назад" onclick="sbGo('index.php?p=admin&c=servers')" icon="<i class='zmdi zmdi-undo'></i>" class="bgm-bluegray btn-icon-text" id="aconf" submit=false}
 	</div>
 </div>

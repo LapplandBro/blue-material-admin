@@ -181,7 +181,7 @@
 			    <input type="hidden" name="dname" id="dname" value="" /> 
 				-{sb_button text="Сохранить" icon="<i class='zmdi zmdi-check-all'></i>" class="bgm-blue btn-icon-text" id="editban" submit=true}-
 			    &nbsp;
-			    -{sb_button text="Назад" onclick="window.location.href='index.php?p=admin&c=bans'" icon="<i class='zmdi zmdi-undo'></i>" class="bgm-lightblue btn-icon-text" id="back" submit=false}-
+			    -{sb_button text="Назад" onclick="sbGo('admin/bans')" icon="<i class='zmdi zmdi-undo'></i>" class="bgm-lightblue btn-icon-text" id="back" submit=false}-
 			</div>
 			<script type="text/javascript">
 				var did = 0;

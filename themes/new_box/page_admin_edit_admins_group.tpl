@@ -41,7 +41,7 @@
 			<div class="card-body card-padding text-center admin-manage-footer">
 				{sb_button text="Сохранить" icon="<i class='zmdi zmdi-check-all'></i>" class="bgm-blue btn-icon-text" id="agroups" submit=true}
 				&nbsp;
-				{sb_button text="Назад" onclick="window.location.href='index.php?p=admin&c=admins'" icon="<i class='zmdi zmdi-undo'></i>" class="bgm-bluegray btn-icon-text" id="aback"}
+				{sb_button text="Назад" onclick="sbGo('admin/admins')" icon="<i class='zmdi zmdi-undo'></i>" class="bgm-bluegray btn-icon-text" id="aback"}
 			</div>
 			{$server_script}
 		</div>

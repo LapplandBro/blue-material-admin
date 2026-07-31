@@ -63,8 +63,8 @@
 																<h4 class="modal-title">{$web_admin.user}</h4>
 															</div>
 															<div class="modal-body">
-																<p class="m-b-10"><button type="button" class="btn btn-link btn-block" data-dismiss="modal" onclick='location.href="index.php?p=admin&amp;c=admins&amp;o=editgroup&amp;id={$web_admin.aid}";'>Изменить группы</button></p>
-																<p class="m-b-10"><button type="button" class="btn btn-link btn-block" data-dismiss="modal" onclick='location.href="index.php?p=admin&amp;c=admins&amp;o=editgroup&amp;id={$web_admin.aid}&amp;wg=";'>Исключить из группы</button></p>
+																<p class="m-b-10"><button type="button" class="btn btn-link btn-block" data-dismiss="modal" onclick='sbGo("index.php?p=admin&amp;c=admins&amp;o=editgroup&amp;id={$web_admin.aid}");'>Изменить группы</button></p>
+																<p class="m-b-10"><button type="button" class="btn btn-link btn-block" data-dismiss="modal" onclick='sbGo("index.php?p=admin&amp;c=admins&amp;o=editgroup&amp;id={$web_admin.aid}&amp;wg=");'>Исключить из группы</button></p>
 															</div>
 														</div>
 													</div>
@@ -135,8 +135,8 @@
 																<h4 class="modal-title">{$server_admin.user}</h4>
 															</div>
 															<div class="modal-body">
-																<p class="m-b-10"><button type="button" class="btn btn-link btn-block" data-dismiss="modal" onclick='location.href="index.php?p=admin&amp;c=admins&amp;o=editgroup&amp;id={$server_admin.aid}";'>Изменить группы</button></p>
-																<p class="m-b-10"><button type="button" class="btn btn-link btn-block" data-dismiss="modal" onclick='location.href="index.php?p=admin&amp;c=admins&amp;o=editgroup&amp;id={$server_admin.aid}&amp;sg=";'>Исключить из группы</button></p>
+																<p class="m-b-10"><button type="button" class="btn btn-link btn-block" data-dismiss="modal" onclick='sbGo("index.php?p=admin&amp;c=admins&amp;o=editgroup&amp;id={$server_admin.aid}");'>Изменить группы</button></p>
+																<p class="m-b-10"><button type="button" class="btn btn-link btn-block" data-dismiss="modal" onclick='sbGo("index.php?p=admin&amp;c=admins&amp;o=editgroup&amp;id={$server_admin.aid}&amp;sg=");'>Исключить из группы</button></p>
 															</div>
 														</div>
 													</div>
