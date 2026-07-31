@@ -2343,12 +2343,19 @@ function AddBan($nickname, $type, $steam, $ip, $length, $dfile, $dname, $reason,
 	}
 	
 	$steam = trim($steam);
+	$steamResolveErr = '';
 	if ($steam !== '' && function_exists('sb_steam_resolve_to_steamid2'))
-		$steam = sb_steam_resolve_to_steamid2($steam);
+		$steam = sb_steam_resolve_to_steamid2($steam, $steamResolveErr);
 	
 	$error = 0;
 	// If they didnt type a steamid
-	if(empty($steam) && $type == 0)
+	if ($steamResolveErr !== '' && $type == 0)
+	{
+		$error++;
+		$objResponse->addAssign("steam.msg", "innerHTML", $steamResolveErr);
+		$objResponse->addScript("$('steam.msg').setStyle('display', 'block');");
+	}
+	else if(empty($steam) && $type == 0)
 	{
 		$error++;
 		$objResponse->addAssign("steam.msg", "innerHTML", "Введите Steam ID, Community ID или ссылку на профиль");
@@ -4308,12 +4315,19 @@ function AddBlock($nickname, $type, $steam, $length, $reason)
 	}
 	
 	$steam = trim($steam);
+	$steamResolveErr = '';
 	if ($steam !== '' && function_exists('sb_steam_resolve_to_steamid2'))
-		$steam = sb_steam_resolve_to_steamid2($steam);
+		$steam = sb_steam_resolve_to_steamid2($steam, $steamResolveErr);
 	
 	$error = 0;
 	// If they didnt type a steamid
-	if(empty($steam))
+	if ($steamResolveErr !== '')
+	{
+		$error++;
+		$objResponse->addAssign("steam.msg", "innerHTML", $steamResolveErr);
+		$objResponse->addScript("$('steam.msg').setStyle('display', 'block');");
+	}
+	else if(empty($steam))
 	{
 		$error++;
 		$objResponse->addAssign("steam.msg", "innerHTML", "Введите Steam ID, Community ID или ссылку на профиль");

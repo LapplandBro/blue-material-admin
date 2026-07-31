@@ -1646,6 +1646,24 @@ function PageDie()
 	die();
 }
 
+/** Отдать статическую errors/404.html с HTTP 404 и завершить скрипт. */
+function sb_send_static_404()
+{
+	while (ob_get_level() > 0)
+		@ob_end_clean();
+	http_response_code(404);
+	header('Content-Type: text/html; charset=utf-8');
+	header('X-Robots-Tag: noindex, nofollow');
+	$path = (defined('ROOT') ? ROOT : dirname(__DIR__) . '/') . 'errors/404.html';
+	if (is_readable($path)) {
+		readfile($path);
+		exit;
+	}
+	echo '<!DOCTYPE html><html lang="ru"><head><meta charset="utf-8"><title>404</title></head>'
+		. '<body><h1>404</h1><p>Страница не найдена. <a href="index.php">На главную</a></p></body></html>';
+	exit;
+}
+
 /**
  * PRG: действие списка (unmute/ungag/delete) → один редирект + flash.
  * Убирает двойную перезагрузку (страница с ?a=… и потом ещё ShowBox-редирект).
@@ -2634,9 +2652,12 @@ function sb_steam_enrich_list_profiles(array $items)
 /**
  * Разобрать ввод: STEAM_, Steam64, [U:1:…], URL /profiles/… или /id/vanity → STEAM_0:X:Y.
  * Если не распознано — вернуть исходную строку (дальше сработает обычная валидация).
+ * @param string $input
+ * @param string|null $error текст ошибки (по ссылке), если vanity не удалось разрешить
  */
-function sb_steam_resolve_to_steamid2($input)
+function sb_steam_resolve_to_steamid2($input, &$error = null)
 {
+	$error = '';
 	$input = trim((string)$input);
 	if ($input === '')
 		return '';
@@ -2644,19 +2665,31 @@ function sb_steam_resolve_to_steamid2($input)
 	// https://steamcommunity.com/id/thatsember
 	if (preg_match('#(?:https?://)?(?:www\.)?steamcommunity\.com/id/([A-Za-z0-9_-]+)/?#i', $input, $m)) {
 		$vanity = $m[1];
-		if (defined('STEAMAPIKEY') && STEAMAPIKEY !== '') {
+		$hasKey = defined('STEAMAPIKEY') && is_string(STEAMAPIKEY) && STEAMAPIKEY !== '';
+
+		if ($hasKey) {
 			$api = 'https://api.steampowered.com/ISteamUser/ResolveVanityURL/v0001/?key='
 				. rawurlencode(STEAMAPIKEY) . '&vanityurl=' . rawurlencode($vanity);
 			$j = @json_decode(@file_get_contents($api));
 			if (!empty($j->response->success) && (int)$j->response->success === 1 && !empty($j->response->steamid))
 				return FriendIDToSteamID((string)$j->response->steamid);
 		}
+
+		// запасной разбор без ключа (XML профиля; часто ломается)
 		if (function_exists('GetFriendIDFromCommunityID')) {
 			$fid = GetFriendIDFromCommunityID($vanity);
 			if ($fid)
 				return FriendIDToSteamID((string)$fid);
 		}
-		return $input;
+
+		if (!$hasKey) {
+			$error = 'Ссылки вида steamcommunity.com/id/... требуют STEAMAPIKEY в config.php. '
+				. 'Либо вставьте Steam64 / STEAM_0:X:Y / ссылку /profiles/7656…';
+		} else {
+			$error = 'Не удалось распознать ссылку /id/' . htmlspecialchars($vanity, ENT_QUOTES, 'UTF-8')
+				. '. Проверьте ник и STEAMAPIKEY, либо вставьте Steam64 / STEAM_0:X:Y.';
+		}
+		return '';
 	}
 
 	// https://steamcommunity.com/profiles/7656119…

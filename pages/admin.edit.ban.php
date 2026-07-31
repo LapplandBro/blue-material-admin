@@ -87,10 +87,17 @@ if(isset($_POST['name']))
 
 	// Form Validation
 	$error = 0;
+	$steamResolveErr = '';
 	if (!empty($_POST['steam']) && function_exists('sb_steam_resolve_to_steamid2'))
-		$_POST['steam'] = sb_steam_resolve_to_steamid2($_POST['steam']);
+		$_POST['steam'] = sb_steam_resolve_to_steamid2($_POST['steam'], $steamResolveErr);
 	// If they didn't type a steamid
-	if(empty($_POST['steam']) && $_POST['type'] == 0)
+	if ($steamResolveErr !== '' && $_POST['type'] == 0)
+	{
+		$error++;
+		$errorScript .= "$('steam.msg').innerHTML = " . json_encode($steamResolveErr, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) . ";";
+		$errorScript .= "$('steam.msg').setStyle('display', 'block');";
+	}
+	else if(empty($_POST['steam']) && $_POST['type'] == 0)
 	{
 		$error++;
 		$errorScript .= "$('steam.msg').innerHTML = 'Введите Steam ID, Community ID или ссылку на профиль';";

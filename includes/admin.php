@@ -27,13 +27,27 @@
 
 global $userbank;
 
-if(!isset($_GET['c']))
+$adminC = isset($_GET['c']) ? trim((string)$_GET['c']) : '';
+$adminKnown = array(
+	'groups', 'admins', 'servers', 'bans', 'comms', 'recidivism',
+	'parsec', 'mods', 'settings', 'pay_card', 'menu',
+);
+
+if ($adminC === '')
 {
 	include TEMPLATES_PATH . "/page.admin.php";
 	RewritePageTitle("Администрирование");
 }
+elseif (!preg_match('/^[a-zA-Z0-9_]+$/', $adminC) || !in_array($adminC, $adminKnown, true))
+{
+	if (function_exists('sb_send_static_404'))
+		sb_send_static_404();
+	http_response_code(404);
+	exit;
+}
 else 
 {
+	$_GET['c'] = $adminC;
 	// ###################[ Admin Groups ]##################################################################
 	if($_GET['c'] == "groups")
 	{
