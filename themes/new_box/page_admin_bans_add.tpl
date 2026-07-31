@@ -31,7 +31,7 @@
 				</div>
 			</div>
 			<div class="form-group m-b-5">
-				<label for="steam" class="col-sm-3 control-label">{help_icon title="Steam ID / Community ID" message="Steam ID или Community ID игрока, которого желаете забанить."} Steam ID / Community ID</label>
+				<label for="steam" class="col-sm-3 control-label">{help_icon title="Steam ID / Community ID" message="Можно: STEAM_0:X:Y, Steam64, [U:1:…], ссылку https://steamcommunity.com/profiles/… или https://steamcommunity.com/id/ник"} Steam ID / ссылка</label>
 				<div class="col-sm-9">
 					<div class="fg-line">
 						<input type="text" TABINDEX=1 class="form-control" id="steam" name="steam" placeholder="Введите данные">

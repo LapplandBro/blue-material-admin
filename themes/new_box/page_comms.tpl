@@ -102,6 +102,9 @@
 							{else}
 								<strong>{$ban.player|escape:'html'|stripslashes}</strong>
 							{/if}
+							{if $ban.steam_profile}
+								<a class="banlist-meta-ico" href="{$ban.steam_profile|escape}" target="_blank" rel="noopener noreferrer" title="Профиль Steam" onclick="event.cancelBubble=true;"><i class="zmdi zmdi-steam"></i></a>
+							{/if}
 							{if $view_comments && $ban.commentdata != "Нет" && $ban.commentdata|@count > 0}
 								<span class="banlist-meta-ico" title="Комментарии">{$ban.commentdata|@count} <i class="zmdi zmdi-comment-text"></i></span>
 							{/if}
@@ -196,6 +199,8 @@
 											<div class="col-sm-8">
 												{if empty($ban.steamid)}
 													<span class="parsec-muted">не указан</span>
+												{elseif $ban.steam_profile}
+													<a href="{$ban.steam_profile|escape}" target="_blank" rel="noopener noreferrer" title="Открыть профиль Steam">{$ban.steamid}</a>
 												{else}
 													{$ban.steamid}
 												{/if}
@@ -206,8 +211,10 @@
 											<div class="col-sm-8">
 												{if empty($ban.steamid)}
 													<span class="parsec-muted">не указан</span>
+												{elseif $ban.steam_profile}
+													<a href="{$ban.steam_profile|escape}" target="_blank" rel="noopener noreferrer" title="Открыть профиль Steam">{$ban.steamid3}</a>
 												{else}
-													<a href="http://steamcommunity.com/profiles/{$ban.steamid3}" target="_blank">{$ban.steamid3}</a>
+													{$ban.steamid3}
 												{/if}
 											</div>
 										</div>
@@ -216,7 +223,14 @@
 										<div class="form-group col-sm-12 m-b-5">
 											<label class="col-sm-4 control-label"><i class="zmdi zmdi-circle-o text-left"></i> Steam Community</label>
 											<div class="col-sm-8">
-												<a href="http://steamcommunity.com/profiles/{$ban.communityid}" target="_blank">{$ban.communityid}</a>
+												{if $ban.steam_profile}
+													<a href="{$ban.steam_profile|escape}" target="_blank" rel="noopener noreferrer" title="Открыть профиль Steam">{$ban.communityid}</a>
+													{if $ban.steam_vanity}
+														· <a href="{$ban.steam_profile|escape}" target="_blank" rel="noopener noreferrer">/id/{$ban.steam_vanity|escape}</a>
+													{/if}
+												{else}
+													{$ban.communityid}
+												{/if}
 											</div>
 										</div>
 										{/if}

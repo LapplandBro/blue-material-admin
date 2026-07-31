@@ -2534,6 +2534,141 @@ function GetCommunityIDFromSteamID2($sid) {
     return bcadd(bcadd('76561197960265728', $parts[1]), bcmul($parts[2], '2'));
 }
 
+/** Нормализация Steam64 (community id). */
+function sb_steam_normalize_community_id($id)
+{
+	$id = preg_replace('/\D+/', '', (string)$id);
+	if ($id !== '' && preg_match('/^7656\d{13}$/', $id))
+		return $id;
+	return '';
+}
+
+/** Fallback-ссылка на профиль: всегда /profiles/STEAM64. */
+function sb_steam_profile_url_fallback($communityid)
+{
+	$c = sb_steam_normalize_community_id($communityid);
+	return ($c !== '') ? ('https://steamcommunity.com/profiles/' . $c) : '';
+}
+
+/**
+ * Батч GetPlayerSummaries → реальные profileurl.
+ * У кого есть custom URL — вернётся https://steamcommunity.com/id/name,
+ * иначе https://steamcommunity.com/profiles/7656…
+ *
+ * @param string[] $communityIds
+ * @return array<string,string> map communityid => url
+ */
+function sb_steam_fetch_profile_urls(array $communityIds)
+{
+	$out = array();
+	$ids = array();
+	foreach ($communityIds as $id) {
+		$c = sb_steam_normalize_community_id($id);
+		if ($c !== '')
+			$ids[$c] = true;
+	}
+	$ids = array_keys($ids);
+	foreach ($ids as $c)
+		$out[$c] = 'https://steamcommunity.com/profiles/' . $c;
+
+	if (!$ids || !defined('STEAMAPIKEY') || STEAMAPIKEY === '')
+		return $out;
+
+	foreach (array_chunk($ids, 100) as $chunk) {
+		$url = 'https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key='
+			. rawurlencode(STEAMAPIKEY) . '&steamids=' . implode(',', $chunk);
+		$raw = @file_get_contents($url);
+		if ($raw === false || $raw === '')
+			continue;
+		$json = @json_decode($raw);
+		if (empty($json->response->players) || !is_array($json->response->players))
+			continue;
+		foreach ($json->response->players as $player) {
+			if (empty($player->steamid))
+				continue;
+			$sid = sb_steam_normalize_community_id($player->steamid);
+			if ($sid === '')
+				continue;
+			if (!empty($player->profileurl) && is_string($player->profileurl)) {
+				$purl = rtrim(preg_replace('#^http://#i', 'https://', $player->profileurl), '/');
+				if (preg_match('#^https://steamcommunity\.com/(?:id|profiles)/#i', $purl))
+					$out[$sid] = $purl;
+			}
+		}
+	}
+	return $out;
+}
+
+/**
+ * Проставляет steam_profile / steam_vanity в элементах списка банов/мутов.
+ * @param array $items
+ * @return array
+ */
+function sb_steam_enrich_list_profiles(array $items)
+{
+	$ids = array();
+	foreach ($items as $row) {
+		if (!empty($row['communityid']))
+			$ids[] = $row['communityid'];
+		elseif (!empty($row['steam_profile']) && preg_match('#/profiles/(\d+)#', $row['steam_profile'], $m))
+			$ids[] = $m[1];
+	}
+	$map = sb_steam_fetch_profile_urls($ids);
+	foreach ($items as $k => $row) {
+		$cid = '';
+		if (!empty($row['communityid']))
+			$cid = sb_steam_normalize_community_id($row['communityid']);
+		if ($cid === '' && !empty($row['steam_profile']) && preg_match('#/profiles/(\d+)#', $row['steam_profile'], $m))
+			$cid = sb_steam_normalize_community_id($m[1]);
+		if ($cid === '')
+			continue;
+		$url = isset($map[$cid]) ? $map[$cid] : sb_steam_profile_url_fallback($cid);
+		$items[$k]['steam_profile'] = $url;
+		$items[$k]['steam_vanity'] = '';
+		if (preg_match('#steamcommunity\.com/id/([A-Za-z0-9_-]+)#i', $url, $vm))
+			$items[$k]['steam_vanity'] = $vm[1];
+	}
+	return $items;
+}
+
+/**
+ * Разобрать ввод: STEAM_, Steam64, [U:1:…], URL /profiles/… или /id/vanity → STEAM_0:X:Y.
+ * Если не распознано — вернуть исходную строку (дальше сработает обычная валидация).
+ */
+function sb_steam_resolve_to_steamid2($input)
+{
+	$input = trim((string)$input);
+	if ($input === '')
+		return '';
+
+	// https://steamcommunity.com/id/thatsember
+	if (preg_match('#(?:https?://)?(?:www\.)?steamcommunity\.com/id/([A-Za-z0-9_-]+)/?#i', $input, $m)) {
+		$vanity = $m[1];
+		if (defined('STEAMAPIKEY') && STEAMAPIKEY !== '') {
+			$api = 'https://api.steampowered.com/ISteamUser/ResolveVanityURL/v0001/?key='
+				. rawurlencode(STEAMAPIKEY) . '&vanityurl=' . rawurlencode($vanity);
+			$j = @json_decode(@file_get_contents($api));
+			if (!empty($j->response->success) && (int)$j->response->success === 1 && !empty($j->response->steamid))
+				return FriendIDToSteamID((string)$j->response->steamid);
+		}
+		if (function_exists('GetFriendIDFromCommunityID')) {
+			$fid = GetFriendIDFromCommunityID($vanity);
+			if ($fid)
+				return FriendIDToSteamID((string)$fid);
+		}
+		return $input;
+	}
+
+	// https://steamcommunity.com/profiles/7656119…
+	if (preg_match('#(?:https?://)?(?:www\.)?steamcommunity\.com/profiles/(\d{15,20})#i', $input, $m))
+		return FriendIDToSteamID($m[1]);
+
+	if (preg_match('/^7656\d{13}$/', $input))
+		return FriendIDToSteamID($input);
+
+	return $input;
+}
+
 function GetUserAvatar($sid = -1) {
     global $userbank;
     

@@ -465,6 +465,10 @@ while (!$res->EOF)
 	$steam2id = $data['steamid'];
 	$steam3parts = explode(':', $steam2id);
 	$data['steamid3'] = '[U:1:' . ($steam3parts[2] * 2 + $steam3parts[1]) . ']';
+	// Ссылка на профиль Steam (STEAM_ / Steam3 / Community — один URL на communityid)
+	$data['steam_profile'] = '';
+	if ((int)$data['type'] === 0 && !empty($data['communityid']) && preg_match('/^7656\d{13}$/', (string)$data['communityid']))
+		$data['steam_profile'] = 'https://steamcommunity.com/profiles/' . $data['communityid'];
 	
 	if(isset($GLOBALS['config']['banlist.hideadminname']) && $GLOBALS['config']['banlist.hideadminname'] == "1" && !$userbank->is_admin())
 		$data['admin'] = false;
@@ -821,6 +825,8 @@ $theme->assign('active_bans', $BanCount);
 
 $theme->assign('ban_nav', $ban_nav);
 $theme->assign('ban_nav_p', $ban_nav_p);
+if (function_exists('sb_steam_enrich_list_profiles') && is_array($bans) && count($bans) > 0)
+	$bans = sb_steam_enrich_list_profiles($bans);
 $theme->assign('ban_list', $bans);
 $theme->assign('admin_nick', $userbank->GetProperty("user"));
 $theme->assign('nocountryshow', ($GLOBALS['config']['banlist.nocountryfetch'] == "1" && !$userbank->is_logged_in()));

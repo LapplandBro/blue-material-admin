@@ -99,6 +99,9 @@
 							{else}
 								<strong>{$ban.player|escape:'html'|stripslashes}</strong>
 							{/if}
+							{if $ban.steam_profile}
+								<a class="banlist-meta-ico" href="{$ban.steam_profile|escape}" target="_blank" rel="noopener noreferrer" title="Профиль Steam" onclick="event.cancelBubble=true;"><i class="zmdi zmdi-steam"></i></a>
+							{/if}
 							{if $ban.demo_available}<span class="banlist-meta-ico" title="Есть демо"><i class="zmdi zmdi-videocam"></i></span>{/if}
 							{if $view_comments && $ban.commentdata != "Нет" && $ban.commentdata|@count > 0}
 								<span class="banlist-meta-ico" title="Комментарии">{$ban.commentdata|@count} <i class="zmdi zmdi-comment-text"></i></span>
@@ -200,6 +203,9 @@
 													{else}
 														{$ban.player|escape:'html'|stripslashes}
 													{/if}
+													{if $ban.steam_profile}
+														· <a href="{$ban.steam_profile|escape}" target="_blank" rel="noopener noreferrer">Профиль Steam</a>
+													{/if}
 												</span>
 											</div>
 											<div class="ban-card-row">
@@ -207,6 +213,8 @@
 												<span class="ban-card-value ban-card-mono">
 													{if empty($ban.steamid)}
 														<span class="parsec-muted">не указан</span>
+													{elseif $ban.steam_profile}
+														<a href="{$ban.steam_profile|escape}" target="_blank" rel="noopener noreferrer" title="Открыть профиль Steam">{$ban.steamid}</a>
 													{else}
 														{$ban.steamid}
 													{/if}
@@ -217,8 +225,10 @@
 												<span class="ban-card-value ban-card-mono">
 													{if empty($ban.steamid)}
 														<span class="parsec-muted">не указан</span>
+													{elseif $ban.steam_profile}
+														<a href="{$ban.steam_profile|escape}" target="_blank" rel="noopener noreferrer" title="Открыть профиль Steam">{$ban.steamid3}</a>
 													{else}
-														<a href="http://steamcommunity.com/profiles/{$ban.steamid3}" target="_blank" rel="noopener">{$ban.steamid3}</a>
+														{$ban.steamid3}
 													{/if}
 												</span>
 											</div>
@@ -226,7 +236,14 @@
 											<div class="ban-card-row">
 												<span class="ban-card-label">Steam Community</span>
 												<span class="ban-card-value ban-card-mono">
-													<a href="http://steamcommunity.com/profiles/{$ban.communityid}" target="_blank" rel="noopener">{$ban.communityid}</a>
+													{if $ban.steam_profile}
+														<a href="{$ban.steam_profile|escape}" target="_blank" rel="noopener noreferrer" title="Открыть профиль Steam">{$ban.communityid}</a>
+														{if $ban.steam_vanity}
+															· <a href="{$ban.steam_profile|escape}" target="_blank" rel="noopener noreferrer">/id/{$ban.steam_vanity|escape}</a>
+														{/if}
+													{else}
+														{$ban.communityid}
+													{/if}
 												</span>
 											</div>
 											{/if}
@@ -369,8 +386,11 @@
 															<li>
 																<i class="zmdi zmdi-steam"></i>
 																{if !empty($ban.admin_authid)}
-																	{$ban.admin_authid}
-																	(<a href="http://steamcommunity.com/profiles/{$ban.admin_authid_link}" target="_blank" rel="noopener">профиль</a>)
+																	{if !empty($ban.admin_authid_link)}
+																		<a href="https://steamcommunity.com/profiles/{$ban.admin_authid_link}" target="_blank" rel="noopener noreferrer" title="Профиль Steam админа">{$ban.admin_authid}</a>
+																	{else}
+																		{$ban.admin_authid}
+																	{/if}
 																{else}
 																	<span class="parsec-muted">нет данных</span>
 																{/if}

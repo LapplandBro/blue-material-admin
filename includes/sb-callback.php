@@ -2343,13 +2343,15 @@ function AddBan($nickname, $type, $steam, $ip, $length, $dfile, $dname, $reason,
 	}
 	
 	$steam = trim($steam);
+	if ($steam !== '' && function_exists('sb_steam_resolve_to_steamid2'))
+		$steam = sb_steam_resolve_to_steamid2($steam);
 	
 	$error = 0;
 	// If they didnt type a steamid
 	if(empty($steam) && $type == 0)
 	{
 		$error++;
-		$objResponse->addAssign("steam.msg", "innerHTML", "Введите Steam ID или Community ID");
+		$objResponse->addAssign("steam.msg", "innerHTML", "Введите Steam ID, Community ID или ссылку на профиль");
 		$objResponse->addScript("$('steam.msg').setStyle('display', 'block');");
 	}
 	else if(($type == 0 
@@ -2360,7 +2362,7 @@ function AddBan($nickname, $type, $steam, $ip, $length, $dfile, $dname, $reason,
 	|| !validate_steam($steam = FriendIDToSteamID($steam)))))
 	{
 		$error++;
-		$objResponse->addAssign("steam.msg", "innerHTML", "Введите действительный Steam ID или Community ID");
+		$objResponse->addAssign("steam.msg", "innerHTML", "Введите действительный Steam ID, Community ID или ссылку (profiles/… или /id/…)");
 		$objResponse->addScript("$('steam.msg').setStyle('display', 'block');");
 	}
 	else if (empty($ip) && $type == 1)
@@ -4306,13 +4308,15 @@ function AddBlock($nickname, $type, $steam, $length, $reason)
 	}
 	
 	$steam = trim($steam);
+	if ($steam !== '' && function_exists('sb_steam_resolve_to_steamid2'))
+		$steam = sb_steam_resolve_to_steamid2($steam);
 	
 	$error = 0;
 	// If they didnt type a steamid
 	if(empty($steam))
 	{
 		$error++;
-		$objResponse->addAssign("steam.msg", "innerHTML", "Введите Steam ID или Community ID");
+		$objResponse->addAssign("steam.msg", "innerHTML", "Введите Steam ID, Community ID или ссылку на профиль");
 		$objResponse->addScript("$('steam.msg').setStyle('display', 'block');");
 	}
 	else if((!is_numeric($steam) 
@@ -4322,7 +4326,7 @@ function AddBlock($nickname, $type, $steam, $length, $reason)
 	|| !validate_steam($steam = FriendIDToSteamID($steam)))))
 	{
 		$error++;
-		$objResponse->addAssign("steam.msg", "innerHTML", "Введите действительный Steam ID или Community ID");
+		$objResponse->addAssign("steam.msg", "innerHTML", "Введите действительный Steam ID, Community ID или ссылку (profiles/… или /id/…)");
 		$objResponse->addScript("$('steam.msg').setStyle('display', 'block');");
 	}
 	else

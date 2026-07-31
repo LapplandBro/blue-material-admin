@@ -87,11 +87,13 @@ if(isset($_POST['name']))
 
 	// Form Validation
 	$error = 0;
+	if (!empty($_POST['steam']) && function_exists('sb_steam_resolve_to_steamid2'))
+		$_POST['steam'] = sb_steam_resolve_to_steamid2($_POST['steam']);
 	// If they didn't type a steamid
 	if(empty($_POST['steam']) && $_POST['type'] == 0)
 	{
 		$error++;
-		$errorScript .= "$('steam.msg').innerHTML = 'Вы должны ввести Steam ID или Community ID';";
+		$errorScript .= "$('steam.msg').innerHTML = 'Введите Steam ID, Community ID или ссылку на профиль';";
 		$errorScript .= "$('steam.msg').setStyle('display', 'block');";
 	}
 	else if(($_POST['type'] == 0 
@@ -102,7 +104,7 @@ if(isset($_POST['name']))
 	|| !validate_steam($_POST['steam'] = FriendIDToSteamID($_POST['steam'])))))
 	{
 		$error++;
-		$errorScript .= "$('steam.msg').innerHTML = 'Введите реальный Steam ID или Community ID';";
+		$errorScript .= "$('steam.msg').innerHTML = 'Введите реальный Steam ID, Community ID или ссылку (profiles/… или /id/…)';";
 		$errorScript .= "$('steam.msg').setStyle('display', 'block');";
 	}
 	// Didn't type an IP
