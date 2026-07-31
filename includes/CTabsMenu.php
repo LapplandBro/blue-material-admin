@@ -33,6 +33,8 @@ class CTabsMenu {
 		$curItem = array();
 		$curItem['title'] = $title;
 		$curItem['desc'] = $description;
+		if ($url !== '' && function_exists('sb_legacy_to_pretty_url'))
+			$url = sb_legacy_to_pretty_url($url);
 		$curItem['url'] = $url;
 		$curItem['external'] = $external;
 		$curItem['id'] = $id;

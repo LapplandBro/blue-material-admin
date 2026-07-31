@@ -315,7 +315,7 @@ else
 				$banTabMenu->addMenuItem("Заявки", 2);
 			if($userbank->HasAccess(ADMIN_OWNER|ADMIN_BAN_IMPORT ) )
 				$banTabMenu->addMenuItem("Импорт", 3);
-			$banTabMenu->addMenuItem("Список", 5, "", "index.php?p=banlist",true);
+			$banTabMenu->addMenuItem("Список", 5, "", sb_url('banlist'),true);
 			$banTabMenu->addMenuItem("История", 6, "", "index.php?p=admin&c=recidivism", true);
 			$banTabMenu->addMenuItem("Связанные", 7, "", "index.php?p=admin&c=parsec", true);
 			$banTabMenu->addMenuItem("Назад", 8, "", "index.php?p=admin", true);
@@ -362,7 +362,7 @@ else
 			if($userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_BAN ) ) {
 				$banTabMenu->addMenuItem("Добавить", 0);
 			}
-			$banTabMenu->addMenuItem("Список", 1, "", "index.php?p=commslist",true);
+			$banTabMenu->addMenuItem("Список", 1, "", sb_url('commslist'),true);
 			$banTabMenu->addMenuItem("История", 2, "", "index.php?p=admin&c=recidivism", true);
 			$banTabMenu->outputMenu();
 			// ====================[ ADMIN SIDE MENU END ] ===================
@@ -395,8 +395,8 @@ else
 
 		$recTabMenu = new CTabsMenu();
 		$recTabMenu->addMenuItem("Поиск", 0);
-		$recTabMenu->addMenuItem("Баны", 1, "", "index.php?p=banlist", true);
-		$recTabMenu->addMenuItem("Муты", 2, "", "index.php?p=commslist", true);
+		$recTabMenu->addMenuItem("Баны", 1, "", sb_url('banlist'), true);
+		$recTabMenu->addMenuItem("Муты", 2, "", sb_url('commslist'), true);
 		$recTabMenu->addMenuItem("Связанные", 3, "", "index.php?p=admin&c=parsec", true);
 		$recTabMenu->outputMenu();
 
@@ -413,7 +413,7 @@ else
 		$parsecTabMenu = new CTabsMenu();
 		$parsecTabMenu->addMenuItem("Поиск", 0);
 		$parsecTabMenu->addMenuItem("История", 1, "", "index.php?p=admin&c=recidivism", true);
-		$parsecTabMenu->addMenuItem("Баны", 2, "", "index.php?p=banlist", true);
+		$parsecTabMenu->addMenuItem("Баны", 2, "", sb_url('banlist'), true);
 		$parsecTabMenu->outputMenu();
 
 		include TEMPLATES_PATH . "/admin.parsec.php";

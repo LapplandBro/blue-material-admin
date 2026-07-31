@@ -1705,11 +1705,69 @@ function sb_url($p, $extra = array())
 		return 'index.php' . ($qs !== '' ? ('?' . $qs) : '');
 	}
 
+	// /banlist/2 вместо banlist?page=2 (остальные GET остаются в query)
+	if (($p === 'banlist' || $p === 'commslist') && isset($extra['page'])) {
+		$pageNum = (int)$extra['page'];
+		unset($extra['page']);
+		if ($pageNum > 1)
+			$path .= '/' . $pageNum;
+	}
+
 	$qs = http_build_query($extra);
 	return $path . ($qs !== '' ? ('?' . $qs) : '');
 }
 
-/** Превратить index.php?p=banlist&c=… в /banlist или /admin/c (для меню из БД). */
+/**
+ * Если открыли /banlist?page=2 — 301 на /banlist/2 (и то же для commslist).
+ * Вызывать в начале page.banlist / page.commslist.
+ */
+function sb_canonical_list_page_redirect($listPage)
+{
+	if ($listPage !== 'banlist' && $listPage !== 'commslist')
+		return;
+	if (empty($_GET['page']) || (int)$_GET['page'] < 2)
+		return;
+	// Уже красивый путь /banlist/2 — в QUERY_STRING page из rewrite, в URI есть /N
+	$uriPath = parse_url(isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '', PHP_URL_PATH);
+	if (is_string($uriPath) && preg_match('#/' . preg_quote($listPage, '#') . '/[0-9]+/?$#', $uriPath))
+		return;
+	// Только если page реально в query string (не только из path rewrite без ?page= в URI)
+	$qs = isset($_SERVER['QUERY_STRING']) ? (string)$_SERVER['QUERY_STRING'] : '';
+	if ($qs === '' || !preg_match('/(?:^|&)page=/i', $qs))
+		return;
+	$q = $_GET;
+	unset($q['p']);
+	sb_redirect(sb_url($listPage, $q), 301);
+}
+
+/**
+ * ЧПУ из хвоста query (?a=1&b=2 или &page=2).
+ * sb_url_query('banlist', '&page=2&searchText=x') → banlist?page=2&searchText=x
+ */
+function sb_url_query($p, $query = '', $extra = array())
+{
+	if (!is_array($extra))
+		$extra = array();
+	$qstr = html_entity_decode((string)$query, ENT_QUOTES, 'UTF-8');
+	$qstr = ltrim($qstr, "?& \t\n\r");
+	if ($qstr !== '') {
+		parse_str($qstr, $parsed);
+		if (is_array($parsed) && $parsed)
+			$extra = array_merge($parsed, $extra);
+	}
+	return sb_url($p, $extra);
+}
+
+/** 303-редирект на ЧПУ (PRG), с очисткой буферов. */
+function sb_redirect($url, $code = 303)
+{
+	while (ob_get_level() > 0)
+		@ob_end_clean();
+	header('Location: ' . $url, true, (int)$code);
+	exit;
+}
+
+/** Превратить index.php?p=banlist&c=… / ?p=… в /banlist или /admin/c. */
 function sb_legacy_to_pretty_url($url)
 {
 	$url = (string)$url;
@@ -1723,9 +1781,14 @@ function sb_legacy_to_pretty_url($url)
 		$frag = substr($u, $hashPos);
 		$u = substr($u, 0, $hashPos);
 	}
-	if (!preg_match('#^(?:\./)?index\.php\?(.*)$#i', $u, $m))
+	$query = '';
+	if (preg_match('#^(?:\.\./)*(?:\./)?index\.php\?(.*)$#i', $u, $m))
+		$query = $m[1];
+	elseif (preg_match('#^\?(.*)$#', $u, $m) && preg_match('/(?:^|&)p=/i', $m[1]))
+		$query = $m[1];
+	else
 		return $url;
-	parse_str($m[1], $q);
+	parse_str($query, $q);
 	if (empty($q['p']))
 		return $url;
 	$p = $q['p'];
@@ -1734,6 +1797,20 @@ function sb_legacy_to_pretty_url($url)
 	if ($hadAmp)
 		$pretty = str_replace('&', '&amp;', $pretty);
 	return $pretty;
+}
+
+/** Smarty outputfilter: href/js с index.php?p=… → ЧПУ. */
+function sb_smarty_pretty_urls($tpl_output, &$smarty)
+{
+	if (!is_string($tpl_output) || $tpl_output === '' || strpos($tpl_output, 'index.php?') === false)
+		return $tpl_output;
+	return preg_replace_callback(
+		'#(?:\.\./)*(?:\./)?index\.php\?[^"\'\s<>]+#i',
+		function ($m) {
+			return sb_legacy_to_pretty_url($m[0]);
+		},
+		$tpl_output
+	);
 }
 
 /** Отдать статическую errors/404.html с HTTP 404 и завершить скрипт. */

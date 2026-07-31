@@ -12,6 +12,10 @@ $theme->register_function("display_header", "materialdesign_cardheader");
 $theme->register_function("display_alert", "materialdesign_alert");
 $theme->register_function("game_icon", "smarty_function_game_icon");
 $theme->register_block("render_material_body", "materialdesign_body");
+if (function_exists('sb_legacy_to_pretty_url')) {
+	$theme->register_modifier('pretty_url', 'sb_legacy_to_pretty_url');
+	$theme->register_outputfilter('sb_smarty_pretty_urls');
+}
 
 // Создание каллбэков функций
 function materialdesign_checkbox($params, &$smarty) {

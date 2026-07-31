@@ -50,6 +50,9 @@ if (isset($_GET['page']) && $_GET['page'] > 0)
 	$page = intval($_GET['page']);
 	$pagelink = "&page=".$page;
 }
+if (function_exists('sb_canonical_list_page_redirect'))
+	sb_canonical_list_page_redirect('banlist');
+$banlist_redir = function_exists('sb_url_query') ? sb_url_query('banlist', $pagelink) : ('index.php?p=banlist'.$pagelink);
 if (version_compare($GLOBALS['db_version'], "5.6.0") >= 0 && version_compare($GLOBALS['db_version'], "10.0.0")<0)
 {
   $GLOBALS['db']->Execute("set session optimizer_switch='block_nested_loop=off';");
@@ -88,7 +91,7 @@ if (isset($_GET['a']) && $_GET['a'] == "unban" && isset($_GET['id']))
 		if(empty($row) || !$row) {
 			$fail++;
 			if(!isset($_GET['bulk'])) {
-				echo "<script>setTimeout('ShowBox(\"Игрок не разбанен\", \"Игрок не был разбанен. Либо был разбанен ранее, либо бан некорректен.<br><br><font color=\'green\' class=\'f-15\'><b>Переадресация...</b></font>\", \"red\", \"index.php?p=banlist$pagelink'\", false);', 1350);</script>";
+				echo "<script>setTimeout('ShowBox(\"Игрок не разбанен\", \"Игрок не был разбанен. Либо был разбанен ранее, либо бан некорректен.<br><br><font color=\'green\' class=\'f-15\'><b>Переадресация...</b></font>\", \"red\", \"$banlist_redir\", false);', 1350);</script>";
 				PageDie();
 			}
 			continue;
@@ -118,17 +121,17 @@ if (isset($_GET['a']) && $_GET['a'] == "unban" && isset($_GET['id']))
 
 		if($res){
 			if(!isset($_GET['bulk']))
-				echo "<script>setTimeout('ShowBox(\"Игрок разбанен\", \"<b>".StripQuotes($row['name'])."</b> (<b>" . ($row['type']==0?$row['authid']:$row['ip']) . "</b>) был разбанен.<br><br><font color=\'green\' class=\'f-15\'><b>Переадресация...</b></font>\", \"green\", \"index.php?p=banlist$pagelink\", false);', 1350);</script>";
+				echo "<script>setTimeout('ShowBox(\"Игрок разбанен\", \"<b>".StripQuotes($row['name'])."</b> (<b>" . ($row['type']==0?$row['authid']:$row['ip']) . "</b>) был разбанен.<br><br><font color=\'green\' class=\'f-15\'><b>Переадресация...</b></font>\", \"green\", \"$banlist_redir\", false);', 1350);</script>";
 			$log = new CSystemLog("m", "Игрок разбанен", "'".StripQuotes($row['name'])."' (" . ($row['type']==0?$row['authid']:$row['ip']) . ") был разбанен");
 			$ucount++;
 		}else{
 			if(!isset($_GET['bulk']))
-				echo "<script>setTimeout('ShowBox(\"Игрок не разбанен\", \"Произошла ошибка <b>".StripQuotes($row['name'])."</b><br><br><font color=\'green\' class=\'f-15\'><b>Переадресация...</b></font>\", \"red\", \"index.php?p=banlist$pagelink\", false);', 1350);</script>";
+				echo "<script>setTimeout('ShowBox(\"Игрок не разбанен\", \"Произошла ошибка <b>".StripQuotes($row['name'])."</b><br><br><font color=\'green\' class=\'f-15\'><b>Переадресация...</b></font>\", \"red\", \"$banlist_redir\", false);', 1350);</script>";
 			$fail++;
 		}
 	}
 	if(isset($_GET['bulk']))
-		echo "<script>setTimeout('ShowBox(\"Игрок разбанен\", \"$ucount был разбанен.<br>$fail failed.<br><br><font color=\'green\' class=\'f-15\'><b>Переадресация...</b></font>\", \"green\", \"index.php?p=banlist$pagelink\", false);', 1350);</script>";
+		echo "<script>setTimeout('ShowBox(\"Игрок разбанен\", \"$ucount был разбанен.<br>$fail failed.<br><br><font color=\'green\' class=\'f-15\'><b>Переадресация...</b></font>\", \"green\", \"$banlist_redir\", false);', 1350);</script>";
 }
 else if(isset($_GET['a']) && $_GET['a'] == "delete")
 {
@@ -138,7 +141,7 @@ else if(isset($_GET['a']) && $_GET['a'] == "delete")
 
 	if (!$userbank->HasAccess(ADMIN_OWNER|ADMIN_DELETE_BAN))
 	{
-		echo "<script>setTimeout('ShowBox(\"Ошибка\", \"У вас нет доступа к этому.<br><br><font color=\'green\' class=\'f-15\'><b>Переадресация...</b></font>\", \"red\", \"index.php?p=banlist$pagelink\", false);', 1350);</script>";
+		echo "<script>setTimeout('ShowBox(\"Ошибка\", \"У вас нет доступа к этому.<br><br><font color=\'green\' class=\'f-15\'><b>Переадресация...</b></font>\", \"red\", \"$banlist_redir\", false);', 1350);</script>";
 		PageDie();
 	}
 	//we have a multiple ban delete asking
@@ -174,31 +177,35 @@ else if(isset($_GET['a']) && $_GET['a'] == "delete")
 
 		if($res){
 			if(!isset($_GET['bulk']))
-				echo "<script>setTimeout('ShowBox(\"Бан удален\", \"Бан игрока <b>".StripQuotes($steam['name'])."</b> (<b>".($steam['type']==0?$steam['authid']:$steam['ip'])."</b>) был удален из SourceBans<br><br><font color=\'green\' class=\'f-15\'><b>Переадресация...</b></font>\", \"green\", \"index.php?p=banlist$pagelink\", false);', 1350);</script>";
+				echo "<script>setTimeout('ShowBox(\"Бан удален\", \"Бан игрока <b>".StripQuotes($steam['name'])."</b> (<b>".($steam['type']==0?$steam['authid']:$steam['ip'])."</b>) был удален из SourceBans<br><br><font color=\'green\' class=\'f-15\'><b>Переадресация...</b></font>\", \"green\", \"$banlist_redir\", false);', 1350);</script>";
 			$log = new CSystemLog("m", "Бан удален", "Бан ".StripQuotes($steam['name'])."' (" . ($steam['type']==0?$steam['authid']:$steam['ip']) . ") был удален.");
 			$dcount++;
 		}else{
 			if(!isset($_GET['bulk']))
-				echo "<script>setTimeout('ShowBox(\"Бан не удален\", \"При удалении бана игрока <b>".StripQuotes($steam['name'])."</b> произошла ошибка.<br><br><font color=\'green\' class=\'f-15\'><b>Переадресация...</b></font>\", \"red\", \"index.php?p=banlist$pagelink\", false);', 1350);</script>";
+				echo "<script>setTimeout('ShowBox(\"Бан не удален\", \"При удалении бана игрока <b>".StripQuotes($steam['name'])."</b> произошла ошибка.<br><br><font color=\'green\' class=\'f-15\'><b>Переадресация...</b></font>\", \"red\", \"$banlist_redir\", false);', 1350);</script>";
 			$fail++;
 		}
 	}
 	if(isset($_GET['bulk']))
-		echo "<script>setTimeout('ShowBox(\"Игроки удалены\", \"$dcount игроки удалены из SourceBans.<br>$fail failed.<br><br><font color=\'green\' class=\'f-15\'><b>Переадресация...</b></font>\", \"green\", \"index.php?p=banlist$pagelink\", false);', 1350);</script>";
+		echo "<script>setTimeout('ShowBox(\"Игроки удалены\", \"$dcount игроки удалены из SourceBans.<br>$fail failed.<br><br><font color=\'green\' class=\'f-15\'><b>Переадресация...</b></font>\", \"green\", \"$banlist_redir\", false);', 1350);</script>";
 }
 
 $BansStart = intval(($page-1) * $BansPerPage);
 $BansEnd = intval($BansStart+$BansPerPage);
 
-// hide inactive bans feature
-if(isset($_GET["hideinactive"]) && $_GET["hideinactive"] == "true") {// hide
-	$_SESSION["hideinactive"] = true;
-	//ShowBox('Hide inactive bans', 'Inactive bans will be hidden from the banlist.', 'green', 'index.php?p=banlist', true);
-	echo "<script>setTimeout(\"$('bans_hidden').style.display = 'block';\", 1350);</script>";
-} elseif(isset($_GET["hideinactive"]) && $_GET["hideinactive"] == "false") { // show
-	unset($_SESSION["hideinactive"]);
-	//ShowBox('Show inactive bans', 'Inactive bans will be shown in the banlist.', 'green', 'index.php?p=banlist', true);
-	//echo "<script>$('bans_hidden').style.display = 'block';</script>";
+// hide inactive bans feature — PRG, чтобы в адресе не висело ?hideinactive=true
+if (isset($_GET["hideinactive"])) {
+	if ($_GET["hideinactive"] == "true")
+		$_SESSION["hideinactive"] = true;
+	elseif ($_GET["hideinactive"] == "false")
+		unset($_SESSION["hideinactive"]);
+	$redirQ = array();
+	foreach (array('searchText', 'advSearch', 'advType', 'page', 'Submit') as $qk) {
+		if (isset($_GET[$qk]) && $_GET[$qk] !== '')
+			$redirQ[$qk] = $_GET[$qk];
+	}
+	if (function_exists('sb_redirect') && function_exists('sb_url'))
+		sb_redirect(sb_url('banlist', $redirQ));
 }
 if(isset($_SESSION["hideinactive"])) {
 	$hidetext = "Все";
@@ -630,7 +637,7 @@ while (!$res->EOF)
 				$cdata = array();
 				$cdata['morecom'] = ($morecom==1?true:false);
 				if($commentres->fields['aid'] == $userbank->GetAid() || $userbank->HasAccess(ADMIN_OWNER)) {
-					$cdata['editcomlink'] = "<a href=\"index.php?p=banlist&comment=".$data['ban_id']."&ctype=B&cid=".$commentres->fields['cid'].$pagelink."\"> Редактировать</a>";
+					$cdata['editcomlink'] = "<a href=\"".sb_url_query('banlist', 'comment='.$data['ban_id'].'&ctype=B&cid='.$commentres->fields['cid'].$pagelink)."\"> Редактировать</a>";
 					if($userbank->HasAccess(ADMIN_OWNER)) {
 						$cdata['delcomlink'] = "<a href=\"#\" target=\"_self\" onclick=\"RemoveComment(".$commentres->fields['cid'].",'B',".(isset($_GET["page"])?$page:-1).");\">Удалить</a>";
 					}
@@ -669,7 +676,7 @@ while (!$res->EOF)
 
 
 	//$data['addcomment'] = CreateLinkR('<img src="images/details.gif" border="0" alt="" style="vertical-align:middle" /> Add Comment','index.php?p=banlist&comment='.$data['ban_id'].'&ctype=B'.$pagelink);
-	$data['addcomment_link'] = 'index.php?p=banlist&comment='.$data['ban_id'].'&ctype=B'.$pagelink;
+	$data['addcomment_link'] = sb_url_query('banlist', 'comment='.$data['ban_id'].'&ctype=B'.$pagelink);
 	//-----------------------------------
 
 	$data['ub_reason'] = (isset($data['ub_reason'])?$data['ub_reason']:"");

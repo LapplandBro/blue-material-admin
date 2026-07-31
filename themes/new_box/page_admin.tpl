@@ -12,26 +12,26 @@
 			<h3 class="admin-hub-section-title">Модерация</h3>
 			<div class="admin-hub-grid">
 				{if $access_bans}
-				<a class="admin-hub-tile" href="index.php?p=admin&amp;c=bans">
+				<a class="admin-hub-tile" href="admin/bans">
 					<span class="admin-hub-tile-title">Баны</span>
 					<span class="admin-hub-tile-desc">Выдать, снять, протесты и заявки</span>
 				</a>
 				<div class="admin-hub-tile admin-hub-tile--with-extra">
-					<a class="admin-hub-tile-main" href="index.php?p=admin&amp;c=comms">
+					<a class="admin-hub-tile-main" href="admin/comms">
 						<span class="admin-hub-tile-title">Муты и гаги</span>
 						<span class="admin-hub-tile-desc">Блок чата и микрофона</span>
 					</a>
-					<a class="admin-hub-tile-extra" href="index.php?p=commslist">Список</a>
+					<a class="admin-hub-tile-extra" href="commslist">Список</a>
 				</div>
 				{/if}
 				{if $access_recidivism}
-				<a class="admin-hub-tile" href="index.php?p=admin&amp;c=recidivism">
+				<a class="admin-hub-tile" href="admin/recidivism">
 					<span class="admin-hub-tile-title">Нарушения</span>
 					<span class="admin-hub-tile-desc">Очки за баны, гаги и муты</span>
 				</a>
 				{/if}
 				{if $access_parsec}
-				<a class="admin-hub-tile" href="index.php?p=admin&amp;c=parsec">
+				<a class="admin-hub-tile" href="admin/parsec">
 					<span class="admin-hub-tile-title">Твинки</span>
 					<span class="admin-hub-tile-desc">Связанные аккаунты с одного ПК и из облака</span>
 				</a>
@@ -45,13 +45,13 @@
 			<h3 class="admin-hub-section-title">Серверы</h3>
 			<div class="admin-hub-grid">
 				{if $access_servers}
-				<a class="admin-hub-tile" href="index.php?p=admin&amp;c=servers">
+				<a class="admin-hub-tile" href="admin/servers">
 					<span class="admin-hub-tile-title">Серверы</span>
 					<span class="admin-hub-tile-desc">Список, RCON, добавление</span>
 				</a>
 				{/if}
 				{if $access_mods}
-				<a class="admin-hub-tile" href="index.php?p=admin&amp;c=mods">
+				<a class="admin-hub-tile" href="admin/mods">
 					<span class="admin-hub-tile-title">Моды</span>
 					<span class="admin-hub-tile-desc">Игровые модификации</span>
 				</a>
@@ -65,25 +65,25 @@
 			<h3 class="admin-hub-section-title">Команда и система</h3>
 			<div class="admin-hub-grid">
 				{if $access_admins}
-				<a class="admin-hub-tile" href="index.php?p=admin&amp;c=admins">
+				<a class="admin-hub-tile" href="admin/admins">
 					<span class="admin-hub-tile-title">Админы</span>
 					<span class="admin-hub-tile-desc">Состав, права, переопределения</span>
 				</a>
 				{/if}
 				{if $access_vouchers}
-				<a class="admin-hub-tile" href="index.php?p=admin&amp;c=pay_card">
+				<a class="admin-hub-tile" href="admin/pay_card">
 					<span class="admin-hub-tile-title">Ваучеры</span>
 					<span class="admin-hub-tile-desc">Выпуск ключей · активирует только гость (не залогиненный)</span>
 				</a>
 				{/if}
 				{if $access_groups}
-				<a class="admin-hub-tile" href="index.php?p=admin&amp;c=groups">
+				<a class="admin-hub-tile" href="admin/groups">
 					<span class="admin-hub-tile-title">Группы</span>
 					<span class="admin-hub-tile-desc">Веб- и серверные группы</span>
 				</a>
 				{/if}
 				{if $access_settings}
-				<a class="admin-hub-tile" href="index.php?p=admin&amp;c=settings">
+				<a class="admin-hub-tile" href="admin/settings">
 					<span class="admin-hub-tile-title">Настройки</span>
 					<span class="admin-hub-tile-desc">Вид сайта, опции, системный лог</span>
 				</a>

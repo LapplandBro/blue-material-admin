@@ -77,6 +77,10 @@ if (!$sb_is_ajax) {
 				unset($qparams['c']);
 			}
 			$path = ($page_param === 'admin' && $c !== '') ? ('/admin/' . $c) : ('/' . $page_param);
+			if (($page_param === 'banlist' || $page_param === 'commslist') && !empty($qparams['page']) && (int)$qparams['page'] > 1) {
+				$path .= '/' . (int)$qparams['page'];
+				unset($qparams['page']);
+			}
 			$qs = http_build_query($qparams);
 			header('Location: ' . $home_base . $path . ($qs !== '' ? ('?' . $qs) : ''), true, 301);
 			exit;

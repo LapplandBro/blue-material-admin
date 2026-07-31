@@ -123,7 +123,7 @@
 					<small>{$total_comms} · последние</small>
 				</h2>
 				<ul class="actions">
-					<li><a href="index.php?p=commslist">Смотреть все</a></li>
+					<li><a href="commslist">Смотреть все</a></li>
 				</ul>
 			</div>
 			<div class="table-responsive">
@@ -180,7 +180,7 @@
 					<small>{$total_bans} · последние</small>
 				</h2>
 				<ul class="actions">
-					<li><a href="index.php?p=banlist">Смотреть все</a></li>
+					<li><a href="banlist">Смотреть все</a></li>
 				</ul>
 			</div>
 			<div class="table-responsive">
@@ -236,7 +236,7 @@
 					<small>{$total_blocked} · последние</small>
 				</h2>
 				<ul class="actions">
-					<li><a href="index.php?p=banlist">Банлист</a></li>
+					<li><a href="banlist">Банлист</a></li>
 				</ul>
 			</div>
 			<div class="table-responsive">
@@ -289,25 +289,25 @@
 {if $stats}
 <div class="row parsec-stats dash-stats">
 	<div class="col-sm-3 col-xs-6">
-		<a class="parsec-stat dash-stat-link" href="index.php?p=adminlist">
+		<a class="parsec-stat dash-stat-link" href="adminlist">
 			<div class="parsec-stat-label">Админы</div>
 			<div class="parsec-stat-value">{$total_admins}</div>
 		</a>
 	</div>
 	<div class="col-sm-3 col-xs-6">
-		<a class="parsec-stat dash-stat-link" href="index.php?p=banlist">
+		<a class="parsec-stat dash-stat-link" href="banlist">
 			<div class="parsec-stat-label">Баны</div>
 			<div class="parsec-stat-value">{$total_bans}</div>
 		</a>
 	</div>
 	<div class="col-sm-3 col-xs-6">
-		<a class="parsec-stat dash-stat-link" href="index.php?p=servers">
+		<a class="parsec-stat dash-stat-link" href="servers">
 			<div class="parsec-stat-label">Серверы</div>
 			<div class="parsec-stat-value">{$total_servers}</div>
 		</a>
 	</div>
 	<div class="col-sm-3 col-xs-6">
-		<a class="parsec-stat dash-stat-link" href="index.php?p=commslist">
+		<a class="parsec-stat dash-stat-link" href="commslist">
 			<div class="parsec-stat-label">Муты / гаги</div>
 			<div class="parsec-stat-value">{$total_comms}</div>
 		</a>

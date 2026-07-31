@@ -9,10 +9,10 @@
 
             <ul class="f-menu f-menu-seo">
                 <li><a href="index.php">Главная</a></li>
-                <li><a href="index.php?p=servers">Серверы</a></li>
-                <li><a href="index.php?p=banlist">Банлист</a></li>
-                <li><a href="index.php?p=commslist">Муты</a></li>
-                <li><a href="index.php?p=adminlist">Админы</a></li>
+                <li><a href="servers">Серверы</a></li>
+                <li><a href="banlist">Банлист</a></li>
+                <li><a href="commslist">Муты</a></li>
+                <li><a href="adminlist">Админы</a></li>
             </ul>
             
             <ul class="f-menu">

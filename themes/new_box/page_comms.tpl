@@ -35,7 +35,7 @@
 					{/if}
 					<input type="hidden" name="page" id="page" value="{$page}">
 					{sb_button text="$commenttype комментарий" onclick="ProcessComment();" class="m-t-15 btn-primary btn-sm" id="acom" submit=false}&nbsp;
-					{sb_button text="Назад" onclick="window.location.href='index.php?p=commslist'" class="m-t-15 btn btn-sm" id="aback"}
+					{sb_button text="Назад" onclick="window.location.href='commslist'" class="m-t-15 btn btn-sm" id="aback"}
 				</li>
 			</ul>
 		</div>
@@ -57,7 +57,7 @@
 	</div>
 	{if $can_add_comms}
 	<div class="card-header p-t-0 p-b-10 banlist-toolbar">
-		<a href="index.php?p=admin&amp;c=comms" class="btn bgm-blue btn-icon-text waves-effect">
+		<a href="admin/comms" class="btn bgm-blue btn-icon-text waves-effect">
 			<i class="zmdi zmdi-plus"></i> Добавить мут / гаг
 		</a>
 	</div>
@@ -65,10 +65,10 @@
 	{if $bstatus_aid}
 	<div class="card-header p-t-0 p-b-10">
 		<div class="btn-group" role="group">
-			<a href="index.php?p=commslist&advSearch={$bstatus_aid}&advType=admin" class="btn btn-sm waves-effect {if !$bstatus}btn-primary{else}btn-default{/if}">Все</a>
-			<a href="index.php?p=commslist&advSearch={$bstatus_aid}&advType=admin&bstatus=active" class="btn btn-sm waves-effect {if $bstatus=='active'}btn-primary{else}btn-default{/if}">Активные</a>
-			<a href="index.php?p=commslist&advSearch={$bstatus_aid}&advType=admin&bstatus=expired" class="btn btn-sm waves-effect {if $bstatus=='expired'}btn-primary{else}btn-default{/if}">Истёкшие</a>
-			<a href="index.php?p=commslist&advSearch={$bstatus_aid}&advType=admin&bstatus=removed" class="btn btn-sm waves-effect {if $bstatus=='removed'}btn-primary{else}btn-default{/if}">Снятые</a>
+			<a href="commslist?advSearch={$bstatus_aid}&amp;advType=admin" class="btn btn-sm waves-effect {if !$bstatus}btn-primary{else}btn-default{/if}">Все</a>
+			<a href="commslist?advSearch={$bstatus_aid}&amp;advType=admin&amp;bstatus=active" class="btn btn-sm waves-effect {if $bstatus=='active'}btn-primary{else}btn-default{/if}">Активные</a>
+			<a href="commslist?advSearch={$bstatus_aid}&amp;advType=admin&amp;bstatus=expired" class="btn btn-sm waves-effect {if $bstatus=='expired'}btn-primary{else}btn-default{/if}">Истёкшие</a>
+			<a href="commslist?advSearch={$bstatus_aid}&amp;advType=admin&amp;bstatus=removed" class="btn btn-sm waves-effect {if $bstatus=='removed'}btn-primary{else}btn-default{/if}">Снятые</a>
 		</div>
 	</div>
 	{/if}

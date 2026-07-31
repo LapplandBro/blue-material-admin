@@ -54,6 +54,9 @@ if (isset($_GET['page']) && $_GET['page'] > 0)
 	$page = intval($_GET['page']);
 	$pagelink = "&page=".$page;
 }
+if (function_exists('sb_canonical_list_page_redirect'))
+	sb_canonical_list_page_redirect('commslist');
+$comms_redir = function_exists('sb_url_query') ? sb_url_query('commslist', $pagelink) : ('index.php?p=commslist'.$pagelink);
 
 if (isset($_GET['a']) && $_GET['a'] == "ungag" && isset($_GET['id']))
 {
@@ -216,13 +219,19 @@ else if(isset($_GET['a']) && $_GET['a'] == "delete")
 $BansStart = intval(($page-1) * $BansPerPage);
 $BansEnd = intval($BansStart+$BansPerPage);
 
-// hide inactive bans feature
-if(isset($_GET["hideinactive"]) && $_GET["hideinactive"] == "true") {// hide
-	$_SESSION["hideinactive"] = true;
-	//ShowBox('Hide inactive bans', 'Inactive bans will be hidden from the banlist.', 'green', 'index.php?p=banlist', true);
-} elseif(isset($_GET["hideinactive"]) && $_GET["hideinactive"] == "false") { // show
-	unset($_SESSION["hideinactive"]);
-	//ShowBox('Show inactive bans', 'Inactive bans will be shown in the banlist.', 'green', 'index.php?p=banlist', true);
+// hide inactive — PRG (без ?hideinactive= в адресной строке)
+if (isset($_GET["hideinactive"])) {
+	if ($_GET["hideinactive"] == "true")
+		$_SESSION["hideinactive"] = true;
+	elseif ($_GET["hideinactive"] == "false")
+		unset($_SESSION["hideinactive"]);
+	$redirQ = array();
+	foreach (array('searchText', 'advSearch', 'advType', 'page', 'Submit', 'bstatus') as $qk) {
+		if (isset($_GET[$qk]) && $_GET[$qk] !== '')
+			$redirQ[$qk] = $_GET[$qk];
+	}
+	if (function_exists('sb_redirect') && function_exists('sb_url'))
+		sb_redirect(sb_url('commslist', $redirQ));
 }
 if(isset($_SESSION["hideinactive"])) {
 	$hidetext = "Показать";
@@ -672,7 +681,7 @@ while (!$res->EOF)
 	}
 
 	$data['addcomment'] = CreateLinkR('<img src="images/details.gif" border="0" alt="" style="vertical-align:middle" /> Добавить комментарий','index.php?p=commslist&comment='.$data['ban_id'].'&ctype=C'.$pagelink);
-	$data['addcomment_link'] = "index.php?p=commslist&comment=".$data['ban_id']."&ctype=C".$pagelink;
+	$data['addcomment_link'] = sb_url_query('commslist', 'comment='.$data['ban_id'].'&ctype=C'.$pagelink);
 	//-----------------------------------
 	$data['counts'] = $delimiter.$mutes.$gags;
 

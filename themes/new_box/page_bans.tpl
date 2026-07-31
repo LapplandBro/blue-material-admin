@@ -35,7 +35,7 @@
 					{/if}
 					<input type="hidden" name="page" id="page" value="{$page}">
 					{sb_button text="$commenttype Комментарий" onclick="ProcessComment();" class="m-t-15 btn-primary btn-sm" id="acom" submit=false}&nbsp;
-					{sb_button text="Назад" onclick="window.location.href='index.php?p=banlist'" class="m-t-15 btn btn-sm" id="aback"}
+					{sb_button text="Назад" onclick="window.location.href='banlist'" class="m-t-15 btn btn-sm" id="aback"}
 				</li>
 			</ul>
 		</div>
@@ -56,7 +56,9 @@
 		</div>
 	</div>
 	
-	<div class="parsec-note parsec-note-muted m-b-0" id="bans_hidden" style="display:none;">Показаны только активные баны.</div>
+	{if $hidetext_darf == '0'}
+	<div class="parsec-note parsec-note-muted m-b-0" id="bans_hidden">Показаны только активные баны.</div>
+	{/if}
 	<div class="alert" role="alert" id="tickswitchlink" style="display:none;"></div>
 	
 	<div class="table-responsive">
@@ -523,7 +525,7 @@
 					</div>
 				{/if}
 				<div class="col-sm-3 p-r-0 text-right" style="float:right;">
-					<button class="btn bgm-bluegray waves-effect" onclick="window.location.href='index.php?p=banlist&hideinactive={if $hidetext_darf == '1'}true{else}false{/if}{$searchlink|htmlspecialchars}'">{$hidetext}&nbsp;баны</button>
+					<button class="btn bgm-bluegray waves-effect" onclick="window.location.href='banlist?hideinactive={if $hidetext_darf == '1'}true{else}false{/if}{$searchlink|htmlspecialchars}'">{$hidetext}&nbsp;баны</button>
 				</div>
 			</div>
 		</div>&nbsp;

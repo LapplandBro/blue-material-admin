@@ -103,6 +103,22 @@ var ADMIN_OWNER = 			(1<<24);
 var accordion;
 var accordionInstances = {};
 
+/** ЧПУ: sbLoc('banlist', '&page=2&a=unban') → banlist/2?a=unban */
+function sbLoc(page, q) {
+	page = String(page);
+	q = (q == null) ? '' : String(q).replace(/^[&?]+/, '');
+	if ((page === 'banlist' || page === 'commslist') && q !== '') {
+		var pm = q.match(/(?:^|&)page=(\d+)(?=&|$)/);
+		if (pm) {
+			var pn = parseInt(pm[1], 10);
+			q = q.replace(/(?:^|&)page=\d+/g, '').replace(/^&+/, '').replace(/&+/g, '&');
+			if (pn > 1)
+				page = page + '/' + pn;
+		}
+	}
+	return page + (q !== '' ? ('?' + q) : '');
+}
+
 // <base href> ломает якоря href="#^N": браузер ведёт на главную (/#^N).
 // Ловим только SourceBans-вкладки (#^…), Bootstrap (#chat, #tab-*) не трогаем.
 (function () {
@@ -453,7 +469,7 @@ function RemoveBan(id, key, page, name, confirm, bulk)
 			var pagelink = page;
 		else
 			var pagelink = "";
-		window.location = "index.php?p=banlist" + pagelink + "&a=delete&id="+ id +"&key="+ key +(bulk=="true"?"&bulk=true":"");
+		window.location = sbLoc("banlist", pagelink + "&a=delete&id="+ id +"&key="+ key +(bulk=="true"?"&bulk=true":""));
 	}
 }
 
@@ -476,7 +492,7 @@ function UnbanBan(id, key, page, name, popup, bulk)
 			$('ureason.msg').setHTML('');
 			$('ureason.msg').setStyle('display', 'none');
 		}
-		window.location = "index.php?p=banlist" + pagelink + "&a=unban&id="+ id +"&key="+ key +"&ureason="+ reason +(bulk=="true"?"&bulk=true":"");
+		window.location = sbLoc("banlist", pagelink + "&a=unban&id="+ id +"&key="+ key +"&ureason="+ reason +(bulk=="true"?"&bulk=true":""));
 	}
 	return true;
 }
@@ -1020,7 +1036,7 @@ function search_bans()
 		input = $('ban_comment').value;
 	}
 	if(type!="" && input!="")
-		window.location = "index.php?p=banlist&advSearch=" + input + "&advType=" + type;
+		window.location = sbLoc("banlist", "advSearch=" + input + "&advType=" + type);
 }
 var webSelected = new Array();
 var srvSelected = new Array();
@@ -1123,7 +1139,7 @@ function search_log()
 		input = $('type').value;
 	}
 	if(type!="" && input!="")
-		window.location = "index.php?p=admin&c=settings&advSearch=" + input + "&advType=" + type + "#^2";
+		window.location = sbLoc("admin/settings", "advSearch=" + input + "&advType=" + type) + "#^2";
 }
 var icname = "";
 function icon(name)
@@ -1422,7 +1438,7 @@ function ClearLogs()
 	{
 		return;
 	}
-	window.location = "index.php?p=admin&c=settings&log_clear=true#^2";
+	window.location = sbLoc("admin/settings", "log_clear=true") + "#^2";
 }
 
 function RemoveMod(name, id)
@@ -1470,19 +1486,19 @@ function changePage(newPage, type, advSearch, advType)
 		if(type == "A")
             window.location = "index.php?p=admin&c=admins"+searchlink+"&page="+nextPage;
 		if(type == "B")
-            window.location = "index.php?p=banlist"+searchlink+"&page="+nextPage;
+            window.location = sbLoc("banlist", searchlink + "&page=" + nextPage);
 		if(type == "C")
-            window.location = "index.php?p=commslist"+searchlink+"&page="+nextPage;
+            window.location = sbLoc("commslist", searchlink + "&page=" + nextPage);
 		if(type == "L")
-            window.location = "index.php?p=admin&c=settings"+searchlink+"&page="+nextPage+"#^2";
+            window.location = sbLoc("admin/settings", searchlink + "&page=" + nextPage) + "#^2";
         if(type == "P")
-            window.location = "index.php?p=admin&c=bans&ppage="+nextPage+"#^1";
+            window.location = sbLoc("admin/bans", "ppage=" + nextPage) + "#^1";
         if(type == "PA")
-            window.location = "index.php?p=admin&c=bans&papage="+nextPage+"#^1~p1";
+            window.location = sbLoc("admin/bans", "papage=" + nextPage) + "#^1~p1";
         if(type == "S")
-            window.location = "index.php?p=admin&c=bans&spage="+nextPage+"#^2";
+            window.location = sbLoc("admin/bans", "spage=" + nextPage) + "#^2";
         if(type == "SA")
-            window.location = "index.php?p=admin&c=bans&sapage="+nextPage+"#^2~s1";
+            window.location = sbLoc("admin/bans", "sapage=" + nextPage) + "#^2~s1";
 	 }
 }
 
@@ -1790,7 +1806,7 @@ function RemoveBlock(id, key, page, name, confirm)
 			var pagelink = page;
 		else
 			var pagelink = "";
-		window.location = "index.php?p=commslist" + pagelink + "&a=delete&id="+ id +"&key="+ key;
+		window.location = sbLoc("commslist", pagelink + "&a=delete&id="+ id +"&key="+ key);
 	}
 }
 
@@ -1814,7 +1830,7 @@ function UnGag(id, key, page, name, popup)
 			var msg2 = document.getElementById('ureason.msg');
 			if (msg2) { msg2.innerHTML = ''; msg2.style.display = 'none'; }
 		}
-		window.location = "index.php?p=commslist" + pagelink + "&a=ungag&id="+ id +"&key="+ key +"&ureason="+ encodeURIComponent(reason);
+		window.location = sbLoc("commslist", pagelink + "&a=ungag&id="+ id +"&key="+ key +"&ureason="+ encodeURIComponent(reason));
 	}
 	return true;
 }
@@ -1839,7 +1855,7 @@ function UnMute(id, key, page, name, popup)
 			var msg2 = document.getElementById('ureason.msg');
 			if (msg2) { msg2.innerHTML = ''; msg2.style.display = 'none'; }
 		}
-		window.location = "index.php?p=commslist" + pagelink + "&a=unmute&id="+ id +"&key="+ key +"&ureason="+ encodeURIComponent(reason);
+		window.location = sbLoc("commslist", pagelink + "&a=unmute&id="+ id +"&key="+ key +"&ureason="+ encodeURIComponent(reason));
 	}
 	return true;
 }
@@ -1903,7 +1919,7 @@ function search_blocks()
 		input = $('ban_comment').value;
 	}
 	if(type!="" && input!="")
-		window.location = "index.php?p=commslist&advSearch=" + input + "&advType=" + type;
+		window.location = sbLoc("commslist", "advSearch=" + input + "&advType=" + type);
 }
 
 function ShowBlockBox(check, type, length)
