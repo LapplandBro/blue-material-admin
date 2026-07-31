@@ -15,9 +15,7 @@
 		</h2>
 	</div>
 	<div class="card-body card-padding">
-		<form method="get" action="index.php" class="form-horizontal" role="form">
-			<input type="hidden" name="p" value="admin" />
-			<input type="hidden" name="c" value="parsec" />
+		<form method="get" action="admin/parsec" class="form-horizontal" role="form" id="parsec-steam-form">
 			<div class="form-group m-b-0">
 				<label class="col-sm-3 control-label" for="steam">Игрок</label>
 				<div class="col-sm-6">

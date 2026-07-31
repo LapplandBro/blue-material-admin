@@ -77,6 +77,13 @@ if (!$useDefault && !preg_match('/^[a-zA-Z0-9_]+$/', $pRaw)) {
 					break;
 				}
 				$_GET['c'] = $adminCEarly;
+				// ЧПУ steam до любого HTML (header уже не отправится)
+				if (($adminCEarly === 'recidivism' || $adminCEarly === 'parsec')
+					&& function_exists('sb_canonical_admin_steam_redirect')) {
+					if (function_exists('sb_apply_steam_path_param'))
+						sb_apply_steam_path_param();
+					sb_canonical_admin_steam_redirect($adminCEarly);
+				}
 			}
 			$page = INCLUDES_PATH . "/admin.php";
 			break;

@@ -389,6 +389,11 @@ else
 	elseif($_GET['c'] == "recidivism")
 	 // ###################[ Recidivism / violation history ]##################################################################
 	{
+		if (function_exists('sb_apply_steam_path_param'))
+			sb_apply_steam_path_param();
+		if (function_exists('sb_canonical_admin_steam_redirect'))
+			sb_canonical_admin_steam_redirect('recidivism');
+
 		CheckAdminAccess( function_exists('RecidivismAccessMask')
 			? RecidivismAccessMask()
 			: (ADMIN_OWNER|ADMIN_ADD_BAN|ADMIN_EDIT_OWN_BANS|ADMIN_EDIT_ALL_BANS|ADMIN_EDIT_GROUP_BANS) );
@@ -397,7 +402,7 @@ else
 		$recTabMenu->addMenuItem("Поиск", 0);
 		$recTabMenu->addMenuItem("Баны", 1, "", sb_url('banlist'), true);
 		$recTabMenu->addMenuItem("Муты", 2, "", sb_url('commslist'), true);
-		$recTabMenu->addMenuItem("Связанные", 3, "", "index.php?p=admin&c=parsec", true);
+		$recTabMenu->addMenuItem("Связанные", 3, "", sb_url('admin', array('c' => 'parsec')), true);
 		$recTabMenu->outputMenu();
 
 		include TEMPLATES_PATH . "/admin.recidivism.php";
@@ -406,13 +411,18 @@ else
 	elseif($_GET['c'] == "parsec")
 	 // ###################[ PARSEC / fingerprint panel ]##################################################################
 	{
+		if (function_exists('sb_apply_steam_path_param'))
+			sb_apply_steam_path_param();
+		if (function_exists('sb_canonical_admin_steam_redirect'))
+			sb_canonical_admin_steam_redirect('parsec');
+
 		CheckAdminAccess( function_exists('RecidivismAccessMask')
 			? RecidivismAccessMask()
 			: (ADMIN_OWNER|ADMIN_ADD_BAN|ADMIN_EDIT_OWN_BANS|ADMIN_EDIT_ALL_BANS|ADMIN_EDIT_GROUP_BANS) );
 
 		$parsecTabMenu = new CTabsMenu();
 		$parsecTabMenu->addMenuItem("Поиск", 0);
-		$parsecTabMenu->addMenuItem("История", 1, "", "index.php?p=admin&c=recidivism", true);
+		$parsecTabMenu->addMenuItem("История", 1, "", sb_url('admin', array('c' => 'recidivism')), true);
 		$parsecTabMenu->addMenuItem("Баны", 2, "", sb_url('banlist'), true);
 		$parsecTabMenu->outputMenu();
 

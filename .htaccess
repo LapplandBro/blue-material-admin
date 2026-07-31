@@ -69,6 +69,8 @@ ErrorDocument 504 /errors/504.html
 	RewriteCond %{REQUEST_FILENAME} -d
 	RewriteRule ^ - [L]
 
+	# /admin/recidivism/STEAM_0-0-123 (двоеточия → дефисы)
+	RewriteRule ^admin/(recidivism|parsec)/(STEAM_[0-9]+-[01]-[0-9]+)/?$ index.php?p=admin&c=$1&steam=$2 [L,QSA]
 	RewriteRule ^admin/([a-zA-Z0-9_]+)/?$ index.php?p=admin&c=$1 [L,QSA]
 	# /banlist/2 → page=2 (и то же для commslist)
 	RewriteRule ^(banlist|commslist)/([0-9]+)/?$ index.php?p=$1&page=$2 [L,QSA]

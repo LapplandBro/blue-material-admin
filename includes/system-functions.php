@@ -1713,8 +1713,86 @@ function sb_url($p, $extra = array())
 			$path .= '/' . $pageNum;
 	}
 
+	// /admin/recidivism/STEAM_0-0-123 вместо ?steam=STEAM_0%3A0%3A123
+	if ($p === 'admin' && ($c === 'recidivism' || $c === 'parsec') && isset($extra['steam'])) {
+		$sid = trim((string)$extra['steam']);
+		if (function_exists('ma_recidivism_normalize_authid')) {
+			$norm = ma_recidivism_normalize_authid($sid);
+			if ($norm !== '')
+				$sid = $norm;
+		} elseif (function_exists('ma_parsec_normalize_authid')) {
+			$norm = ma_parsec_normalize_authid($sid);
+			if ($norm !== '')
+				$sid = $norm;
+		}
+		$token = sb_steam_path_token($sid);
+		if ($token !== '') {
+			$path .= '/' . $token;
+			unset($extra['steam']);
+		}
+	}
+
 	$qs = http_build_query($extra);
 	return $path . ($qs !== '' ? ('?' . $qs) : '');
+}
+
+/** STEAM_0:1:123 → STEAM_0-1-123 (для path; «:» в URL на Windows/Apache — боль). */
+function sb_steam_path_token($steam)
+{
+	$steam = trim((string)$steam);
+	if (preg_match('/^STEAM_(\d+):([01]):(\d+)$/i', $steam, $m))
+		return 'STEAM_' . $m[1] . '-' . $m[2] . '-' . $m[3];
+	if (preg_match('/^STEAM_(\d+)-([01])-(\d+)$/i', $steam, $m))
+		return 'STEAM_' . $m[1] . '-' . $m[2] . '-' . $m[3];
+	return '';
+}
+
+function sb_steam_from_path_token($token)
+{
+	$token = trim((string)$token);
+	if (preg_match('/^STEAM_(\d+)-([01])-(\d+)$/i', $token, $m))
+		return 'STEAM_' . $m[1] . ':' . $m[2] . ':' . $m[3];
+	return '';
+}
+
+/** Rewrite отдаёт steam=STEAM_0-0-N — вернуть классический STEAM_0:0:N в $_GET. */
+function sb_apply_steam_path_param()
+{
+	if (empty($_GET['steam']))
+		return;
+	$from = sb_steam_from_path_token($_GET['steam']);
+	if ($from !== '')
+		$_GET['steam'] = $from;
+}
+
+/** /admin/parsec?steam=STEAM_0:0:N → /admin/parsec/STEAM_0-0-N */
+function sb_canonical_admin_steam_redirect($section)
+{
+	if ($section !== 'recidivism' && $section !== 'parsec')
+		return;
+	if (empty($_GET['steam']))
+		return;
+	sb_apply_steam_path_param();
+	$steam = trim((string)$_GET['steam']);
+	if (function_exists('ma_recidivism_normalize_authid')) {
+		$norm = ma_recidivism_normalize_authid($steam);
+		if ($norm !== '')
+			$steam = $norm;
+	} elseif (function_exists('ma_parsec_normalize_authid')) {
+		$norm = ma_parsec_normalize_authid($steam);
+		if ($norm !== '')
+			$steam = $norm;
+	}
+	$token = sb_steam_path_token($steam);
+	if ($token === '')
+		return;
+	$uriPath = parse_url(isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '', PHP_URL_PATH);
+	if (is_string($uriPath) && preg_match('#/admin/' . preg_quote($section, '#') . '/' . preg_quote($token, '#') . '/?$#i', $uriPath))
+		return;
+	$q = $_GET;
+	unset($q['p'], $q['c']);
+	$q['steam'] = $steam;
+	sb_redirect(sb_url('admin', array_merge(array('c' => $section), $q)), 301);
 }
 
 /**
@@ -1758,12 +1836,28 @@ function sb_url_query($p, $query = '', $extra = array())
 	return sb_url($p, $extra);
 }
 
+/**
+ * Абсолютный URL для Location: (браузер НЕ учитывает <base href>).
+ * admin/bans → http://site/admin/bans или /admin/bans
+ */
+function sb_abs_url($url)
+{
+	$url = (string)$url;
+	if ($url === '' || $url[0] === '/' || preg_match('#^[a-z][a-z0-9+.-]*:#i', $url))
+		return $url === '' ? '/' : $url;
+	$base = defined('SB_WP_URL') ? rtrim((string)SB_WP_URL, '/') : '';
+	$rel = ltrim($url, './');
+	if ($base !== '')
+		return $base . '/' . $rel;
+	return '/' . $rel;
+}
+
 /** 303-редирект на ЧПУ (PRG), с очисткой буферов. */
 function sb_redirect($url, $code = 303)
 {
 	while (ob_get_level() > 0)
 		@ob_end_clean();
-	header('Location: ' . $url, true, (int)$code);
+	header('Location: ' . sb_abs_url($url), true, (int)$code);
 	exit;
 }
 
@@ -3449,7 +3543,7 @@ function RecidivismBuildLinkedCards($authid)
 			'points_mute' => $scores['mute'],
 			'points_display' => sprintf('B%s G%s M%s', $scores['ban'], $scores['gag'], $scores['mute']),
 			'active_ban' => $activeBan > 0,
-			'view_url' => 'index.php?p=admin&c=recidivism&steam=' . rawurlencode($sid),
+			'view_url' => sb_url('admin', array('c' => 'recidivism', 'steam' => $sid)),
 			'family_size' => count($family['all'])
 		);
 	}
@@ -3579,7 +3673,7 @@ function RecidivismAttachScoresToList(array &$rows)
 		$row['view_recidivism'] = true;
 		$row['recid_family_hint'] = '';
 		if (!empty($row['steamid'])) {
-			$row['recid_url'] = 'index.php?p=admin&c=recidivism&steam=' . rawurlencode($row['steamid']);
+			$row['recid_url'] = sb_url('admin', array('c' => 'recidivism', 'steam' => $row['steamid']));
 			if (!empty($familyHints[$row['steamid']]['hint']))
 				$row['recid_family_hint'] = $familyHints[$row['steamid']]['hint'];
 		}
@@ -3965,7 +4059,7 @@ function ParsecPanelListBannedFingerprints($page = 1, $perPage = 25)
 				? date('d.m.Y H:i', (int)$r['banned_timestamp'])
 				: '—',
 			'open_url' => !empty($steams[0])
-				? ('index.php?p=admin&c=parsec&steam=' . rawurlencode($steams[0]))
+				? (sb_url('admin', array('c' => 'parsec', 'steam' => $steams[0])))
 				: ('index.php?p=admin&c=parsec&fp=' . rawurlencode($fp))
 		);
 	}

@@ -13,6 +13,12 @@ if (!defined("IN_SB")) { echo "Ошибка доступа!"; die(); }
 
 global $userbank, $theme;
 
+// ЧПУ до проверки прав — иначе ?steam=… остаётся в адресе на логине
+if (function_exists('sb_apply_steam_path_param'))
+	sb_apply_steam_path_param();
+if (function_exists('sb_canonical_admin_steam_redirect'))
+	sb_canonical_admin_steam_redirect('recidivism');
+
 $recidMask = function_exists('RecidivismAccessMask')
 	? RecidivismAccessMask()
 	: (ADMIN_OWNER | ADMIN_ADD_BAN | ADMIN_EDIT_OWN_BANS | ADMIN_EDIT_ALL_BANS | ADMIN_EDIT_GROUP_BANS);
@@ -216,8 +222,10 @@ if (!$tablesOk) {
 			: array('all' => array($authid), 'fingerprint_id' => '', 'is_banned' => 0);
 
 		foreach ($linkedCards as &$la) {
-			$la['parsec_url'] = 'index.php?p=admin&c=parsec&steam=' . rawurlencode($la['authid']);
-			$la['banlist_url'] = 'index.php?p=banlist&searchText=' . rawurlencode($la['authid']);
+			$la['parsec_url'] = sb_url('admin', array('c' => 'parsec', 'steam' => $la['authid']));
+			$la['banlist_url'] = sb_url('banlist', array('searchText' => $la['authid']));
+			if (empty($la['view_url']))
+				$la['view_url'] = sb_url('admin', array('c' => 'recidivism', 'steam' => $la['authid']));
 			$src = isset($la['sources']) ? $la['sources'] : array();
 			$chips = array();
 			if (in_array('fingerprint', $src, true))
@@ -272,9 +280,9 @@ if (!$tablesOk) {
 			'updated_fmt' => $updatedAt ? date('d.m.Y H:i', $updatedAt) : '—',
 			'missing_row' => $missingRow,
 			'community_url' => 'https://steamcommunity.com/profiles/' . SteamIDToFriendID($authid),
-			'banlist_url' => 'index.php?p=banlist&advSearch=' . urlencode($authid) . '&advType=steamid',
-			'commslist_url' => 'index.php?p=commslist&advSearch=' . urlencode($authid) . '&advType=steamid',
-			'parsec_url' => 'index.php?p=admin&c=parsec&steam=' . rawurlencode($authid)
+			'banlist_url' => sb_url('banlist', array('advSearch' => $authid, 'advType' => 'steamid')),
+			'commslist_url' => sb_url('commslist', array('advSearch' => $authid, 'advType' => 'steamid')),
+			'parsec_url' => sb_url('admin', array('c' => 'parsec', 'steam' => $authid))
 		);
 
 		$events = $GLOBALS['db']->GetAll(
@@ -370,7 +378,7 @@ if (!$tablesOk) {
 		);
 		$rp['name'] = $nm ? $nm : '';
 		$rp['updated_fmt'] = !empty($rp['updated_at']) ? date('d.m.Y H:i', (int)$rp['updated_at']) : '—';
-		$rp['view_url'] = 'index.php?p=admin&c=recidivism&steam=' . urlencode($rp['authid']);
+		$rp['view_url'] = sb_url('admin', array('c' => 'recidivism', 'steam' => $rp['authid']));
 		$rp['points_ban'] = round((float)$rp['points_ban'], 2);
 		$rp['points_gag'] = round((float)$rp['points_gag'], 2);
 		$rp['points_mute'] = round((float)$rp['points_mute'], 2);
@@ -378,7 +386,7 @@ if (!$tablesOk) {
 			? round((float)$rp['points_total'], 2)
 			: round($rp['points_ban'] + $rp['points_gag'] + $rp['points_mute'], 2);
 		$rp['has_escalate'] = !empty($rp['escalated_ban']) || !empty($rp['escalated_gag']) || !empty($rp['escalated_mute']);
-		$rp['parsec_url'] = 'index.php?p=admin&c=parsec&steam=' . rawurlencode($rp['authid']);
+		$rp['parsec_url'] = sb_url('admin', array('c' => 'parsec', 'steam' => $rp['authid']));
 	}
 	unset($rp);
 }

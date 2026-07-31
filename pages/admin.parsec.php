@@ -12,6 +12,11 @@ if (!defined("IN_SB")) { echo "Ошибка доступа!"; die(); }
 
 global $userbank, $theme;
 
+if (function_exists('sb_apply_steam_path_param'))
+	sb_apply_steam_path_param();
+if (function_exists('sb_canonical_admin_steam_redirect'))
+	sb_canonical_admin_steam_redirect('parsec');
+
 if (!function_exists('ParsecPanelCanView') || !ParsecPanelCanView()) {
 	CheckAdminAccess(function_exists('RecidivismAccessMask')
 		? RecidivismAccessMask()
@@ -146,8 +151,10 @@ if ($authid !== '' && $error_msg === '') {
 	);
 	$linked = RecidivismBuildLinkedCards($authid);
 	foreach ($linked as &$la) {
-		$la['banlist_url'] = 'index.php?p=banlist&searchText=' . rawurlencode($la['authid']);
-		$la['parsec_url'] = 'index.php?p=admin&c=parsec&steam=' . rawurlencode($la['authid']);
+		$la['banlist_url'] = sb_url('banlist', array('searchText' => $la['authid']));
+		$la['parsec_url'] = sb_url('admin', array('c' => 'parsec', 'steam' => $la['authid']));
+		if (empty($la['view_url']))
+			$la['view_url'] = sb_url('admin', array('c' => 'recidivism', 'steam' => $la['authid']));
 		$src = isset($la['sources']) ? $la['sources'] : array();
 		$labels = array();
 		$labelTexts = array();
@@ -196,8 +203,8 @@ if ($authid !== '' && $error_msg === '') {
 		'points_mute' => $scores['mute'],
 		'points_display' => sprintf('B%s G%s M%s', $scores['ban'], $scores['gag'], $scores['mute']),
 		'family_size' => isset($family['all']) ? count($family['all']) : 1,
-		'recid_url' => 'index.php?p=admin&c=recidivism&steam=' . rawurlencode($authid),
-		'banlist_url' => 'index.php?p=banlist&searchText=' . rawurlencode($authid)
+		'recid_url' => sb_url('admin', array('c' => 'recidivism', 'steam' => $authid)),
+		'banlist_url' => sb_url('banlist', array('searchText' => $authid))
 	);
 	$api_player = ParsecPanelFetchApiPlayer($authid);
 } elseif ($fp_input !== '' && $tables_ok) {
@@ -227,8 +234,7 @@ if ($authid !== '' && $error_msg === '') {
 			}
 		}
 		if ($firstSteam !== '') {
-			header('Location: index.php?p=admin&c=parsec&steam=' . rawurlencode($firstSteam));
-			exit;
+			sb_redirect(sb_url('admin', array('c' => 'parsec', 'steam' => $firstSteam)));
 		}
 	}
 }
@@ -245,7 +251,7 @@ for ($i = 1; $i <= $banned_pages; $i++) {
 	$page_links[] = array(
 		'n' => $i,
 		'current' => ($i === $page),
-		'url' => 'index.php?p=admin&c=parsec&page=' . $i
+		'url' => sb_url('admin', array('c' => 'parsec', 'page' => $i))
 	);
 }
 
@@ -274,9 +280,9 @@ $theme->assign('csrf', $csrf);
 $theme->assign('admin_steam', ParsecPanelAdminSteam());
 $pwCfg = defined('PARSEC_PANEL_WRITE_PASSWORD') ? (string)PARSEC_PANEL_WRITE_PASSWORD : '';
 $theme->assign('password_configured', ($pwCfg !== '' && $pwCfg !== 'change-me-parsec-panel'));
-$form_action = 'index.php?p=admin&c=parsec';
-if ($authid !== '')
-	$form_action .= '&steam=' . rawurlencode($authid);
+$form_action = $authid !== ''
+	? sb_url('admin', array('c' => 'parsec', 'steam' => $authid))
+	: sb_url('admin', array('c' => 'parsec'));
 $theme->assign('form_action', $form_action);
 
 $theme->display('page_admin_parsec.tpl');
