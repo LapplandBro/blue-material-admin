@@ -46,7 +46,18 @@ foreach($var AS $v)
 	} 
 	else 
 	{
-		$lnk = "#^" . $v['id']; 
+		// С <base href="/"> голый #^N уезжает на главную. Префикс — текущий путь страницы.
+		$tabBase = '';
+		if (function_exists('sb_url')) {
+			$tp = isset($_GET['p']) ? (string)$_GET['p'] : 'admin';
+			$textra = array();
+			if (!empty($_GET['c']))
+				$textra['c'] = (string)$_GET['c'];
+			$tabBase = sb_url($tp, $textra);
+			if ($tabBase === './')
+				$tabBase = '';
+		}
+		$lnk = $tabBase . "#^" . $v['id'];
 		$click = "SwapPane(". $v['id'] .");";
 	} 
 	if($i == 0) 

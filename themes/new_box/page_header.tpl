@@ -11,6 +11,7 @@
 <meta name="robots" content="index,follow">
 {/if}
 <link rel="canonical" href="{$seo_canonical|escape}">
+{if $base_href}<base href="{$base_href|escape}">{/if}
 <link rel="icon" href="./images/favicon.ico">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="ru_RU">
@@ -135,8 +136,8 @@
 <div class="row">
 <div class="col-xs-12">
 <div class="p-t-5 p-b-10 p-r-10 p-l-10 text-center">
-<button type="button" class="btn btn-primary btn-block btn-icon-text waves-effect" onclick="window.location.href='?p=search_bans'"><i class="zmdi zmdi-lock-outline"></i>Баны</button>
-<button type="button" class="btn btn-warning btn-block btn-icon-text waves-effect" onclick="window.location.href='?p=search_comm'"><i class="zmdi zmdi-mic-off"></i>Муты</button>
+<button type="button" class="btn btn-primary btn-block btn-icon-text waves-effect" onclick="window.location.href='search_bans'"><i class="zmdi zmdi-lock-outline"></i>Баны</button>
+<button type="button" class="btn btn-warning btn-block btn-icon-text waves-effect" onclick="window.location.href='search_comm'"><i class="zmdi zmdi-mic-off"></i>Муты</button>
 </div>
 </div>
 </div>
@@ -180,7 +181,7 @@
 </aside>
 <nav id="sidebar" class="sidebar c-overflow" aria-label="Главное меню">
 <div class="profile-menu">
-<a href="{if $logged_in}index.php?p=account{else}index.php?p=login{/if}" title="{if $logged_in}Профиль{else}Авторизация{/if}">
+<a href="{if $logged_in}account{else}login{/if}" title="{if $logged_in}Профиль{else}Авторизация{/if}">
 <div class="profile-pic">
 <img src="{$avatar|escape}" alt="{if $logged_in}{$username|escape}{else}Гость{/if}">
 </div>
@@ -191,12 +192,12 @@
 </a>
 <ul class="main-menu">
 {if $logged_in}
-<li><a href="index.php?p=account"><i class="zmdi zmdi-settings"></i> Профиль</a></li>
-<li><a href="index.php?p=logout"><i class="zmdi zmdi-time-restore"></i> Выход</a></li>
+<li><a href="account"><i class="zmdi zmdi-settings"></i> Профиль</a></li>
+<li><a href="logout"><i class="zmdi zmdi-time-restore"></i> Выход</a></li>
 {else}
-<li><a href="index.php?p=login"><i class="zmdi zmdi-input-antenna"></i> Авторизация</a></li>
+<li><a href="login"><i class="zmdi zmdi-input-antenna"></i> Авторизация</a></li>
 {if $vay4er_act == "1"}
-<li><a href="index.php?p=pay"><i class="zmdi zmdi-shopping-cart-plus"></i> Активировать ваучер</a></li>
+<li><a href="pay"><i class="zmdi zmdi-shopping-cart-plus"></i> Активировать ваучер</a></li>
 {/if}
 {/if}
 </ul>

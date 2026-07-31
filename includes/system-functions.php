@@ -429,23 +429,23 @@ function sb_menu_icon($url, $title)
 		? mb_strtolower(strip_tags((string)$title), 'UTF-8')
 		: strtolower(strip_tags((string)$title));
 
-	if (preg_match('/(?:\?|&)p=admin\b/', $url_l) || strpos($title_l, 'админ-панель') !== false)
+	if (preg_match('/(?:\?|&)p=admin\b/', $url_l) || preg_match('#(?:^|/)admin(?:/|$)#', $url_l) || strpos($title_l, 'админ-панель') !== false)
 		return 'zmdi zmdi-shield-security';
-	if (preg_match('/(?:\?|&)p=(home|default)\b/', $url_l) || $title_l === 'главная')
+	if (preg_match('/(?:\?|&)p=(home|default)\b/', $url_l) || $url_l === './' || $url_l === '/' || $title_l === 'главная')
 		return 'zmdi zmdi-home';
-	if (preg_match('/(?:\?|&)p=servers\b/', $url_l) || strpos($title_l, 'сервер') !== false)
+	if (preg_match('/(?:\?|&)p=servers\b/', $url_l) || preg_match('#(?:^|/)servers(?:\?|$)#', $url_l) || strpos($title_l, 'сервер') !== false)
 		return 'zmdi zmdi-dns';
-	if (preg_match('/(?:\?|&)p=banlist\b/', $url_l) || (strpos($title_l, 'бан') !== false && strpos($title_l, 'апелля') === false))
+	if (preg_match('/(?:\?|&)p=banlist\b/', $url_l) || preg_match('#(?:^|/)banlist(?:\?|$)#', $url_l) || (strpos($title_l, 'бан') !== false && strpos($title_l, 'апелля') === false))
 		return 'zmdi zmdi-block-alt';
-	if (preg_match('/(?:\?|&)p=commslist\b/', $url_l) || strpos($title_l, 'мут') !== false || strpos($title_l, 'гаг') !== false)
+	if (preg_match('/(?:\?|&)p=commslist\b/', $url_l) || preg_match('#(?:^|/)commslist(?:\?|$)#', $url_l) || strpos($title_l, 'мут') !== false || strpos($title_l, 'гаг') !== false)
 		return 'zmdi zmdi-mic-off';
-	if (preg_match('/(?:\?|&)p=adminlist\b/', $url_l) || strpos($title_l, 'админлист') !== false || strpos($title_l, 'список админ') !== false)
+	if (preg_match('/(?:\?|&)p=adminlist\b/', $url_l) || preg_match('#(?:^|/)adminlist(?:\?|$)#', $url_l) || strpos($title_l, 'админлист') !== false || strpos($title_l, 'список админ') !== false)
 		return 'zmdi zmdi-accounts';
-	if (preg_match('/(?:\?|&)p=submit\b/', $url_l) || strpos($title_l, 'жалоб') !== false)
+	if (preg_match('/(?:\?|&)p=submit\b/', $url_l) || preg_match('#(?:^|/)submit(?:\?|$)#', $url_l) || strpos($title_l, 'жалоб') !== false)
 		return 'zmdi zmdi-flag';
-	if (preg_match('/(?:\?|&)p=protest\b/', $url_l) || strpos($title_l, 'апелля') !== false)
+	if (preg_match('/(?:\?|&)p=protest\b/', $url_l) || preg_match('#(?:^|/)protest(?:\?|$)#', $url_l) || strpos($title_l, 'апелля') !== false)
 		return 'zmdi zmdi-balance';
-	if (preg_match('/(?:\?|&)p=pay\b/', $url_l) || strpos($title_l, 'ваучер') !== false)
+	if (preg_match('/(?:\?|&)p=pay\b/', $url_l) || preg_match('#(?:^|/)pay(?:\?|$)#', $url_l) || strpos($title_l, 'ваучер') !== false)
 		return 'zmdi zmdi-shopping-cart-plus';
 	if (preg_match('/vk\.com/i', $url_l) || preg_match('/\bvk\b/', $title_l))
 		return 'zmdi zmdi-vk';
@@ -517,14 +517,21 @@ function AddTab($title, $url, $desc, $newtab=false, $active=false)
 		$active_match = false;
 		if ($p !== '' && $p !== 'default')
 		{
+			$u = html_entity_decode((string)$url, ENT_QUOTES, 'UTF-8');
+			$path = $u;
 			$qs = array();
-			$qpos = strpos($url, '?');
+			$qpos = strpos($u, '?');
 			if ($qpos !== false)
 			{
-				$query = html_entity_decode(substr($url, $qpos + 1), ENT_QUOTES, 'UTF-8');
+				$path = substr($u, 0, $qpos);
+				$query = substr($u, $qpos + 1);
 				if ($query !== '')
 					parse_str($query, $qs);
 			}
+			$path = trim($path, '/');
+			if ($path === '.' || $path === './')
+				$path = '';
+
 			if (!empty($qs['p']) && (string)$qs['p'] === $p)
 			{
 				if (!empty($qs['c']))
@@ -532,6 +539,12 @@ function AddTab($title, $url, $desc, $newtab=false, $active=false)
 				else
 					$active_match = ($c === '');
 			}
+			elseif ($p === 'admin' && $c !== '' && preg_match('#^admin/([a-zA-Z0-9_]+)$#', $path, $pm))
+				$active_match = ($pm[1] === $c);
+			elseif ($c === '' && $path === $p)
+				$active_match = true;
+			elseif ($c === '' && $p === 'home' && ($path === '' || $path === 'home'))
+				$active_match = true;
 			elseif ($c === '' && strlen($url) > 12 && substr($url, 12) == $p)
 				$active_match = true;
 		}
@@ -607,7 +620,7 @@ function BuildPageTabs()
 		{
 			foreach ($glist as $it)
 			{
-				if (!empty($it['url']) && preg_match('/(?:\?|&)p=pay\b/', $it['url']))
+				if (!empty($it['url']) && (preg_match('/(?:\?|&)p=pay\b/', $it['url']) || preg_match('#(?:^|/)pay(?:\?|$)#', $it['url'])))
 				{
 					$has_voucher = true;
 					break 2;
@@ -618,7 +631,7 @@ function BuildPageTabs()
 		{
 			$groups['site'][] = array(
 				'text' => 'Активировать ваучер',
-				'url' => 'index.php?p=pay',
+				'url' => function_exists('sb_url') ? sb_url('pay') : 'index.php?p=pay',
 				'description' => 'Активация ваучера для получения админки (только для гостей)',
 				'newtab' => '0',
 			);
@@ -630,7 +643,9 @@ function BuildPageTabs()
 		$has_admin_hub = false;
 		foreach ($groups['admin'] as $aitem)
 		{
-			if (preg_match('/(?:\?|&)p=admin\b/', $aitem['url']) && !preg_match('/(?:\?|&)c=/', $aitem['url']))
+			$au = $aitem['url'];
+			if ((preg_match('/(?:\?|&)p=admin\b/', $au) && !preg_match('/(?:\?|&)c=/', $au))
+				|| preg_match('#(?:^|/)admin/?$#', $au))
 			{
 				$has_admin_hub = true;
 				break;
@@ -640,7 +655,7 @@ function BuildPageTabs()
 		{
 			$groups['admin'][] = array(
 				'text' => 'Админ-панель',
-				'url' => 'index.php?p=admin',
+				'url' => function_exists('sb_url') ? sb_url('admin') : 'index.php?p=admin',
 				'description' => 'Управление серверами, админами и настройками',
 				'newtab' => '0',
 			);
@@ -654,7 +669,7 @@ function BuildPageTabs()
 		echo '<li class="main-menu-label" aria-hidden="true"><span>'.$group_labels[$gkey].'</span></li>';
 		$GLOBALS['sb_menu_current_group'] = $gkey;
 		foreach ($list as $item)
-			AddTab($item['text'], $item['url'], $item['description'], ($item['newtab']=="1"));
+			AddTab($item['text'], function_exists('sb_legacy_to_pretty_url') ? sb_legacy_to_pretty_url($item['url']) : $item['url'], $item['description'], ($item['newtab']=="1"));
 	}
 	unset($GLOBALS['sb_menu_current_group']);
 
@@ -663,27 +678,27 @@ function BuildPageTabs()
 	// BUILD THE SUB-MENU's FOR ADMIN PAGES (top-right #nav)
 	$submenu = new CTabsMenu();
 	if($userbank->HasAccess(ADMIN_OWNER|ADMIN_LIST_ADMINS|ADMIN_ADD_ADMINS|ADMIN_EDIT_ADMINS|ADMIN_DELETE_ADMINS))
-		$submenu->addMenuItem("Администраторы", 0,"", "index.php?p=admin&amp;c=admins", true);
+		$submenu->addMenuItem("Администраторы", 0,"", sb_url('admin', array('c' => 'admins')), true);
 	if(($userbank->HasAccess(ADMIN_OWNER)) && ($GLOBALS['config']['page.vay4er'] == "1"))
-		$submenu->addMenuItem("Ваучеры", 0,"", "index.php?p=admin&amp;c=pay_card", true);
+		$submenu->addMenuItem("Ваучеры", 0,"", sb_url('admin', array('c' => 'pay_card')), true);
 	if($userbank->HasAccess(ADMIN_OWNER|ADMIN_LIST_SERVERS|ADMIN_ADD_SERVER|ADMIN_EDIT_SERVERS|ADMIN_DELETE_SERVERS))
-		$submenu->addMenuItem("Серверы", 0,"", "index.php?p=admin&amp;c=servers", true);
+		$submenu->addMenuItem("Серверы", 0,"", sb_url('admin', array('c' => 'servers')), true);
 	if($userbank->HasAccess( ADMIN_OWNER|ADMIN_ADD_BAN|ADMIN_EDIT_OWN_BANS|ADMIN_EDIT_GROUP_BANS|ADMIN_EDIT_ALL_BANS|ADMIN_BAN_PROTESTS|ADMIN_BAN_SUBMISSIONS))
-		$submenu->addMenuItem("Баны", 0,"", "index.php?p=admin&amp;c=bans", true);
+		$submenu->addMenuItem("Баны", 0,"", sb_url('admin', array('c' => 'bans')), true);
 	if($userbank->HasAccess( ADMIN_OWNER|ADMIN_ADD_BAN|ADMIN_EDIT_OWN_BANS|ADMIN_EDIT_ALL_BANS))
-		$submenu->addMenuItem("Муты и гаги", 0,"", "index.php?p=admin&amp;c=comms", true);
+		$submenu->addMenuItem("Муты и гаги", 0,"", sb_url('admin', array('c' => 'comms')), true);
 	if(function_exists('RecidivismCanView') ? RecidivismCanView() : $userbank->HasAccess( ADMIN_OWNER|ADMIN_ADD_BAN|ADMIN_EDIT_OWN_BANS|ADMIN_EDIT_ALL_BANS|ADMIN_EDIT_GROUP_BANS))
-		$submenu->addMenuItem("История нарушений", 0,"", "index.php?p=admin&amp;c=recidivism", true);
+		$submenu->addMenuItem("История нарушений", 0,"", sb_url('admin', array('c' => 'recidivism')), true);
 	if(function_exists('ParsecPanelCanView') ? ParsecPanelCanView() : false)
-		$submenu->addMenuItem("Связанные аккаунты", 0,"", "index.php?p=admin&amp;c=parsec", true);
+		$submenu->addMenuItem("Связанные аккаунты", 0,"", sb_url('admin', array('c' => 'parsec')), true);
 	if($userbank->HasAccess(ADMIN_OWNER|ADMIN_LIST_GROUPS|ADMIN_ADD_GROUP|ADMIN_EDIT_GROUPS|ADMIN_DELETE_GROUPS))
-		$submenu->addMenuItem("Группы", 0,"", "index.php?p=admin&amp;c=groups", true);
+		$submenu->addMenuItem("Группы", 0,"", sb_url('admin', array('c' => 'groups')), true);
 	if($userbank->HasAccess(ADMIN_OWNER|ADMIN_WEB_SETTINGS))
-		$submenu->addMenuItem("Настройки", 0,"", "index.php?p=admin&amp;c=settings", true);
+		$submenu->addMenuItem("Настройки", 0,"", sb_url('admin', array('c' => 'settings')), true);
 	if($userbank->HasAccess(ADMIN_OWNER))
-		$submenu->addMenuItem("Меню", 0,"", "index.php?p=admin&amp;c=menu", true);
+		$submenu->addMenuItem("Меню", 0,"", sb_url('admin', array('c' => 'menu')), true);
 	if($userbank->HasAccess( ADMIN_OWNER|ADMIN_LIST_MODS|ADMIN_ADD_MODS|ADMIN_EDIT_MODS|ADMIN_DELETE_MODS))
-		$submenu->addMenuItem("Моды", 0,"", "?p=admin&amp;c=mods", true);
+		$submenu->addMenuItem("Моды", 0,"", sb_url('admin', array('c' => 'mods')), true);
 	SubMenu( $submenu->getMenuArray() );
 }
 
@@ -1644,6 +1659,78 @@ function PageDie()
 {
 	include TEMPLATES_PATH.'/footer.php';
 	die();
+}
+
+/** Страницы с ЧПУ: /banlist вместо index.php?p=banlist */
+function sb_pretty_pages()
+{
+	return array(
+		'login', 'logout', 'admin', 'submit', 'banlist', 'commslist', 'servers',
+		'protest', 'account', 'lostpassword', 'home', 'search_bans', 'search_comm',
+		'pay', 'adminlist',
+	);
+}
+
+/**
+ * ЧПУ-ссылка: sb_url('banlist'), sb_url('admin', array('c'=>'bans')), sb_url('banlist', array('page'=>2)).
+ * Старые index.php?p=… тоже работают (редирект/rewrite).
+ */
+function sb_url($p, $extra = array())
+{
+	if (!is_array($extra))
+		$extra = array();
+	$p = preg_replace('/[^a-zA-Z0-9_]/', '', (string)$p);
+	$c = '';
+	if (isset($extra['c'])) {
+		$c = preg_replace('/[^a-zA-Z0-9_]/', '', (string)$extra['c']);
+		unset($extra['c']);
+	}
+	unset($extra['p']);
+
+	$pages = sb_pretty_pages();
+	if ($p === 'admin' && $c !== '') {
+		$path = 'admin/' . $c;
+	} elseif ($p !== '' && in_array($p, $pages, true)) {
+		$path = ($p === 'home') ? './' : $p;
+	} else {
+		$q = $extra;
+		if ($p !== '')
+			$q = array_merge(array('p' => $p), $q);
+		if ($c !== '')
+			$q['c'] = $c;
+		$qs = http_build_query($q);
+		return 'index.php' . ($qs !== '' ? ('?' . $qs) : '');
+	}
+
+	$qs = http_build_query($extra);
+	return $path . ($qs !== '' ? ('?' . $qs) : '');
+}
+
+/** Превратить index.php?p=banlist&c=… в /banlist или /admin/c (для меню из БД). */
+function sb_legacy_to_pretty_url($url)
+{
+	$url = (string)$url;
+	if ($url === '' || $url[0] === '#' || preg_match('#^(https?:)?//#i', $url) || stripos($url, 'javascript:') === 0)
+		return $url;
+	$hadAmp = (strpos($url, '&amp;') !== false);
+	$u = html_entity_decode($url, ENT_QUOTES, 'UTF-8');
+	$frag = '';
+	$hashPos = strpos($u, '#');
+	if ($hashPos !== false) {
+		$frag = substr($u, $hashPos);
+		$u = substr($u, 0, $hashPos);
+	}
+	if (!preg_match('#^(?:\./)?index\.php\?(.*)$#i', $u, $m))
+		return $url;
+	parse_str($m[1], $q);
+	if (empty($q['p']))
+		return $url;
+	$p = $q['p'];
+	unset($q['p']);
+	$pretty = sb_url($p, $q) . $frag;
+	if ($hadAmp)
+		$pretty = str_replace('&', '&amp;', $pretty);
+	return $pretty;
 }
 
 /** Отдать статическую errors/404.html с HTTP 404 и завершить скрипт. */

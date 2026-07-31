@@ -62,6 +62,15 @@ ErrorDocument 504 /errors/504.html
 	RewriteCond %{QUERY_STRING} (^|&)c=admins(&|$) [NC]
 	RewriteCond %{QUERY_STRING} (^|&)o=editpermissions(&|$) [NC]
 	RewriteRule ^index\.php$ - [F,L]
+
+	# ЧПУ: /banlist → index.php?p=banlist, /admin/bans → index.php?p=admin&c=bans
+	# Если панель в подпапке — раскомментируй: RewriteBase /подпапка/
+	RewriteCond %{REQUEST_FILENAME} -f [OR]
+	RewriteCond %{REQUEST_FILENAME} -d
+	RewriteRule ^ - [L]
+
+	RewriteRule ^admin/([a-zA-Z0-9_]+)/?$ index.php?p=admin&c=$1 [L,QSA]
+	RewriteRule ^(login|logout|admin|submit|banlist|commslist|servers|protest|account|lostpassword|home|search_bans|search_comm|pay|adminlist)/?$ index.php?p=$1 [L,QSA]
 </IfModule>
 
 # Security-заголовки

@@ -305,19 +305,19 @@ else
 			// ====================[ ADMIN SIDE MENU START ] ===================
 			$banTabMenu = new CTabsMenu();
 			if($userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_BAN ) ) {
-				$banTabMenu->addMenuItem("Добавить бан",0);
+				$banTabMenu->addMenuItem("Добавить",0);
 				if($GLOBALS['config']['config.enablegroupbanning']==1)
 					$banTabMenu->addMenuItem("Бан группы",4);
 			}
 			if($userbank->HasAccess(ADMIN_OWNER|ADMIN_BAN_PROTESTS ) )
-				$banTabMenu->addMenuItem("Протесты банов",1);
+				$banTabMenu->addMenuItem("Протесты",1);
 			if($userbank->HasAccess(ADMIN_OWNER|ADMIN_BAN_SUBMISSIONS ) )
-				$banTabMenu->addMenuItem("Заявки на бан", 2);
+				$banTabMenu->addMenuItem("Заявки", 2);
 			if($userbank->HasAccess(ADMIN_OWNER|ADMIN_BAN_IMPORT ) )
-				$banTabMenu->addMenuItem("Импорт банов", 3);
-			$banTabMenu->addMenuItem("Список банов", 5, "", "index.php?p=banlist",true);
-			$banTabMenu->addMenuItem("История нарушений", 6, "", "index.php?p=admin&c=recidivism", true);
-			$banTabMenu->addMenuItem("Связанные аккаунты", 7, "", "index.php?p=admin&c=parsec", true);
+				$banTabMenu->addMenuItem("Импорт", 3);
+			$banTabMenu->addMenuItem("Список", 5, "", "index.php?p=banlist",true);
+			$banTabMenu->addMenuItem("История", 6, "", "index.php?p=admin&c=recidivism", true);
+			$banTabMenu->addMenuItem("Связанные", 7, "", "index.php?p=admin&c=parsec", true);
 			$banTabMenu->addMenuItem("Назад", 8, "", "index.php?p=admin", true);
 			$banTabMenu->outputMenu();
 			// ====================[ ADMIN SIDE MENU END ] ===================
@@ -360,10 +360,10 @@ else
 			// ====================[ ADMIN SIDE MENU START ] ===================
 			$banTabMenu = new CTabsMenu();
 			if($userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_BAN ) ) {
-				$banTabMenu->addMenuItem("Добавить мут / гаг", 0);
+				$banTabMenu->addMenuItem("Добавить", 0);
 			}
-			$banTabMenu->addMenuItem("Список мутов/гагов", 1, "", "index.php?p=commslist",true);
-			$banTabMenu->addMenuItem("История нарушений", 2, "", "index.php?p=admin&c=recidivism", true);
+			$banTabMenu->addMenuItem("Список", 1, "", "index.php?p=commslist",true);
+			$banTabMenu->addMenuItem("История", 2, "", "index.php?p=admin&c=recidivism", true);
 			$banTabMenu->outputMenu();
 			// ====================[ ADMIN SIDE MENU END ] ===================
 
@@ -394,10 +394,10 @@ else
 			: (ADMIN_OWNER|ADMIN_ADD_BAN|ADMIN_EDIT_OWN_BANS|ADMIN_EDIT_ALL_BANS|ADMIN_EDIT_GROUP_BANS) );
 
 		$recTabMenu = new CTabsMenu();
-		$recTabMenu->addMenuItem("Поиск игрока", 0);
-		$recTabMenu->addMenuItem("Список банов", 1, "", "index.php?p=banlist", true);
-		$recTabMenu->addMenuItem("Муты и гаги", 2, "", "index.php?p=commslist", true);
-		$recTabMenu->addMenuItem("Связанные аккаунты", 3, "", "index.php?p=admin&c=parsec", true);
+		$recTabMenu->addMenuItem("Поиск", 0);
+		$recTabMenu->addMenuItem("Баны", 1, "", "index.php?p=banlist", true);
+		$recTabMenu->addMenuItem("Муты", 2, "", "index.php?p=commslist", true);
+		$recTabMenu->addMenuItem("Связанные", 3, "", "index.php?p=admin&c=parsec", true);
 		$recTabMenu->outputMenu();
 
 		include TEMPLATES_PATH . "/admin.recidivism.php";
@@ -411,9 +411,9 @@ else
 			: (ADMIN_OWNER|ADMIN_ADD_BAN|ADMIN_EDIT_OWN_BANS|ADMIN_EDIT_ALL_BANS|ADMIN_EDIT_GROUP_BANS) );
 
 		$parsecTabMenu = new CTabsMenu();
-		$parsecTabMenu->addMenuItem("Поиск твинков", 0);
-		$parsecTabMenu->addMenuItem("История нарушений", 1, "", "index.php?p=admin&c=recidivism", true);
-		$parsecTabMenu->addMenuItem("Список банов", 2, "", "index.php?p=banlist", true);
+		$parsecTabMenu->addMenuItem("Поиск", 0);
+		$parsecTabMenu->addMenuItem("История", 1, "", "index.php?p=admin&c=recidivism", true);
+		$parsecTabMenu->addMenuItem("Баны", 2, "", "index.php?p=banlist", true);
 		$parsecTabMenu->outputMenu();
 
 		include TEMPLATES_PATH . "/admin.parsec.php";

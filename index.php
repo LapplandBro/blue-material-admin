@@ -45,19 +45,40 @@ $sb_is_ajax =
 	|| (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strcasecmp($_SERVER['HTTP_X_REQUESTED_WITH'], 'XMLHttpRequest') === 0);
 
 if (!$sb_is_ajax) {
-	$request_path = parse_url(isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '/', PHP_URL_PATH);
-	$query_string = isset($_SERVER['QUERY_STRING']) ? $_SERVER['QUERY_STRING'] : '';
-	$script_base = basename($request_path === null ? '' : $request_path);
-	if ($script_base === 'index.php') {
+	// Только если в URL реально /index.php (не внутренний rewrite /banlist → index.php).
+	// THE_REQUEST на части CGI/XAMPP пустой — смотрим REQUEST_URI.
+	$req_path = parse_url(isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '/', PHP_URL_PATH);
+	$asked_index = is_string($req_path) && (bool)preg_match('#/index\.php$#i', $req_path);
+	if (!$asked_index && !empty($_SERVER['THE_REQUEST']))
+		$asked_index = (bool)preg_match('#\s/+index\.php[\s?]#i', (string)$_SERVER['THE_REQUEST']);
+	if ($asked_index) {
+		$query_string = isset($_SERVER['QUERY_STRING']) ? $_SERVER['QUERY_STRING'] : '';
 		parse_str($query_string, $qparams);
-		$page_param = isset($qparams['p']) ? $qparams['p'] : '';
+		$page_param = isset($qparams['p']) ? preg_replace('/[^a-zA-Z0-9_]/', '', (string)$qparams['p']) : '';
 		unset($qparams['p']);
+		$home_base = rtrim(defined('SB_WP_URL') ? SB_WP_URL : '', '/');
+		if ($home_base === '') {
+			$home_base = ((defined('COOKIE_SECURE') && COOKIE_SECURE) ? 'https' : 'http') . '://' . (isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'localhost');
+		}
 		if (($page_param === '' || strcasecmp($page_param, 'home') === 0) && count($qparams) === 0) {
-			$home_base = rtrim(defined('SB_WP_URL') ? SB_WP_URL : '', '/');
-			if ($home_base === '') {
-				$home_base = ((defined('COOKIE_SECURE') && COOKIE_SECURE) ? 'https' : 'http') . '://' . (isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'localhost');
-			}
 			header('Location: ' . $home_base . '/', true, 301);
+			exit;
+		}
+		// index.php?p=banlist → /banlist (и /admin/bans для c=)
+		$pretty_pages = array(
+			'login', 'logout', 'admin', 'submit', 'banlist', 'commslist', 'servers',
+			'protest', 'account', 'lostpassword', 'search_bans', 'search_comm',
+			'pay', 'adminlist',
+		);
+		if ($page_param !== '' && in_array($page_param, $pretty_pages, true)) {
+			$c = '';
+			if ($page_param === 'admin' && !empty($qparams['c'])) {
+				$c = preg_replace('/[^a-zA-Z0-9_]/', '', (string)$qparams['c']);
+				unset($qparams['c']);
+			}
+			$path = ($page_param === 'admin' && $c !== '') ? ('/admin/' . $c) : ('/' . $page_param);
+			$qs = http_build_query($qparams);
+			header('Location: ' . $home_base . $path . ($qs !== '' ? ('?' . $qs) : ''), true, 301);
 			exit;
 		}
 	}

@@ -44,10 +44,10 @@ function sb_install_write_seo_files($siteRoot, $baseUrl = '')
 
 	$paths = array(
 		array('loc' => $base . '/', 'changefreq' => 'daily', 'priority' => '1.0'),
-		array('loc' => $base . '/index.php?p=servers', 'changefreq' => 'hourly', 'priority' => '0.9'),
-		array('loc' => $base . '/index.php?p=banlist', 'changefreq' => 'hourly', 'priority' => '0.9'),
-		array('loc' => $base . '/index.php?p=commslist', 'changefreq' => 'hourly', 'priority' => '0.8'),
-		array('loc' => $base . '/index.php?p=adminlist', 'changefreq' => 'weekly', 'priority' => '0.7'),
+		array('loc' => $base . '/servers', 'changefreq' => 'hourly', 'priority' => '0.9'),
+		array('loc' => $base . '/banlist', 'changefreq' => 'hourly', 'priority' => '0.9'),
+		array('loc' => $base . '/commslist', 'changefreq' => 'hourly', 'priority' => '0.8'),
+		array('loc' => $base . '/adminlist', 'changefreq' => 'weekly', 'priority' => '0.7'),
 	);
 
 	$xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";

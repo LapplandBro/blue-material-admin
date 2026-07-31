@@ -103,7 +103,29 @@ var ADMIN_OWNER = 			(1<<24);
 var accordion;
 var accordionInstances = {};
 
-
+// <base href> ломает якоря href="#^N": браузер ведёт на главную (/#^N).
+// Ловим только SourceBans-вкладки (#^…), Bootstrap (#chat, #tab-*) не трогаем.
+(function () {
+	if (typeof document === 'undefined' || !document.addEventListener)
+		return;
+	document.addEventListener('click', function (e) {
+		var a = e.target;
+		while (a && a.nodeName !== 'A')
+			a = a.parentNode;
+		if (!a || !a.getAttribute)
+			return;
+		var href = a.getAttribute('href');
+		if (!href || href.indexOf('#^') !== 0)
+			return;
+		e.preventDefault();
+		try {
+			if (window.history && history.replaceState)
+				history.replaceState(null, '', window.location.pathname + window.location.search + href);
+			else
+				window.location.hash = href.substring(1);
+		} catch (err) {}
+	}, true);
+})();
 
 function ProcessAdminTabs()
 {

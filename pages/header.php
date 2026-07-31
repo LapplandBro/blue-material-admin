@@ -239,11 +239,20 @@ if ($seo_description === '' || $seo_strlen($seo_description) < 50)
 if ($seo_strlen($seo_description) > 155)
 	$seo_description = $seo_substr($seo_description, 0, 152) . '…';
 
-// Главная: каноникал без ?p=home, чтобы не плодить дубли.
+// Canonical: ЧПУ (/banlist, /admin/bans), главная без хвоста.
+$seo_c = (isset($_GET['c']) ? preg_replace('/[^a-zA-Z0-9_]/', '', (string)$_GET['c']) : '');
 if ($seo_page === 'home')
 	$seo_canonical = $site_base . '/';
+elseif ($seo_page === 'admin' && $seo_c !== '')
+	$seo_canonical = $site_base . '/admin/' . rawurlencode($seo_c);
+elseif ($seo_page !== '')
+	$seo_canonical = $site_base . '/' . rawurlencode($seo_page);
 else
-	$seo_canonical = $site_base . '/index.php?p=' . rawurlencode($seo_page);
+	$seo_canonical = $site_base . '/';
+
+// <base href> — чтобы CSS/JS с /banlist не ломались (относительные themes/…)
+$base_href = $site_base . '/';
+$theme->assign('base_href', $base_href);
 
 // --- Social embed (Discord/Telegram/etc.): отдельно от dashboard UI ---
 $og_site_name = (defined('SB_OG_SITE_NAME') && SB_OG_SITE_NAME !== '')
