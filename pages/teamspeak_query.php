@@ -826,7 +826,11 @@ function channelInfo($ip,$tPort,$port,$cID)
 		$html = "<tr class=\"bg1\"><td>Channel:</td></tr>\n";
 		$html .= "<tr class=\"bg1\"><td>".removeChar($name)."<br /><br /></td></tr>\n";
 		$html .= "<tr class=\"bg1\"><td>Topic:</td></tr>\n";
-		$html .= "<tr class=\"bg1\"><td>".utf8_encode(removeChar($topic))."<br /><br /></td></tr>\n";
+		$topicUtf8 = removeChar($topic);
+		if (function_exists('mb_convert_encoding')) {
+			$topicUtf8 = mb_convert_encoding($topicUtf8, 'UTF-8', 'ISO-8859-1');
+		}
+		$html .= "<tr class=\"bg1\"><td>".$topicUtf8."<br /><br /></td></tr>\n";
 		$html .= "<tr class=\"bg1\"><td>User in channel:</td></tr>\n";
 		$html .= "<tr class=\"bg1\"><td>".$cUser."/".removeChar($max)."<br /><br /></td></tr>\n";
 		$html .= "<tr class=\"bg1\"><td>Codec:</td></tr>\n";

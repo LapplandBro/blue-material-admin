@@ -110,8 +110,7 @@ function adodb_error_pg($errormsg)
 			'canceling statement due to statement timeout$' => DB_ERROR_STATEMENT_TIMEOUT,
 			'could not serialize access due to'   => DB_ERROR_SERIALIZATION_FAILURE
 		);
-	reset($error_regexps);
-	while (list($regexp,$code) = each($error_regexps)) {
+	foreach ($error_regexps as $regexp => $code) {
 		if (preg_match("/$regexp/mi", $errormsg)) {
 			return $code;
 		}

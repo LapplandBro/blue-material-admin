@@ -9,6 +9,7 @@
  * Include the {@link shared.make_timestamp.php} plugin
  */
 require_once $smarty->_get_plugin_filepath('shared', 'make_timestamp');
+require_once $smarty->_get_plugin_filepath('shared', 'strftime_compat');
 /**
  * Smarty date_format modifier plugin
  *
@@ -50,7 +51,7 @@ function smarty_modifier_date_format($string, $format = '%b %e, %Y', $default_da
         }
         $format = str_replace($_win_from, $_win_to, $format);
     }
-    return strftime($format, $timestamp);
+    return smarty_compat_strftime($format, $timestamp);
 }
 
 /* vim: set expandtab: */

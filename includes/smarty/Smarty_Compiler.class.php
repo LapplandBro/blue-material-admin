@@ -261,13 +261,14 @@ class Smarty_Compiler extends Smarty {
         $this->_folded_blocks = $match;
         reset($this->_folded_blocks);
 
-        /* replace special blocks by "{php}" */
-        $source_content = preg_replace_callback($search, create_function ('$matches', "return '"
-                                       . $this->_quote_replace($this->left_delimiter) . 'php'
-                                       . "' . str_repeat(\"\n\", substr_count('\$matches[1]', \"\n\")) .'"
-                                       . $this->_quote_replace($this->right_delimiter)
-                                       . "';")
-                                       , $source_content);
+        /* replace special blocks by "{php}" (PHP 8+: create_function removed) */
+        $_smarty_ldq = $this->_quote_replace($this->left_delimiter);
+        $_smarty_rdq = $this->_quote_replace($this->right_delimiter);
+        $source_content = preg_replace_callback($search, function ($matches) use ($_smarty_ldq, $_smarty_rdq) {
+            return $_smarty_ldq . 'php'
+                . str_repeat("\n", substr_count(isset($matches[1]) ? $matches[1] : '', "\n"))
+                . $_smarty_rdq;
+        }, $source_content);
 
         /* Gather all template tags. */
         preg_match_all("~{$ldq}\s*(.*?)\s*{$rdq}~s", $source_content, $_match);
@@ -397,7 +398,7 @@ class Smarty_Compiler extends Smarty {
         }
 
         // put header at the top of the compiled template
-        $template_header = "<?php /* Smarty version ".$this->_version.", created on ".strftime("%Y-%m-%d %H:%M:%S")."\n";
+        $template_header = "<?php /* Smarty version ".$this->_version.", created on ".date("Y-m-d H:i:s")."\n";
         $template_header .= "         compiled from ".strtr(urlencode($resource_name), array('%2F'=>'/', '%3A'=>':'))." */ ?>\n";
 
         /* Emit code to load needed plugins. */
@@ -555,8 +556,9 @@ class Smarty_Compiler extends Smarty {
                 return '';
 
             case 'php':
-                /* handle folded tags replaced by {php} */
-                list(, $block) = each($this->_folded_blocks);
+                /* handle folded tags replaced by {php} (PHP 8+: each() removed) */
+                $block = current($this->_folded_blocks);
+                next($this->_folded_blocks);
                 $this->_current_line_no += substr_count($block[0], "\n");
                 /* the number of matched elements in the regexp in _compile_file()
                    determins the type of folded tag that was found */

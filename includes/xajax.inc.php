@@ -734,9 +734,8 @@ class xajax
 		{
 			for ($i = 0; $i < sizeof($aArgs); $i++)
 			{
-				// If magic quotes is on, then we need to strip the slashes from the args
-				if (get_magic_quotes_gpc() == 1 && is_string($aArgs[$i])) {
-				
+				// PHP 8+: get_magic_quotes_gpc() removed (always off)
+				if (function_exists('get_magic_quotes_gpc') && get_magic_quotes_gpc() == 1 && is_string($aArgs[$i])) {
 					$aArgs[$i] = stripslashes($aArgs[$i]);
 				}
 				if (stristr($aArgs[$i],"<xjxobj>") != false)
@@ -806,7 +805,7 @@ class xajax
 					$oErrorResponse->addAlert("** Logging Error **\n\nxajax was unable to write to the error log file:\n" . $this->sLogFile);
 				}
 				else {
-					fwrite($fH, "** xajax Error Log - " . strftime("%b %e %Y %I:%M:%S %p") . " **" . $GLOBALS['xajaxErrorHandlerText'] . "\n\n\n");
+					fwrite($fH, "** xajax Error Log - " . date('M j Y h:i:s A') . " **" . $GLOBALS['xajaxErrorHandlerText'] . "\n\n\n");
 					fclose($fH);
 				}
 			}
@@ -1264,7 +1263,8 @@ class xajax
 			}
 			// If magic quotes is on, then we need to strip the slashes from the
 			// array values because of the parse_str pass which adds slashes
-			if (get_magic_quotes_gpc() == 1) {
+			// PHP 8+: get_magic_quotes_gpc() removed (always off)
+			if (function_exists('get_magic_quotes_gpc') && get_magic_quotes_gpc() == 1) {
 				$newArray = array();
 				foreach ($aArray as $sKey => $sValue) {
 					if (is_string($sValue))
@@ -1301,9 +1301,9 @@ class xajax
 			{
 				$sFuncToUse = "mb_convert_encoding";
 			}
-			else if ($this->sEncoding == "ISO-8859-1")
+			else if ($this->sEncoding == "ISO-8859-1" && function_exists('mb_convert_encoding'))
 			{
-				$sFuncToUse = "utf8_decode";
+				$sFuncToUse = "mb_convert_encoding_iso";
 			}
 			else
 			{
@@ -1322,9 +1322,9 @@ class xajax
 					{
 						$sValue = mb_convert_encoding($sValue, $this->sEncoding, "UTF-8");
 					}
-					else
+					else if ($sFuncToUse == "mb_convert_encoding_iso")
 					{
-						$sValue = utf8_decode($sValue);
+						$sValue = mb_convert_encoding($sValue, 'ISO-8859-1', 'UTF-8');
 					}
 				}
 			}

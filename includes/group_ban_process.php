@@ -240,7 +240,9 @@ while ($current_member_index < $total_members) {
             $pre = $db->Prepare("INSERT INTO ".DB_PREFIX."_bans(created,type,ip,authid,name,ends,length,reason,aid,adminIp ) VALUES(UNIX_TIMESTAMP(),?,?,?,?,UNIX_TIMESTAMP(),?,?,?,?)");
 
             $original_name = $tag->childNodes->item(0)->nodeValue;
-            $name_to_insert = utf8_encode($original_name); // Apply utf8_encode here again
+            $name_to_insert = function_exists('mb_convert_encoding')
+                ? mb_convert_encoding($original_name, 'UTF-8', 'ISO-8859-1')
+                : $original_name;
             
             // Attempt to insert with the potentially encoded name
             $success = $db->Execute($pre,array(0,

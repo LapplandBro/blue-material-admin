@@ -40,7 +40,7 @@ if (!defined('IN_SB')) {echo("You should not be here. Only follow links!");die()
  * исключения при фэйлах, а просто вернёт FALSE.
  * Не трогать.
  **/
-require INCLUDES_PATH . '/SourceQuery/bootstrap.php';
+require_once INCLUDES_PATH . '/SourceQuery/autoload.php';
 use xPaw\SourceQuery\SourceQuery;
 
 class CServerControl {
@@ -53,13 +53,12 @@ class CServerControl {
     public function Connect($ip, $port = 27015) {
         try {
             $this->sq->Disconnect();
-        } catch (Exception $e) {}
+        } catch (\Throwable $e) {}
         
-        // Connect
         try {
             $this->sq->Connect($ip, $port, 2, SourceQuery::SOURCE);
             return true;
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             return false;
         }
     }
@@ -69,7 +68,7 @@ class CServerControl {
         try {
             $this->sq->SetRconPassword($password);
             return true;
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             return false;
         }
     }
@@ -77,7 +76,7 @@ class CServerControl {
     public function SendCommand($cmd) {
         try {
             return $this->sq->Rcon($cmd);
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             return false;
         }
     }
@@ -86,7 +85,7 @@ class CServerControl {
     public function GetInfo() {
         try {
             return $this->sq->GetInfo();
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             return false;
         }
     }
@@ -94,7 +93,7 @@ class CServerControl {
     public function GetPlayers() {
         try {
             return $this->sq->GetPlayers();
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             return false;
         }
     }
@@ -102,7 +101,7 @@ class CServerControl {
     public function GetRules() {
         try {
             return $this->sq->GetRules();
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             return false;
         }
     }

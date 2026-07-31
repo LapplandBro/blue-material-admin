@@ -208,7 +208,9 @@ ZIP с ветки `main`: https://github.com/LapplandBro/blue-material-admin
 
 Обычное обновление файлов **не требует** SQL. Миграции — только если явно написано в релизе.
 
-Целевая PHP: **7.1.33**. На PHP 8.x панель не рассчитана — это не «баг обновления».
+Целевая PHP этой ветки: **8.3.22** (минимум **8.2** из‑за SourceQuery 6).  
+Для хостинга на **PHP 7.1.33** бери ветку [`main`](https://github.com/LapplandBro/blue-material-admin/tree/main).  
+Подробности порта: [`docs/PHP83.md`](docs/PHP83.md).
 
 ---
 

@@ -2392,7 +2392,7 @@ function ShowBox($title, $msg, $color, $redir="", $noclose=false)
 {
 	echo sprintf("<script>ShowBox('%s', '%s', '%s', '%s', %s);</script>", addslashes($title), addslashes($msg), addslashes($color), addslashes($redir), $noclose ? "true" : "false");
 }
-function ShowBox_ajx($title, $msg, $color, $redir="", $noclose=false, &$response)
+function ShowBox_ajx($title, $msg, $color, &$response, $redir="", $noclose=false)
 {
 	$response->AddScript(sprintf("ShowBox('%s', '%s', '%s', '%s', %s);", addslashes($title), addslashes($msg), addslashes($color), addslashes($redir), $noclose ? "true" : "false"));
 }
@@ -2729,7 +2729,7 @@ function GetFriendIDFromCommunityID($comid)
 	if(($status && $status[1] != "public") || strstr($raw, "</profile>")) {
 		$raw = str_replace("&", "", $raw);
 		$raw = strip_31_ascii($raw);
-		$raw = utf8_encode($raw);
+		$raw = function_exists('mb_convert_encoding') ? mb_convert_encoding($raw, 'UTF-8', 'ISO-8859-1') : $raw;
 		$xml = simplexml_load_string($raw);
 		$result = $xml->xpath('/profile/steamID64');
 		$friendid = (string)$result[0];
@@ -2745,7 +2745,7 @@ function GetCommunityName($steamid)
 	if(strstr($raw, "</profile>")) {
 		$raw = str_replace("&", "", $raw);
         $raw = strip_31_ascii($raw);
-		$raw = utf8_encode($raw);
+		$raw = function_exists('mb_convert_encoding') ? mb_convert_encoding($raw, 'UTF-8', 'ISO-8859-1') : $raw;
 		$xml = simplexml_load_string($raw);
 		$result = $xml->xpath('/profile/steamID');
 		$friendid = (string)$result[0];

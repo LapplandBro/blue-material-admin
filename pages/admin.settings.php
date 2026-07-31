@@ -55,7 +55,7 @@ if(!defined("IN_SB")){echo "Ошибка доступа!";die();}
 	if(isset($_GET['advSearch']))
 	{
 		// Escape the value, but strip the leading and trailing quote
-		$value = substr($GLOBALS['db']->qstr($_GET['advSearch'], get_magic_quotes_gpc()), 1, -1);
+		$value = substr($GLOBALS['db']->qstr($_GET['advSearch'], false), 1, -1);
 		$type = $_GET['advType'];
 		switch($type)
 		{
