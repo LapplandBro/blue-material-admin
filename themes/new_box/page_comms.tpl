@@ -149,7 +149,7 @@
 				</tr>
 				<!-- ###############[ Start Sliding Panel ]################## -->
 				<tr class="banlist-detail-row">
-					<td colspan="8" class="banlist-detail-cell">
+					<td colspan="{$ban_colspan}" class="banlist-detail-cell">
 						<div class="opener"> 
 								<div class="card-header banlist-detail-head">
 									<h2>Карточка блокировки</h2>

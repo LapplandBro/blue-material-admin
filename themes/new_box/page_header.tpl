@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+{if $base_href}<base href="{$base_href|escape}">{/if}
 <title>{$seo_document_title|escape}</title>
 <meta name="description" content="{$seo_description|escape}">
 {if $seo_noindex}
@@ -11,7 +12,6 @@
 <meta name="robots" content="index,follow">
 {/if}
 <link rel="canonical" href="{$seo_canonical|escape}">
-{if $base_href}<base href="{$base_href|escape}">{/if}
 <link rel="icon" href="./images/favicon.ico">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="ru_RU">

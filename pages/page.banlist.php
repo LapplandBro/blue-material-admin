@@ -752,8 +752,9 @@ if (strlen($next) > 0)
 $ban_nav .= '</ul>&nbsp;'; 
 
 $pages = ceil($BanCount/$BansPerPage);
+$ban_nav_p = '';
 if($pages > 1) {
-	$ban_nav_p = ' / Страница: <div class="select" style="display: inline-block;"><select class="form-control" onchange="changePage(this,\'B\',\''.(isset($_GET['advSearch']) ? $_GET['advSearch'] : '').'\',\''.(isset($_GET['advType']) ? $_GET['advType'] : '').'\');" style="display: inline-block;width: 50px;">';
+	$ban_nav_p = ' / Страница: <span class="select" style="display: inline-block;"><select class="form-control" onchange="changePage(this,\'B\',\''.(isset($_GET['advSearch']) ? $_GET['advSearch'] : '').'\',\''.(isset($_GET['advType']) ? $_GET['advType'] : '').'\');" style="display: inline-block;width: 50px;">';
 	for($i=1;$i<=$pages;$i++)
 	{
 		if(isset($_GET["page"]) && $i == $page) {
@@ -762,7 +763,7 @@ if($pages > 1) {
 		}
 		$ban_nav_p .= '<option value="' . $i . '">&nbsp;' . $i . '</option>';
 	}
-	$ban_nav_p .= '</select></div>&nbsp;';
+	$ban_nav_p .= '</select></span>&nbsp;';
 }
 
 //COMMENT STUFF
@@ -841,12 +842,18 @@ $theme->assign('nocountryshow', ($GLOBALS['config']['banlist.nocountryfetch'] ==
 $theme->assign('admin_postkey', $_SESSION['banlist_postkey']);
 $theme->assign('admininfos', $GLOBALS['config']['config.enableadmininfos']);
 $theme->assign('hideplayerips', (isset($GLOBALS['config']['banlist.hideplayerips']) && $GLOBALS['config']['banlist.hideplayerips'] == "1" && !$userbank->is_admin()));
-$theme->assign('hideadminname', (isset($GLOBALS['config']['banlist.hideadminname']) && $GLOBALS['config']['banlist.hideadminname'] == "1" && !$userbank->is_admin()));
+$hideadminname = (isset($GLOBALS['config']['banlist.hideadminname']) && $GLOBALS['config']['banlist.hideadminname'] == "1" && !$userbank->is_admin());
+$view_bans = ($userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_ALL_BANS|ADMIN_EDIT_OWN_BANS|ADMIN_EDIT_GROUP_BANS|ADMIN_UNBAN|ADMIN_UNBAN_OWN_BANS|ADMIN_UNBAN_GROUP_BANS|ADMIN_DELETE_BAN));
+$view_recidivism = function_exists('RecidivismCanView') && RecidivismCanView();
+$theme->assign('hideadminname', $hideadminname);
 $theme->assign('groupban', ($GLOBALS['config']['config.enablegroupbanning']==1 && $userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_BAN)));
 $theme->assign('friendsban', ($GLOBALS['config']['config.enablefriendsbanning']==1 && $userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_BAN)));
 $theme->assign('general_unban', $userbank->HasAccess(ADMIN_OWNER|ADMIN_UNBAN|ADMIN_UNBAN_OWN_BANS|ADMIN_UNBAN_GROUP_BANS));
 $theme->assign('can_delete', $userbank->HasAccess(ADMIN_DELETE_BAN));
-$theme->assign('view_bans', ($userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_ALL_BANS|ADMIN_EDIT_OWN_BANS|ADMIN_EDIT_GROUP_BANS|ADMIN_UNBAN|ADMIN_UNBAN_OWN_BANS|ADMIN_UNBAN_GROUP_BANS|ADMIN_DELETE_BAN)));
-$theme->assign('view_recidivism', function_exists('RecidivismCanView') && RecidivismCanView());
+$theme->assign('view_bans', $view_bans);
+$theme->assign('view_recidivism', $view_recidivism);
+// Игра + дата + игрок + срок (+ чекбокс / рецидив / админ)
+$ban_colspan = 4 + ($view_bans ? 1 : 0) + ($view_recidivism ? 1 : 0) + (!$hideadminname ? 1 : 0);
+$theme->assign('ban_colspan', $ban_colspan);
 $theme->assign('can_export',($userbank->HasAccess(ADMIN_OWNER) || (isset($GLOBALS['config']['config.exportpublic']) && $GLOBALS['config']['config.exportpublic'] == "1")));
 $theme->display('page_bans.tpl');

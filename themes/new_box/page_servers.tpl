@@ -54,9 +54,9 @@
 									<div class="servers-detail-grid">
 										<div class="servers-players-col">
 											<div id="sinfo_{$server.sid}">
-												<table class="table table-striped parsec-table servers-players-table" width="100%" border="0" id="playerlist_{$server.sid}" name="playerlist_{$server.sid}"></table>
+												<table class="table table-striped parsec-table servers-players-table" width="100%" border="0" id="playerlist_{$server.sid}"></table>
 											</div>
-											<div id="noplayer_{$server.sid}" name="noplayer_{$server.sid}" class="servers-empty" style="display:none;">
+											<div id="noplayer_{$server.sid}" class="servers-empty" style="display:none;">
 												<p class="servers-empty-text">Сейчас на сервере никого нет.</p>
 											</div>
 										</div>
