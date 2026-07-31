@@ -1347,6 +1347,10 @@ blockquote small {
 
 .sweet-alert p {
   color: #7ea8d4 !important;
+  max-height: 50vh;
+  overflow-y: auto;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 /* Server sync modal after ban/mute (iframe #srvkicker) */
@@ -2359,6 +2363,10 @@ a.admin-hub-tile:focus,
 .rcon-line--out {
   color: #d7e8ff;
   white-space: pre-wrap;
+  max-height: 40vh;
+  overflow-y: auto;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .rcon-line--err {
