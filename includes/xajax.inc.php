@@ -1301,10 +1301,6 @@ class xajax
 			{
 				$sFuncToUse = "mb_convert_encoding";
 			}
-			else if ($this->sEncoding == "ISO-8859-1" && function_exists('mb_convert_encoding'))
-			{
-				$sFuncToUse = "mb_convert_encoding_iso";
-			}
 			else
 			{
 				trigger_error("The incoming xajax data could not be converted from UTF-8", E_USER_NOTICE);
@@ -1321,10 +1317,6 @@ class xajax
 					else if ($sFuncToUse == "mb_convert_encoding")
 					{
 						$sValue = mb_convert_encoding($sValue, $this->sEncoding, "UTF-8");
-					}
-					else if ($sFuncToUse == "mb_convert_encoding_iso")
-					{
-						$sValue = mb_convert_encoding($sValue, 'ISO-8859-1', 'UTF-8');
 					}
 				}
 			}
