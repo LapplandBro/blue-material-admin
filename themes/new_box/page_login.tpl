@@ -40,14 +40,14 @@
 									<div class="form-group">
 										<div class="col-sm-offset-2 col-sm-10" id="loginSubmit">
 											-{sb_button text="Войти" onclick=$redir icon="<i class='zmdi zmdi-long-arrow-tab'></i>" class="btn bgm-blue btn-icon-text" id="alogin" submit=false}-
-											-{sb_button text="Забыл пароль" onclick="window.location.href='index.php?p=lostpassword'" icon="<i class='zmdi zmdi-help-outline'></i>" class="btn-icon-text bgm-orange"}-
+											-{sb_button text="Забыл пароль" onclick="sbGo('index.php?p=lostpassword')" icon="<i class='zmdi zmdi-help-outline'></i>" class="btn-icon-text bgm-orange"}-
 										</div>
 									</div>
 									-{if $steam_allowed}-
 									<div class="form-group">
 										-{if $login_allowed}-<label class="col-sm-2 control-label">Другие способы</label>-{/if}-
 										<div class="col-sm-10 p-t-10">
-											-{sb_button text="Войти через STEAM" onclick="window.location.href='steam_auth.php?login'" icon="<i class='zmdi zmdi-steam'></i>" class="btn-icon-text bgm-bluegray"}-
+											-{sb_button text="Войти через STEAM" onclick="sbGo('steam_auth.php?login')" icon="<i class='zmdi zmdi-steam'></i>" class="btn-icon-text bgm-bluegray"}-
 										</div>
 									</div>
 									-{/if}-

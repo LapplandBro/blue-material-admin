@@ -33,7 +33,7 @@
 		<div class="card-body card-padding text-center">
 				{sb_button text="Забанить группу" onclick="ProcessGroupBan();" icon="<i class='zmdi zmdi-shield-security'></i>" class="bgm-blue btn-icon-text" id="agban" submit=false}
 					  &nbsp;
-				{sb_button text="Назад" onclick="window.location.href='index.php?p=admin&c=bans'" icon="<i class='zmdi zmdi-undo'></i>" class="bgm-lightblue btn-icon-text" id="aback"}
+				{sb_button text="Назад" onclick="sbAdminBack(0, 'admin/bans')" icon="<i class='zmdi zmdi-undo'></i>" class="bgm-lightblue btn-icon-text" id="aback"}
 		</div>
 		</div>
 		{else}
@@ -67,7 +67,7 @@
 		<div class="card-body card-padding text-center">
 			{sb_button text="Забанить группу" onclick="CheckGroupBan();" icon="<i class='zmdi zmdi-shield-security'></i>" class="bgm-blue btn-icon-text" id="gban" submit=false}
 			&nbsp;
-			{sb_button text="Назад" onclick="window.location.href='index.php?p=admin&c=bans'" icon="<i class='zmdi zmdi-undo'></i>" class="bgm-lightblue btn-icon-text" id="aback"}
+			{sb_button text="Назад" onclick="sbAdminBack(0, 'admin/bans')" icon="<i class='zmdi zmdi-undo'></i>" class="bgm-lightblue btn-icon-text" id="aback"}
 		</div>
 		{/if}
 	</div>

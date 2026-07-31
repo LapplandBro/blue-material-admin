@@ -39,10 +39,24 @@ foreach($var AS $v)
 	} 
 	if($first) 
 		$GLOBALS['enable'] = $v['id']; 
+	$hrefAttr = '#';
+	$click = '';
 	if(isset($v['external']) && $v['external'] == true) 
 	{
-		$lnk = $v['url']; 
-		$click = "";
+		$lnk = (string)$v['url'];
+		// javascript:… → чистый JS в onclick; обычные URL — sbGo (location не видит <base href>).
+		if ($lnk !== '' && stripos($lnk, 'javascript:') === 0)
+		{
+			$js = substr($lnk, strlen('javascript:'));
+			$js = rtrim($js, " \t;");
+			$click = $js . ';return false;';
+			$hrefAttr = '#';
+		}
+		else
+		{
+			$click = "if(typeof sbGo==='function'){sbGo('".addslashes($lnk)."');return false;}";
+			$hrefAttr = htmlspecialchars($lnk, ENT_QUOTES, 'UTF-8');
+		}
 	} 
 	else 
 	{
@@ -57,15 +71,15 @@ foreach($var AS $v)
 			if ($tabBase === './')
 				$tabBase = '';
 		}
-		$lnk = $tabBase . "#^" . $v['id'];
-		$click = "SwapPane(". $v['id'] .");";
+		$hrefAttr = htmlspecialchars($tabBase . "#^" . $v['id'], ENT_QUOTES, 'UTF-8');
+		$click = "SwapPane(". (int)$v['id'] .");";
 	} 
 	if($i == 0) 
 		$class = "active"; 
 	else 
 		$class = "";
 	$itm = array();
-	$itm['tab'] = "<li id='tab-". $v['id'] . "' class='" . $class . "'><a href='$lnk' id='admin_tab_".$v['id']."' onclick=\"$click\"> " . $v['title'] . "</a></li>";
+	$itm['tab'] = "<li id='tab-". (int)$v['id'] . "' class='" . $class . "'><a href='".$hrefAttr."' id='admin_tab_".(int)$v['id']."' onclick=\"".$click."\"> " . htmlspecialchars($v['title'], ENT_QUOTES, 'UTF-8') . "</a></li>";
 	array_push($tabs, $itm) ;
 	$i++;
 	$first=false;

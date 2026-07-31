@@ -103,7 +103,57 @@ var ADMIN_OWNER = 			(1<<24);
 var accordion;
 var accordionInstances = {};
 
-/** ЧПУ: sbLoc('banlist', '&page=2&a=unban') → banlist/2?a=unban */
+/**
+ * Абсолютный URL относительно <base href>.
+ * Важно: window.location = 'index.php?…' / 'admin/admins' НЕ учитывает <base>,
+ * и с /admin/admins уезжает в /admin/index.php (кнопка «Назад» «ничего не делает»).
+ */
+function sbAbs(url) {
+	url = (url == null) ? '' : String(url);
+	if (url === '' || url.charAt(0) === '#' || /^[a-z][a-z0-9+.-]*:/i.test(url))
+		return url;
+	// Ведущий «/» = корень хоста, а не каталог панели в подпапке — снимаем, резолвим через <base>.
+	if (url.charAt(0) === '/')
+		url = url.substring(1);
+	try {
+		var a = document.createElement('a');
+		a.href = url;
+		return a.href;
+	} catch (e) {
+		return url;
+	}
+}
+
+/** Переход с учётом <base href> (для onclick кнопок «Назад» и т.п.). */
+function sbGo(url) {
+	window.location.href = sbAbs(url);
+}
+
+/**
+ * «Назад» внутри вкладок админки (#^N): не уходим на тот же URL без хэша
+ * (после reload ProcessAdminTabs/SwapPane легко оставляют пустой экран),
+ * а просто переключаем pane + hash.
+ * tabId — номер вкладки (обычно 0 = список). fallbackUrl — если pane нет на странице.
+ */
+function sbAdminBack(tabId, fallbackUrl) {
+	tabId = (tabId === undefined || tabId === null || tabId === '') ? 0 : tabId;
+	var pane = document.getElementById(String(tabId));
+	var tab = document.getElementById('tab-' + tabId);
+	if (pane && tab && typeof SwapPane === 'function') {
+		SwapPane(tabId);
+		try {
+			var dest = window.location.pathname + window.location.search + '#^' + tabId;
+			if (window.history && history.replaceState)
+				history.replaceState(null, '', dest);
+			else
+				window.location.hash = '^' + tabId;
+		} catch (err) {}
+		return;
+	}
+	sbGo(fallbackUrl || 'admin');
+}
+
+/** ЧПУ: sbLoc('banlist', '&page=2&a=unban') → абсолютный …/banlist/2?a=unban */
 function sbLoc(page, q) {
 	page = String(page);
 	q = (q == null) ? '' : String(q).replace(/^[&?]+/, '');
@@ -116,11 +166,11 @@ function sbLoc(page, q) {
 				page = page + '/' + pn;
 		}
 	}
-	return page + (q !== '' ? ('?' + q) : '');
+	return sbAbs(page + (q !== '' ? ('?' + q) : ''));
 }
 
 // <base href> ломает якоря href="#^N": браузер ведёт на главную (/#^N).
-// Ловим только SourceBans-вкладки (#^…), Bootstrap (#chat, #tab-*) не трогаем.
+// Ловим SourceBans-вкладки: голый #^N и path#^N (admin/admins#^1).
 (function () {
 	if (typeof document === 'undefined' || !document.addEventListener)
 		return;
@@ -131,15 +181,31 @@ function sbLoc(page, q) {
 		if (!a || !a.getAttribute)
 			return;
 		var href = a.getAttribute('href');
-		if (!href || href.indexOf('#^') !== 0)
+		if (!href)
 			return;
+		var hashIdx = href.indexOf('#^');
+		if (hashIdx < 0)
+			return;
+		var hash = href.substring(hashIdx); // #^N или #^N~…
+		var pathPart = href.substring(0, hashIdx);
+		// Чужие якоря не трогаем; path должен быть пустым или вести на текущую страницу.
+		if (pathPart !== '') {
+			try {
+				var abs = sbAbs(pathPart);
+				var cur = window.location.href.split('#')[0];
+				if (abs.split('#')[0] !== cur)
+					return; // другой URL — обычный переход
+			} catch (err) {
+				return;
+			}
+		}
 		e.preventDefault();
 		try {
 			if (window.history && history.replaceState)
-				history.replaceState(null, '', window.location.pathname + window.location.search + href);
+				history.replaceState(null, '', window.location.pathname + window.location.search + hash);
 			else
-				window.location.hash = href.substring(1);
-		} catch (err) {}
+				window.location.hash = hash.substring(1);
+		} catch (err2) {}
 	}, true);
 })();
 
@@ -155,6 +221,10 @@ function ProcessAdminTabs()
 		else
 			tabNo = -1;
 	}
+
+	// Нет #^N — показать первую существующую вкладку (иначе все pane остаются display:none).
+	if (tabNo === -1 && document.getElementById('tab-0') && document.getElementById('0'))
+		SwapPane(0);
 
 	var upos = url.indexOf('~');
 	if (upos !== -1) {

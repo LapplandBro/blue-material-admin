@@ -125,7 +125,7 @@
 		<div class="card-body card-padding text-center">
 			{sb_button text="Добавить" icon="<i class='zmdi zmdi-check-all'></i>" class="bgm-blue btn-icon-text" id="pay_key_send" submit=true}
 			
-			{sb_button text="Назад" onclick="window.location.href='index.php?p=admin&c=pay'" icon="<i class='zmdi zmdi-undo'></i>" class="bgm-lightblue btn-icon-text" id="aback"}
+			{sb_button text="Назад" onclick="sbGo('index.php?p=admin&c=pay')" icon="<i class='zmdi zmdi-undo'></i>" class="bgm-lightblue btn-icon-text" id="aback"}
 		</div>
 	</div>
 </form>

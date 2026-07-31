@@ -54,7 +54,7 @@ $name = $userbank->GetProperty("user", $_GET['id']);
 	<div class="card-body card-padding text-center admin-manage-footer">
 		<button type="button" onclick="ProcessEditAdminPermissions();" class="btn bgm-blue btn-icon-text waves-effect" id="editadmingroup"><i class="zmdi zmdi-check-all"></i> Сохранить</button>
 		&nbsp;
-		<button type="button" onclick="window.location.href='index.php?p=admin&c=admins'" class="btn bgm-bluegray btn-icon-text waves-effect" id="back"><i class="zmdi zmdi-undo"></i> Назад</button>
+		<button type="button" onclick="sbGo('admin/admins')" class="btn bgm-bluegray btn-icon-text waves-effect" id="back"><i class="zmdi zmdi-undo"></i> Назад</button>
 	</div>
 </div>
 

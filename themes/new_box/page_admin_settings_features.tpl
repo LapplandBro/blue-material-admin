@@ -128,7 +128,7 @@
 			<div class="card-body card-padding text-center">
 				{sb_button text="Сохранить" icon="<i class='zmdi zmdi-check-all'></i>" class="bgm-blue btn-icon-text" id="fsettings" submit=true}
 				&nbsp;
-				{sb_button text="Назад" onclick="window.location.href='index.php?p=admin&c=settings'" icon="<i class='zmdi zmdi-undo'></i>" class="bgm-bluegray btn-icon-text" id="fback"}
+				{sb_button text="Назад" onclick="sbGo('index.php?p=admin&c=settings')" icon="<i class='zmdi zmdi-undo'></i>" class="bgm-bluegray btn-icon-text" id="fback"}
 			</div>
 		</div>
 	</div>

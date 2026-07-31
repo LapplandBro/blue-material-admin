@@ -136,8 +136,8 @@
 <div class="row">
 <div class="col-xs-12">
 <div class="p-t-5 p-b-10 p-r-10 p-l-10 text-center">
-<button type="button" class="btn btn-primary btn-block btn-icon-text waves-effect" onclick="window.location.href='search_bans'"><i class="zmdi zmdi-lock-outline"></i>Баны</button>
-<button type="button" class="btn btn-warning btn-block btn-icon-text waves-effect" onclick="window.location.href='search_comm'"><i class="zmdi zmdi-mic-off"></i>Муты</button>
+<button type="button" class="btn btn-primary btn-block btn-icon-text waves-effect" onclick="sbGo('search_bans')"><i class="zmdi zmdi-lock-outline"></i>Баны</button>
+<button type="button" class="btn btn-warning btn-block btn-icon-text waves-effect" onclick="sbGo('search_comm')"><i class="zmdi zmdi-mic-off"></i>Муты</button>
 </div>
 </div>
 </div>

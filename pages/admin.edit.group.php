@@ -125,7 +125,7 @@ elseif($_GET['type'] == 'server') $type_label = 'группа серверов';
 	<div class="card-body card-padding text-center admin-manage-footer">
 		<button type="button" onclick="ProcessEditGroup('<?php echo $_GET['type']?>', $('groupname').value);" name="editgroup" class="btn bgm-blue btn-icon-text waves-effect" id="editgroup"><i class="zmdi zmdi-check-all"></i> Сохранить</button>
 		&nbsp;
-		<button type="button" onclick="window.location.href='index.php?p=admin&c=groups'" name="back" class="btn bgm-bluegray btn-icon-text waves-effect" id="back"><i class="zmdi zmdi-undo"></i> Назад</button>
+		<button type="button" onclick="sbGo('admin/groups')" name="back" class="btn bgm-bluegray btn-icon-text waves-effect" id="back"><i class="zmdi zmdi-undo"></i> Назад</button>
 	</div>
 </div>
 </div>

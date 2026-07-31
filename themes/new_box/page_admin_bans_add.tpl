@@ -175,7 +175,7 @@
 		<div class="card-body card-padding text-center">
 			{sb_button text="Добавить бан" onclick="ConvertSteamID_3to2('steam');ProcessBan();" icon="<i class='zmdi zmdi-shield-security'></i>" class="bgm-blue btn-icon-text" id="aban" submit=false}
 				  &nbsp;
-			{sb_button text="Назад" onclick="window.location.href='index.php?p=admin'" icon="<i class='zmdi zmdi-undo'></i>" class="bgm-bluegray btn-icon-text" id="aback"}
+			{sb_button text="Назад" onclick="sbGo('admin')" icon="<i class='zmdi zmdi-undo'></i>" class="bgm-bluegray btn-icon-text" id="aback"}
 		</div>
 	</div>
 </div>

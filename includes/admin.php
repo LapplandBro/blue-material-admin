@@ -316,9 +316,9 @@ else
 			if($userbank->HasAccess(ADMIN_OWNER|ADMIN_BAN_IMPORT ) )
 				$banTabMenu->addMenuItem("Импорт", 3);
 			$banTabMenu->addMenuItem("Список", 5, "", sb_url('banlist'),true);
-			$banTabMenu->addMenuItem("История", 6, "", "index.php?p=admin&c=recidivism", true);
-			$banTabMenu->addMenuItem("Связанные", 7, "", "index.php?p=admin&c=parsec", true);
-			$banTabMenu->addMenuItem("Назад", 8, "", "index.php?p=admin", true);
+			$banTabMenu->addMenuItem("История", 6, "", sb_url('admin', array('c' => 'recidivism')), true);
+			$banTabMenu->addMenuItem("Связанные", 7, "", sb_url('admin', array('c' => 'parsec')), true);
+			$banTabMenu->addMenuItem("Назад", 8, "", sb_url('admin'), true);
 			$banTabMenu->outputMenu();
 			// ====================[ ADMIN SIDE MENU END ] ===================
 
@@ -334,7 +334,7 @@ else
 		elseif($_GET['o'] == 'edit')
 		{
 			$banTabMenu = new CTabsMenu();
-			$banTabMenu->addMenuItem("Назад", 0,"", "index.php?p=admin&c=bans", true);
+			$banTabMenu->addMenuItem("Назад", 0,"", sb_url('admin', array('c' => 'bans')), true);
 			$banTabMenu->outputMenu();			
 			
 			include TEMPLATES_PATH . "/admin.edit.ban.php";
@@ -343,7 +343,7 @@ else
 		elseif($_GET['o'] == 'email')
 		{
 			$banTabMenu = new CTabsMenu();
-			$banTabMenu->addMenuItem("Назад", 0, "", "index.php?p=admin&c=bans", true);
+			$banTabMenu->addMenuItem("Назад", 0, "", sb_url('admin', array('c' => 'bans')), true);
 			$banTabMenu->outputMenu();					
 			
 			include TEMPLATES_PATH . "/admin.email.php";
