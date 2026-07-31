@@ -42,7 +42,7 @@
 			<div class="card-body card-padding text-center">
 				{sb_button text="Сохранить" onclick="ProcessGroup();" icon="<i class='zmdi zmdi-check-all'></i>" class="bgm-blue btn-icon-text" id="agroup" submit=false}
 				&nbsp;
-				{sb_button text="Назад" onclick="window.location.href='index.php?p=admin&c=groups'" icon="<i class='zmdi zmdi-undo'></i>" class="bgm-bluegray btn-icon-text" id="aback"}
+				{sb_button text="Назад" onclick="sbAdminBack(0, 'admin/groups')" icon="<i class='zmdi zmdi-undo'></i>" class="bgm-bluegray btn-icon-text" id="aback"}
 			</div>
 		</div>
 	</div>

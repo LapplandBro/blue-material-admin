@@ -3033,11 +3033,24 @@ function SendRcon($sid, $command, $output)
 	}
 	$ret = $r->SendCommand($command);
 
-
 	$textAppend = "<div class=\"rcon-line rcon-line--cmd\"><span class=\"rcon-prompt\">›</span> ".htmlspecialchars($command)." <span class=\"parsec-muted\">".date("d.m.Y H:i")."</span></div>";
 	// htmlspecialchars() before the \n -> <br /> conversion escapes any HTML/JS the RCON command's
 	// echoed output (or an attacker-controlled game server) might contain, without breaking the <br />.
-	$ret = str_replace("\n", "<br />", htmlspecialchars($ret));
+	// Huge / binary-tainted RCON replies must be sanitized+truncated: otherwise xajax XML becomes
+	// invalid and the browser dumps the entire responseText into ShowBox ("AJAX Call Failed!").
+	if ($ret === false || $ret === null) {
+		$ret = '';
+	} else {
+		$ret = (string)$ret;
+		$ret = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F]/', '', $ret);
+		$rconMaxChars = 12000;
+		$retLen = function_exists('mb_strlen') ? mb_strlen($ret, 'UTF-8') : strlen($ret);
+		if ($retLen > $rconMaxChars) {
+			$ret = (function_exists('mb_substr') ? mb_substr($ret, 0, $rconMaxChars, 'UTF-8') : substr($ret, 0, $rconMaxChars))
+				. "\n\n… вывод обрезан (" . number_format($retLen) . " символов). Используй более узкую команду.";
+		}
+	}
+	$ret = str_replace("\n", "<br />", htmlspecialchars($ret, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
 	if(empty($ret))
 	{
 		if($output)
@@ -3253,7 +3266,7 @@ function Maintenance($type) {
     $objResponse = new xajaxResponse();
     if (!$userbank->HasAccess(ADMIN_OWNER|ADMIN_WEB_SETTINGS)) {
         ShowBox_ajx("Ошибка", "Вы не имеете прав для выполнения данного действия!", "red", "", true, $objResponse);
-        new CSystemLog("w", "Ошибка доступа", $usernake . " пытался произвести операцию по обслуживанию системы, не имея на это прав.");
+        new CSystemLog("w", "Ошибка доступа", $username . " пытался произвести операцию по обслуживанию системы, не имея на это прав.");
         return $objResponse;
     }
     

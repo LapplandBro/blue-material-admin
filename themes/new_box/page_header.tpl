@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+{if $base_href}<base href="{$base_href|escape}">{/if}
 <title>{$seo_document_title|escape}</title>
 <meta name="description" content="{$seo_description|escape}">
 {if $seo_noindex}
@@ -11,7 +12,6 @@
 <meta name="robots" content="index,follow">
 {/if}
 <link rel="canonical" href="{$seo_canonical|escape}">
-{if $base_href}<base href="{$base_href|escape}">{/if}
 <link rel="icon" href="./images/favicon.ico">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="ru_RU">
@@ -136,8 +136,8 @@
 <div class="row">
 <div class="col-xs-12">
 <div class="p-t-5 p-b-10 p-r-10 p-l-10 text-center">
-<button type="button" class="btn btn-primary btn-block btn-icon-text waves-effect" onclick="window.location.href='search_bans'"><i class="zmdi zmdi-lock-outline"></i>Баны</button>
-<button type="button" class="btn btn-warning btn-block btn-icon-text waves-effect" onclick="window.location.href='search_comm'"><i class="zmdi zmdi-mic-off"></i>Муты</button>
+<button type="button" class="btn btn-primary btn-block btn-icon-text waves-effect" onclick="sbGo('search_bans')"><i class="zmdi zmdi-lock-outline"></i>Баны</button>
+<button type="button" class="btn btn-warning btn-block btn-icon-text waves-effect" onclick="sbGo('search_comm')"><i class="zmdi zmdi-mic-off"></i>Муты</button>
 </div>
 </div>
 </div>

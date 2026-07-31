@@ -110,7 +110,7 @@
 			<div class="card-body card-padding text-center">
 				{sb_button text="Сохранить изменения" icon="<i class='zmdi zmdi-account-add'></i>" class="bgm-blue btn-icon-text" id="editmod" submit=true}
 				&nbsp;
-				{sb_button text="Назад" onclick="window.location.href='index.php?p=admin&c=admins'" icon="<i class='zmdi zmdi-undo'></i>" class="bgm-bluegray btn-icon-text" id="aback"}
+				{sb_button text="Назад" onclick="sbGo('admin/admins')" icon="<i class='zmdi zmdi-undo'></i>" class="bgm-bluegray btn-icon-text" id="aback"}
 			</div>
         {$server_script}
 		</div>

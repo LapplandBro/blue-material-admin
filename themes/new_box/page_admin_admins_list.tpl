@@ -1,7 +1,7 @@
 {if not $permission_listadmin}
 	<div class="parsec-note parsec-note-warn">Нет доступа к списку администраторов.</div>
 {else}
-	<button onclick="window.location.href='{$btn_href}'" class="btn btn-float btn-danger m-btn" {$btn_helpa}><i class="zmdi {$btn_icon}"></i></button>
+	<button onclick="sbGo('{$btn_href}')" class="btn btn-float btn-danger m-btn" {$btn_helpa}><i class="zmdi {$btn_icon}"></i></button>
 
 	<div class="card banlist-panel admin-manage admin-admins">
 		<div class="card-header">

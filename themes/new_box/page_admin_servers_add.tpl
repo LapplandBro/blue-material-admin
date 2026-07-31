@@ -106,7 +106,7 @@
 				{sb_button text=$submit_text onclick="process_add_server();" icon="<i class='zmdi zmdi-plus'></i>" class="bgm-blue btn-icon-text" id="aserver" submit=true}
 			{/if}
 			    &nbsp;
-				{sb_button text="Назад" onclick="window.location.href='index.php?p=admin&c=servers'" icon="<i class='zmdi zmdi-undo'></i>" class="bgm-bluegray btn-icon-text" id="aback"}
+				{sb_button text="Назад" onclick="sbGo('index.php?p=admin&c=servers')" icon="<i class='zmdi zmdi-undo'></i>" class="bgm-bluegray btn-icon-text" id="aback"}
 		</div>
 	</div>
 </div>

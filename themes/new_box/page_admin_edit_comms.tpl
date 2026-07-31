@@ -134,7 +134,7 @@
 			      <input type="hidden" name="dname" id="dname" value="" />
 			      	-{sb_button text="Сохранить" class="ok" id="editban" submit=true}-
 			     	 &nbsp;
-			     	 -{sb_button text="Назад" onclick="window.location.href='index.php?p=admin&c=comms'" class="cancel" id="back" submit=false}-
+			     	 -{sb_button text="Назад" onclick="sbGo('index.php?p=admin&c=comms')" class="cancel" id="back" submit=false}-
 			      </td>
 			  </tr>
         </table>

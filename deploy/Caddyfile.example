@@ -1,0 +1,18 @@
+# Пример: Blue Material Admin за Caddy → Apache/PHP
+# Скопируйте в свой Caddyfile и поправьте домен / порт бэкенда.
+# Полная инструкция: docs/CADDY.md
+#
+# ВАЖНО: НЕ делай rewrite ЧПУ здесь, если PHP канонизирует index.php?p=… → /banlist.
+# Иначе петля ERR_TOO_MANY_REDIRECTS. ЧПУ — на Apache (.htaccess / vhost).
+
+example.com, www.example.com {
+	encode gzip zstd
+
+	reverse_proxy 127.0.0.1:5987 {
+		header_up Host {host}
+		header_up X-Forwarded-Proto {scheme}
+		header_up X-Forwarded-Host {host}
+		header_up X-Forwarded-Port 443
+		header_up X-Real-IP {remote_host}
+	}
+}

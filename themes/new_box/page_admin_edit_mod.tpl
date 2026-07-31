@@ -22,7 +22,7 @@
 			</div>
 
 			<p class="text-center">{sb_button text="Сохранить" icon="<i class='zmdi zmdi-check-all'></i>" class="bgm-blue btn-icon-text" submit=true id="amod"}&nbsp;
-			{sb_button text="Назад" icon="<i class='zmdi zmdi-undo'></i>" class="bgm-bluegray btn-icon-text" onclick="window.location.href='index.php?p=admin&c=mods'" id="aback"}</p>
+			{sb_button text="Назад" icon="<i class='zmdi zmdi-undo'></i>" class="bgm-bluegray btn-icon-text" onclick="sbGo('index.php?p=admin&c=mods')" id="aback"}</p>
 		</div>
 	</div>
 	</div>

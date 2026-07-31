@@ -22,7 +22,7 @@
 		<td>
       		{sb_button text="Отправить E-mail" onclick="$email_js" class="ok" id="aemail" submit=false}
      		 &nbsp;
-      		{sb_button text="Назад" onclick="window.location.href='index.php?p=admin&c=bans'" class="cancel" id="back" submit=false}
+      		{sb_button text="Назад" onclick="sbGo('admin/bans')" class="cancel" id="back" submit=false}
      	</td>
  	</tr>
 </table>

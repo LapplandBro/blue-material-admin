@@ -1,5 +1,6 @@
 <form action="index.php?p=protest" method="post">
 	<input type="hidden" name="subprotest" value="1">
+	{if $sb_csrf}<input type="hidden" name="sb_csrf" value="{$sb_csrf|escape}" />{/if}
 	<div class="card">
 		<div class="form-horizontal" role="form" id="add-group">
 			<div class="card-header">
@@ -29,7 +30,7 @@
 					<label for="SteamID" class="col-sm-3 control-label">Ваш SteamID</label>
 					<div class="col-sm-9">
 						<div class="fg-line">
-							<input type="text" size="40" class="form-control" maxlength="64" value="{$steam_id}" name="SteamID" placeholder="Введите данные(обязательное поле)">
+							<input type="text" size="40" class="form-control" maxlength="64" value="{$steam_id}" id="SteamID" name="SteamID" placeholder="Введите данные(обязательное поле)">
 						</div>
 					</div>
 				</div>
@@ -37,7 +38,7 @@
 					<label for="IP" class="col-sm-3 control-label">Ваш IP</label>
 					<div class="col-sm-9">
 						<div class="fg-line">
-							<input type="text" size="40" class="form-control" maxlength="64" value="{$ip}" name="IP" placeholder="Введите данные(обязательное поле)">
+							<input type="text" size="40" class="form-control" maxlength="64" value="{$ip}" id="IP" name="IP" placeholder="Введите данные(обязательное поле)">
 						</div>
 					</div>
 				</div>
@@ -45,7 +46,7 @@
 					<label for="PlayerName" class="col-sm-3 control-label">Ник</label>
 					<div class="col-sm-9">
 						<div class="fg-line">
-							<input type="text" size="40" class="form-control" maxlength="70" value="{$player_name}" name="PlayerName" placeholder="Введите данные(обязательное поле)">
+							<input type="text" size="40" class="form-control" maxlength="70" value="{$player_name}" id="PlayerName" name="PlayerName" placeholder="Введите данные(обязательное поле)">
 						</div>
 					</div>
 				</div>
@@ -53,7 +54,7 @@
 					<label for="BanReason" class="col-sm-3 control-label">Причина</label>
 					<div class="col-sm-9 p-t-10">
 						<div class="fg-line">
-							<textarea name="BanReason" cols="30" rows="5" class="form-control p-t-5" placeholder="От информативности/убедительности зависит Ваш разбан(обязательное поле)" >{$reason}</textarea>
+							<textarea id="BanReason" name="BanReason" cols="30" rows="5" class="form-control p-t-5" placeholder="От информативности/убедительности зависит Ваш разбан(обязательное поле)" >{$reason}</textarea>
 						</div>
 					</div>
 				</div>
@@ -61,7 +62,21 @@
 					<label for="EmailAddr" class="col-sm-3 control-label">Ваш Email</label>
 					<div class="col-sm-9">
 						<div class="fg-line">
-							<input type="text" size="40" class="form-control" maxlength="70" value="{$player_email}" name="EmailAddr" placeholder="Введите данные(обязательное поле)">
+							<input type="text" size="40" class="form-control" maxlength="70" value="{$player_email|escape}" id="EmailAddr" name="EmailAddr" placeholder="Введите данные(обязательное поле)">
+						</div>
+					</div>
+				</div>
+				<div class="form-group m-b-15">
+					<label for="kapcha" class="col-sm-3 control-label">Проверочный код</label>
+					<div class="col-sm-9">
+						<div class="voucher-captcha-row">
+							<img id="protest_captcha_img" class="voucher-captcha-img" src="includes/captcha/captcha.php?t={$smarty.now}" width="170" height="56" alt="Капча" />
+							<button type="button" class="btn btn-default btn-icon waves-effect" title="Обновить код" onclick="var i=document.getElementById('protest_captcha_img'); if(i) i.src='includes/captcha/captcha.php?t='+Date.now();">
+								<i class="zmdi zmdi-refresh-alt"></i>
+							</button>
+							<div class="fg-line voucher-captcha-input">
+								<input type="text" class="form-control" id="kapcha" name="kapcha" placeholder="Символы с картинки" required maxlength="8" autocomplete="off" />
+							</div>
 						</div>
 					</div>
 				</div>

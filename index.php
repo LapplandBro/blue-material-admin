@@ -45,12 +45,20 @@ $sb_is_ajax =
 	|| (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strcasecmp($_SERVER['HTTP_X_REQUESTED_WITH'], 'XMLHttpRequest') === 0);
 
 if (!$sb_is_ajax) {
-	// Только если в URL реально /index.php (не внутренний rewrite /banlist → index.php).
-	// THE_REQUEST на части CGI/XAMPP пустой — смотрим REQUEST_URI.
+	// Только если клиент реально открыл /index.php (не rewrite /banlist → index.php).
+	// Caddy rewrite → /index.php?p=banlist → PHP 301 /banlist → снова rewrite = ERR_TOO_MANY_REDIRECTS.
+	// За reverse proxy (X-Forwarded-*) канонизацию отключаем: ЧПУ делает Apache внутренним rewrite.
 	$req_path = parse_url(isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '/', PHP_URL_PATH);
 	$asked_index = is_string($req_path) && (bool)preg_match('#/index\.php$#i', $req_path);
 	if (!$asked_index && !empty($_SERVER['THE_REQUEST']))
 		$asked_index = (bool)preg_match('#\s/+index\.php[\s?]#i', (string)$_SERVER['THE_REQUEST']);
+	if ($asked_index && !empty($_SERVER['REDIRECT_URL'])) {
+		$redir_path = parse_url((string)$_SERVER['REDIRECT_URL'], PHP_URL_PATH);
+		if (is_string($redir_path) && $redir_path !== '' && !preg_match('#/index\.php$#i', $redir_path))
+			$asked_index = false;
+	}
+	if ($asked_index && (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) || !empty($_SERVER['HTTP_X_FORWARDED_HOST'])))
+		$asked_index = false;
 	if ($asked_index) {
 		$query_string = isset($_SERVER['QUERY_STRING']) ? $_SERVER['QUERY_STRING'] : '';
 		parse_str($query_string, $qparams);

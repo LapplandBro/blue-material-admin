@@ -35,7 +35,7 @@
 					{/if}
 					<input type="hidden" name="page" id="page" value="{$page}">
 					{sb_button text="$commenttype Комментарий" onclick="ProcessComment();" class="m-t-15 btn-primary btn-sm" id="acom" submit=false}&nbsp;
-					{sb_button text="Назад" onclick="window.location.href='banlist'" class="m-t-15 btn btn-sm" id="aback"}
+					{sb_button text="Назад" onclick="sbGo('banlist')" class="m-t-15 btn btn-sm" id="aback"}
 				</li>
 			</ul>
 		</div>
@@ -146,7 +146,7 @@
 				</tr>
 				<!-- ###############[ Start Sliding Panel ]################## -->
 				<tr class="banlist-detail-row">
-					<td colspan="9" class="banlist-detail-cell">
+					<td colspan="{$ban_colspan}" class="banlist-detail-cell">
 						<div class="opener"> 
 								<div class="card-header banlist-detail-head">
 									<h2>Карточка бана</h2>
@@ -525,7 +525,7 @@
 					</div>
 				{/if}
 				<div class="col-sm-3 p-r-0 text-right" style="float:right;">
-					<button class="btn bgm-bluegray waves-effect" onclick="window.location.href='banlist?hideinactive={if $hidetext_darf == '1'}true{else}false{/if}{$searchlink|htmlspecialchars}'">{$hidetext}&nbsp;баны</button>
+					<button class="btn bgm-bluegray waves-effect" onclick="sbGo('banlist?hideinactive={if $hidetext_darf == 1}true{else}false{/if}{$searchlink|htmlspecialchars}')">{$hidetext}&nbsp;баны</button>
 				</div>
 			</div>
 		</div>&nbsp;

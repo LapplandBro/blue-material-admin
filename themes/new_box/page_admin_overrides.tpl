@@ -61,7 +61,7 @@
 			<div class="card-body card-padding text-center admin-manage-footer">
 				{sb_button text="Сохранить" icon="<i class='zmdi zmdi-check-all'></i>" class="bgm-blue btn-icon-text" id="oversave" submit=true}
 				&nbsp;
-				{sb_button text="Назад" onclick="window.location.href='index.php?p=admin&c=admins'" icon="<i class='zmdi zmdi-undo'></i>" class="bgm-bluegray btn-icon-text" id="oback"}
+				{sb_button text="Назад" onclick="sbAdminBack(0, 'admin/admins')" icon="<i class='zmdi zmdi-undo'></i>" class="bgm-bluegray btn-icon-text" id="oback"}
 			</div>
 		</div>
 	</form>

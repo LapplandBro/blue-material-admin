@@ -1,26 +1,26 @@
-# Папка загружаемых файлов. Даже если где-то в проверке типа файла при
-# загрузке есть ошибка, эта директива не даёт веб-серверу ИСПОЛНЯТЬ
-# php/cgi/perl-скрипты из этой папки - они будут отдаваться как обычные
-# файлы, а не выполняться.
+# Загрузки карт/скриншотов: даже при обходе проверки типа — PHP не исполнять.
+Options -Indexes
 
 <IfModule mod_authz_core.c>
-    <FilesMatch "\.(php|php[0-9]?|phtml|pl|py|cgi|asp|aspx|sh|exe)$">
-        Require all denied
-    </FilesMatch>
+	<FilesMatch "(?i)\.(php|php[0-9]?|phtml|phar|pl|py|cgi|asp|aspx|sh|exe)$">
+		Require all denied
+	</FilesMatch>
 </IfModule>
 <IfModule !mod_authz_core.c>
-    <FilesMatch "\.(php|php[0-9]?|phtml|pl|py|cgi|asp|aspx|sh|exe)$">
-        Order allow,deny
-        Deny from all
-    </FilesMatch>
+	<FilesMatch "(?i)\.(php|php[0-9]?|phtml|phar|pl|py|cgi|asp|aspx|sh|exe)$">
+		Order allow,deny
+		Deny from all
+	</FilesMatch>
 </IfModule>
 
+<IfModule mod_php.c>
+	php_flag engine off
+</IfModule>
 <IfModule mod_php7.c>
-    php_flag engine off
+	php_flag engine off
 </IfModule>
 <IfModule mod_php5.c>
-    php_flag engine off
+	php_flag engine off
 </IfModule>
-
-RemoveHandler .php .php3 .php4 .php5 .phtml
-RemoveType .php .php3 .php4 .php5 .phtml
+RemoveHandler .php .php3 .php4 .php5 .php7 .php8 .phtml .phar
+RemoveType .php .php3 .php4 .php5 .php7 .php8 .phtml .phar

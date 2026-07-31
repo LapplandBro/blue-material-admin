@@ -46,7 +46,7 @@ $res = $GLOBALS['db']->GetRow("
     				SELECT bid, ba.type, ba.authid, ba.name, created, ends, length, reason, ba.aid, ba.sid, ad.user, ad.gid
     				FROM ".DB_PREFIX."_comms AS ba
     				LEFT JOIN ".DB_PREFIX."_admins AS ad ON ba.aid = ad.aid
-    				WHERE bid = {$_GET['id']}");
+    				WHERE bid = ?", array((int)$_GET['id']));
 
 if (!$userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_ALL_BANS)&&(!$userbank->HasAccess(ADMIN_EDIT_OWN_BANS) && $res[8]!=$userbank->GetAid())&&(!$userbank->HasAccess(ADMIN_EDIT_GROUP_BANS) && $res->fields['gid']!=$userbank->GetProperty('gid')))
 {
@@ -151,7 +151,7 @@ if(isset($_POST['name']))
 	{
 		// БАГ-ФИКС: раньше запрашивались только length/authid/type, и лог писался ТОЛЬКО при
 		// смене срока - любое другое изменение (ник, причина, SteamID) проходило бесследно.
-		$lengthrev = $GLOBALS['db']->Execute("SELECT length, authid, type, name, reason FROM ".DB_PREFIX."_comms WHERE bid = '".(int)$_GET['id']."'");
+		$lengthrev = $GLOBALS['db']->Execute("SELECT length, authid, type, name, reason FROM ".DB_PREFIX."_comms WHERE bid = ?", array((int)$_GET['id']));
 		
 		
 		$edit = $GLOBALS['db']->Execute("UPDATE ".DB_PREFIX."_comms SET
