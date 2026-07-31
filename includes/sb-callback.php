@@ -3266,7 +3266,7 @@ function Maintenance($type) {
     $objResponse = new xajaxResponse();
     if (!$userbank->HasAccess(ADMIN_OWNER|ADMIN_WEB_SETTINGS)) {
         ShowBox_ajx("Ошибка", "Вы не имеете прав для выполнения данного действия!", "red", $objResponse, "", true);
-        new CSystemLog("w", "Ошибка доступа", $usernake . " пытался произвести операцию по обслуживанию системы, не имея на это прав.");
+        new CSystemLog("w", "Ошибка доступа", $username . " пытался произвести операцию по обслуживанию системы, не имея на это прав.");
         return $objResponse;
     }
     
