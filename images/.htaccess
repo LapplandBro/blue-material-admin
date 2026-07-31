@@ -1,18 +1,20 @@
-# /images/ — только статика. Без index.html Apache с Options Indexes
-# отдаёт листинг каталога (сканеры: «Directory Listing /images/»).
+# /images/ — только статика. PHP/CGI не исполнять.
 Options -Indexes
 
-# На всякий случай: скрипты из images/ не исполнять.
 <IfModule mod_authz_core.c>
-	<FilesMatch "\.(php|php[0-9]?|phtml|pl|py|cgi|asp|aspx|sh|exe)$">
+	<FilesMatch "(?i)\.(php|php[0-9]?|phtml|phar|pl|py|cgi|asp|aspx|sh|exe)$">
 		Require all denied
 	</FilesMatch>
 </IfModule>
 <IfModule !mod_authz_core.c>
-	<FilesMatch "\.(php|php[0-9]?|phtml|pl|py|cgi|asp|aspx|sh|exe)$">
+	<FilesMatch "(?i)\.(php|php[0-9]?|phtml|phar|pl|py|cgi|asp|aspx|sh|exe)$">
 		Order allow,deny
 		Deny from all
 	</FilesMatch>
+</IfModule>
+
+<IfModule mod_php.c>
+	php_flag engine off
 </IfModule>
 <IfModule mod_php7.c>
 	php_flag engine off
@@ -20,5 +22,5 @@ Options -Indexes
 <IfModule mod_php5.c>
 	php_flag engine off
 </IfModule>
-RemoveHandler .php .php3 .php4 .php5 .phtml
-RemoveType .php .php3 .php4 .php5 .phtml
+RemoveHandler .php .php3 .php4 .php5 .php7 .php8 .phtml .phar
+RemoveType .php .php3 .php4 .php5 .php7 .php8 .phtml .phar

@@ -36,6 +36,11 @@ if($GLOBALS['config']['config.enablesubmit']!="1")
 require_once(INCLUDES_PATH.'/CServerControl.php');
 $sinfo = new CServerControl();
 
+if (function_exists('sb_session_start'))
+	sb_session_start();
+elseif (session_status() === PHP_SESSION_NONE)
+	@session_start();
+
 if (!isset($_POST['subban']) || $_POST['subban'] != 1)
 {
 	$SteamID = "";
@@ -48,15 +53,33 @@ if (!isset($_POST['subban']) || $_POST['subban'] != 1)
 }
 else
 {
-	$SteamID = trim(htmlspecialchars($_POST['SteamID']));
-	$BanIP = trim(htmlspecialchars($_POST['BanIP']));
-	$PlayerName = htmlspecialchars($_POST['PlayerName']);
-	$BanReason = htmlspecialchars($_POST['BanReason']);
-	$SubmitterName = htmlspecialchars($_POST['SubmitName']);
-	$Email = trim(htmlspecialchars($_POST['EmailAddr']));
-	$SID = (int)$_POST['server'];
+	$SteamID = trim(htmlspecialchars(isset($_POST['SteamID']) ? $_POST['SteamID'] : ''));
+	$BanIP = trim(htmlspecialchars(isset($_POST['BanIP']) ? $_POST['BanIP'] : ''));
+	$PlayerName = htmlspecialchars(isset($_POST['PlayerName']) ? $_POST['PlayerName'] : '');
+	$BanReason = htmlspecialchars(isset($_POST['BanReason']) ? $_POST['BanReason'] : '');
+	$SubmitterName = htmlspecialchars(isset($_POST['SubmitName']) ? $_POST['SubmitName'] : '');
+	$Email = trim(htmlspecialchars(isset($_POST['EmailAddr']) ? $_POST['EmailAddr'] : ''));
+	$SID = isset($_POST['server']) ? (int)$_POST['server'] : -1;
 	$validsubmit = true;
 	$errors = "";
+
+	$csrf = isset($_POST['sb_csrf']) ? $_POST['sb_csrf'] : '';
+	if (function_exists('sb_csrf_validate') && !sb_csrf_validate($csrf)) {
+		$errors .= '* Сессия устарела. Обновите страницу и попробуйте снова.<br>';
+		$validsubmit = false;
+	} elseif (function_exists('sb_rate_limit_hit') && sb_rate_limit_hit('submit_ban', 8, 900)) {
+		$errors .= '* Слишком много попыток. Подождите несколько минут.<br>';
+		$validsubmit = false;
+	} else {
+		$kapcha = isset($_POST['kapcha']) ? trim((string)$_POST['kapcha']) : '';
+		$expect = isset($_SESSION['rand_code']) ? (string)$_SESSION['rand_code'] : '';
+		unset($_SESSION['rand_code']);
+		if ($expect === '' || !hash_equals(strtolower($expect), strtolower($kapcha))) {
+			$errors .= '* Проверочный код неверен. Обновите картинку и введите заново.<br>';
+			$validsubmit = false;
+		}
+	}
+
 	if((strlen($SteamID)!=0 && $SteamID != "STEAM_0:") && !validate_steam($SteamID))
 	{
 		$errors .= '* Введите реальный STEAM ID.<br>';
@@ -116,7 +139,7 @@ else
 		if($demo || empty($_FILES['demo_file']['name']))
 		{
 			if($SID!=0) {
-				$res = $GLOBALS['db']->GetRow("SELECT ip, port FROM ".DB_PREFIX."_servers WHERE sid = $SID");
+				$res = $GLOBALS['db']->GetRow("SELECT ip, port FROM ".DB_PREFIX."_servers WHERE sid = ?", array($SID));
 				
 				$sinfo->Connect($res[0],$res[1]);
 				
@@ -125,7 +148,7 @@ else
 					$mailserver = "Сервер: " . $info['HostName'] . " (" . $res[0] . ":" . $res[1] . ")\n";
 				else
 					$mailserver = "Сервер: Ошибка соединения (" . $res[0] . ":" . $res[1] . ")\n";
-				$modid = $GLOBALS['db']->GetRow("SELECT m.mid FROM `".DB_PREFIX."_servers` as s LEFT JOIN `".DB_PREFIX."_mods` as m ON m.mid = s.modid WHERE s.sid = '".$SID."';");
+				$modid = $GLOBALS['db']->GetRow("SELECT m.mid FROM `".DB_PREFIX."_servers` as s LEFT JOIN `".DB_PREFIX."_mods` as m ON m.mid = s.modid WHERE s.sid = ?", array($SID));
 			} else {
 				$mailserver = "Сервер: Другой сервер\n";
 				$modid[0] = 0;
@@ -196,5 +219,6 @@ $theme->assign('subplayer_name',$SubmitterName);
 $theme->assign('player_email',	$Email);
 $theme->assign('server_list',		$servers);
 $theme->assign('server_selected',	$SID);
+$theme->assign('sb_csrf', function_exists('sb_csrf_token') ? sb_csrf_token() : '');
 
 $theme->display('page_submitban.tpl');

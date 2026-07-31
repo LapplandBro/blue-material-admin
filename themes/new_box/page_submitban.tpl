@@ -8,12 +8,13 @@
 		</div>
 			<form action="index.php?p=submit" method="post" enctype="multipart/form-data">
 			<input type="hidden" name="subban" value="1">
+			{if $sb_csrf}<input type="hidden" name="sb_csrf" value="{$sb_csrf|escape}" />{/if}
 		<div class="card-body card-padding p-b-0">
 			<div class="form-group m-b-5">
 				<label for="SteamID" class="col-sm-3 control-label">SteamID нарушителя:</label>
 				<div class="col-sm-9">
 					<div class="fg-line">
-					<input type="text" class="form-control" value="{$STEAMID}">
+					<input type="text" class="form-control" id="SteamID" name="SteamID" value="{$STEAMID|escape}" placeholder="STEAM_0:…">
 					</div>
 				</div>
 			</div>
@@ -21,7 +22,7 @@
 				<label for="BanIP" class="col-sm-3 control-label">IP нарушителя:</label>
 				<div class="col-sm-9">
 					<div class="fg-line">
-						<input type="text" TABINDEX=1 class="form-control" name="BanIP" placeholder="Введите данные">
+						<input type="text" TABINDEX=1 class="form-control" id="BanIP" name="BanIP" value="{$ban_ip|escape}" placeholder="Введите данные">
 					</div>
 				</div>
 			</div>
@@ -29,7 +30,7 @@
 				<label for="PlayerName" class="col-sm-3 control-label">Никнейм нарушителя<span class="mandatory">*</span>:</label>
 				<div class="col-sm-9">
 					<div class="fg-line">
-					<input type="text" class="form-control" name="PlayerName" placeholder="Введите данные{$player_name}">
+					<input type="text" class="form-control" id="PlayerName" name="PlayerName" value="{$player_name|escape}" placeholder="Введите данные">
 					</div>
 				</div>
 			</div>
@@ -37,7 +38,7 @@
 				<label for="BanReason" class="col-sm-3 control-label">Комментарий<span class="mandatory">*</span>:</label>
 					<div class="col-sm-9">
 					<div class="fg-line">
-					<textarea class="form-control auto-size" name="BanReason" placeholder="Пожалуйста, пишите информативные комментарии. Комментарии типа 'читер' не рассматриваются {$ban_reason}" style="overflow: hidden; word-wrap: break-word; height: 43px;"></textarea>
+					<textarea class="form-control auto-size" id="BanReason" name="BanReason" placeholder="Пожалуйста, пишите информативные комментарии. Комментарии типа 'читер' не рассматриваются" style="overflow: hidden; word-wrap: break-word; height: 43px;">{$ban_reason|escape}</textarea>
 					</div>
 				</div>
 			</div>
@@ -45,14 +46,14 @@
 					<label for="SubmitName" class="col-sm-3 control-label">Ваш ник:</label>
 				<div class="col-sm-9">
 					<div class="fg-line">
-					<input type="text" class="form-control" name="SubmitName" placeholder="Введите данные{$subplayer_name}">
+					<input type="text" class="form-control" id="SubmitName" name="SubmitName" value="{$subplayer_name|escape}" placeholder="Введите данные">
 					</div>
 				</div>
 			</div>
 			<div class="form-group m-b-5">
 				<label for="EmailAddr" class="col-sm-3 control-label">Ваш Email<span class="mandatory">*</span>:</label>
 				<div class="col-sm-9">
-					<input type="text" class="form-control" name="EmailAddr" placeholder="Введите данные{$player_email}">
+					<input type="text" class="form-control" id="EmailAddr" name="EmailAddr" value="{$player_email|escape}" placeholder="Введите данные">
 				</div>
 			</div>
 			<div class="form-group m-b-5">
@@ -72,10 +73,24 @@
 				<div class="fileinput fileinput-new" data-provides="fileinput">
 					<span class="btn btn-primary btn-file m-r-10">
 						<span class="fileinput-new">Выберите файл</span>
-							<input type="file" name="...">
+							<input type="file" name="demo_file">
 					</span>
 					<span class="fileinput-filename"></span>
 					<a href="#" class="close fileinput-exists" data-dismiss="fileinput">&times;</a>
+				</div>
+			</div>
+			<div class="form-group m-b-15">
+				<label for="kapcha" class="col-sm-3 control-label">Проверочный код<span class="mandatory">*</span>:</label>
+				<div class="col-sm-9">
+					<div class="voucher-captcha-row">
+						<img id="submit_captcha_img" class="voucher-captcha-img" src="includes/captcha/captcha.php?t={$smarty.now}" width="170" height="56" alt="Капча" />
+						<button type="button" class="btn btn-default btn-icon waves-effect" title="Обновить код" onclick="var i=document.getElementById('submit_captcha_img'); if(i) i.src='includes/captcha/captcha.php?t='+Date.now();">
+							<i class="zmdi zmdi-refresh-alt"></i>
+						</button>
+						<div class="fg-line voucher-captcha-input">
+							<input type="text" class="form-control" id="kapcha" name="kapcha" placeholder="Символы с картинки" required maxlength="8" autocomplete="off" />
+						</div>
+					</div>
 				</div>
 			</div>
 			<div class="card-body card-padding">

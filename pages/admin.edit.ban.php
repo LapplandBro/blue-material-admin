@@ -30,12 +30,12 @@ if(!defined("IN_SB")){echo "Ошибка доступа!";die();}
 global $userbank, $theme; 
 
 if($GLOBALS['config']['config.modgroup'] != "0"){
-	$gid_groups = $GLOBALS['db']->GetOne("SELECT `gid` FROM `" . DB_PREFIX . "_admins` WHERE `aid` = '".$userbank->GetAid()."'");
+	$gid_groups = $GLOBALS['db']->GetOne("SELECT `gid` FROM `" . DB_PREFIX . "_admins` WHERE `aid` = ?", array((int)$userbank->GetAid()));
 
 	if($gid_groups == $GLOBALS['config']['config.modgroup']){
-		$_GET['id'] = preg_replace("/[^0-9]/", '', $_GET['id']);
-		$srv_ban = $GLOBALS['db']->GetOne("SELECT `sid` FROM `" . DB_PREFIX . "_bans` WHERE `bid` = '".$_GET['id']."'");
-		$amd_access = $GLOBALS['db']->GetOne("SELECT `server_id` FROM `" . DB_PREFIX . "_admins_servers_groups` WHERE `admin_id` = '".$userbank->GetAid()."' AND `server_id` = '".$srv_ban."'");
+		$_GET['id'] = (int)preg_replace("/[^0-9]/", '', isset($_GET['id']) ? (string)$_GET['id'] : '');
+		$srv_ban = $GLOBALS['db']->GetOne("SELECT `sid` FROM `" . DB_PREFIX . "_bans` WHERE `bid` = ?", array((int)$_GET['id']));
+		$amd_access = $GLOBALS['db']->GetOne("SELECT `server_id` FROM `" . DB_PREFIX . "_admins_servers_groups` WHERE `admin_id` = ? AND `server_id` = ?", array((int)$userbank->GetAid(), (int)$srv_ban));
 		if($srv_ban != $amd_access){
 			echo '<script>setTimeout(\'<script>ShowBox("Ошибка", "Вы имеете доступ только к редактированию банов на тех серверах, где у вас есть права управляющего!", "red", "");setTimeout(\'history.go(-1);\', 4000);\', 1200);</script>';
 			PageDie();
@@ -62,9 +62,9 @@ $res = $GLOBALS['db']->GetRow("
     				FROM ".DB_PREFIX."_bans AS ba
     				LEFT JOIN ".DB_PREFIX."_admins AS ad ON ba.aid = ad.aid
     				LEFT JOIN ".DB_PREFIX."_servers AS se ON se.sid = ba.sid
-    				LEFT JOIN ".DB_PREFIX."_demos AS dm ON dm.demid = {$_GET['id']}
+    				LEFT JOIN ".DB_PREFIX."_demos AS dm ON dm.demid = ?
     				LEFT JOIN ".DB_PREFIX."_mods AS mo ON mo.mid = se.modid
-    				WHERE bid = {$_GET['id']}");
+    				WHERE bid = ?", array((int)$_GET['id'], (int)$_GET['id']));
 
 if (!$userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_ALL_BANS)&&(!$userbank->HasAccess(ADMIN_EDIT_OWN_BANS) && $res[8]!=$userbank->GetAid())&&(!$userbank->HasAccess(ADMIN_EDIT_GROUP_BANS) && $res->fields['gid']!=$userbank->GetProperty('gid')))
 {
@@ -217,7 +217,7 @@ if(isset($_POST['name']))
 		// менялся срок бана - любое другое изменение (ник, причина, IP, SteamID) проходило
 		// полностью бесследно. Забираем все поля, которые реально можно поменять в этой форме,
 		// чтобы можно было залогировать любое изменение, а не только смену срока.
-		$lengthrev = $GLOBALS['db']->Execute("SELECT length, authid, name, reason, ip, type FROM ".DB_PREFIX."_bans WHERE bid = '".(int)$_GET['id']."'");
+		$lengthrev = $GLOBALS['db']->Execute("SELECT length, authid, name, reason, ip, type FROM ".DB_PREFIX."_bans WHERE bid = ?", array((int)$_GET['id']));
 		
 		
 		$edit = $GLOBALS['db']->Execute("UPDATE ".DB_PREFIX."_bans SET
@@ -233,7 +233,7 @@ if(isset($_POST['name']))
 				
 		if(!empty($_POST['dname']) and !$demo_linker)
 		{
-			$demoid = $GLOBALS['db']->GetRow("SELECT filename FROM `" . DB_PREFIX . "_demos` WHERE demid = '" . $_GET['id'] . "';");
+			$demoid = $GLOBALS['db']->GetRow("SELECT filename FROM `" . DB_PREFIX . "_demos` WHERE demid = ?", array((int)$_GET['id']));
 			@unlink(SB_DEMOS."/".$demoid['filename']);
 			$edit = $GLOBALS['db']->Execute("REPLACE INTO ".DB_PREFIX."_demos
 											(`demid`, `demtype`, `filename`, `origname`)
@@ -256,7 +256,7 @@ if(isset($_POST['name']))
 												?)", array((int)$_GET['id'], '', $demo_linker));
 		}else{
 			if($res['origname'])
-				$edit = $GLOBALS['db']->Execute("DELETE FROM `".DB_PREFIX."_demos` WHERE `demid` = '?';", array((int)$_GET['id']));
+				$edit = $GLOBALS['db']->Execute("DELETE FROM `".DB_PREFIX."_demos` WHERE `demid` = ?", array((int)$_GET['id']));
 		}
 		
 		if($edit)

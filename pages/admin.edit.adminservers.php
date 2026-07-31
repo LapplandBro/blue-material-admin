@@ -38,9 +38,12 @@ if(!isset($_GET['id']))
 	PageDie();
 }
 
-if(!$userbank->GetProperty("user", $_GET['id']))
+$_GET['id'] = (int)$_GET['id'];
+$aid = (int)$_GET['id'];
+
+if(!$userbank->GetProperty("user", $aid))
 {
-	$log = new CSystemLog("e", "Получение данных администратора не удалось", "Не могу найти данные для администратора с идентификатором '".$_GET['id']."'");
+	$log = new CSystemLog("e", "Получение данных администратора не удалось", "Не могу найти данные для администратора с идентификатором '".$aid."'");
 	echo '<div id="msg-red" >
 	<i><img src="images/icons/warning.svg" alt="Warning" /></i>
 	<b>Ошибка</b>
@@ -50,10 +53,9 @@ if(!$userbank->GetProperty("user", $_GET['id']))
 	PageDie();
 }
 
-$aid = (int)$_GET['id'];
 if(!$userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_ADMINS))
 {
-	$log = new CSystemLog("w", "Попытка взлома", $userbank->GetProperty("user") . " пытался изменить доступ к серверу админа ".$userbank->GetProperty('user', $_GET['id']).", не имея на это прав.");
+	$log = new CSystemLog("w", "Попытка взлома", $userbank->GetProperty("user") . " пытался изменить доступ к серверу админа ".$userbank->GetProperty('user', $aid).", не имея на это прав.");
 	echo '<div id="msg-red" >
 	<i><img src="images/icons/warning.svg" alt="Внимание" /></i>
 	<b>Ошибка</b>
@@ -63,7 +65,7 @@ if(!$userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_ADMINS))
 	PageDie();
 }
 
-$servers = $GLOBALS['db']->GetAll("SELECT `server_id`, `srv_group_id` FROM ".DB_PREFIX."_admins_servers_groups WHERE admin_id = ". (int)$aid);
+$servers = $GLOBALS['db']->GetAll("SELECT `server_id`, `srv_group_id` FROM ".DB_PREFIX."_admins_servers_groups WHERE admin_id = ?", array($aid));
 $adminGroup = $GLOBALS['db']->GetAll('SELECT id FROM '.DB_PREFIX.'_srvgroups sg, '.DB_PREFIX.'_admins a WHERE sg.name = a.srv_group and a.aid = ? limit 1', array($aid));
 
 $server_grp = isset($adminGroup[0]['id'])?$adminGroup[0]['id']:0;
@@ -73,7 +75,7 @@ if(isset($_POST['editadminserver']))
 {
 	
 	// clear old stuffs
-	$GLOBALS['db']->Execute("DELETE FROM ".DB_PREFIX."_admins_servers_groups WHERE admin_id = {$aid}");
+	$GLOBALS['db']->Execute("DELETE FROM ".DB_PREFIX."_admins_servers_groups WHERE admin_id = ?", array($aid));
 	if(isset($_POST['servers']) && is_array($_POST['servers']) && count($_POST['servers']) > 0) {
 		foreach($_POST['servers'] AS $s)
 		{
@@ -98,11 +100,11 @@ if(isset($_POST['editadminserver']))
 	{
 		// rehash the admins on the servers
 		$serveraccessq = $GLOBALS['db']->GetAll("SELECT s.sid FROM `".DB_PREFIX."_servers` s
-												LEFT JOIN `".DB_PREFIX."_admins_servers_groups` asg ON asg.admin_id = '".(int)$aid."'
+												LEFT JOIN `".DB_PREFIX."_admins_servers_groups` asg ON asg.admin_id = ?
 												LEFT JOIN `".DB_PREFIX."_servers_groups` sg ON sg.group_id = asg.srv_group_id
 												WHERE ((asg.server_id != '-1' AND asg.srv_group_id = '-1')
 												OR (asg.srv_group_id != '-1' AND asg.server_id = '-1'))
-												AND (s.sid IN(asg.server_id) OR s.sid IN(sg.server_id)) AND s.enabled = 1");
+												AND (s.sid IN(asg.server_id) OR s.sid IN(sg.server_id)) AND s.enabled = 1", array($aid));
 		
 		$allservers = array();
 		foreach($serveraccessq as $access) {

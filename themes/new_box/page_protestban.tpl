@@ -1,5 +1,6 @@
 <form action="index.php?p=protest" method="post">
 	<input type="hidden" name="subprotest" value="1">
+	{if $sb_csrf}<input type="hidden" name="sb_csrf" value="{$sb_csrf|escape}" />{/if}
 	<div class="card">
 		<div class="form-horizontal" role="form" id="add-group">
 			<div class="card-header">
@@ -61,7 +62,21 @@
 					<label for="EmailAddr" class="col-sm-3 control-label">Ваш Email</label>
 					<div class="col-sm-9">
 						<div class="fg-line">
-							<input type="text" size="40" class="form-control" maxlength="70" value="{$player_email}" name="EmailAddr" placeholder="Введите данные(обязательное поле)">
+							<input type="text" size="40" class="form-control" maxlength="70" value="{$player_email|escape}" name="EmailAddr" placeholder="Введите данные(обязательное поле)">
+						</div>
+					</div>
+				</div>
+				<div class="form-group m-b-15">
+					<label for="kapcha" class="col-sm-3 control-label">Проверочный код</label>
+					<div class="col-sm-9">
+						<div class="voucher-captcha-row">
+							<img id="protest_captcha_img" class="voucher-captcha-img" src="includes/captcha/captcha.php?t={$smarty.now}" width="170" height="56" alt="Капча" />
+							<button type="button" class="btn btn-default btn-icon waves-effect" title="Обновить код" onclick="var i=document.getElementById('protest_captcha_img'); if(i) i.src='includes/captcha/captcha.php?t='+Date.now();">
+								<i class="zmdi zmdi-refresh-alt"></i>
+							</button>
+							<div class="fg-line voucher-captcha-input">
+								<input type="text" class="form-control" id="kapcha" name="kapcha" placeholder="Символы с картинки" required maxlength="8" autocomplete="off" />
+							</div>
 						</div>
 					</div>
 				</div>

@@ -62,7 +62,14 @@ else {
     $aid = 0;
     $password = '';
     
-    $result = $GLOBALS['db']->Execute(sprintf("SELECT aid,password,expired FROM %s_admins WHERE authid LIKE '%%%s'", DB_PREFIX, str_replace('STEAM_0:', '', $SteamID)));
+    // Хвост 0:123 / 1:123 — совпадение STEAM_0 и STEAM_1 (как раньше LIKE '%…').
+    $authTail = preg_replace('/^STEAM_[0-9]:/', '', (string)$SteamID);
+    if (!is_string($authTail) || !preg_match('/^[01]:[0-9]+$/', $authTail))
+        RedirectToSite(SB_WP_URL, 'Некорректный SteamID от OpenID.', false);
+    $result = $GLOBALS['db']->Execute(
+        "SELECT aid, password, expired FROM `" . DB_PREFIX . "_admins` WHERE authid LIKE ?",
+        array('%' . $authTail)
+    );
 	while(!$result->EOF) {
         $exp = $result->fields['expired'];
         if (($exp > 0 && $exp > time()) || $exp == '0' || $exp == '') {

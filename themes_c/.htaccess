@@ -1,5 +1,6 @@
-# Скомпилированные Smarty-шаблоны — не для веба.
+# Smarty compile cache — с веба недоступен (ни PHP, ни чтение .php/.tpl).
 Options -Indexes
+
 <IfModule mod_authz_core.c>
 	Require all denied
 </IfModule>
@@ -7,3 +8,15 @@ Options -Indexes
 	Order allow,deny
 	Deny from all
 </IfModule>
+
+<IfModule mod_php.c>
+	php_flag engine off
+</IfModule>
+<IfModule mod_php7.c>
+	php_flag engine off
+</IfModule>
+<IfModule mod_php5.c>
+	php_flag engine off
+</IfModule>
+RemoveHandler .php .php3 .php4 .php5 .php7 .php8 .phtml
+RemoveType .php .php3 .php4 .php5 .php7 .php8 .phtml

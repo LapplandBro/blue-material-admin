@@ -32,6 +32,12 @@ if($GLOBALS['config']['config.enableprotest']!="1")
 	PageDie();
 }
 if(!defined("IN_SB")){echo "Ошибка доступа!"; die();}
+
+if (function_exists('sb_session_start'))
+	sb_session_start();
+elseif (session_status() === PHP_SESSION_NONE)
+	@session_start();
+
 if (!isset($_POST['subprotest']) || $_POST['subprotest'] != 1)
 {
 	$Type = 0;
@@ -43,18 +49,35 @@ if (!isset($_POST['subprotest']) || $_POST['subprotest'] != 1)
 }
 else
 {
-	$Type = (int)$_POST['Type'];
-	$SteamID = htmlspecialchars($_POST['SteamID']);
-	$IP = htmlspecialchars($_POST['IP']);
-	$PlayerName = htmlspecialchars($_POST['PlayerName']);
-	$UnbanReason = htmlspecialchars($_POST['BanReason']);
-	$Email = htmlspecialchars($_POST['EmailAddr']);
+	$Type = isset($_POST['Type']) ? (int)$_POST['Type'] : 0;
+	$SteamID = htmlspecialchars(isset($_POST['SteamID']) ? $_POST['SteamID'] : '');
+	$IP = htmlspecialchars(isset($_POST['IP']) ? $_POST['IP'] : '');
+	$PlayerName = htmlspecialchars(isset($_POST['PlayerName']) ? $_POST['PlayerName'] : '');
+	$UnbanReason = htmlspecialchars(isset($_POST['BanReason']) ? $_POST['BanReason'] : '');
+	$Email = htmlspecialchars(isset($_POST['EmailAddr']) ? $_POST['EmailAddr'] : '');
 	$validsubmit = true;
 	$errors = "";
 	$BanId = -1;
 
-	if(get_magic_quotes_gpc())
+	if(function_exists('get_magic_quotes_gpc') && get_magic_quotes_gpc())
 		$UnbanReason = stripslashes($UnbanReason);
+
+	$csrf = isset($_POST['sb_csrf']) ? $_POST['sb_csrf'] : '';
+	if (function_exists('sb_csrf_validate') && !sb_csrf_validate($csrf)) {
+		$errors .= '* Сессия устарела. Обновите страницу и попробуйте снова.<br>';
+		$validsubmit = false;
+	} elseif (function_exists('sb_rate_limit_hit') && sb_rate_limit_hit('protest_ban', 8, 900)) {
+		$errors .= '* Слишком много попыток. Подождите несколько минут.<br>';
+		$validsubmit = false;
+	} else {
+		$kapcha = isset($_POST['kapcha']) ? trim((string)$_POST['kapcha']) : '';
+		$expect = isset($_SESSION['rand_code']) ? (string)$_SESSION['rand_code'] : '';
+		unset($_SESSION['rand_code']);
+		if ($expect === '' || !hash_equals(strtolower($expect), strtolower($kapcha))) {
+			$errors .= '* Проверочный код неверен. Обновите картинку и введите заново.<br>';
+			$validsubmit = false;
+		}
+	}
 
 	if($Type == 0 && !validate_steam($SteamID))
 	{
@@ -73,7 +96,7 @@ else
 		else
 		{
 			$BanId = (int)$res->fields[0];
-			$res = $GLOBALS['db']->Execute("SELECT pid FROM ".DB_PREFIX."_protests WHERE bid=$BanId");
+			$res = $GLOBALS['db']->Execute("SELECT pid FROM ".DB_PREFIX."_protests WHERE bid = ?", array($BanId));
 			if ($res->RecordCount() > 0)
 			{
 				$errors .=  '* Бан этого STEAM ID уже был опротестован.<br>';
@@ -83,7 +106,7 @@ else
 	}
 	if($Type == 1 && !validate_ip($IP))
 	{
-		$errors .= '* Введите действительныйd IP.<br>';
+		$errors .= '* Введите действительный IP.<br>';
 		$validsubmit = false;
 	}
 	elseif($Type==1)
@@ -98,7 +121,7 @@ else
 		else
 		{
 			$BanId = (int)$res->fields[0];
-			$res = $GLOBALS['db']->Execute("SELECT pid FROM ".DB_PREFIX."_protests WHERE bid=$BanId");
+			$res = $GLOBALS['db']->Execute("SELECT pid FROM ".DB_PREFIX."_protests WHERE bid = ?", array($BanId));
 			if ($res->RecordCount() > 0)
 			{
 				$errors .=  '* Бан этого IP уже был опротестован.<br>';
@@ -130,8 +153,8 @@ else
 		$UnbanReason = trim($UnbanReason);
 		$pre = $GLOBALS['db']->Prepare("INSERT INTO ".DB_PREFIX."_protests(bid,datesubmitted,reason,email,archiv,pip) VALUES (?,UNIX_TIMESTAMP(),?,?,0,?)");
 		$res = $GLOBALS['db']->Execute($pre,array($BanId, $UnbanReason,$Email,$_SERVER['REMOTE_ADDR']));
-        $protid = $GLOBALS['db']->Insert_ID();
-        $protadmin = $GLOBALS['db']->GetRow("SELECT ad.user FROM ".DB_PREFIX."_protests p, ".DB_PREFIX."_admins ad, ".DB_PREFIX."_bans b WHERE p.pid = '".$protid."' AND b.bid = p.bid AND ad.aid = b.aid");
+        $protid = (int)$GLOBALS['db']->Insert_ID();
+        $protadmin = $GLOBALS['db']->GetRow("SELECT ad.user FROM ".DB_PREFIX."_protests p, ".DB_PREFIX."_admins ad, ".DB_PREFIX."_bans b WHERE p.pid = ? AND b.bid = p.bid AND ad.aid = b.aid", array($protid));
 
 		$Type = 0;
 		$SteamID = "";
@@ -146,7 +169,7 @@ else
 		$headers = 'From: protest@' . sb_get_site_host() . "\n" .
 		'X-Mailer: PHP/' . phpversion();
 
-		$emailinfo = $GLOBALS['db']->Execute("SELECT aid, user, email FROM `".DB_PREFIX."_admins` WHERE aid = (SELECT aid FROM `".DB_PREFIX."_bans` WHERE bid = '".(int)$BanId."');");
+		$emailinfo = $GLOBALS['db']->Execute("SELECT aid, user, email FROM `".DB_PREFIX."_admins` WHERE aid = (SELECT aid FROM `".DB_PREFIX."_bans` WHERE bid = ?)", array((int)$BanId));
         $requri = substr($_SERVER['REQUEST_URI'], 0, strrpos($_SERVER['REQUEST_URI'], ".php")+4);
 		if(isset($GLOBALS['config']['protest.emailonlyinvolved']) && $GLOBALS['config']['protest.emailonlyinvolved'] == 1 && !empty($emailinfo->fields['email']))
 			$admins = array(array('aid' => $emailinfo->fields['aid'], 'user' => $emailinfo->fields['user'], 'email' => $emailinfo->fields['email']));
@@ -172,6 +195,7 @@ $theme->assign('ip', $IP);
 $theme->assign('player_name', $PlayerName);
 $theme->assign('reason', $UnbanReason);
 $theme->assign('player_email', $Email);
+$theme->assign('sb_csrf', function_exists('sb_csrf_token') ? sb_csrf_token() : '');
 
 $theme->display('page_protestban.tpl');
 ?>

@@ -197,6 +197,8 @@ ZIP с ветки `main`: https://github.com/LapplandBro/blue-material-admin
 С заменой: `includes/`, `pages/`, `scripts/`, `themes/new_box/`, `images/icons/`, `errors/`, корневые `*.php` **кроме** `config.php`.  
 `.htaccess` — только если не правил сам.
 
+**Caddy → Apache (VPS):** включи `AllowOverride All` (или RewriteRule ЧПУ в vhost). Не делай rewrite ЧПУ в Caddy — будет петля с PHP 301. См. [`docs/CADDY.md`](docs/CADDY.md) и [`deploy/Caddyfile.example`](deploy/Caddyfile.example).
+
 ### 5. После заливки
 
 1. Очисти файлы в `themes_c/` (папку оставь)  

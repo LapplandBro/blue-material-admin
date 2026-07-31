@@ -56,7 +56,7 @@ if(!isset($_GET['id']))
 }
 $_GET['id'] = (int)$_GET['id'];
 
-$server = $GLOBALS['db']->GetRow("SELECT * FROM ".DB_PREFIX."_servers WHERE sid = {$_GET['id']}");
+$server = $GLOBALS['db']->GetRow("SELECT * FROM ".DB_PREFIX."_servers WHERE sid = ?", array((int)$_GET['id']));
 if(!$server)
 {
 	$log = new CSystemLog("e", "Получение данных сервера не удалось", "Не удается найти данные для сервера с идентификатором '".$_GET['id']."'");
@@ -141,10 +141,10 @@ if(isset($_POST['address']))
 	if($error == 0)
 	{
 		$grps = "";
-		$sg = $GLOBALS['db']->GetAll("SELECT * FROM ".DB_PREFIX."_servers_groups WHERE server_id = {$_GET['id']}");
+		$sg = $GLOBALS['db']->GetAll("SELECT * FROM ".DB_PREFIX."_servers_groups WHERE server_id = ?", array((int)$_GET['id']));
 		foreach($sg AS $s)
 		{
-			$GLOBALS['db']->Execute("DELETE FROM ".DB_PREFIX."_servers_groups WHERE server_id = " . (int)$s['server_id'] . " AND group_id = " . (int)$s['group_id']);
+			$GLOBALS['db']->Execute("DELETE FROM ".DB_PREFIX."_servers_groups WHERE server_id = ? AND group_id = ?", array((int)$s['server_id'], (int)$s['group_id']));
 		}
 		if(!empty($_POST['groups'])) {
 			foreach($_POST['groups'] as $t)
@@ -202,7 +202,7 @@ echo '</form>';
 echo "<script>";
 if(!isset($_POST['address']))
 {
-	$groups = $GLOBALS['db']->GetAll("SELECT group_id FROM `" . DB_PREFIX . "_servers_groups` WHERE server_id = {$_GET['id']}");
+	$groups = $GLOBALS['db']->GetAll("SELECT group_id FROM `" . DB_PREFIX . "_servers_groups` WHERE server_id = ?", array((int)$_GET['id']));
 }
 else
 {

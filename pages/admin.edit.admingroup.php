@@ -118,7 +118,7 @@ if(isset($_POST['wg']) || isset($_GET['wg']) || isset($_GET['sg']))
 		{
 			// rehash the admins on the servers
 			$serveraccessq = $GLOBALS['db']->GetAll("SELECT s.sid FROM `".DB_PREFIX."_servers` s
-													LEFT JOIN `".DB_PREFIX."_admins_servers_groups` asg ON asg.admin_id = '".(int)$_GET['id']."'
+													LEFT JOIN `".DB_PREFIX."_admins_servers_groups` asg ON asg.admin_id = ".(int)$_GET['id']."
 													LEFT JOIN `".DB_PREFIX."_servers_groups` sg ON sg.group_id = asg.srv_group_id
 													WHERE ((asg.server_id != '-1' AND asg.srv_group_id = '-1')
 													OR (asg.srv_group_id != '-1' AND asg.server_id = '-1'))

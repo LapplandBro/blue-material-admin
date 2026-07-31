@@ -27,6 +27,25 @@
 
 require_once("init.php");
 
+/**
+ * Content-Disposition filename (RFC 6266 / RFC 5987).
+ * Без CR/LF/кавычек — иначе header injection через origname.
+ */
+function sb_content_disposition_attachment($origname)
+{
+	$name = (string)$origname;
+	$name = str_replace(array("\0", "\r", "\n"), '', $name);
+	$name = basename(str_replace('\\', '/', $name));
+	if ($name === '' || $name === '.' || $name === '..')
+		$name = 'demo.dem';
+	// ASCII fallback для старых клиентов
+	$ascii = preg_replace('/[^\x20-\x7E]/', '_', $name);
+	$ascii = str_replace(array('"', '\\', ';', '='), '_', $ascii);
+	if ($ascii === '' || $ascii === '.' || $ascii === '..')
+		$ascii = 'demo.dem';
+	return "attachment; filename=\"" . $ascii . "\"; filename*=UTF-8''" . rawurlencode($name);
+}
+
 if(!isset($_GET['id']) || !isset($_GET['type']))
   die('No id or type parameter.');
 
@@ -34,24 +53,25 @@ if(strcasecmp($_GET['type'], "U") != 0 && strcasecmp($_GET['type'], "B") != 0 &&
   die('Bad type');
 
 $id = (int)$_GET['id'];
+$type = strtoupper(substr((string)$_GET['type'], 0, 1));
 
-$demo = $GLOBALS['db']->GetRow("SELECT filename, origname FROM `".DB_PREFIX."_demos` WHERE demtype=? AND demid=?;", array($_GET['type'], $id));
+$demo = $GLOBALS['db']->GetRow("SELECT filename, origname FROM `".DB_PREFIX."_demos` WHERE demtype=? AND demid=?;", array($type, $id));
 //Official Fix: https://code.google.com/p/sourcebans/source/detail/r=165
 if(!$demo)
 {
   die('Demo not found.');
 }
 
-if((!in_array($demo['filename'], scandir(SB_DEMOS)) || !file_exists(SB_DEMOS . "/" . $demo['filename'])) && $_GET['type'] != "U")
+if((!in_array($demo['filename'], scandir(SB_DEMOS)) || !file_exists(SB_DEMOS . "/" . $demo['filename'])) && $type != "U")
 {
   die('File not found.');
 }
 
-if($_GET['type'] != "U"){
+if($type != "U"){
 $demo['filename'] = basename($demo['filename']);
-header('Content-type: application/force-download');
+header('Content-Type: application/octet-stream');
 header('Content-Transfer-Encoding: Binary');
-header('Content-disposition: attachment; filename="' . $demo['origname'] . '"');
+header('Content-Disposition: ' . sb_content_disposition_attachment($demo['origname']));
 header("Content-Length: " . filesize(SB_DEMOS . "/" . $demo['filename']));
 readfile(SB_DEMOS . "/" . $demo['filename']);
 }else{
