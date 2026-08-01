@@ -5,7 +5,7 @@
 <img width="1920" height="946" alt="image" src="https://github.com/user-attachments/assets/50bd68c2-0e93-49a3-ac72-c868d3a56aa8" />
 
 
-> Target PHP **7.1.33** (на PHP 8.x не рассчитана).
+> Target PHP **7.1.33** (на PHP 8.x не рассчитана в ветке main, в ветке php 8.3.22 работает исправно).
 
 **Topics:** `sourcebans` `sourcemod` `csgo` `cs2` `tf2` `php` `moderation` `material-admin`
 
@@ -102,7 +102,7 @@ Blue Material Admin — тёмный Firewatch-стиль, свой логоти
 
 | | Минимум | Рекомендуется |
 |---|---|---|
-| PHP | 7.1 | **7.1.33** (на 8.x не рассчитана) |
+| PHP | 7.1 | **7.1.33** (В ветке main, в ветке php 8.3.22 работает исправно) |
 | MySQL / MariaDB | 5.0 | 5.5+ / 10.x |
 | Расширения | mysqli, bcmath, xml, json, mbstring, openssl, curl | gd, gmp |
 
