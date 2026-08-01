@@ -1243,7 +1243,8 @@ function RedirectJS($url)
 
 function RemoveCode($text)
 {
-	return htmlspecialchars(strip_tags($text));
+	// ENT_QUOTES обязателен: на PHP < 8.1 кавычки иначе не экранируются (CVE-2026-30760).
+	return htmlspecialchars(strip_tags((string)$text), ENT_QUOTES, 'UTF-8');
 }
 
 /** Нормализация ключа ваучера → lowercase hex без разделителей. */
@@ -2270,21 +2271,27 @@ function sb_comms_type_icon_html($type, $size = 16)
 function GetMapImage($map, $game=false)
 {
 	$map = basename(str_replace('\\', '/', (string)$map));
-	$map = preg_replace('/\.(bsp|jpg|jpeg|png)$/i', '', $map);
+	$map = preg_replace('/\.(bsp|jpg|jpeg|png|webp)$/i', '', $map);
 
 	if ($map === '' || $map === '.' || $map === '..')
 		return 'images/maps/nomap.jpg';
 
+	$exts = defined('ALLOW_GAMEMAPS_EXT') ? ALLOW_GAMEMAPS_EXT : array('jpg', 'jpeg', 'png', 'webp');
+
 	if ($game) {
 		$game = strtolower((string)$game);
-		$localGame = SB_MAP_LOCATION . '/' . $game . '/' . $map . '.jpg';
-		if (@is_file($localGame))
-			return 'images/maps/' . $game . '/' . $map . '.jpg';
+		foreach ($exts as $ext) {
+			$localGame = SB_MAP_LOCATION . '/' . $game . '/' . $map . '.' . $ext;
+			if (@is_file($localGame))
+				return 'images/maps/' . $game . '/' . $map . '.' . $ext;
+		}
 	}
 
-	$local = SB_MAP_LOCATION . '/' . $map . '.jpg';
-	if (@is_file($local))
-		return 'images/maps/' . $map . '.jpg';
+	foreach ($exts as $ext) {
+		$local = SB_MAP_LOCATION . '/' . $map . '.' . $ext;
+		if (@is_file($local))
+			return 'images/maps/' . $map . '.' . $ext;
+	}
 
 	// Без сетевого кэша на диск: отдаём прямую ссылку, браузер сам подтянет (или упрётся в onerror → nomap).
 	$remote = GetRemoteMapImageUrl($map, $game);
@@ -2292,6 +2299,58 @@ function GetMapImage($map, $game=false)
 		return $remote;
 
 	return 'images/maps/nomap.jpg';
+}
+
+/**
+ * Перекодирует изображение через GD, срезая полиглоты/метаданные.
+ * Без GD возвращает false — вызывающий решает, принимать ли файл только по getimagesize.
+ *
+ * @param string $filePath
+ * @param int $imageType IMAGETYPE_*
+ * @return bool
+ */
+function reencodeImage($filePath, $imageType)
+{
+	if (!extension_loaded('gd') || !is_string($filePath) || $filePath === '' || !is_file($filePath))
+		return false;
+
+	$img = null;
+	$imageType = (int)$imageType;
+
+	if ($imageType === IMAGETYPE_JPEG && function_exists('imagecreatefromjpeg')) {
+		$img = @imagecreatefromjpeg($filePath);
+		if ($img)
+			@imagejpeg($img, $filePath, 90);
+	} elseif ($imageType === IMAGETYPE_PNG && function_exists('imagecreatefrompng')) {
+		$img = @imagecreatefrompng($filePath);
+		if ($img) {
+			imagealphablending($img, false);
+			imagesavealpha($img, true);
+			@imagepng($img, $filePath, 9);
+		}
+	} elseif (defined('IMAGETYPE_WEBP') && $imageType === IMAGETYPE_WEBP && function_exists('imagecreatefromwebp')) {
+		$img = @imagecreatefromwebp($filePath);
+		if ($img)
+			@imagewebp($img, $filePath, 80);
+	}
+
+	if (!$img)
+		return false;
+
+	imagedestroy($img);
+	return true;
+}
+
+/**
+ * CSRF для popup-загрузчиков (map/icon/demo). При провале — HTML-отказ и exit.
+ */
+function sb_upload_require_csrf()
+{
+	$token = isset($_POST['sb_csrf']) ? $_POST['sb_csrf'] : '';
+	if (!function_exists('sb_csrf_validate') || !sb_csrf_validate($token)) {
+		$log = new CSystemLog("w", "CSRF", "Отклонена загрузка файла: неверный CSRF-токен (" . (isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '?') . ").");
+		sb_upload_access_denied('Неверный CSRF-токен. Обновите страницу и попробуйте снова.');
+	}
 }
 
 /**
