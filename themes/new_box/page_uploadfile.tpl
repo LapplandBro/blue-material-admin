@@ -51,6 +51,7 @@
 
 		<form class="upload-form" action="" method="POST" id="{$form_name|escape}" enctype="multipart/form-data">
 			<input name="upload" value="1" type="hidden">
+			{if $sb_csrf}<input type="hidden" name="sb_csrf" value="{$sb_csrf|escape}" />{/if}
 			<label class="upload-drop" for="upload_file_input">
 				<span class="upload-drop__icon" aria-hidden="true">&#8679;</span>
 				<span class="upload-drop__text">Выберите файл или перетащите сюда</span>

@@ -31,31 +31,73 @@ global $theme, $userbank;
 
 if (!$userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_MODS|ADMIN_ADD_MODS))
 {
-    $log = new CSystemLog("w", "Попытка взлома", $userbank->GetProperty('user') . " пытался загрузить иконку МОДа, не имея на это прав.");
+	$log = new CSystemLog("w", "Попытка взлома", $userbank->GetProperty('user') . " пытался загрузить иконку МОДа, не имея на это прав.");
 	sb_upload_access_denied('Нет доступа к загрузке иконки');
 }
 
-$message = "";
-if(isset($_POST['upload']))
-{
-	// SECURITY: basename() strips any directory-traversal component from the
-	// user-supplied filename, and we reject filenames with a "hidden" extension
-	// (e.g. "shell.php.gif") in addition to the plain extension whitelist check.
-	$icon_filename = basename($_FILES['icon_file']['name']);
-	$has_valid_ext = ($icon_filename !== '')
-		&& (CheckExt($icon_filename, "gif") || CheckExt($icon_filename, "jpg") || CheckExt($icon_filename, "png"))
-		&& strpos(pathinfo($icon_filename, PATHINFO_FILENAME), '.') === false;
+$allowed_icon_types = array(
+	IMAGETYPE_GIF => 'gif',
+	IMAGETYPE_JPEG => 'jpg',
+	IMAGETYPE_PNG => 'png',
+);
 
-	if($has_valid_ext)
-	{
-		move_uploaded_file($_FILES['icon_file']['tmp_name'],SB_ICONS."/".$icon_filename);
-		// json_encode() safely escapes the filename for use inside the inline <script> block.
-		$message =  "<script>window.opener.icon(" . json_encode($icon_filename) . ");self.close()</script>";
-        $log = new CSystemLog("m", "Иконка МОДа загружена", "Новая иконка МОДа загружена: ".htmlspecialchars($icon_filename));
-	}
-	else 
-	{
-		$message =  "<b> Файл должен быть формата gif, jpg или png.</b><br><br>";
+$message = "";
+if (isset($_POST['upload']))
+{
+	sb_upload_require_csrf();
+
+	if (empty($_FILES['icon_file']) || !isset($_FILES['icon_file']['tmp_name'])) {
+		$message = "<b>Файл не получен.</b><br><br>";
+	} elseif ((int)$_FILES['icon_file']['error'] !== 0) {
+		$message = "<b>Ошибка загрузки: " . htmlspecialchars(getReasonByCode((int)$_FILES['icon_file']['error'], "GIF, JPG, PNG"), ENT_QUOTES, 'UTF-8') . "</b><br><br>";
+	} elseif ((int)$_FILES['icon_file']['size'] <= 0 || (int)$_FILES['icon_file']['size'] > MAX_GAMEICON_SIZE_BYTES) {
+		$message = "<b>Файл слишком большой или пуст (макс. " . (int)(MAX_GAMEICON_SIZE_BYTES / 1024 / 1024) . " MB).</b><br><br>";
+	} else {
+		$tmp = (string)$_FILES['icon_file']['tmp_name'];
+		$original = (string)$_FILES['icon_file']['name'];
+		$check = @getimagesize($tmp);
+
+		if ($check === false || empty($check[2]) || !isset($allowed_icon_types[(int)$check[2]])) {
+			$message = "<b>Файл должен быть настоящим изображением формата gif, jpg или png.</b><br><br>";
+			$log = new CSystemLog("w", "Подозрительная загрузка", "Иконка МОДа отклонена: " . $original);
+		} elseif (!is_uploaded_file($tmp)) {
+			$message = "<b>Некорректная временная загрузка.</b><br><br>";
+		} else {
+			$ext = $allowed_icon_types[(int)$check[2]];
+			$original_basename = basename($original);
+			$clean_name = preg_replace('/[^a-zA-Z0-9._-]/', '', $original_basename);
+			$stem = ($clean_name !== '' && $clean_name === $original_basename)
+				? pathinfo($clean_name, PATHINFO_FILENAME)
+				: '';
+
+			if ($stem === '' || strpos($stem, '.') !== false) {
+				$message = "<b>Недопустимое имя файла.</b><br><br>";
+			} else {
+				$icon_filename = $stem . '.' . $ext;
+				$destination = rtrim(SB_ICONS, '/\\') . DIRECTORY_SEPARATOR . $icon_filename;
+
+				if (file_exists($destination)) {
+					$message = "<b>Файл с таким именем уже существует.</b><br><br>";
+				} elseif (!@move_uploaded_file($tmp, $destination)) {
+					$message = "<b>Не удалось сохранить файл.</b><br><br>";
+				} else {
+					@chmod($destination, 0644);
+					$ok = true;
+					// GIF не перекодируем через GD (ломает анимацию); JPEG/PNG — да.
+					if (extension_loaded('gd') && (int)$check[2] !== IMAGETYPE_GIF) {
+						if (!reencodeImage($destination, (int)$check[2])) {
+							@unlink($destination);
+							$message = "<b>Файл повреждён или содержит некорректные данные.</b><br><br>";
+							$ok = false;
+						}
+					}
+					if ($ok) {
+						$message = "<script>window.opener.icon(" . json_encode($icon_filename) . ");self.close()</script>";
+						$log = new CSystemLog("m", "Иконка МОДа загружена", "Новая иконка МОДа загружена: " . htmlspecialchars($icon_filename, ENT_QUOTES, 'UTF-8'));
+					}
+				}
+			}
+		}
 	}
 }
 
@@ -64,5 +106,6 @@ $theme->assign("message", $message);
 $theme->assign("input_name", "icon_file");
 $theme->assign("form_name", "iconup");
 $theme->assign("formats", "GIF, PNG или JPG");
+$theme->assign("sb_csrf", function_exists('sb_csrf_token') ? sb_csrf_token() : '');
 
 $theme->display('page_uploadfile.tpl');
