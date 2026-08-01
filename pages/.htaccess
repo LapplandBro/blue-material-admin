@@ -1,0 +1,15 @@
+# Большинство pages/*.php — только include из index.php (IN_SB).
+# Прямой HTTP к ним закрыт. Белый список — попапы upload и iframe kick/block.
+<IfModule mod_authz_core.c>
+	Require all denied
+	<FilesMatch "^(admin\.uploadmapimg|admin\.uploadicon|admin\.uploaddemo|admin\.kickit|admin\.blockit)\.php$">
+		Require all granted
+	</FilesMatch>
+</IfModule>
+<IfModule !mod_authz_core.c>
+	Order deny,allow
+	Deny from all
+	<FilesMatch "^(admin\.uploadmapimg|admin\.uploadicon|admin\.uploaddemo|admin\.kickit|admin\.blockit)\.php$">
+		Allow from all
+	</FilesMatch>
+</IfModule>

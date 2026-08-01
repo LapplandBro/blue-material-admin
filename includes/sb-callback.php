@@ -2262,7 +2262,7 @@ function KickPlayer($sid, $name)
 
 	require INCLUDES_PATH.'/CServerControl.php';
 	//get the server data
-	$data = $GLOBALS['db']->GetRow("SELECT ip, port, rcon FROM ".DB_PREFIX."_servers WHERE sid = '".$sid."';");
+	$data = $GLOBALS['db']->GetRow("SELECT ip, port, rcon FROM ".DB_PREFIX."_servers WHERE sid = ?", array($sid));
 	if(empty($data['rcon'])) {
 		$objResponse->addScript("ShowBox('Ошибка', 'Невозможно кикнуть ".addslashes(htmlspecialchars($name)).". Не задан РКОН пароль!', 'red', '', true);");
 		return $objResponse;
@@ -2273,7 +2273,7 @@ function KickPlayer($sid, $name)
 
 	if(!$r->AuthRcon($data['rcon']))
 	{
-		$GLOBALS['db']->Execute("UPDATE ".DB_PREFIX."_servers SET rcon = '' WHERE sid = '".$sid."';");
+		$GLOBALS['db']->Execute("UPDATE ".DB_PREFIX."_servers SET rcon = '' WHERE sid = ?", array($sid));
 		$objResponse->addScript("ShowBox('Ошибка', 'Невозможно кикнуть ".addslashes(htmlspecialchars($name)).". Неверный РКОН пароль!', 'red', '', true);");
 		return $objResponse;
 	}
@@ -2299,7 +2299,7 @@ function KickPlayer($sid, $name)
 			$steam2 = renderSteam2(getAccountId($steam), 0);
 		}
 		// check for immunity
-		$admin = $GLOBALS['db']->GetRow("SELECT a.immunity AS pimmune, g.immunity AS gimmune FROM `".DB_PREFIX."_admins` AS a LEFT JOIN `".DB_PREFIX."_srvgroups` AS g ON g.name = a.srv_group WHERE authid = '".$steam2."' LIMIT 1;");
+		$admin = $GLOBALS['db']->GetRow("SELECT a.immunity AS pimmune, g.immunity AS gimmune FROM `".DB_PREFIX."_admins` AS a LEFT JOIN `".DB_PREFIX."_srvgroups` AS g ON g.name = a.srv_group WHERE authid = ? LIMIT 1;", array($steam2));
 		if($admin && $admin['gimmune']>$admin['pimmune'])
 			$immune = $admin['gimmune'];
 		elseif($admin)
@@ -2532,10 +2532,21 @@ function AddBan($nickname, $type, $steam, $ip, $length, $dfile, $dname, $reason,
 function SetupBan($subid)
 {
 	$objResponse = new xajaxResponse();
+	global $userbank, $username;
 	$subid = (int)$subid;
 
-	$ban = $GLOBALS['db']->GetRow("SELECT * FROM ".DB_PREFIX."_submissions WHERE subid = $subid");
-	$demo = $GLOBALS['db']->GetRow("SELECT * FROM ".DB_PREFIX."_demos WHERE demid = $subid AND demtype = \"S\"");
+	if (!$userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_BAN|ADMIN_BAN_SUBMISSIONS))
+	{
+		$objResponse->redirect("index.php?p=login&m=no_access", 0);
+		$log = new CSystemLog("w", "Ошибка доступа", $username . " пытался подтянуть заявку #$subid в форму бана, не имея на это прав.");
+		return $objResponse;
+	}
+
+	$ban = $GLOBALS['db']->GetRow("SELECT * FROM ".DB_PREFIX."_submissions WHERE subid = ?", array($subid));
+	$demo = $GLOBALS['db']->GetRow("SELECT * FROM ".DB_PREFIX."_demos WHERE demid = ? AND demtype = ?", array($subid, "S"));
+	if (empty($ban))
+		return $objResponse;
+
 	// clear any old stuff
 	$objResponse->addScript("$('nickname').value = ''");
 	$objResponse->addScript("$('fromsub').value = ''");
@@ -2544,20 +2555,20 @@ function SetupBan($subid)
 	$objResponse->addScript("$('txtReason').value = ''");
 	$objResponse->addAssign("demo.msg", "innerHTML",  "");
 	// add new stuff
-	$objResponse->addScript("$('nickname').value = '" . $ban['name'] . "'");
-	$objResponse->addScript("$('steam').value = '" . $ban['SteamId']. "'");
-	$objResponse->addScript("$('ip').value = '" . $ban['sip'] . "'");
+	$objResponse->addScript("$('nickname').value = " . json_encode((string)$ban['name']));
+	$objResponse->addScript("$('steam').value = " . json_encode((string)$ban['SteamId']));
+	$objResponse->addScript("$('ip').value = " . json_encode((string)$ban['sip']));
 	if(trim($ban['SteamId']) == "")
 		$type = "1";
 	else
 		$type = "0";
 	$objResponse->addScriptCall("selectLengthTypeReason", "0", $type, addslashes($ban['reason']));
 
-	$objResponse->addScript("$('fromsub').value = '$subid'");
+	$objResponse->addScript("$('fromsub').value = " . json_encode((string)$subid));
 	if($demo)
 	{
-		$objResponse->addAssign("demo.msg", "innerHTML",  $demo['origname']);
-		$objResponse->addScript("demo('" . $demo['filename'] . "', '" . $demo['origname'] . "');");
+		$objResponse->addAssign("demo.msg", "innerHTML",  htmlspecialchars((string)$demo['origname'], ENT_QUOTES, 'UTF-8'));
+		$objResponse->addScript("demo(" . json_encode((string)$demo['filename']) . ", " . json_encode((string)$demo['origname']) . ");");
 	}
 	$objResponse->addScript("SwapPane(0);");
 	return $objResponse;
@@ -2566,10 +2577,21 @@ function SetupBan($subid)
 function PrepareReban($bid)
 {
 	$objResponse = new xajaxResponse();
+	global $userbank, $username;
 	$bid = (int)$bid;
 
-	$ban = $GLOBALS['db']->GetRow("SELECT type, ip, authid, name, length, reason FROM ".DB_PREFIX."_bans WHERE bid = '".$bid."';");
-	$demo = $GLOBALS['db']->GetRow("SELECT * FROM ".DB_PREFIX."_demos WHERE demid = '".$bid."' AND demtype = \"B\";");
+	if (!$userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_BAN))
+	{
+		$objResponse->redirect("index.php?p=login&m=no_access", 0);
+		$log = new CSystemLog("w", "Ошибка доступа", $username . " пытался подтянуть бан #$bid в форму, не имея на это прав.");
+		return $objResponse;
+	}
+
+	$ban = $GLOBALS['db']->GetRow("SELECT type, ip, authid, name, length, reason FROM ".DB_PREFIX."_bans WHERE bid = ?", array($bid));
+	$demo = $GLOBALS['db']->GetRow("SELECT * FROM ".DB_PREFIX."_demos WHERE demid = ? AND demtype = ?", array($bid, "B"));
+	if (empty($ban))
+		return $objResponse;
+
 	// clear any old stuff
 	$objResponse->addScript("$('nickname').value = ''");
 	$objResponse->addScript("$('ip').value = ''");
@@ -2580,15 +2602,15 @@ function PrepareReban($bid)
 	$objResponse->addAssign("txtReason", "innerHTML",  "");
 
 	// add new stuff
-	$objResponse->addScript("$('nickname').value = '" . $ban['name'] . "'");
-	$objResponse->addScript("$('steam').value = '" . $ban['authid']. "'");
-	$objResponse->addScript("$('ip').value = '" . $ban['ip']. "'");
+	$objResponse->addScript("$('nickname').value = " . json_encode((string)$ban['name']));
+	$objResponse->addScript("$('steam').value = " . json_encode((string)$ban['authid']));
+	$objResponse->addScript("$('ip').value = " . json_encode((string)$ban['ip']));
 	$objResponse->addScriptCall("selectLengthTypeReason", $ban['length'], $ban['type'], addslashes($ban['reason']));
 
 	if($demo)
 	{
-		$objResponse->addAssign("demo.msg", "innerHTML",  $demo['origname']);
-		$objResponse->addScript("demo('" . $demo['filename'] . "', '" . $demo['origname'] . "');");
+		$objResponse->addAssign("demo.msg", "innerHTML",  htmlspecialchars((string)$demo['origname'], ENT_QUOTES, 'UTF-8'));
+		$objResponse->addScript("demo(" . json_encode((string)$demo['filename']) . ", " . json_encode((string)$demo['origname']) . ");");
 	}
 	$objResponse->addScript("SwapPane(0);");
 	return $objResponse;
@@ -4445,8 +4467,19 @@ function AddBlock($nickname, $type, $steam, $length, $reason)
 function PrepareReblock($bid)
 {
 	$objResponse = new xajaxResponse();
+	global $userbank, $username;
+	$bid = (int)$bid;
 
-	$ban = $GLOBALS['db']->GetRow("SELECT name, authid, type, length, reason FROM ".DB_PREFIX."_comms WHERE bid = '".$bid."';");
+	if (!$userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_BAN))
+	{
+		$objResponse->redirect("index.php?p=login&m=no_access", 0);
+		$log = new CSystemLog("w", "Ошибка доступа", $username . " пытался подтянуть блок #$bid в форму, не имея на это прав.");
+		return $objResponse;
+	}
+
+	$ban = $GLOBALS['db']->GetRow("SELECT name, authid, type, length, reason FROM ".DB_PREFIX."_comms WHERE bid = ?", array($bid));
+	if (empty($ban))
+		return $objResponse;
 
 	// clear any old stuff
 	$objResponse->addScript("$('nickname').value = ''");
@@ -4455,8 +4488,8 @@ function PrepareReblock($bid)
 	$objResponse->addAssign("txtReason", "innerHTML",  "");
 
 	// add new stuff
-	$objResponse->addScript("$('nickname').value = '" . $ban['name'] . "'");
-	$objResponse->addScript("$('steam').value = '" . $ban['authid']. "'");
+	$objResponse->addScript("$('nickname').value = " . json_encode((string)$ban['name']));
+	$objResponse->addScript("$('steam').value = " . json_encode((string)$ban['authid']));
 	$objResponse->addScriptCall("selectLengthTypeReason", $ban['length'], $ban['type']-1, addslashes($ban['reason']));
 
 	$objResponse->addScript("SwapPane(0);");
@@ -4466,6 +4499,15 @@ function PrepareReblock($bid)
 function PrepareBlockFromBan($bid)
 {
 	$objResponse = new xajaxResponse();
+	global $userbank, $username;
+	$bid = (int)$bid;
+
+	if (!$userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_BAN))
+	{
+		$objResponse->redirect("index.php?p=login&m=no_access", 0);
+		$log = new CSystemLog("w", "Ошибка доступа", $username . " пытался подтянуть бан #$bid в форму блока, не имея на это прав.");
+		return $objResponse;
+	}
 
 	// clear any old stuff
 	$objResponse->addScript("$('nickname').value = ''");
@@ -4473,11 +4515,13 @@ function PrepareBlockFromBan($bid)
 	$objResponse->addScript("$('txtReason').value = ''");	
 	$objResponse->addAssign("txtReason", "innerHTML",  "");
 
-	$ban = $GLOBALS['db']->GetRow("SELECT name, authid FROM ".DB_PREFIX."_bans WHERE bid = '".$bid."';");
+	$ban = $GLOBALS['db']->GetRow("SELECT name, authid FROM ".DB_PREFIX."_bans WHERE bid = ?", array($bid));
+	if (empty($ban))
+		return $objResponse;
 
 	// add new stuff
-	$objResponse->addScript("$('nickname').value = '" . $ban['name'] . "'");
-	$objResponse->addScript("$('steam').value = '" . $ban['authid']. "'");
+	$objResponse->addScript("$('nickname').value = " . json_encode((string)$ban['name']));
+	$objResponse->addScript("$('steam').value = " . json_encode((string)$ban['authid']));
 	
 	$objResponse->addScript("SwapPane(0);");
 	return $objResponse;
