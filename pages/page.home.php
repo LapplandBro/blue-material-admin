@@ -228,6 +228,8 @@ require(TEMPLATES_PATH . "/page.servers.php"); //Set theme vars from servers pag
 $theme->assign('dashboard_title',  stripslashes($GLOBALS['config']['dash.intro.title']));
 
 $dashboard_text = stripslashes($GLOBALS['config']['dash.intro.text']);
+if (function_exists('sb_sanitize_admin_html'))
+	$dashboard_text = sb_sanitize_admin_html($dashboard_text);
 // SEO: убрать вложенные теги/<br> из заголовков; сдвинуть иерархию (на странице уже будет H1 «Главная»).
 $dashboard_text = preg_replace_callback(
 	'/<h([1-6])(\s[^>]*)?>(.*?)<\/h\1>/is',
@@ -244,12 +246,18 @@ $dashboard_text = preg_replace_callback(
 );
 $theme->assign('dashboard_text', $dashboard_text);
 $theme->assign('dashboard_info_block',  $GLOBALS['config']['dash.info_block']);
-$theme->assign('dashboard_info_block_text',  $GLOBALS['config']['dash.info_block_text']);
-$theme->assign('dashboard_info_block_text_p',  $GLOBALS['config']['dash.info_block_text_t']);
-$theme->assign('dashboard_info_vk',  $GLOBALS['config']['dash.info_vk']);
-$theme->assign('dashboard_info_steam',  $GLOBALS['config']['dash.info_steam']);
-$theme->assign('dashboard_info_yout',  $GLOBALS['config']['dash.info_yout']);
-$theme->assign('dashboard_info_face',  $GLOBALS['config']['dash.info_face']);
+$info_block_text = isset($GLOBALS['config']['dash.info_block_text']) ? stripslashes($GLOBALS['config']['dash.info_block_text']) : '';
+$info_block_text_p = isset($GLOBALS['config']['dash.info_block_text_t']) ? stripslashes($GLOBALS['config']['dash.info_block_text_t']) : '';
+if (function_exists('sb_sanitize_admin_html')) {
+	$info_block_text = sb_sanitize_admin_html($info_block_text);
+	$info_block_text_p = sb_sanitize_admin_html($info_block_text_p);
+}
+$theme->assign('dashboard_info_block_text',  $info_block_text);
+$theme->assign('dashboard_info_block_text_p',  $info_block_text_p);
+$theme->assign('dashboard_info_vk',  function_exists('sb_safe_http_url') ? sb_safe_http_url($GLOBALS['config']['dash.info_vk']) : $GLOBALS['config']['dash.info_vk']);
+$theme->assign('dashboard_info_steam',  function_exists('sb_safe_http_url') ? sb_safe_http_url($GLOBALS['config']['dash.info_steam']) : $GLOBALS['config']['dash.info_steam']);
+$theme->assign('dashboard_info_yout',  function_exists('sb_safe_http_url') ? sb_safe_http_url($GLOBALS['config']['dash.info_yout']) : $GLOBALS['config']['dash.info_yout']);
+$theme->assign('dashboard_info_face',  function_exists('sb_safe_http_url') ? sb_safe_http_url($GLOBALS['config']['dash.info_face']) : $GLOBALS['config']['dash.info_face']);
 $theme->assign('players_blocked', $stopped);
 $theme->assign('total_blocked', $totalstopped);
 

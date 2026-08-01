@@ -337,7 +337,7 @@
 														</a>
 								 
 														<div class="media-body">
-															<a href="#" class="a-title">{if !empty($commenta.comname)}{$commenta.comname|escape:'html'}{else}<span class="parsec-muted">админ удалён</span>{/if}</a>{if !empty($commenta.edittime)} <small class="c-gray m-l-10">правлен {$commenta.edittime}{if !empty($commenta.editname)} ({$commenta.editname}){/if}</small>{/if}
+															<a href="#" class="a-title">{if !empty($commenta.comname)}{$commenta.comname|escape:'html'}{else}<span class="parsec-muted">админ удалён</span>{/if}</a>{if !empty($commenta.edittime)} <small class="c-gray m-l-10">правлен {$commenta.edittime|escape:'html'}{if !empty($commenta.editname)} ({$commenta.editname|escape:'html'}){/if}</small>{/if}
 															<p class="m-t-5 m-b-0" style="white-space: nowrap;overflow: hidden;text-overflow: ellipsis;">{$commenta.commenttxt|escape:'html'}</p>
 														</div>
 														

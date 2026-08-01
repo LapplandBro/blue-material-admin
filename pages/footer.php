@@ -60,8 +60,15 @@ if(isset($_GET['p']))
 	$_SESSION['p'] = $_GET['p'];
 if(isset($_GET['c']))
 	$_SESSION['c'] = $_GET['c'];
-if(isset($_GET['p']) && $_GET['p'] != "login")
-	$_SESSION['q'] = $_SERVER['QUERY_STRING'];
+// Только безопасный query для post-login redirect (тот же whitelist, что у Plogin).
+// Сырой QUERY_STRING в сессии давал XSS на странице логина через {$redir} в <script>.
+if (isset($_GET['p']) && $_GET['p'] != "login") {
+	$qs = isset($_SERVER['QUERY_STRING']) ? (string)$_SERVER['QUERY_STRING'] : '';
+	if ($qs !== '' && preg_match('/^[a-zA-Z0-9_.=&%-]+$/', $qs))
+		$_SESSION['q'] = $qs;
+	else
+		unset($_SESSION['q']);
+}
 
 
 	

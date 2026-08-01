@@ -1247,6 +1247,35 @@ function RemoveCode($text)
 	return htmlspecialchars(strip_tags((string)$text), ENT_QUOTES, 'UTF-8');
 }
 
+/**
+ * Грубая санация «доверенного» HTML из админки (dash intro и т.п.):
+ * убирает script/iframe и inline-обработчики / javascript: URL.
+ */
+function sb_sanitize_admin_html($html)
+{
+	$html = (string)$html;
+	if ($html === '')
+		return '';
+	$html = preg_replace('#<\s*(script|iframe|object|embed|link|meta|style|form|base)[^>]*>.*?<\s*/\s*\1\s*>#is', '', $html);
+	$html = preg_replace('#<\s*(script|iframe|object|embed|link|meta|style|form|base)[^>]*/?\s*>#is', '', $html);
+	$html = preg_replace('/\son[a-z]+\s*=\s*("|\')(?:(?!\1).)*\1/iu', '', $html);
+	$html = preg_replace('/\son[a-z]+\s*=\s*[^\s>]+/iu', '', $html);
+	$html = preg_replace('/\s(href|src|action)\s*=\s*("|\')\s*javascript:[^\'"]*\2/iu', ' $1="#"', $html);
+	$html = preg_replace('/\s(href|src|action)\s*=\s*javascript:[^\s>]*/iu', ' $1="#"', $html);
+	return $html;
+}
+
+/** Разрешает только http(s) URL; иначе пустая строка. */
+function sb_safe_http_url($url)
+{
+	$url = trim((string)$url);
+	if ($url === '')
+		return '';
+	if (!preg_match('#^https?://#i', $url))
+		return '';
+	return $url;
+}
+
 /** Нормализация ключа ваучера → lowercase hex без разделителей. */
 function sb_voucher_normalize_key($raw)
 {
