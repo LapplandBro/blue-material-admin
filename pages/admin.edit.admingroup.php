@@ -40,7 +40,7 @@ if(!isset($_GET['id']))
 }
 
 $_GET['id'] = (int)$_GET['id'];
-if(!$userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_ADMINS))
+if(!$userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_ADMINS) || !sb_can_manage_admin((int)$_GET['id']))
 {
 	$log = new CSystemLog("w", "Попытка взлома", $userbank->GetProperty("user") . " пытался изменить группу админу ".$userbank->GetProperty('user', $_GET['id']).". не имея на это прав.");
 	echo '<div id="msg-red" >

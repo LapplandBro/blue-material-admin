@@ -2006,6 +2006,81 @@ function sb_protected_steamids()
 	return array_values(array_filter(array_map('trim', explode(',', SB_PROTECTED_STEAMIDS))));
 }
 
+/**
+ * Есть ли у админа доступ к игровому серверу $sid (прямая привязка или группа серверов).
+ * OWNER всегда true.
+ *
+ * @param int $sid
+ * @param int|null $aid null = текущий админ
+ * @return bool
+ */
+function sb_admin_has_server_access($sid, $aid = null)
+{
+	global $userbank;
+	$sid = (int)$sid;
+	if ($sid <= 0 || !isset($userbank) || !is_object($userbank))
+		return false;
+	if ($aid === null)
+		$aid = (int)$userbank->GetAid();
+	else
+		$aid = (int)$aid;
+	if ($aid <= 0)
+		return false;
+	if ($userbank->HasAccess(ADMIN_OWNER, $aid))
+		return true;
+
+	$admin_servers = $GLOBALS['db']->GetAll(
+		"SELECT `server_id`, `srv_group_id` FROM `".DB_PREFIX."_admins_servers_groups` WHERE admin_id = ?",
+		array($aid)
+	);
+	if (!is_array($admin_servers))
+		return false;
+
+	foreach ($admin_servers as $srv) {
+		if ((int)$srv['server_id'] === $sid)
+			return true;
+		if ((int)$srv['srv_group_id'] > 0) {
+			$servers_in_group = $GLOBALS['db']->GetAll(
+				"SELECT `server_id` FROM `".DB_PREFIX."_servers_groups` WHERE group_id = ?",
+				array((int)$srv['srv_group_id'])
+			);
+			if (!is_array($servers_in_group))
+				continue;
+			foreach ($servers_in_group as $servig) {
+				if ((int)$servig['server_id'] === $sid)
+					return true;
+			}
+		}
+	}
+	return false;
+}
+
+/**
+ * Можно ли текущему админу менять другого (права/группы/серверы).
+ * Не-OWNER не трогает OWNER и SteamID из SB_PROTECTED_STEAMIDS.
+ *
+ * @param int $targetAid
+ * @return bool
+ */
+function sb_can_manage_admin($targetAid)
+{
+	global $userbank;
+	$targetAid = (int)$targetAid;
+	if ($targetAid <= 0 || !isset($userbank) || !is_object($userbank))
+		return false;
+	if (!$userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_ADMINS))
+		return false;
+
+	$auth = $userbank->GetProperty('authid', $targetAid);
+	if (!empty($auth) && in_array($auth, sb_protected_steamids(), true))
+		return false;
+
+	if (!$userbank->HasAccess(ADMIN_OWNER) && $userbank->HasAccess(ADMIN_OWNER, $targetAid))
+		return false;
+
+	return true;
+}
+
 /** Сброс auth-кук без session_destroy (безопасно при bootstrap). */
 function sb_clear_auth_cookies()
 {
