@@ -37,8 +37,11 @@ if(isset($_GET['m']) && $_GET['m'] == "overreach")
 	echo "<script>setTimeout(\"ShowBox('Превышение полномочий', 'Ваши права администратора отозваны за превышение полномочий.<br />Обратитесь к вышестоящему.', 'red', '', false);\", 800);</script>";
 
 	
-//$theme->assign('redir', "DoLogin('".(isset($_SESSION['q'])?$_SESSION['q']:'')."');");
-$theme->assign('redir', "DoLogin('p=account'); '".(isset($_SESSION['q'])?$_SESSION['q']:'')."';");
+$login_redir = (isset($_SESSION['q']) && is_string($_SESSION['q'])) ? $_SESSION['q'] : 'p=account';
+if (!preg_match('/^[a-zA-Z0-9_.=&%-]+$/', $login_redir))
+	$login_redir = 'p=account';
+// Готовый JS-вызов; json_encode безопасен для вставки в <script>.
+$theme->assign('redir', 'DoLogin('.json_encode($login_redir).');');
 
 // === Authorization by type - START ===
 /**

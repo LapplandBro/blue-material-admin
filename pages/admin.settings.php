@@ -222,6 +222,9 @@ else
 
 				// Логотип шапки зафиксирован: кастомный PNG/путь ломает Material Admin brand.
 				$locked_logo = 'images/icons/logo-material-admin.svg';
+				$dash_intro_safe = function_exists('sb_sanitize_admin_html')
+					? sb_sanitize_admin_html(isset($_POST['dash_intro_text']) ? $_POST['dash_intro_text'] : '')
+					: (isset($_POST['dash_intro_text']) ? $_POST['dash_intro_text'] : '');
 
 				$edit = $GLOBALS['db']->Execute("REPLACE INTO ".DB_PREFIX."_settings (`value`, `setting`) VALUES
 												(?, 'template.title'),
@@ -245,7 +248,7 @@ else
 												(" . (int)$_POST['block_home'] . ", 'config.home.comms'),
 												(".(int)$admin_list_en.", 'page.adminlist'),
 												('".(int)$gendata."', 'page.footer.allow_show_data'),
-												(".(int)$vay4_en.", 'page.vay4er')", array($_POST['template_title'], $locked_logo, $_POST['config_dateformat'], $_POST['config_dateformat2'], $_POST['dash_intro_text'], $tz_string, $summertime, $cureason));
+												(".(int)$vay4_en.", 'page.vay4er')", array($_POST['template_title'], $locked_logo, $_POST['config_dateformat'], $_POST['config_dateformat2'], $dash_intro_safe, $tz_string, $summertime, $cureason));
 				
 				/* SMTP */
 				$GLOBALS['db']->Execute(sprintf("REPLACE INTO `%s_settings` (`value`, `setting`) VALUES

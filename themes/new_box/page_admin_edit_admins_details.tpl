@@ -91,7 +91,7 @@
 					<label for="comment" class="col-sm-3 control-label">{help_icon title="Коментарий" message="Напишите коментарий к администратору."} Комментарий</label>
 					<div class="col-sm-9">
 						<div class="fg-line">
-							<textarea TABINDEX=10 class="form-control p-t-5" id="comment" name="comment" rows="3" placeholder="Введите желаемый текст(Не обязательно). Включена поддержка html.">{$comment}</textarea>
+							<textarea TABINDEX=10 class="form-control p-t-5" id="comment" name="comment" rows="3" placeholder="Текст без HTML (необязательно)">{$comment|escape}</textarea>
 						</div>
 						<div id="comment.msg"></div>
 					</div>
@@ -100,7 +100,7 @@
 					<label for="vk" class="col-sm-3 control-label">{help_icon title="ВКонтакте" message="Введите ID профиля, для генерации ссылки на страницу администратора в соцсети."} VK(ID)</label>
 					<div class="col-sm-9">
 						<div class="fg-line">
-							<input type="text" TABINDEX=10 class="form-control" id="vk" name="vk" placeholder="Введите данные(Не обязательно)" value={$vk}>
+							<input type="text" TABINDEX=10 class="form-control" id="vk" name="vk" placeholder="Введите данные(Не обязательно)" value="{$vk|escape}">
 						</div>
 						<div id="vk.msg"></div>
 					</div>
