@@ -194,6 +194,8 @@ echo '<div id="admin-page-content">';
 			$prot['name'] = $protestb[3];
 			$prot['authid'] = $protestb[2];
 			$prot['ip'] = $protestb['ip'];
+			$protLabel = ($prot['authid'] != '') ? $prot['authid'] : $prot['ip'];
+			$prot['label_js'] = json_encode((string)$protLabel, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
 
 			$prot['date'] = SBDate($dateformat, $protestb['created']);
 			if ($protestb['ends'] == 'never')
@@ -348,6 +350,8 @@ echo '<div id="admin-page-content">';
 					$prot['name'] = $protestb[3];
 					$prot['authid'] = $protestb[2];
 					$prot['ip'] = $protestb['ip'];
+					$protLabel = ($prot['authid'] != '') ? $prot['authid'] : $prot['ip'];
+					$prot['label_js'] = json_encode((string)$protLabel, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
 
 					$prot['date'] = SBDate($dateformat, $protestb['created']);
 					if ($protestb['ends'] == 'never')
@@ -422,6 +426,10 @@ echo '<div id="admin-page-content">';
 			$prot['commentdata'] = $comment;
 			$prot['protaddcomment'] = CreateLinkR('<img src="images/details.png" border="0" alt="" style="vertical-align:middle" /> Добавить комментарий','index.php?p=banlist&comment='.(int)$prot['pid'].'&ctype=P');
 			//-----------------------------------------
+			if (empty($prot['label_js'])) {
+				$protLabel = !empty($prot['authid']) ? $prot['authid'] : (!empty($prot['ip']) ? $prot['ip'] : ('#'.$prot['pid']));
+				$prot['label_js'] = json_encode((string)$protLabel, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+			}
 
             array_push($protest_list_archiv, $prot);
 
@@ -508,6 +516,9 @@ echo '<div id="admin-page-content">';
 			$submission_list = array();
 			foreach($submissions AS $sub)
 			{
+				// name_js — для onclick (RemoveSubmission): НЕ htmlspecialchars.
+				// Иначе &#039; в атрибуте декодируется браузером → breakout в JS (XSS → xajax_AddAdmin).
+				$sub['name_js'] = json_encode((string)$sub['name'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
                 $sub['name'] = wordwrap(htmlspecialchars($sub['name']), 55, "<br />", true);
                 $sub['reason'] = wordwrap(htmlspecialchars($sub['reason']), 55, "<br />", true);
             
@@ -646,6 +657,7 @@ echo '<div id="admin-page-content">';
 			$submission_list_archiv = array();
 			foreach($submissionsarchiv AS $sub)
 			{
+				$sub['name_js'] = json_encode((string)$sub['name'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
                 $sub['name'] = wordwrap(htmlspecialchars($sub['name']), 55, "<br />", true);
                 $sub['reason'] = wordwrap(htmlspecialchars($sub['reason']), 55, "<br />", true);
             

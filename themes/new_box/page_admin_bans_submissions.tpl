@@ -28,7 +28,7 @@
 					<span class="admin-actions">
 						<a class="admin-action" href="#" onclick="xajax_SetupBan({$sub.subid});return false;">Забанить</a>
 						{if $permissions_editsub}
-							<a class="admin-action admin-action--danger" href="#" onclick="RemoveSubmission({$sub.subid}, '{$sub.name|stripslashes|stripquotes}', '1');return false;">Удалить</a>
+							<a class="admin-action admin-action--danger" href="#" onclick="RemoveSubmission({$sub.subid}, {$sub.name_js}, '1');return false;">Удалить</a>
 						{/if}
 						<a class="admin-action" href="index.php?p=admin&amp;c=bans&amp;o=email&amp;type=s&amp;id={$sub.subid}">Контакты</a>
 					</span>
