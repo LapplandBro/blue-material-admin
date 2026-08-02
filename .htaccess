@@ -29,7 +29,7 @@ ErrorDocument 504 /errors/504.html
 		Require all denied
 	</FilesMatch>
 	# Конфиг и служебные файлы в корне (include по FS работает, HTTP — 403)
-	<FilesMatch "(?i)^(config\.php|composer\.(json|lock)|package(-lock)?\.json|requirements\.txt|\.gitignore|\.gitattributes|sb_debug_connection\.php)$">
+	<FilesMatch "(?i)^(config\.php|init\.php|composer\.(json|lock)|package(-lock)?\.json|requirements\.txt|\.gitignore|\.gitattributes|sb_debug_connection\.php)$">
 		Require all denied
 	</FilesMatch>
 </IfModule>
@@ -38,7 +38,7 @@ ErrorDocument 504 /errors/504.html
 		Order allow,deny
 		Deny from all
 	</FilesMatch>
-	<FilesMatch "(?i)^(config\.php|composer\.(json|lock)|package(-lock)?\.json|requirements\.txt|\.gitignore|\.gitattributes|sb_debug_connection\.php)$">
+	<FilesMatch "(?i)^(config\.php|init\.php|composer\.(json|lock)|package(-lock)?\.json|requirements\.txt|\.gitignore|\.gitattributes|sb_debug_connection\.php)$">
 		Order allow,deny
 		Deny from all
 	</FilesMatch>

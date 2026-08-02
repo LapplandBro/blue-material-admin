@@ -2259,10 +2259,16 @@ function KickPlayer($sid, $name)
 		$log = new CSystemLog("w", "Ошибка доступа", $username . " пытался кикнуть ".htmlspecialchars($name).", не имея на это прав.");
 		return $objResponse;
 	}
+	if(!sb_admin_has_server_access($sid))
+	{
+		$objResponse->redirect("index.php?p=login&m=no_access", 0);
+		$log = new CSystemLog("w", "Попытка взлома", $username . " пытался кикнуть игрока на сервере sid=$sid без доступа к этому серверу.");
+		return $objResponse;
+	}
 
 	require INCLUDES_PATH.'/CServerControl.php';
 	//get the server data
-	$data = $GLOBALS['db']->GetRow("SELECT ip, port, rcon FROM ".DB_PREFIX."_servers WHERE sid = '".$sid."';");
+	$data = $GLOBALS['db']->GetRow("SELECT ip, port, rcon FROM ".DB_PREFIX."_servers WHERE sid = ?", array($sid));
 	if(empty($data['rcon'])) {
 		$objResponse->addScript("ShowBox('Ошибка', 'Невозможно кикнуть ".addslashes(htmlspecialchars($name)).". Не задан РКОН пароль!', 'red', '', true);");
 		return $objResponse;
@@ -2273,7 +2279,7 @@ function KickPlayer($sid, $name)
 
 	if(!$r->AuthRcon($data['rcon']))
 	{
-		$GLOBALS['db']->Execute("UPDATE ".DB_PREFIX."_servers SET rcon = '' WHERE sid = '".$sid."';");
+		$GLOBALS['db']->Execute("UPDATE ".DB_PREFIX."_servers SET rcon = '' WHERE sid = ?", array($sid));
 		$objResponse->addScript("ShowBox('Ошибка', 'Невозможно кикнуть ".addslashes(htmlspecialchars($name)).". Неверный РКОН пароль!', 'red', '', true);");
 		return $objResponse;
 	}
@@ -2299,7 +2305,7 @@ function KickPlayer($sid, $name)
 			$steam2 = renderSteam2(getAccountId($steam), 0);
 		}
 		// check for immunity
-		$admin = $GLOBALS['db']->GetRow("SELECT a.immunity AS pimmune, g.immunity AS gimmune FROM `".DB_PREFIX."_admins` AS a LEFT JOIN `".DB_PREFIX."_srvgroups` AS g ON g.name = a.srv_group WHERE authid = '".$steam2."' LIMIT 1;");
+		$admin = $GLOBALS['db']->GetRow("SELECT a.immunity AS pimmune, g.immunity AS gimmune FROM `".DB_PREFIX."_admins` AS a LEFT JOIN `".DB_PREFIX."_srvgroups` AS g ON g.name = a.srv_group WHERE authid = ? LIMIT 1;", array($steam2));
 		if($admin && $admin['gimmune']>$admin['pimmune'])
 			$immune = $admin['gimmune'];
 		elseif($admin)
@@ -2532,10 +2538,21 @@ function AddBan($nickname, $type, $steam, $ip, $length, $dfile, $dname, $reason,
 function SetupBan($subid)
 {
 	$objResponse = new xajaxResponse();
+	global $userbank, $username;
 	$subid = (int)$subid;
 
-	$ban = $GLOBALS['db']->GetRow("SELECT * FROM ".DB_PREFIX."_submissions WHERE subid = $subid");
-	$demo = $GLOBALS['db']->GetRow("SELECT * FROM ".DB_PREFIX."_demos WHERE demid = $subid AND demtype = \"S\"");
+	if (!$userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_BAN|ADMIN_BAN_SUBMISSIONS))
+	{
+		$objResponse->redirect("index.php?p=login&m=no_access", 0);
+		$log = new CSystemLog("w", "Ошибка доступа", $username . " пытался подтянуть заявку #$subid в форму бана, не имея на это прав.");
+		return $objResponse;
+	}
+
+	$ban = $GLOBALS['db']->GetRow("SELECT * FROM ".DB_PREFIX."_submissions WHERE subid = ?", array($subid));
+	$demo = $GLOBALS['db']->GetRow("SELECT * FROM ".DB_PREFIX."_demos WHERE demid = ? AND demtype = ?", array($subid, "S"));
+	if (empty($ban))
+		return $objResponse;
+
 	// clear any old stuff
 	$objResponse->addScript("$('nickname').value = ''");
 	$objResponse->addScript("$('fromsub').value = ''");
@@ -2544,20 +2561,20 @@ function SetupBan($subid)
 	$objResponse->addScript("$('txtReason').value = ''");
 	$objResponse->addAssign("demo.msg", "innerHTML",  "");
 	// add new stuff
-	$objResponse->addScript("$('nickname').value = '" . $ban['name'] . "'");
-	$objResponse->addScript("$('steam').value = '" . $ban['SteamId']. "'");
-	$objResponse->addScript("$('ip').value = '" . $ban['sip'] . "'");
+	$objResponse->addScript("$('nickname').value = " . json_encode((string)$ban['name']));
+	$objResponse->addScript("$('steam').value = " . json_encode((string)$ban['SteamId']));
+	$objResponse->addScript("$('ip').value = " . json_encode((string)$ban['sip']));
 	if(trim($ban['SteamId']) == "")
 		$type = "1";
 	else
 		$type = "0";
 	$objResponse->addScriptCall("selectLengthTypeReason", "0", $type, addslashes($ban['reason']));
 
-	$objResponse->addScript("$('fromsub').value = '$subid'");
+	$objResponse->addScript("$('fromsub').value = " . json_encode((string)$subid));
 	if($demo)
 	{
-		$objResponse->addAssign("demo.msg", "innerHTML",  $demo['origname']);
-		$objResponse->addScript("demo('" . $demo['filename'] . "', '" . $demo['origname'] . "');");
+		$objResponse->addAssign("demo.msg", "innerHTML",  htmlspecialchars((string)$demo['origname'], ENT_QUOTES, 'UTF-8'));
+		$objResponse->addScript("demo(" . json_encode((string)$demo['filename']) . ", " . json_encode((string)$demo['origname']) . ");");
 	}
 	$objResponse->addScript("SwapPane(0);");
 	return $objResponse;
@@ -2566,10 +2583,21 @@ function SetupBan($subid)
 function PrepareReban($bid)
 {
 	$objResponse = new xajaxResponse();
+	global $userbank, $username;
 	$bid = (int)$bid;
 
-	$ban = $GLOBALS['db']->GetRow("SELECT type, ip, authid, name, length, reason FROM ".DB_PREFIX."_bans WHERE bid = '".$bid."';");
-	$demo = $GLOBALS['db']->GetRow("SELECT * FROM ".DB_PREFIX."_demos WHERE demid = '".$bid."' AND demtype = \"B\";");
+	if (!$userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_BAN))
+	{
+		$objResponse->redirect("index.php?p=login&m=no_access", 0);
+		$log = new CSystemLog("w", "Ошибка доступа", $username . " пытался подтянуть бан #$bid в форму, не имея на это прав.");
+		return $objResponse;
+	}
+
+	$ban = $GLOBALS['db']->GetRow("SELECT type, ip, authid, name, length, reason FROM ".DB_PREFIX."_bans WHERE bid = ?", array($bid));
+	$demo = $GLOBALS['db']->GetRow("SELECT * FROM ".DB_PREFIX."_demos WHERE demid = ? AND demtype = ?", array($bid, "B"));
+	if (empty($ban))
+		return $objResponse;
+
 	// clear any old stuff
 	$objResponse->addScript("$('nickname').value = ''");
 	$objResponse->addScript("$('ip').value = ''");
@@ -2580,15 +2608,15 @@ function PrepareReban($bid)
 	$objResponse->addAssign("txtReason", "innerHTML",  "");
 
 	// add new stuff
-	$objResponse->addScript("$('nickname').value = '" . $ban['name'] . "'");
-	$objResponse->addScript("$('steam').value = '" . $ban['authid']. "'");
-	$objResponse->addScript("$('ip').value = '" . $ban['ip']. "'");
+	$objResponse->addScript("$('nickname').value = " . json_encode((string)$ban['name']));
+	$objResponse->addScript("$('steam').value = " . json_encode((string)$ban['authid']));
+	$objResponse->addScript("$('ip').value = " . json_encode((string)$ban['ip']));
 	$objResponse->addScriptCall("selectLengthTypeReason", $ban['length'], $ban['type'], addslashes($ban['reason']));
 
 	if($demo)
 	{
-		$objResponse->addAssign("demo.msg", "innerHTML",  $demo['origname']);
-		$objResponse->addScript("demo('" . $demo['filename'] . "', '" . $demo['origname'] . "');");
+		$objResponse->addAssign("demo.msg", "innerHTML",  htmlspecialchars((string)$demo['origname'], ENT_QUOTES, 'UTF-8'));
+		$objResponse->addScript("demo(" . json_encode((string)$demo['filename']) . ", " . json_encode((string)$demo['origname']) . ");");
 	}
 	$objResponse->addScript("SwapPane(0);");
 	return $objResponse;
@@ -2754,21 +2782,26 @@ function EditAdminPerms($aid, $web_flags, $srv_flags)
 		return $objResponse;
 	}
 
-	if(!$userbank->HasAccess(ADMIN_OWNER) && (int)$web_flags & ADMIN_OWNER )
+	if(!$userbank->HasAccess(ADMIN_OWNER) && ((int)$web_flags & ADMIN_OWNER))
 	{
 			$objResponse->redirect("index.php?p=login&m=no_access", 0);
-			$log = new CSystemLog("w", "Ошибка доступа", $username . " пытался сменить разрешения главного админа, не имея на это прав.");
+			$log = new CSystemLog("w", "Ошибка доступа", $username . " пытался выдать ADMIN_OWNER, не имея на это прав.");
 			return $objResponse;
 	}
 
-	// Защита из конфига: SteamID в SB_PROTECTED_STEAMIDS нельзя редактировать (демоут/снятие прав) из панели
-	$protected_steamids = array_filter(array_map('trim', explode(',', defined('SB_PROTECTED_STEAMIDS') ? SB_PROTECTED_STEAMIDS : '')));
-	$targetAuthid = $userbank->GetProperty('authid', $aid);
-	if(!empty($targetAuthid) && in_array($targetAuthid, $protected_steamids))
+	// Не-OWNER не может трогать OWNER / protected SteamID (в т.ч. демоут).
+	if(!sb_can_manage_admin($aid))
 	{
-		$objResponse->addAlert("Ошибка: Этот администратор защищён в конфиге (SB_PROTECTED_STEAMIDS). Изменение прав запрещено.");
-		$log = new CSystemLog("w", "Попытка редактирования прав защищённого админа", $username . " попытался изменить права защищённого SteamID: " . $targetAuthid);
-		sb_tripwire_punish_actor($objResponse, 'попытался изменить права защищённого');
+		$targetAuthid = $userbank->GetProperty('authid', $aid);
+		if(!empty($targetAuthid) && in_array($targetAuthid, sb_protected_steamids(), true))
+		{
+			$objResponse->addAlert("Ошибка: Этот администратор защищён в конфиге (SB_PROTECTED_STEAMIDS). Изменение прав запрещено.");
+			$log = new CSystemLog("w", "Попытка редактирования прав защищённого админа", $username . " попытался изменить права защищённого SteamID: " . $targetAuthid);
+			sb_tripwire_punish_actor($objResponse, 'попытался изменить права защищённого');
+			return $objResponse;
+		}
+		$objResponse->redirect("index.php?p=login&m=no_access", 0);
+		$log = new CSystemLog("w", "Ошибка доступа", $username . " пытался изменить права OWNER/чужого админа #$aid, не имея на это прав.");
 		return $objResponse;
 	}
 
@@ -2782,7 +2815,7 @@ function EditAdminPerms($aid, $web_flags, $srv_flags)
 	}
 	
 	// Update web stuff
-	$GLOBALS['db']->Execute("UPDATE `".DB_PREFIX."_admins` SET `extraflags` = $web_flags WHERE `aid` = $aid");
+	$GLOBALS['db']->Execute("UPDATE `".DB_PREFIX."_admins` SET `extraflags` = ? WHERE `aid` = ?", array($web_flags, $aid));
 
 
 	if(strstr($srv_flags, "#"))
@@ -2793,7 +2826,7 @@ function EditAdminPerms($aid, $web_flags, $srv_flags)
 	}
 	$immunity = ($immunity>0) ? $immunity : 0;
 	// Update server stuff
-	$GLOBALS['db']->Execute("UPDATE `".DB_PREFIX."_admins` SET `srv_flags` = ?, `immunity` = ? WHERE `aid` = $aid", array($srv_flags, $immunity));
+	$GLOBALS['db']->Execute("UPDATE `".DB_PREFIX."_admins` SET `srv_flags` = ?, `immunity` = ? WHERE `aid` = ?", array($srv_flags, $immunity, $aid));
 
 	if(isset($GLOBALS['config']['config.enableadminrehashing']) && $GLOBALS['config']['config.enableadminrehashing'] == 1)
 	{
@@ -2839,9 +2872,28 @@ function EditGroup($gid, $web_flags, $srv_flags, $type, $name, $overrides, $newO
 	$gid = (int)$gid;
 	$name = RemoveCode($name);
 	$web_flags = (int)$web_flags;
+
+	// Не-OWNER не может выдать ADMIN_OWNER группе и не может править группу, где OWNER уже есть.
+	if(!$userbank->HasAccess(ADMIN_OWNER) && ($web_flags & ADMIN_OWNER))
+	{
+		$objResponse->redirect("index.php?p=login&m=no_access", 0);
+		$log = new CSystemLog("w", "Ошибка доступа", $username . " пытался выдать ADMIN_OWNER веб-группе #$gid.");
+		return $objResponse;
+	}
+	if(($type == "web" || $type == "server") && !$userbank->HasAccess(ADMIN_OWNER))
+	{
+		$curGroup = $GLOBALS['db']->GetRow("SELECT flags FROM `".DB_PREFIX."_groups` WHERE `gid` = ?", array($gid));
+		if(!empty($curGroup) && ((int)$curGroup['flags'] & ADMIN_OWNER))
+		{
+			$objResponse->redirect("index.php?p=login&m=no_access", 0);
+			$log = new CSystemLog("w", "Ошибка доступа", $username . " пытался изменить OWNER-группу #$gid.");
+			return $objResponse;
+		}
+	}
+
 	if($type == "web" || $type == "server" )
 	// Update web stuff
-	$GLOBALS['db']->Execute("UPDATE `".DB_PREFIX."_groups` SET `flags` = ?, `name` = ? WHERE `gid` = $gid", array($web_flags, $name));
+	$GLOBALS['db']->Execute("UPDATE `".DB_PREFIX."_groups` SET `flags` = ?, `name` = ? WHERE `gid` = ?", array($web_flags, $name, $gid));
 
 	if($type == "srv")
 	{
@@ -2946,41 +2998,12 @@ function SendRcon($sid, $command, $output)
 		return $objResponse;
 	}
 
-	// SECURITY FIX: HasAccess(SM_RCON) above only checks that the admin has RCON permission
-	// *somewhere*, not specifically on server $sid - without this check, any admin with RCON
-	// rights on one server could send RCON commands to every other registered server too.
-	// Mirrors the per-server access check performed in pages/admin.rcon.php.
-	if(!$userbank->HasAccess(ADMIN_OWNER))
+	// HasAccess(SM_RCON) выше — «есть RCON где-то»; доступ к конкретному sid — отдельно.
+	if(!sb_admin_has_server_access((int)$sid))
 	{
-		$sid_check = (int)$sid;
-		$server_access = false;
-		$admin_servers = $GLOBALS['db']->GetAll("SELECT `server_id`, `srv_group_id` FROM ".DB_PREFIX."_admins_servers_groups WHERE admin_id = ?", array($userbank->GetAid()));
-		foreach($admin_servers as $srv)
-		{
-			if($srv['server_id'] == $sid_check)
-			{
-				$server_access = true;
-				break;
-			}
-			if($srv['srv_group_id'] > 0)
-			{
-				$servers_in_group = $GLOBALS['db']->GetAll("SELECT `server_id` FROM ".DB_PREFIX."_servers_groups WHERE group_id = ?", array((int)$srv['srv_group_id']));
-				foreach($servers_in_group as $servig)
-				{
-					if($servig['server_id'] == $sid_check)
-					{
-						$server_access = true;
-						break 2;
-					}
-				}
-			}
-		}
-		if(!$server_access)
-		{
-			$objResponse->redirect("index.php?p=login&m=no_access", 0);
-			$log = new CSystemLog("w", "Попытка взлома", $username . " пытался отправить РКОН команду серверу (sid $sid_check), не имея доступа к этому серверу.");
-			return $objResponse;
-		}
+		$objResponse->redirect("index.php?p=login&m=no_access", 0);
+		$log = new CSystemLog("w", "Попытка взлома", $username . " пытался отправить РКОН команду серверу (sid ".(int)$sid."), не имея доступа к этому серверу.");
+		return $objResponse;
 	}
 
 	if(empty($command))
@@ -4237,10 +4260,16 @@ function ViewCommunityProfile($sid, $name)
 		return $objResponse;
 	}
 	$sid = (int)$sid;
+	if(!sb_admin_has_server_access($sid))
+	{
+		$objResponse->redirect("index.php?p=login&m=no_access", 0);
+		$log = new CSystemLog("w", "Попытка взлома", $username . " пытался смотреть профиль через RCON на sid=$sid без доступа к серверу.");
+		return $objResponse;
+	}
   
 	require INCLUDES_PATH.'/CServerControl.php';
 	//get the server data
-	$data = $GLOBALS['db']->GetRow("SELECT ip, port, rcon FROM ".DB_PREFIX."_servers WHERE sid = '".$sid."';");
+	$data = $GLOBALS['db']->GetRow("SELECT ip, port, rcon FROM ".DB_PREFIX."_servers WHERE sid = ?", array($sid));
 	if(empty($data['rcon'])) {
 		$objResponse->addScript("ShowBox('Ошибка', 'Невозможно получить информацию о игроке ".addslashes(htmlspecialchars($name)).". Не задан РКОН пароль!', 'red', '', true);");
 		return $objResponse;
@@ -4251,7 +4280,7 @@ function ViewCommunityProfile($sid, $name)
 
 	if(!$r->AuthRcon($data['rcon']))
 	{
-		$GLOBALS['db']->Execute("UPDATE ".DB_PREFIX."_servers SET rcon = '' WHERE sid = '".$sid."';");
+		$GLOBALS['db']->Execute("UPDATE ".DB_PREFIX."_servers SET rcon = '' WHERE sid = ?", array($sid));
 		$objResponse->addScript("ShowBox('Ошибка', 'Невозможно получить информацию о игроке ".addslashes(htmlspecialchars($name)).". Неверный РКОН пароль!', 'red', '', true);");
 		return $objResponse;
 	}
@@ -4294,9 +4323,15 @@ function SendMessage($sid, $name, $message)
 		return $objResponse;
 	}
 	$sid = (int)$sid;
+	if(!sb_admin_has_server_access($sid))
+	{
+		$objResponse->redirect("index.php?p=login&m=no_access", 0);
+		$log = new CSystemLog("w", "Попытка взлома", $username . " пытался отправить сообщение через RCON на sid=$sid без доступа к серверу.");
+		return $objResponse;
+	}
 	require INCLUDES_PATH.'/CServerControl.php';
 	//get the server data
-	$data = $GLOBALS['db']->GetRow("SELECT ip, port, rcon FROM ".DB_PREFIX."_servers WHERE sid = '".$sid."';");
+	$data = $GLOBALS['db']->GetRow("SELECT ip, port, rcon FROM ".DB_PREFIX."_servers WHERE sid = ?", array($sid));
 	if(empty($data['rcon'])) {
 		$objResponse->addScript("ShowBox('Ошибка', 'Невозможно отправить сообщение для ".addslashes(htmlspecialchars($name)).". Не задан РКОН пароль!', 'red', '', true);");
 		return $objResponse;
@@ -4307,7 +4342,7 @@ function SendMessage($sid, $name, $message)
 	
 	if(!$r->AuthRcon($data['rcon']))
 	{
-		$GLOBALS['db']->Execute("UPDATE ".DB_PREFIX."_servers SET rcon = '' WHERE sid = '".$sid."';");
+		$GLOBALS['db']->Execute("UPDATE ".DB_PREFIX."_servers SET rcon = '' WHERE sid = ?", array($sid));
 		$objResponse->addScript("ShowBox('Ошибка', 'Невозможно отправить сообщение для ".addslashes(htmlspecialchars($name)).". Неверноый РКОН пароль!', 'red', '', true);");
 		return $objResponse;
 	}
@@ -4445,8 +4480,19 @@ function AddBlock($nickname, $type, $steam, $length, $reason)
 function PrepareReblock($bid)
 {
 	$objResponse = new xajaxResponse();
+	global $userbank, $username;
+	$bid = (int)$bid;
 
-	$ban = $GLOBALS['db']->GetRow("SELECT name, authid, type, length, reason FROM ".DB_PREFIX."_comms WHERE bid = '".$bid."';");
+	if (!$userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_BAN))
+	{
+		$objResponse->redirect("index.php?p=login&m=no_access", 0);
+		$log = new CSystemLog("w", "Ошибка доступа", $username . " пытался подтянуть блок #$bid в форму, не имея на это прав.");
+		return $objResponse;
+	}
+
+	$ban = $GLOBALS['db']->GetRow("SELECT name, authid, type, length, reason FROM ".DB_PREFIX."_comms WHERE bid = ?", array($bid));
+	if (empty($ban))
+		return $objResponse;
 
 	// clear any old stuff
 	$objResponse->addScript("$('nickname').value = ''");
@@ -4455,8 +4501,8 @@ function PrepareReblock($bid)
 	$objResponse->addAssign("txtReason", "innerHTML",  "");
 
 	// add new stuff
-	$objResponse->addScript("$('nickname').value = '" . $ban['name'] . "'");
-	$objResponse->addScript("$('steam').value = '" . $ban['authid']. "'");
+	$objResponse->addScript("$('nickname').value = " . json_encode((string)$ban['name']));
+	$objResponse->addScript("$('steam').value = " . json_encode((string)$ban['authid']));
 	$objResponse->addScriptCall("selectLengthTypeReason", $ban['length'], $ban['type']-1, addslashes($ban['reason']));
 
 	$objResponse->addScript("SwapPane(0);");
@@ -4466,6 +4512,15 @@ function PrepareReblock($bid)
 function PrepareBlockFromBan($bid)
 {
 	$objResponse = new xajaxResponse();
+	global $userbank, $username;
+	$bid = (int)$bid;
+
+	if (!$userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_BAN))
+	{
+		$objResponse->redirect("index.php?p=login&m=no_access", 0);
+		$log = new CSystemLog("w", "Ошибка доступа", $username . " пытался подтянуть бан #$bid в форму блока, не имея на это прав.");
+		return $objResponse;
+	}
 
 	// clear any old stuff
 	$objResponse->addScript("$('nickname').value = ''");
@@ -4473,11 +4528,13 @@ function PrepareBlockFromBan($bid)
 	$objResponse->addScript("$('txtReason').value = ''");	
 	$objResponse->addAssign("txtReason", "innerHTML",  "");
 
-	$ban = $GLOBALS['db']->GetRow("SELECT name, authid FROM ".DB_PREFIX."_bans WHERE bid = '".$bid."';");
+	$ban = $GLOBALS['db']->GetRow("SELECT name, authid FROM ".DB_PREFIX."_bans WHERE bid = ?", array($bid));
+	if (empty($ban))
+		return $objResponse;
 
 	// add new stuff
-	$objResponse->addScript("$('nickname').value = '" . $ban['name'] . "'");
-	$objResponse->addScript("$('steam').value = '" . $ban['authid']. "'");
+	$objResponse->addScript("$('nickname').value = " . json_encode((string)$ban['name']));
+	$objResponse->addScript("$('steam').value = " . json_encode((string)$ban['authid']));
 	
 	$objResponse->addScript("SwapPane(0);");
 	return $objResponse;
@@ -4492,10 +4549,15 @@ function PastePlayerData($sid, $name) {
         $log = new CSystemLog("w", "Ошибка доступа", $username . " пытался получить данные об игроке для добавления бана/блока , не имея на это прав.");
         return $objResponse;
     }
+
+    $sid = (int) $sid;
+    if (!sb_admin_has_server_access($sid)) {
+        $objResponse->redirect("index.php?p=login&m=no_access", 0);
+        $log = new CSystemLog("w", "Попытка взлома", $username . " пытался получить данные игрока с sid=$sid без доступа к серверу.");
+        return $objResponse;
+    }
     
     sleep(1); // костыль против быстрого "пролёта" окошка о том, что игрок не найден
-    
-    $sid = (int) $sid;
     $data = $GLOBALS['db']->GetRow("SELECT ip, port, rcon FROM ".DB_PREFIX."_servers WHERE sid = ?;", array($sid));
     if (empty($data['rcon'])) {
         $objResponse->addScript("$('dialog-control').setStyle('display', 'block');");

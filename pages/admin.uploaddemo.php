@@ -40,15 +40,28 @@ $message = "";
 
 if(isset($_POST['upload']))
 {
-	if (CheckExt($_FILES['demo_file']['name'], ["dem", "zip", "rar", "7z", "bz2", "gz"])) {
-		$filename = md5(time().rand(0, 1000));
-		move_uploaded_file($_FILES['demo_file']['tmp_name'],SB_DEMOS."/".$filename);
-		// json_encode() safely escapes the attacker-controlled original filename for
-		// use inside the inline <script> block (prevents JS/HTML injection via filename).
-		$message =  "<script>window.opener.demo(" . json_encode($filename) . "," . json_encode($_FILES['demo_file']['name']) . ");self.close()</script>";
-        $log = new CSystemLog("m", "Демо загружено", "Новое демо было успешно загружено: ".htmlspecialchars($_FILES['demo_file']['name']));
-	} else
-		$message =  "<b> Файл должен быть формата dem, zip, rar, 7z, bz2 или gz.</b><br><br>";
+	sb_upload_require_csrf();
+
+	$orig = isset($_FILES['demo_file']['name']) ? (string)$_FILES['demo_file']['name'] : '';
+	$tmp = isset($_FILES['demo_file']['tmp_name']) ? (string)$_FILES['demo_file']['tmp_name'] : '';
+	$err = isset($_FILES['demo_file']['error']) ? (int)$_FILES['demo_file']['error'] : 4;
+
+	if ($err !== 0 || $tmp === '' || !is_uploaded_file($tmp)) {
+		$message = "<b>Не удалось получить файл.</b><br><br>";
+	} elseif (!CheckExt(basename($orig), array("dem", "zip", "rar", "7z", "bz2", "gz"))
+		|| strpos(pathinfo(basename($orig), PATHINFO_FILENAME), '.') !== false) {
+		$message = "<b> Файл должен быть формата dem, zip, rar, 7z, bz2 или gz.</b><br><br>";
+	} else {
+		// На диске — случайное имя без расширения (демо не отдаются как PHP).
+		$filename = md5(uniqid((string)mt_rand(), true));
+		if (!@move_uploaded_file($tmp, rtrim(SB_DEMOS, '/\\') . DIRECTORY_SEPARATOR . $filename)) {
+			$message = "<b>Не удалось сохранить файл.</b><br><br>";
+		} else {
+			@chmod(rtrim(SB_DEMOS, '/\\') . DIRECTORY_SEPARATOR . $filename, 0644);
+			$message = "<script>window.opener.demo(" . json_encode($filename) . "," . json_encode($orig) . ");self.close()</script>";
+			$log = new CSystemLog("m", "Демо загружено", "Новое демо было успешно загружено: " . htmlspecialchars($orig, ENT_QUOTES, 'UTF-8'));
+		}
+	}
 }
 
 $theme->assign("title", "Загрузить демо");
@@ -56,5 +69,6 @@ $theme->assign("message", $message);
 $theme->assign("input_name", "demo_file");
 $theme->assign("form_name", "demup");
 $theme->assign("formats", "DEM, ZIP, RAR, 7Z, BZ2 или GZ");
+$theme->assign("sb_csrf", function_exists('sb_csrf_token') ? sb_csrf_token() : '');
 
 $theme->display('page_uploadfile.tpl');

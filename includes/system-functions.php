@@ -2005,6 +2005,81 @@ function sb_protected_steamids()
 	return array_values(array_filter(array_map('trim', explode(',', SB_PROTECTED_STEAMIDS))));
 }
 
+/**
+ * Есть ли у админа доступ к игровому серверу $sid (прямая привязка или группа серверов).
+ * OWNER всегда true.
+ *
+ * @param int $sid
+ * @param int|null $aid null = текущий админ
+ * @return bool
+ */
+function sb_admin_has_server_access($sid, $aid = null)
+{
+	global $userbank;
+	$sid = (int)$sid;
+	if ($sid <= 0 || !isset($userbank) || !is_object($userbank))
+		return false;
+	if ($aid === null)
+		$aid = (int)$userbank->GetAid();
+	else
+		$aid = (int)$aid;
+	if ($aid <= 0)
+		return false;
+	if ($userbank->HasAccess(ADMIN_OWNER, $aid))
+		return true;
+
+	$admin_servers = $GLOBALS['db']->GetAll(
+		"SELECT `server_id`, `srv_group_id` FROM `".DB_PREFIX."_admins_servers_groups` WHERE admin_id = ?",
+		array($aid)
+	);
+	if (!is_array($admin_servers))
+		return false;
+
+	foreach ($admin_servers as $srv) {
+		if ((int)$srv['server_id'] === $sid)
+			return true;
+		if ((int)$srv['srv_group_id'] > 0) {
+			$servers_in_group = $GLOBALS['db']->GetAll(
+				"SELECT `server_id` FROM `".DB_PREFIX."_servers_groups` WHERE group_id = ?",
+				array((int)$srv['srv_group_id'])
+			);
+			if (!is_array($servers_in_group))
+				continue;
+			foreach ($servers_in_group as $servig) {
+				if ((int)$servig['server_id'] === $sid)
+					return true;
+			}
+		}
+	}
+	return false;
+}
+
+/**
+ * Можно ли текущему админу менять другого (права/группы/серверы).
+ * Не-OWNER не трогает OWNER и SteamID из SB_PROTECTED_STEAMIDS.
+ *
+ * @param int $targetAid
+ * @return bool
+ */
+function sb_can_manage_admin($targetAid)
+{
+	global $userbank;
+	$targetAid = (int)$targetAid;
+	if ($targetAid <= 0 || !isset($userbank) || !is_object($userbank))
+		return false;
+	if (!$userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_ADMINS))
+		return false;
+
+	$auth = $userbank->GetProperty('authid', $targetAid);
+	if (!empty($auth) && in_array($auth, sb_protected_steamids(), true))
+		return false;
+
+	if (!$userbank->HasAccess(ADMIN_OWNER) && $userbank->HasAccess(ADMIN_OWNER, $targetAid))
+		return false;
+
+	return true;
+}
+
 /** Сброс auth-кук без session_destroy (безопасно при bootstrap). */
 function sb_clear_auth_cookies()
 {
@@ -2270,21 +2345,27 @@ function sb_comms_type_icon_html($type, $size = 16)
 function GetMapImage($map, $game=false)
 {
 	$map = basename(str_replace('\\', '/', (string)$map));
-	$map = preg_replace('/\.(bsp|jpg|jpeg|png)$/i', '', $map);
+	$map = preg_replace('/\.(bsp|jpg|jpeg|png|webp)$/i', '', $map);
 
 	if ($map === '' || $map === '.' || $map === '..')
 		return 'images/maps/nomap.jpg';
 
+	$exts = defined('ALLOW_GAMEMAPS_EXT') ? ALLOW_GAMEMAPS_EXT : array('jpg', 'jpeg', 'png', 'webp');
+
 	if ($game) {
 		$game = strtolower((string)$game);
-		$localGame = SB_MAP_LOCATION . '/' . $game . '/' . $map . '.jpg';
-		if (@is_file($localGame))
-			return 'images/maps/' . $game . '/' . $map . '.jpg';
+		foreach ($exts as $ext) {
+			$localGame = SB_MAP_LOCATION . '/' . $game . '/' . $map . '.' . $ext;
+			if (@is_file($localGame))
+				return 'images/maps/' . $game . '/' . $map . '.' . $ext;
+		}
 	}
 
-	$local = SB_MAP_LOCATION . '/' . $map . '.jpg';
-	if (@is_file($local))
-		return 'images/maps/' . $map . '.jpg';
+	foreach ($exts as $ext) {
+		$local = SB_MAP_LOCATION . '/' . $map . '.' . $ext;
+		if (@is_file($local))
+			return 'images/maps/' . $map . '.' . $ext;
+	}
 
 	// Без сетевого кэша на диск: отдаём прямую ссылку, браузер сам подтянет (или упрётся в onerror → nomap).
 	$remote = GetRemoteMapImageUrl($map, $game);
@@ -2292,6 +2373,58 @@ function GetMapImage($map, $game=false)
 		return $remote;
 
 	return 'images/maps/nomap.jpg';
+}
+
+/**
+ * Перекодирует изображение через GD, срезая полиглоты/метаданные.
+ * Без GD возвращает false — вызывающий решает, принимать ли файл только по getimagesize.
+ *
+ * @param string $filePath
+ * @param int $imageType IMAGETYPE_*
+ * @return bool
+ */
+function reencodeImage($filePath, $imageType)
+{
+	if (!extension_loaded('gd') || !is_string($filePath) || $filePath === '' || !is_file($filePath))
+		return false;
+
+	$img = null;
+	$imageType = (int)$imageType;
+
+	if ($imageType === IMAGETYPE_JPEG && function_exists('imagecreatefromjpeg')) {
+		$img = @imagecreatefromjpeg($filePath);
+		if ($img)
+			@imagejpeg($img, $filePath, 90);
+	} elseif ($imageType === IMAGETYPE_PNG && function_exists('imagecreatefrompng')) {
+		$img = @imagecreatefrompng($filePath);
+		if ($img) {
+			imagealphablending($img, false);
+			imagesavealpha($img, true);
+			@imagepng($img, $filePath, 9);
+		}
+	} elseif (defined('IMAGETYPE_WEBP') && $imageType === IMAGETYPE_WEBP && function_exists('imagecreatefromwebp')) {
+		$img = @imagecreatefromwebp($filePath);
+		if ($img)
+			@imagewebp($img, $filePath, 80);
+	}
+
+	if (!$img)
+		return false;
+
+	imagedestroy($img);
+	return true;
+}
+
+/**
+ * CSRF для popup-загрузчиков (map/icon/demo). При провале — HTML-отказ и exit.
+ */
+function sb_upload_require_csrf()
+{
+	$token = isset($_POST['sb_csrf']) ? $_POST['sb_csrf'] : '';
+	if (!function_exists('sb_csrf_validate') || !sb_csrf_validate($token)) {
+		$log = new CSystemLog("w", "CSRF", "Отклонена загрузка файла: неверный CSRF-токен (" . (isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '?') . ").");
+		sb_upload_access_denied('Неверный CSRF-токен. Обновите страницу и попробуйте снова.');
+	}
 }
 
 /**

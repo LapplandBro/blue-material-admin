@@ -53,7 +53,7 @@ if(!$userbank->GetProperty("user", $aid))
 	PageDie();
 }
 
-if(!$userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_ADMINS))
+if(!$userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_ADMINS) || !sb_can_manage_admin($aid))
 {
 	$log = new CSystemLog("w", "Попытка взлома", $userbank->GetProperty("user") . " пытался изменить доступ к серверу админа ".$userbank->GetProperty('user', $aid).", не имея на это прав.");
 	echo '<div id="msg-red" >

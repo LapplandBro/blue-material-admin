@@ -1,0 +1,7 @@
+# После появления ../config.php установщик по HTTP закрыт.
+# Папку install/ после установки всё равно лучше удалить.
+<IfModule mod_rewrite.c>
+	RewriteEngine On
+	RewriteCond ../config.php -f
+	RewriteRule ^ - [F,L]
+</IfModule>

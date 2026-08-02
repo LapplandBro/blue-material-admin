@@ -53,11 +53,11 @@ if(!$userbank->GetProperty("user", $_GET['id']))
 }
 
 
-// Skip all checks if root
-if(!$userbank->HasAccess(ADMIN_OWNER))
-{
-	if(!$userbank->HasAccess(ADMIN_EDIT_ADMINS) || ($userbank->HasAccess(ADMIN_OWNER, $_GET['id']) && $_GET['id'] != $userbank->GetAid()))
-	{
+// OWNER — полный доступ. Иначе: свои детали или EDIT_ADMINS + sb_can_manage_admin (не OWNER/protected).
+$editing_self = ((int)$_GET['id'] === (int)$userbank->GetAid());
+if (!$userbank->HasAccess(ADMIN_OWNER)) {
+	$can = $editing_self || ($userbank->HasAccess(ADMIN_EDIT_ADMINS) && function_exists('sb_can_manage_admin') && sb_can_manage_admin((int)$_GET['id']));
+	if (!$can) {
 		$log = new CSystemLog("w", "Попытка взлома", $userbank->GetProperty("user") . " пытался редактировать детали ".$userbank->GetProperty('user', $_GET['id']).", не имея на это прав.");
 		echo '<div id="msg-red" >
 		<i><img src="./images/warning.png" alt="Внимание" /></i>
@@ -313,27 +313,33 @@ if(isset($_POST['adminname']))
 		// ADM discord //
 		if($p_discord)
 		{
+			$discord_save = RemoveCode(isset($_POST['discord']) ? $_POST['discord'] : '');
 			$edit = $GLOBALS['db']->Execute("UPDATE ".DB_PREFIX."_admins SET
 									`discord` = ?
-									WHERE `aid` = ?", array($_POST['discord'], $_GET['id']));
+									WHERE `aid` = ?", array($discord_save, $_GET['id']));
 		}
 		// ADM discord //
 		
 		// ADM vk //
 		if($p_vk)
 		{
+			$vk_save = RemoveCode(isset($_POST['vk']) ? $_POST['vk'] : '');
+			$vk_save = str_replace(array('http://', 'https://', '/', 'vk.com', 'vk.ru'), '', $vk_save);
+			$vk_save = preg_replace('/[^a-zA-Z0-9_.\-]/', '', $vk_save);
 			$edit = $GLOBALS['db']->Execute("UPDATE ".DB_PREFIX."_admins SET
 									`vk` = ?
-									WHERE `aid` = ?", array($_POST['vk'], $_GET['id']));
+									WHERE `aid` = ?", array($vk_save, $_GET['id']));
 		}
 		// ADM vk //
 		
 		// ADM comment //
 		if($p_comment)
 		{
+			// Без HTML: иначе stored XSS на банлисте / в карточке админа.
+			$comment_save = RemoveCode(isset($_POST['comment']) ? $_POST['comment'] : '');
 			$edit = $GLOBALS['db']->Execute("UPDATE ".DB_PREFIX."_admins SET
 									`comment` = ?
-									WHERE `aid` = ?", array($_POST['comment'], $_GET['id']));
+									WHERE `aid` = ?", array($comment_save, $_GET['id']));
 		}
 		// ADM comment //
 		

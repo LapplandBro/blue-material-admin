@@ -2,7 +2,7 @@
 
 Веб-панель от **Крузяры** ([lapplandbro](https://github.com/lapplandbro)) для игровых серверов Source (**CS:GO / CS2**, **TF2** и др.) на базе **SourceBans++** с темой **Blue Admin** собственной разработки.
 
-<img width="1921" height="946" alt="Blue Material Admin" src="https://github.com/user-attachments/assets/690db1d7-344c-4724-877a-1f76792c45c7" />
+<img width="1920" height="946" alt="image" src="https://github.com/user-attachments/assets/50bd68c2-0e93-49a3-ac72-c868d3a56aa8" />
 
 > Target PHP **8.5.8**.
 

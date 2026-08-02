@@ -400,7 +400,7 @@
 															<li>
 																<i class="zmdi zmdi-vk"></i>
 																{if !empty($ban.admin_vk)}
-																	<a href="https://vk.com/{$ban.admin_vk}" target="_blank" rel="noopener">ВКонтакте</a>
+																	<a href="https://vk.com/{$ban.admin_vk|escape:'url'}" target="_blank" rel="noopener">ВКонтакте</a>
 																{else}
 																	<span class="parsec-muted">нет данных</span>
 																{/if}
@@ -416,7 +416,7 @@
 															<li class="ban-issuer-note">
 																<i class="zmdi zmdi-info-outline"></i>
 																{if !empty($ban.admin_comm)}
-																	{$ban.admin_comm}
+																	{$ban.admin_comm|escape:'html'|nl2br}
 																{else}
 																	Обычный рядовой, контролирует порядок на серверах.
 																{/if}
@@ -445,7 +445,7 @@
 																	</span>
 																	{if $commenta.edittime != "none"}
 																		<span class="ban-comment-meta">
-																			ред. {if $commenta.editname != "none"}{$commenta.editname}{else}админ удалён{/if} · {$commenta.edittime}
+																			ред. {if $commenta.editname != "none"}{$commenta.editname|escape:'html'}{else}админ удалён{/if} · {$commenta.edittime|escape:'html'}
 																		</span>
 																	{/if}
 																	{if $commenta.editcomlink != "none" || $commenta.delcomlink != "none"}
@@ -489,7 +489,7 @@
 											<p>
 												<ul class="clist clist-angle">
 													{if !empty($ban.admin_discord)}<li>Discord: {$ban.admin_discord|escape}</li>{/if}
-													{if !empty($ban.admin_vk)}<li>VK: <a href="https://vk.com/{$ban.admin_vk}">Линк</a></li>{/if}
+													{if !empty($ban.admin_vk)}<li>VK: <a href="https://vk.com/{$ban.admin_vk|escape:'url'}">Линк</a></li>{/if}
 												</ul>
 											</p>
                                         </div>

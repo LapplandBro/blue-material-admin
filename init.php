@@ -38,6 +38,26 @@ define('SB_MAP_LOCATION', ROOT . 'images/maps');
 define('SB_ICONS', ROOT . SB_ICON_LOCATION);
 define('SB_DEMOS', ROOT . SB_DEMO_LOCATION);
 
+// Загрузка превью карт: тип по содержимому (getimagesize), не по Content-Type клиента.
+// IMAGETYPE_* → расширение файла на диске.
+if (!defined('ALLOWED_GAMEMAPS_TYPES')) {
+	$__sb_map_types = array(IMAGETYPE_JPEG => 'jpg', IMAGETYPE_PNG => 'png');
+	if (defined('IMAGETYPE_WEBP'))
+		$__sb_map_types[IMAGETYPE_WEBP] = 'webp';
+	define('ALLOWED_GAMEMAPS_TYPES', $__sb_map_types);
+	unset($__sb_map_types);
+}
+if (!defined('ALLOW_GAMEMAPS_EXT'))
+	define('ALLOW_GAMEMAPS_EXT', array_map('strtolower', array_values(ALLOWED_GAMEMAPS_TYPES)));
+if (!defined('MAX_GAMEMAPS_SIZE_BYTES'))
+	define('MAX_GAMEMAPS_SIZE_BYTES', 5 * 1024 * 1024);
+if (!defined('MAX_GAMEMAPS_WIDTH'))
+	define('MAX_GAMEMAPS_WIDTH', 4096);
+if (!defined('MAX_GAMEMAPS_HEIGHT'))
+	define('MAX_GAMEMAPS_HEIGHT', 4096);
+if (!defined('MAX_GAMEICON_SIZE_BYTES'))
+	define('MAX_GAMEICON_SIZE_BYTES', 2 * 1024 * 1024);
+
 define('SB_THEMES', ROOT . 'themes/');
 define('SB_THEMES_COMPILE', ROOT . 'themes_c/');
 
