@@ -1935,7 +1935,8 @@ function sb_smarty_pretty_urls($tpl_output, &$smarty)
 	// Нельзя и просто […&…]+ без &amp; — матч обрывается на «;» внутри &amp;,
 	// и href «index.php?p=admin&amp;c=admins…» превращается в «admin?amp=;c=…».
 	return preg_replace_callback(
-		'#(?:\.\./)*(?:\./)?index\.php\?(?:[a-zA-Z0-9_.=+%.-]|&amp;|&)+#i',
+		// &amp; — HTML; голый & только перед ключом query (не &#039; из htmlspecialchars).
+		'#(?:\.\./)*(?:\./)?index\.php\?(?:[a-zA-Z0-9_.=+%.-]+|&amp;|&(?=[a-zA-Z0-9_]))+#i',
 		function ($m) {
 			return sb_legacy_to_pretty_url($m[0]);
 		},
