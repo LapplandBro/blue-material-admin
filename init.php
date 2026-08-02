@@ -472,6 +472,13 @@ sb_migrate_skype_to_discord_column(DB_PREFIX . '_admins');
 sb_migrate_skype_to_discord_column(DB_PREFIX . '_billing_adminpayments');
 function sb_migrate_skype_to_discord_column($table)
 {
+	// Таблицы вроде billing_* могут отсутствовать на части инсталляций.
+	$exists = @$GLOBALS['db']->GetOne(
+		"SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = " .
+		$GLOBALS['db']->qstr($table)
+	);
+	if (!$exists)
+		return;
 	$col = @$GLOBALS['db']->GetRow("SHOW COLUMNS FROM `" . $table . "` LIKE 'skype'");
 	if (!$col)
 		return;

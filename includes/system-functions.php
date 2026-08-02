@@ -2945,7 +2945,7 @@ function ShowBox($title, $msg, $color, $redir="", $noclose=false)
 {
 	echo sprintf("<script>ShowBox('%s', '%s', '%s', '%s', %s);</script>", addslashes($title), addslashes($msg), addslashes($color), addslashes($redir), $noclose ? "true" : "false");
 }
-function ShowBox_ajx($title, $msg, $color, $redir="", $noclose=false, &$response)
+function ShowBox_ajx($title, $msg, $color, &$response, $redir="", $noclose=false)
 {
 	$response->AddScript(sprintf("ShowBox('%s', '%s', '%s', '%s', %s);", addslashes($title), addslashes($msg), addslashes($color), addslashes($redir), $noclose ? "true" : "false"));
 }
