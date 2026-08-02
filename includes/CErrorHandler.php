@@ -37,6 +37,11 @@ class CErrorHandler {
     }
     
     public function BasicErrorCatcher($errno, $errstr, $errfile, $errline) {
+        // set_error_handler получает ВСЕ уровни, даже если error_reporting их маскирует.
+        // Deprecated/Strict от Smarty 2.x на PHP 8.2+ не показываем и не логируем.
+        if ($errno === E_DEPRECATED || $errno === E_USER_DEPRECATED || $errno === E_STRICT || $errno === E_NOTICE)
+            return true;
+
         /* Moved from /var/www/g-44/data/www/bans.g-44.ru/init.php */
         if(!is_object($GLOBALS['log']))
             return false;
