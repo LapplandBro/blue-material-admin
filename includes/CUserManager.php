@@ -71,7 +71,8 @@ class CUserManager
 		// Not in the manager, so we need to get them from DB
 		$res = $GLOBALS['db']->GetRow("SELECT adm.user user, adm.authid authid, adm.password password, adm.gid gid, adm.email email, adm.validate validate, adm.extraflags extraflags, 
 									   adm.immunity admimmunity,sg.immunity sgimmunity, adm.srv_password srv_password, adm.srv_group srv_group, adm.srv_flags srv_flags,sg.flags sgflags,
-									   wg.flags wgflags, wg.name wgname, adm.lastvisit lastvisit, adm.expired expired, adm.discord discord, adm.comment comment, adm.vk vk
+									   wg.flags wgflags, wg.name wgname, adm.lastvisit lastvisit, adm.expired expired, adm.discord discord, adm.comment comment, adm.vk vk,
+									   adm.web_session web_session
 									   FROM " . DB_PREFIX . "_admins AS adm
 									   LEFT JOIN " . DB_PREFIX . "_groups AS wg ON adm.gid = wg.gid
 									   LEFT JOIN " . DB_PREFIX . "_srvgroups AS sg ON adm.srv_group = sg.name
@@ -105,6 +106,7 @@ class CUserManager
 		$user['discord'] = $res['discord'];
 		$user['comment'] = $res['comment'];
 		$user['vk'] = $res['vk'];
+		$user['web_session'] = isset($res['web_session']) ? $res['web_session'] : '';
 		$this->admins[$aid] = $user;
 		return $user;
 	}
@@ -197,26 +199,25 @@ class CUserManager
 
 		if(empty($this->admins[$aid]) || empty($this->admins[$aid]['password']))
 			return false;
-			
-		// Кука password хранит тот же хэш, что в БД (старый sha1-двойной или password_hash).
-		// hash_equals — против magic hash / timing.
-		if(hash_equals((string)$this->admins[$aid]['password'], (string)$password))
-		{
-			// Истёкший / отозванный аккаунт (в т.ч. tripwire expired=1) — не держим сессию по кукам.
-			$expired = isset($this->admins[$aid]['expired']) ? (int)$this->admins[$aid]['expired'] : 0;
-			if ($expired > 0 && $expired < time())
-			{
-				if (function_exists('sb_clear_auth_cookies'))
-					sb_clear_auth_cookies();
-				elseif (function_exists('logout'))
-					@logout();
-				return false;
-			}
-			$GLOBALS['db']->Execute("UPDATE `" . DB_PREFIX . "_admins` SET `lastvisit` = UNIX_TIMESTAMP() WHERE `aid` = ?", array($aid));
-			return true;
-		}
-		else 
+
+		// Только opaque web-session (s.<token>). Кука = password hash больше не принимается
+		// (pass-the-hash / обход TOTP при утечке хеша из БД).
+		$storedSession = isset($this->admins[$aid]['web_session']) ? $this->admins[$aid]['web_session'] : '';
+		if(!sb_verify_web_session($aid, (string)$password, $storedSession))
 			return false;
+
+		// Истёкший / отозванный аккаунт (в т.ч. tripwire expired=1) — не держим сессию по кукам.
+		$expired = isset($this->admins[$aid]['expired']) ? (int)$this->admins[$aid]['expired'] : 0;
+		if ($expired > 0 && $expired < time())
+		{
+			if (function_exists('sb_clear_auth_cookies'))
+				sb_clear_auth_cookies();
+			elseif (function_exists('logout'))
+				@logout();
+			return false;
+		}
+		$GLOBALS['db']->Execute("UPDATE `" . DB_PREFIX . "_admins` SET `lastvisit` = UNIX_TIMESTAMP() WHERE `aid` = ?", array($aid));
+		return true;
 	}
 
 	/**
@@ -310,21 +311,20 @@ class CUserManager
 			$this->GetUserArray($aid);
 		if (empty($this->admins[$aid]['password']))
 			return false;
-		$stored = (string)$this->admins[$aid]['password'];
 
 		if (session_status() === PHP_SESSION_ACTIVE)
 			@session_regenerate_id(true);
 
+		$sessionCookie = sb_issue_web_session($aid);
+		if ($sessionCookie === '')
+			return false;
+		$this->admins[$aid]['web_session'] = hash('sha256', substr($sessionCookie, 2));
+
 		$user = isset($this->admins[$aid]['user']) ? $this->admins[$aid]['user'] : null;
-		if ($save) {
-			sb_set_auth_cookie("aid", $aid, time() + LOGIN_COOKIE_LIFETIME);
-			sb_set_auth_cookie("password", $stored, time() + LOGIN_COOKIE_LIFETIME);
-			setcookie("user", $user, time() + LOGIN_COOKIE_LIFETIME, COOKIE_PATH, COOKIE_DOMAIN, COOKIE_SECURE, true);
-		} else {
-			sb_set_auth_cookie("aid", $aid, 0);
-			sb_set_auth_cookie("password", $stored, 0);
-			setcookie("user", $user, 0, COOKIE_PATH, COOKIE_DOMAIN, COOKIE_SECURE, true);
-		}
+		$expire = $save ? (time() + LOGIN_COOKIE_LIFETIME) : 0;
+		sb_set_auth_cookie("aid", $aid, $expire);
+		sb_set_auth_cookie("password", $sessionCookie, $expire);
+		setcookie("user", $user, $expire, COOKIE_PATH, COOKIE_DOMAIN, COOKIE_SECURE, true);
 		$this->aid = $aid;
 		return true;
 	}

@@ -271,6 +271,12 @@ try
 {
 	if(isset($_POST['new_override_name']))
 	{
+		if(!$userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_ADMINS))
+			throw new Exception("Нет доступа к переопределениям.");
+		$csrf = isset($_POST['sb_csrf']) ? $_POST['sb_csrf'] : '';
+		if(!function_exists('sb_csrf_validate') || !sb_csrf_validate($csrf))
+			throw new Exception("Неверный CSRF-токен. Обновите страницу и попробуйте снова.");
+
 		// Handle old overrides, if there are any.
 		if(isset($_POST['override_id']))
 		{
@@ -334,6 +340,7 @@ echo '<div id="2" style="display:none;">';
 	$theme->assign('overrides_error', $overrides_error);
 	$theme->assign('overrides_save_success', $overrides_save_success);
 	$theme->assign('permission_addadmin', $userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_ADMINS));
+	$theme->assign('sb_csrf', function_exists('sb_csrf_token') ? sb_csrf_token() : '');
 	$theme->display('page_admin_overrides.tpl');
 echo '</div>';
 ?>

@@ -194,7 +194,7 @@ class LightOpenID
         curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($curl, CURLOPT_HEADER, false);
         curl_setopt($curl, CURLOPT_USERAGENT, $this->user_agent);
-        curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, true);
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
         
         if ($method == 'POST') {
@@ -399,7 +399,7 @@ class LightOpenID
             // Enable validation of the SSL certificates.
             if ($this->verify_peer) {
                 $default['ssl'] += array(
-                    'verify_peer' => false,
+                    'verify_peer' => true,
                     'capath' => '',
                     'cafile' => ''
                 );

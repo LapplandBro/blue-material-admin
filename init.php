@@ -160,6 +160,63 @@ function sb_set_auth_cookie($name, $value, $expire)
 	}
 }
 
+/** Колонка opaque web-сессии (кука ≠ password hash). */
+function sb_migrate_admins_web_session_column()
+{
+	if (empty($GLOBALS['db']))
+		return;
+	$col = @$GLOBALS['db']->GetRow("SHOW COLUMNS FROM `" . DB_PREFIX . "_admins` LIKE 'web_session'");
+	if ($col)
+		return;
+	@$GLOBALS['db']->Execute("ALTER TABLE `" . DB_PREFIX . "_admins` ADD `web_session` VARCHAR(64) NULL DEFAULT NULL");
+}
+
+/**
+ * Новый web-session токен: sha256 в БД, значение куки s.<hex>.
+ */
+function sb_issue_web_session($aid)
+{
+	$aid = (int)$aid;
+	if ($aid <= 0 || empty($GLOBALS['db']))
+		return '';
+	if (function_exists('random_bytes'))
+		$token = bin2hex(random_bytes(32));
+	else
+		$token = bin2hex(openssl_random_pseudo_bytes(32));
+	$hash = hash('sha256', $token);
+	$GLOBALS['db']->Execute("UPDATE `" . DB_PREFIX . "_admins` SET `web_session` = ? WHERE `aid` = ?", array($hash, $aid));
+	return 's.' . $token;
+}
+
+function sb_clear_web_session($aid)
+{
+	$aid = (int)$aid;
+	if ($aid <= 0 || empty($GLOBALS['db']))
+		return;
+	@$GLOBALS['db']->Execute("UPDATE `" . DB_PREFIX . "_admins` SET `web_session` = NULL WHERE `aid` = ?", array($aid));
+}
+
+/**
+ * Кука password: только opaque-сессия s.<64hex>, не hash пароля из БД.
+ */
+function sb_verify_web_session($aid, $cookie, $storedHash = null)
+{
+	$aid = (int)$aid;
+	if ($aid <= 0 || !is_string($cookie) || strpos($cookie, 's.') !== 0)
+		return false;
+	$token = substr($cookie, 2);
+	if ($token === '' || strlen($token) !== 64 || !ctype_xdigit($token))
+		return false;
+	if ($storedHash === null || $storedHash === '') {
+		if (empty($GLOBALS['db']))
+			return false;
+		$storedHash = $GLOBALS['db']->GetOne("SELECT web_session FROM `" . DB_PREFIX . "_admins` WHERE aid = ?", array($aid));
+	}
+	if ($storedHash === null || $storedHash === false || $storedHash === '')
+		return false;
+	return hash_equals((string)$storedHash, hash('sha256', $token));
+}
+
 /**
  * Стартует PHP-сессию с безопасными флагами cookie (Secure/HttpOnly/SameSite=Lax).
  */
@@ -418,6 +475,9 @@ function sb_migrate_admins_password_column()
 		return;
 	@$GLOBALS['db']->Execute("ALTER TABLE `" . DB_PREFIX . "_admins` MODIFY `password` VARCHAR(255) NOT NULL");
 }
+
+// Opaque web-session (кука ≠ password hash) — до CUserManager.
+sb_migrate_admins_web_session_column();
 
 require_once(INCLUDES_PATH . '/sb-totp.php');
 sb_totp_migrate_schema();

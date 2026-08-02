@@ -49,25 +49,31 @@ if(!$userbank->GetProperty("user", $_GET['id']))
 	PageDie();
 }
 
-// Form sent
-if(isset($_POST['wg']) || isset($_GET['wg']) || isset($_GET['sg']))
+// Только POST + CSRF (раньше принимали GET wg/sg — privilege escalation).
+if($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['wg']) || isset($_POST['sg'])))
 {
-	if(isset($_GET['wg'])) {
-		$_POST['wg'] = $_GET['wg'];
+	$csrf = isset($_POST['sb_csrf']) ? $_POST['sb_csrf'] : '';
+	if(!function_exists('sb_csrf_validate') || !sb_csrf_validate($csrf))
+	{
+		CreateRedBox("Ошибка", "Неверный CSRF-токен. Обновите страницу и попробуйте снова.");
+		PageDie();
 	}
-	if(isset($_GET['sg'])) {
-		$_POST['sg'] = $_GET['sg'];
-	}
-	
-	$_POST['wg'] = (int)$_POST['wg'];
-	$_POST['sg'] = (int)$_POST['sg'];
-	
+
+	$_POST['wg'] = isset($_POST['wg']) ? (int)$_POST['wg'] : -2;
+	$_POST['sg'] = isset($_POST['sg']) ? (int)$_POST['sg'] : -2;
+
 	// Users require a password and email to have web permissions
 	$password = $GLOBALS['userbank']->GetProperty('password', $_GET['id']);
 	$email = $GLOBALS['userbank']->GetProperty('email', $_GET['id']);
 	if($_POST['wg'] > 0 && (empty($password) || empty($email)))
 	{
 		echo '<script>setTimeout(function() { ShowBox("Ошибка", "Администраторы должны иметь пароль и адрес электронной почты для того, чтобы получить веб-разрешения.<br /><a href=\"index.php?p=admin&c=admins&o=editdetails&id=' . $_GET['id'] . '\" title=\"Редактировать детали Администратора\">Измените детали</a> сначала и попробуйте снова.", "red"); }, 1350);</script>';
+	}
+	else if(!$userbank->HasAccess(ADMIN_OWNER) && $_POST['wg'] > 0 && function_exists('sb_web_group_has_owner') && sb_web_group_has_owner($_POST['wg']))
+	{
+		$log = new CSystemLog("w", "Ошибка доступа", $userbank->GetProperty("user") . " пытался назначить OWNER веб-группу #" . $_POST['wg'] . " админу #" . $_GET['id']);
+		CreateRedBox("Ошибка", "Нельзя назначить группу с правами OWNER.");
+		PageDie();
 	}
 	else
 	{
@@ -143,5 +149,6 @@ $theme->assign('group_admin_id', $userbank->GetProperty("gid", $_GET['id']));
 $theme->assign('group_lst',  $sgroups);
 $theme->assign('web_lst',  $wgroups);
 $theme->assign('server_admin_group_id',  $server_admin_group);
+$theme->assign('sb_csrf', function_exists('sb_csrf_token') ? sb_csrf_token() : '');
 
 $theme->display('page_admin_edit_admins_group.tpl');

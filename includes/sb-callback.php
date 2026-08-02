@@ -432,6 +432,8 @@ function AddGroup($name, $type, $bitmask, $srvflags)
 	if($error > 0)
 		return $objResponse;
 
+	$bitmask = function_exists('sb_strip_nonowner_web_flags') ? sb_strip_nonowner_web_flags((int)$bitmask) : ((int)$bitmask & ~ADMIN_OWNER);
+
 	$query = $GLOBALS['db']->GetRow("SELECT MAX(gid) AS next_gid FROM `" . DB_PREFIX . "_groups`");
 	if($type == "1")
 	{
@@ -1071,7 +1073,7 @@ function AddAdmin_pay($mask, $srv_mask, $a_name, $a_steam, $a_email, $a_password
 	$a_email = RemoveCode($a_email);
 	$a_servername = ($a_servername=="0" ? null : RemoveCode($a_servername));
 	$a_webname = RemoveCode($a_webname);
-	$mask = (int)$mask;
+	$mask = function_exists('sb_strip_nonowner_web_flags') ? sb_strip_nonowner_web_flags((int)$mask) : ((int)$mask & ~ADMIN_OWNER);
 
 	$error=0;
 	
@@ -1372,6 +1374,12 @@ function AddAdmin_pay($mask, $srv_mask, $a_name, $a_steam, $a_email, $a_password
 	else if($a_wg != 'c' && $a_wg > 0)
 	{
 		$web_group = (int)$a_wg;
+		if(!$userbank->HasAccess(ADMIN_OWNER) && function_exists('sb_web_group_has_owner') && sb_web_group_has_owner($web_group))
+		{
+			$objResponse->redirect("index.php?p=login&m=no_access", 0);
+			$log = new CSystemLog("w", "Ошибка доступа", $username . " пытался назначить OWNER веб-группу #$web_group.");
+			return $objResponse;
+		}
 	}
 	// Custom permissions -> no group
 	else
@@ -1424,8 +1432,12 @@ function AddAdmin_pay($mask, $srv_mask, $a_name, $a_steam, $a_email, $a_password
 			sb_voucher_unlock_clear();
 		if (function_exists('sb_voucher_rehash_set'))
 			sb_voucher_rehash_set($a_code);
-		sb_set_auth_cookie("aid", $aid, time()+LOGIN_COOKIE_LIFETIME);
-		sb_set_auth_cookie("password", $GLOBALS['db']->GetOne("SELECT `password` FROM `".DB_PREFIX."_admins` WHERE `aid` = ?", array((int)$aid)), time()+LOGIN_COOKIE_LIFETIME);
+		if (!$userbank->login_by_aid((int)$aid, true)) {
+			sb_set_auth_cookie("aid", $aid, time()+LOGIN_COOKIE_LIFETIME);
+			$sess = sb_issue_web_session((int)$aid);
+			if ($sess !== '')
+				sb_set_auth_cookie("password", $sess, time()+LOGIN_COOKIE_LIFETIME);
+		}
 
 		// Grant permissions to the selected server groups
 		$srv_groups = explode(",", $server);
@@ -1491,7 +1503,7 @@ function AddAdmin($mask, $srv_mask, $a_name, $a_steam, $a_email, $a_password, $a
 	$a_email = RemoveCode($a_email);
 	$a_servername = ($a_servername=="0" ? null : RemoveCode($a_servername));
 	$a_webname = RemoveCode($a_webname);
-	$mask = (int)$mask;
+	$mask = function_exists('sb_strip_nonowner_web_flags') ? sb_strip_nonowner_web_flags((int)$mask) : ((int)$mask & ~ADMIN_OWNER);
 
 	$error=0;
 	
@@ -1828,6 +1840,12 @@ function AddAdmin($mask, $srv_mask, $a_name, $a_steam, $a_email, $a_password, $a
 	else if($a_wg != 'c' && $a_wg > 0)
 	{
 		$web_group = (int)$a_wg;
+		if(!$userbank->HasAccess(ADMIN_OWNER) && function_exists('sb_web_group_has_owner') && sb_web_group_has_owner($web_group))
+		{
+			$objResponse->redirect("index.php?p=login&m=no_access", 0);
+			$log = new CSystemLog("w", "Ошибка доступа", $username . " пытался назначить OWNER веб-группу #$web_group.");
+			return $objResponse;
+		}
 	}
 	// Custom permissions -> no group
 	else
@@ -2756,14 +2774,19 @@ function ChangePassword($aid, $pass)
 	$objResponse = new xajaxResponse();
 	$aid = (int)$aid;
 
-	if($aid != $userbank->aid && !$userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_ADMINS))
+	if($aid != $userbank->aid)
 	{
-		$objResponse->redirect("index.php?p=login&m=no_access", 0);
-		$log = new CSystemLog("w", "Ошибка доступа", $_SERVER["REMOTE_ADDR"] . " пытался сменить пароль, не имея на это прав.");
-		return $objResponse;
+		if(!$userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_ADMINS) || !function_exists('sb_can_manage_admin') || !sb_can_manage_admin($aid))
+		{
+			$objResponse->redirect("index.php?p=login&m=no_access", 0);
+			$log = new CSystemLog("w", "Ошибка доступа", $_SERVER["REMOTE_ADDR"] . " пытался сменить пароль, не имея на это прав.");
+			return $objResponse;
+		}
 	}
 
 	$GLOBALS['db']->Execute("UPDATE `".DB_PREFIX."_admins` SET `password` = ? WHERE `aid` = ?", array($userbank->hash_password($pass), $aid));
+	if (function_exists('sb_clear_web_session'))
+		sb_clear_web_session($aid);
 	$admname = $GLOBALS['db']->GetRow("SELECT user FROM `".DB_PREFIX."_admins` WHERE aid = ?", array((int)$aid));
 	$objResponse->addAlert("Пароль успешно изменен");
 	$objResponse->addRedirect("index.php?p=login", 0);

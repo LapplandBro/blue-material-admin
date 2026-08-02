@@ -9,6 +9,7 @@
 	{/if}
 
 	<form action="" method="post">
+		<input type="hidden" name="sb_csrf" value="{$sb_csrf}" />
 		<div class="card banlist-panel admin-manage">
 			<div class="card-header">
 				<h2>Переопределения

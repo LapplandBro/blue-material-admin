@@ -209,8 +209,14 @@ if (isset($_POST['postd']) && $_POST['postd']) {
 				0
 			));
 
+			@$db->Execute("ALTER TABLE `" . $prefix . "_admins` ADD `web_session` VARCHAR(64) NULL DEFAULT NULL");
+			if (function_exists('random_bytes'))
+				$installToken = bin2hex(random_bytes(32));
+			else
+				$installToken = bin2hex(openssl_random_pseudo_bytes(32));
+			$db->Execute("UPDATE `" . $prefix . "_admins` SET `web_session` = ? WHERE `aid` = 1", array(hash('sha256', $installToken)));
 			setcookie('aid', '1', time() + LOGIN_COOKIE_LIFETIME, COOKIE_PATH, COOKIE_DOMAIN, false, true);
-			setcookie('password', sha1(sha1(SB_SALT . $_POST['pass1'])), time() + LOGIN_COOKIE_LIFETIME, COOKIE_PATH, COOKIE_DOMAIN, false, true);
+			setcookie('password', 's.' . $installToken, time() + LOGIN_COOKIE_LIFETIME, COOKIE_PATH, COOKIE_DOMAIN, false, true);
 
 			$errors = 0;
 			$file = file_get_contents(INCLUDES_PATH . '/data.sql');

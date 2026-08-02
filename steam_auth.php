@@ -97,8 +97,10 @@ else {
             RedirectToSite(rtrim(SB_WP_URL, '/') . '/login2fa', '', true);
         }
 
-        sb_set_auth_cookie("aid", $aid, time()+LOGIN_COOKIE_LIFETIME);
-        sb_set_auth_cookie("password", $password, time()+LOGIN_COOKIE_LIFETIME);
+        global $userbank;
+        if (!isset($userbank) || !is_object($userbank) || !$userbank->login_by_aid((int)$aid, true)) {
+            RedirectToSite(SB_WP_URL, 'Не удалось создать сессию входа.', false);
+        }
 
         // Как у Plogin: пишем успешный Steam-вход в системный лог.
         $adminRow = $GLOBALS['db']->GetRow("SELECT user FROM " . DB_PREFIX . "_admins WHERE aid = ?", array((int)$aid));
