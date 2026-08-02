@@ -58,6 +58,14 @@ $errorScript = "";
 
 if(isset($_POST['address']))
 {
+	// CSRF: обычная (не xajax) форма POST на эту же страницу.
+	$csrf = isset($_POST['sb_csrf']) ? $_POST['sb_csrf'] : '';
+	if(!function_exists('sb_csrf_validate') || !sb_csrf_validate($csrf))
+	{
+		CreateRedBox("Ошибка", "Неверный CSRF-токен. Обновите страницу и попробуйте снова.");
+		PageDie();
+	}
+
 	// Form validation
 	$error = 0;
 	
@@ -181,6 +189,7 @@ $theme->assign('edit_server', true);
 $theme->assign('submit_text', "Обновить данные");
 
 echo '<form action="" method="post" name="editserver">';
+echo '<input type="hidden" name="sb_csrf" value="' . htmlspecialchars(function_exists('sb_csrf_token') ? sb_csrf_token() : '', ENT_QUOTES, 'UTF-8') . '" />';
 $theme->display('page_admin_servers_add.tpl');
 echo '</form>';
 

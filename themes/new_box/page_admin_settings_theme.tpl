@@ -1,4 +1,5 @@
 <form action="" method="post" id="theme_form">
+	<input type="hidden" name="sb_csrf" value="{$sb_csrf}" />
 	<input type="hidden" name="settingsGroup" value="mainsettings_themes" />
 	<div class="card banlist-panel admin-form">
 		<div class="form-horizontal" role="form">

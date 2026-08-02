@@ -118,6 +118,18 @@ else
 			$errors .= '* Формат файла должен быть zip, rar, 7z, bz2 или gz.<br>';
 			$validsubmit = false;
 		}
+		// Лимит размера загружаемого демо - иначе анонимная (без логина) форма жалобы
+		// превращается в способ забить диск сервера произвольно большими файлами.
+		if(isset($_FILES['demo_file']['error']) && $_FILES['demo_file']['error'] === UPLOAD_ERR_INI_SIZE)
+		{
+			$errors .= '* Файл демо слишком большой (максимум 20 МБ).<br>';
+			$validsubmit = false;
+		}
+		elseif(isset($_FILES['demo_file']['size']) && (int)$_FILES['demo_file']['size'] > 20 * 1024 * 1024)
+		{
+			$errors .= '* Файл демо слишком большой (максимум 20 МБ).<br>';
+			$validsubmit = false;
+		}
 	}
 	$checkres = $GLOBALS['db']->Execute("SELECT length FROM ".DB_PREFIX."_bans WHERE authid = ? AND RemoveType IS NULL", array($SteamID));
 	$numcheck = $checkres->RecordCount();

@@ -151,6 +151,14 @@ else
 	{
 		$errors = "";
 
+		// CSRF: обычные (не xajax) формы POST на эту же страницу.
+		$csrf = isset($_POST['sb_csrf']) ? $_POST['sb_csrf'] : '';
+		if(!function_exists('sb_csrf_validate') || !sb_csrf_validate($csrf))
+		{
+			CreateRedBox("Ошибка", "Неверный CSRF-токен. Обновите страницу и попробуйте снова.");
+			PageDie();
+		}
+
 		if ($_POST['settingsGroup'] == "mainsettings_themes")
 		{
 			$edit = $GLOBALS['db']->Execute("REPLACE INTO ".DB_PREFIX."_settings (`value`, `setting`) VALUES
@@ -312,7 +320,9 @@ else
 	}
 
 	$date_offs = $GLOBALS['config']['config.timezone'];
-	
+
+	$theme->assign('sb_csrf', function_exists('sb_csrf_token') ? sb_csrf_token() : '');
+
 	#########[Settings Page]###############
 	echo '<div id="0" style="display:none;">';
 		

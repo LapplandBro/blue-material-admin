@@ -266,7 +266,7 @@ if (isset($_GET['searchText']))
 
 	$res_count = $GLOBALS['db']->Execute("SELECT count(CO.bid) FROM ".DB_PREFIX."_comms AS CO WHERE CO.authid LIKE ? OR CO.name LIKE ? OR CO.reason LIKE ?" . $hideinactive
 										,array($search,$search,$search));
-$searchlink = "&searchText=".$_GET["searchText"];
+$searchlink = "&searchText=".rawurlencode((string)$_GET["searchText"]);
 }
 elseif(!isset($_GET['advSearch']))
 {
@@ -430,9 +430,9 @@ if(isset($_GET['advSearch']))
 
 	$res_count = $GLOBALS['db']->Execute("SELECT count(CO.bid) FROM ".DB_PREFIX."_comms AS CO
 										  ".($type=="comment"&&$userbank->is_admin()?"LEFT JOIN ".DB_PREFIX."_comments AS CM ON CO.bid = CM.bid":"")." ".$where.$hideinactive, $advcrit);
-	$searchlink = "&advSearch=".$_GET['advSearch']."&advType=".$_GET['advType'];
+	$searchlink = "&advSearch=".rawurlencode((string)$_GET['advSearch'])."&advType=".rawurlencode((string)$_GET['advType']);
 	if(isset($_GET['bstatus']) && $_GET['bstatus'] != '')
-		$searchlink .= "&bstatus=".$_GET['bstatus'];
+		$searchlink .= "&bstatus=".rawurlencode((string)$_GET['bstatus']);
 }
 
 $BanCount = $res_count->fields[0];
@@ -717,7 +717,7 @@ if (function_exists('RecidivismAttachScoresToList'))
 	RecidivismAttachScoresToList($bans);
 
 if(isset($_GET['advSearch']))
-	$advSearchString = "&advSearch=" . (isset($_GET['advSearch'])?$_GET['advSearch']:'') . "&advType=" . (isset($_GET['advType'])?$_GET['advType']:'') . (isset($_GET['bstatus']) && $_GET['bstatus'] != '' ? "&bstatus=".$_GET['bstatus'] : '');
+	$advSearchString = "&advSearch=" . (isset($_GET['advSearch'])?rawurlencode((string)$_GET['advSearch']):'') . "&advType=" . (isset($_GET['advType'])?rawurlencode((string)$_GET['advType']):'') . (isset($_GET['bstatus']) && $_GET['bstatus'] != '' ? "&bstatus=".rawurlencode((string)$_GET['bstatus']) : '');
 else
 	$advSearchString = '';
 
@@ -726,7 +726,7 @@ if ($page > 1)
 	if(isset($_GET['c']) && $_GET['c'] == "comms")
 		$prev = CreateLinkR('<i class="zmdi zmdi-chevron-right"></i>',"javascript:void(0);", "", "_self", false, $prev);
 	else
-		$prev = CreateLinkR('<i class="zmdi zmdi-chevron-left"></i>',"index.php?p=commslist&page=".($page-1).(isset($_GET['searchText']) > 0?"&searchText=".$_GET['searchText']:'' . $advSearchString));
+		$prev = CreateLinkR('<i class="zmdi zmdi-chevron-left"></i>',"index.php?p=commslist&page=".($page-1).(isset($_GET['searchText']) > 0?"&searchText=".rawurlencode((string)$_GET['searchText']):'' . $advSearchString));
 }
 else
 {
@@ -741,7 +741,7 @@ if ($BansEnd < $BanCount)
 			$next = CreateLinkR('<i class="zmdi zmdi-chevron-left"></i>',"javascript:void(0);", "", "_self", false, $nxt);
 	}
 	else
-		$next = CreateLinkR('<i class="zmdi zmdi-chevron-right"></i>',"index.php?p=commslist&page=".($page+1).(isset($_GET['searchText']) ?"&searchText=".$_GET['searchText']:'' . $advSearchString));
+		$next = CreateLinkR('<i class="zmdi zmdi-chevron-right"></i>',"index.php?p=commslist&page=".($page+1).(isset($_GET['searchText']) ?"&searchText=".rawurlencode((string)$_GET['searchText']):'' . $advSearchString));
 }
 else
 	$next = "";

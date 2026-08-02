@@ -42,7 +42,7 @@ if ($mode === 'enroll') {
 		$csrf = isset($_POST['sb_csrf']) ? $_POST['sb_csrf'] : '';
 		if (function_exists('sb_csrf_validate') && !sb_csrf_validate($csrf)) {
 			$error = 'Сессия истекла. Обновите страницу.';
-		} elseif (function_exists('sb_rate_limit_hit') && sb_rate_limit_hit('totp_enroll', 10, 900)) {
+		} elseif (function_exists('sb_rate_limit_hit') && sb_rate_limit_hit('totp_enroll_' . $aid, 10, 900)) {
 			$error = 'Слишком много попыток. Подождите.';
 		} elseif (!sb_totp_verify($secret, isset($_POST['code']) ? $_POST['code'] : '')) {
 			$error = 'Неверный код. Проверьте время на устройстве и попробуйте снова.';
@@ -78,7 +78,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && strtoupper($_SERVER['REQUEST_METHOD']) 
 	$csrf = isset($_POST['sb_csrf']) ? $_POST['sb_csrf'] : '';
 	if (function_exists('sb_csrf_validate') && !sb_csrf_validate($csrf)) {
 		$error = 'Сессия истекла. Обновите страницу.';
-	} elseif (function_exists('sb_rate_limit_hit') && sb_rate_limit_hit('totp_challenge', 12, 900)) {
+	} elseif (function_exists('sb_rate_limit_hit') && sb_rate_limit_hit('totp_challenge_' . $aid, 12, 900)) {
 		$error = 'Слишком много попыток. Подождите.';
 	} else {
 		$code = isset($_POST['code']) ? trim((string)$_POST['code']) : '';

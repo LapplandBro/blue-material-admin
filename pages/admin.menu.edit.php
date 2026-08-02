@@ -9,6 +9,13 @@ global $userbank, $theme;
 		if(isset($_POST['Link']))
 		{ 
 			if ($_POST['Link'] == "edit"){
+				// CSRF: обычная (не xajax) форма POST на эту же страницу.
+				$csrf = isset($_POST['sb_csrf']) ? $_POST['sb_csrf'] : '';
+				if(!function_exists('sb_csrf_validate') || !sb_csrf_validate($csrf))
+				{
+					CreateRedBox("Ошибка", "Неверный CSRF-токен. Обновите страницу и попробуйте снова.");
+					PageDie();
+				}
 				sb_menu_ensure_group_column();
 				$on_act = (isset($_POST['on_link']) && $_POST['on_link'] == "on" ? 1 : 0);
 				$system = $GLOBALS['db']->GetRow("SELECT url,system FROM `" . DB_PREFIX . "_menu` WHERE `id` = " . (int) $_GET['id']);
@@ -49,6 +56,7 @@ global $userbank, $theme;
 			$theme->assign('system', ($list_menu['system']==1));
 			$theme->assign('menu_icon_picker', sb_menu_icon_picker_html($icon_sel));
 			$theme->assign('menu_group_picker', sb_menu_group_picker_html($group_sel));
+			$theme->assign('sb_csrf', function_exists('sb_csrf_token') ? sb_csrf_token() : '');
 			$theme->left_delimiter = "{";
 			$theme->right_delimiter = "}";
 			$theme->display('page_admin_menu_edit.tpl');

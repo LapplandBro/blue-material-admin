@@ -1,5 +1,6 @@
 <form action="" method="post">
 	<div class="card" id="admin-page-content">
+		<input type="hidden" name="sb_csrf" value="{$sb_csrf}" />
 		<input type="hidden" name="Link" value="edit" />
 		<div class="form-horizontal" role="form">
 			<div class="card-header">

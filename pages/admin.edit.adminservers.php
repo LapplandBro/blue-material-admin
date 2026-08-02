@@ -58,7 +58,14 @@ $server_grp = isset($adminGroup[0]['id'])?$adminGroup[0]['id']:0;
 	
 if(isset($_POST['editadminserver']))
 {
-	
+	// CSRF: обычная (не xajax) форма POST на эту же страницу.
+	$csrf = isset($_POST['sb_csrf']) ? $_POST['sb_csrf'] : '';
+	if(!function_exists('sb_csrf_validate') || !sb_csrf_validate($csrf))
+	{
+		CreateRedBox("Ошибка", "Неверный CSRF-токен. Обновите страницу и попробуйте снова.");
+		PageDie();
+	}
+
 	// clear old stuffs
 	$GLOBALS['db']->Execute("DELETE FROM ".DB_PREFIX."_admins_servers_groups WHERE admin_id = ?", array($aid));
 	if(isset($_POST['servers']) && is_array($_POST['servers']) && count($_POST['servers']) > 0) {
@@ -132,5 +139,6 @@ $theme->assign('row_count', $rowcount);
 $theme->assign('group_list', $group_list);
 $theme->assign('server_list', $server_list);
 $theme->assign('assigned_servers', $servers);
+$theme->assign('sb_csrf', function_exists('sb_csrf_token') ? sb_csrf_token() : '');
 
 $theme->display('page_admin_edit_admins_servers.tpl');
