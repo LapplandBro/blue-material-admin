@@ -19,6 +19,10 @@ CREATE TABLE IF NOT EXISTS `{prefix}_admins` (
   `comment` varchar(128) NULL,
   `vk` varchar(128) NULL,
   `support` int(6) NULL default '0',
+  `totp_secret` varchar(255) NULL default NULL,
+  `totp_enabled` tinyint(1) NOT NULL default '0',
+  `totp_confirmed_at` int(11) NULL default NULL,
+  `totp_recovery_codes` text NULL,
   PRIMARY KEY  (`aid`),
   UNIQUE KEY `user` (`user`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;

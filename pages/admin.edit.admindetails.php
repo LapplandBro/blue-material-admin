@@ -70,6 +70,25 @@ if (!$userbank->HasAccess(ADMIN_OWNER)) {
 }
 
 $errorScript = "";
+$totp_admin_msg = '';
+
+// OWNER / EDIT_ADMINS: сброс 2FA другому админу (lockout recovery).
+if (isset($_POST['reset_totp']) && function_exists('sb_totp_disable')) {
+	$csrf = isset($_POST['sb_csrf']) ? $_POST['sb_csrf'] : '';
+	$can_reset = $userbank->HasAccess(ADMIN_OWNER)
+		|| ($userbank->HasAccess(ADMIN_EDIT_ADMINS) && function_exists('sb_can_manage_admin') && sb_can_manage_admin((int)$_GET['id']));
+	if (function_exists('sb_csrf_validate') && !sb_csrf_validate($csrf)) {
+		$totp_admin_msg = 'Неверный CSRF. Обновите страницу.';
+	} elseif (!$can_reset) {
+		$totp_admin_msg = 'Недостаточно прав для сброса 2FA.';
+	} elseif ((int)$_GET['id'] === (int)$userbank->GetAid() && !$userbank->HasAccess(ADMIN_OWNER)) {
+		$totp_admin_msg = 'Свой 2FA сбрасывайте в разделе «Аккаунт».';
+	} else {
+		sb_totp_disable((int)$_GET['id']);
+		$totp_admin_msg = '2FA для этого администратора сброшена.';
+		new CSystemLog("m", "2FA reset", $userbank->GetProperty("user") . " сбросил TOTP у aid=" . (int)$_GET['id']);
+	}
+}
 
 // Form submitted?
 if(isset($_POST['adminname']))
@@ -445,6 +464,10 @@ $theme->assign('vk', $a_vk);
 $theme->assign('discord', $a_discord);
 // ADM discord //
 $theme->assign('a_spass', $a_serverpass);
+$theme->assign('totp_enabled_admin', function_exists('sb_totp_is_enabled') && sb_totp_is_enabled((int)$_GET['id']));
+$theme->assign('totp_admin_msg', $totp_admin_msg);
+$theme->assign('can_reset_totp', $userbank->HasAccess(ADMIN_OWNER) || ($userbank->HasAccess(ADMIN_EDIT_ADMINS) && function_exists('sb_can_manage_admin') && sb_can_manage_admin((int)$_GET['id'])));
+$theme->assign('sb_csrf', function_exists('sb_csrf_token') ? sb_csrf_token() : '');
 
 $theme->display('page_admin_edit_admins_details.tpl');
 ?>

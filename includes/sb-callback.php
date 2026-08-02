@@ -179,7 +179,7 @@ function Plogin($username, $password, $remember, $redirect, $nopass)
 		// увидеть перебор паролей (брутфорс) или понять, кто и когда пытался зайти под чужим логином.
 		$log = new CSystemLog("w", "Неудачный вход", "Неудачная попытка входа под логином '" . htmlspecialchars($username) . "' с IP " . $_SERVER["REMOTE_ADDR"] . ".");
 		if($nopass!=1)
-			$objResponse->addScript('ShowBox("Вход неудался", "Неверно введены имя пользователя или пароль.<br \> Если Вы забыли свой пароль, Используйте ссылку <a href=\"index.php?p=lostpassword\" title=\"Забыл пароль\">Забыл пароль.</a>", "red", "", true);');
+			$objResponse->addScript('ShowBox("Вход неудался", "Неверно введены имя пользователя или пароль.<br \> Если Вы забыли свой пароль, Используйте ссылку <a href=\"lostpassword\" title=\"Забыл пароль\">Забыл пароль.</a>", "red", "", true);');
 		return $objResponse;
 	}
 	else if($q[2] > 0 && $q[2] < time())
@@ -189,6 +189,16 @@ function Plogin($username, $password, $remember, $redirect, $nopass)
 	}
 	else {
 		$objResponse->addScript("$('msg-red').setStyle('display', 'none');");
+	}
+
+	// Тихая миграция хэша до MFA-гейта (login_by_aid plaintext не получит).
+	$userbank->upgrade_password_hash($aid, $password);
+
+	$mfa = function_exists('sb_totp_gate_required') ? sb_totp_gate_required($aid) : 'none';
+	if ($mfa === 'challenge' || $mfa === 'enroll') {
+		sb_mfa_begin($aid, !empty($remember), $mfa);
+		$objResponse->addRedirect('login2fa', 0);
+		return $objResponse;
 	}
 
 	$userbank->login($aid, $password, $remember);
@@ -271,7 +281,7 @@ function LostPassword($email)
 	// клиентом, и без этой правки был возможен классический "password reset poisoning" -
 	// злоумышленник мог отправить запрос с поддельным Host и получить ссылку сброса пароля,
 	// указывающую на его собственный (фишинговый) домен, но с валидным токеном жертвы.
-	$message .= rtrim(SB_WP_URL, '/') . "/index.php?p=lostpassword&email=". rawurlencode(RemoveCode($email)) . "&validation=" . $validation;
+	$message .= rtrim(SB_WP_URL, '/') . "/lostpassword?email=". rawurlencode(RemoveCode($email)) . "&validation=" . $validation;
 
 	$headers = 'From: Sourcebans@' . sb_get_site_host() . "\n" .
     'X-Mailer: PHP/' . phpversion();

@@ -419,6 +419,9 @@ function sb_migrate_admins_password_column()
 	@$GLOBALS['db']->Execute("ALTER TABLE `" . DB_PREFIX . "_admins` MODIFY `password` VARCHAR(255) NOT NULL");
 }
 
+require_once(INCLUDES_PATH . '/sb-totp.php');
+sb_totp_migrate_schema();
+
 $debug = $GLOBALS['db']->Execute("SELECT value FROM `".DB_PREFIX."_settings` WHERE setting = 'config.debug';");
 if($debug->fields['value']=="1") {
 	define("DEVELOPER_MODE", true);

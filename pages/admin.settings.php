@@ -289,6 +289,7 @@ else
 			$admin_warns = (isset($_POST['admin_warns']) && $_POST['admin_warns'] == "on" ? 1 : 0);
 			
 			$map_autofetch = (isset($_POST['map_autofetch']) && $_POST['map_autofetch'] == "on" ? 1 : 0);
+			$totp_enforce_owner = (isset($_POST['totp_enforce_owner']) && $_POST['totp_enforce_owner'] == "on" ? 1 : 0);
 			
 			$edit = $GLOBALS['db']->Execute("REPLACE INTO ".DB_PREFIX."_settings (`value`, `setting`) VALUES
 											(" . (int)$exportpub . ", 'config.exportpublic'),
@@ -302,7 +303,8 @@ else
 											(" . (int)$old_serverside . ", 'feature.old_serverside'),
 											(" . (int)$admin_warns . ", 'admin.warns'),
 											(" . (int)$_POST['admin_warns_max'] . ", 'admin.warns.max'),
-											(" . (int)$map_autofetch . ", 'feature.map_autofetch');");
+											(" . (int)$map_autofetch . ", 'feature.map_autofetch'),
+											(" . (int)$totp_enforce_owner . ", 'config.totp.enforce_owner');");
 
 			?><script>setTimeout("ShowBox('Настройки опций изменены', 'Изменения были успешно применены!', 'green', 'index.php?p=admin&c=settings#^3', false, 2500);", 1200);</script><?php
 			$log = new CSystemLog("m", "Настройки изменены", $userbank->GetProperty("user") . " изменил настройки раздела \"Опции\" (features).");
@@ -346,6 +348,7 @@ else
 		$theme->assign('old_serverside', ($GLOBALS['config']['feature.old_serverside'] == "1"));
 		// Настройка ещё не сохранялась ни разу -> считаем автозагрузку карт включённой по умолчанию.
 		$theme->assign('map_autofetch', (!isset($GLOBALS['config']['feature.map_autofetch']) || $GLOBALS['config']['feature.map_autofetch'] == "1"));
+		$theme->assign('totp_enforce_owner', (!empty($GLOBALS['config']['config.totp.enforce_owner']) && $GLOBALS['config']['config.totp.enforce_owner'] == "1"));
 		$theme->assign('maxWarnings', $GLOBALS['config']['admin.warns.max']);
 		$theme->assign('warnings_enabled', ($GLOBALS['config']['admin.warns'] == "1"));
 		$theme->display('page_admin_settings_features.tpl');

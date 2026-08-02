@@ -105,6 +105,8 @@
 				{display_material_checkbox name="old_serverside" help_title="Режим совместимости с плагинами SB" help_text="Переключает веб-панель в режим совместимости со старой серверной частью SourceBans."}
 				
 				{display_material_checkbox name="map_autofetch" help_title="Превью карт с GameTracker" help_text="Если у карты нет вручную загруженной иконки в images/maps, браузер подгружает превью напрямую с GameTracker (без кеша на диске сервера). Если картинки там нет — показывается локальный unknown map (nomap.jpg)."}
+
+				{display_material_checkbox name="totp_enforce_owner" help_title="Обязательная 2FA для OWNER" help_text="Владельцы панели (флаг OWNER) не смогут завершить вход по паролю или Steam, пока не настроят TOTP. Остальные админы подключают 2FA добровольно в разделе «Аккаунт»."}
 				
 				<div class="form-group form-inline m-b-5">
 					<label for="admin_warns" class="col-sm-3 control-label">{help_icon title="Предупреждения" message="Позволяет включить систему предупреждений для Администраторов."} Предупреждения</label>
@@ -136,6 +138,7 @@
 
 {if $old_serverside}<script>document.getElementById('old_serverside').checked = true;</script>{/if}
 {if $map_autofetch}<script>document.getElementById('map_autofetch').checked = true;</script>{/if}
+{if $totp_enforce_owner}<script>document.getElementById('totp_enforce_owner').checked = true;</script>{/if}
 {if $warnings_enabled}<script>document.getElementById('admin_warns').checked = true;</script>{/if}
 
 {literal}

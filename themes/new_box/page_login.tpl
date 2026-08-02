@@ -40,7 +40,7 @@
 									<div class="form-group">
 										<div class="col-sm-offset-2 col-sm-10" id="loginSubmit">
 											-{sb_button text="Войти" onclick=$redir icon="<i class='zmdi zmdi-long-arrow-tab'></i>" class="btn bgm-blue btn-icon-text" id="alogin" submit=false}-
-											-{sb_button text="Забыл пароль" onclick="sbGo('index.php?p=lostpassword')" icon="<i class='zmdi zmdi-help-outline'></i>" class="btn-icon-text bgm-orange"}-
+											-{sb_button text="Забыл пароль" onclick="sbGo('lostpassword')" icon="<i class='zmdi zmdi-help-outline'></i>" class="btn-icon-text bgm-orange"}-
 										</div>
 									</div>
 									-{if $steam_allowed}-

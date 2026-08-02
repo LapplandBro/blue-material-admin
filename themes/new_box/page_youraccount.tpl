@@ -246,6 +246,76 @@
 	</div>
 </div>
 
+<div id="5" style="display:none;">
+	<div class="card banlist-panel admin-form account-card">
+		<div class="form-horizontal" role="form">
+			<div class="card-header">
+				<h2>Двухфакторная аутентификация (TOTP)
+					<small>Google Authenticator, Aegis, 1Password и совместимые приложения</small>
+				</h2>
+			</div>
+			<div class="card-body card-padding">
+				-{if $totp_msg}-
+				<div class="alert -{if $totp_msg_type == 'success'}-alert-success-{elseif $totp_msg_type == 'error'}-alert-danger-{else}-alert-info-{/if}-" role="alert">-{$totp_msg|escape}-</div>
+				-{/if}-
+
+				-{if $totp_recovery_once}-
+				<div class="alert alert-warning" role="alert">
+					<p>Recovery-коды (сохраните сейчас):</p>
+					<ul class="list-unstyled" style="font-family:monospace;">
+					-{foreach from=$totp_recovery_once item=c}-
+						<li>-{$c|escape}-</li>
+					-{/foreach}-
+					</ul>
+				</div>
+				-{/if}-
+
+				-{if $totp_enabled}-
+				<p>2FA сейчас <strong>включена</strong>. Для отключения нужны пароль панели и код из приложения (или неиспользованный recovery-код).</p>
+				<form method="post" action="account">
+					-{if $sb_csrf}-<input type="hidden" name="sb_csrf" value="-{$sb_csrf|escape}-" />-{/if}-
+					<input type="hidden" name="totp_action" value="disable" />
+					<div class="form-group m-b-5">
+						<label class="col-sm-3 control-label" for="totp_dis_pw">Пароль</label>
+						<div class="col-sm-9"><input type="password" class="form-control" id="totp_dis_pw" name="password" required autocomplete="current-password"></div>
+					</div>
+					<div class="form-group m-b-5">
+						<label class="col-sm-3 control-label" for="totp_dis_code">Код 2FA</label>
+						<div class="col-sm-9"><input type="text" class="form-control" id="totp_dis_code" name="code" required autocomplete="one-time-code"></div>
+					</div>
+					<div class="form-group m-b-5 account-form-actions">
+						<label class="col-sm-3 control-label"></label>
+						<div class="col-sm-9"><button type="submit" class="btn bgm-red btn-icon-text waves-effect"><i class="zmdi zmdi-close"></i> Отключить 2FA</button></div>
+					</div>
+				</form>
+				-{elseif $totp_setup_secret}-
+				<p>Секрет: <code style="font-size:1.1em;">-{$totp_setup_secret|escape}-</code></p>
+				<p><a href="-{$totp_otpauth|escape}-">Открыть otpauth://</a></p>
+				<form method="post" action="account">
+					-{if $sb_csrf}-<input type="hidden" name="sb_csrf" value="-{$sb_csrf|escape}-" />-{/if}-
+					<input type="hidden" name="totp_action" value="confirm" />
+					<div class="form-group m-b-5">
+						<label class="col-sm-3 control-label" for="totp_en_code">Код из приложения</label>
+						<div class="col-sm-9"><input type="text" class="form-control" id="totp_en_code" name="code" required inputmode="numeric" autocomplete="one-time-code" maxlength="8"></div>
+					</div>
+					<div class="form-group m-b-5 account-form-actions">
+						<label class="col-sm-3 control-label"></label>
+						<div class="col-sm-9"><button type="submit" class="btn bgm-blue btn-icon-text waves-effect"><i class="zmdi zmdi-shield-check"></i> Подтвердить и включить</button></div>
+					</div>
+				</form>
+				-{else}-
+				<p>После включения вход по паролю или через Steam потребует код из приложения.</p>
+				<form method="post" action="account">
+					-{if $sb_csrf}-<input type="hidden" name="sb_csrf" value="-{$sb_csrf|escape}-" />-{/if}-
+					<input type="hidden" name="totp_action" value="start" />
+					<button type="submit" class="btn bgm-blue btn-icon-text waves-effect"><i class="zmdi zmdi-plus"></i> Начать настройку 2FA</button>
+				</form>
+				-{/if}-
+			</div>
+		</div>
+	</div>
+</div>
+
 <script>
 var error = 0;
 function set_error(count) {

@@ -1700,7 +1700,7 @@ function sb_pretty_pages()
 {
 	return array(
 		'login', 'logout', 'admin', 'submit', 'banlist', 'commslist', 'servers',
-		'protest', 'account', 'lostpassword', 'home', 'search_bans', 'search_comm',
+		'protest', 'account', 'lostpassword', 'login2fa', 'home', 'search_bans', 'search_comm',
 		'pay', 'adminlist',
 	);
 }
@@ -1929,8 +1929,10 @@ function sb_smarty_pretty_urls($tpl_output, &$smarty)
 {
 	if (!is_string($tpl_output) || $tpl_output === '' || strpos($tpl_output, 'index.php?') === false)
 		return $tpl_output;
+	// Только безопасные символы query — иначе после htmlspecialchars(&#039;)
+	// жадный [^"'] съедает JS-хвост sbGo('…&#039;) и ломает onclick.
 	return preg_replace_callback(
-		'#(?:\.\./)*(?:\./)?index\.php\?[^"\'\s<>]+#i',
+		'#(?:\.\./)*(?:\./)?index\.php\?[a-zA-Z0-9_=&%.+-]+#i',
 		function ($m) {
 			return sb_legacy_to_pretty_url($m[0]);
 		},

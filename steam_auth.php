@@ -91,6 +91,12 @@ else {
         RedirectToSite(SB_WP_URL, 'По предоставленным данным, не найдено ни одного администратора.', false);
     }
     else {
+        $mfa = function_exists('sb_totp_gate_required') ? sb_totp_gate_required((int)$aid) : 'none';
+        if ($mfa === 'challenge' || $mfa === 'enroll') {
+            sb_mfa_begin((int)$aid, true, $mfa);
+            RedirectToSite(rtrim(SB_WP_URL, '/') . '/login2fa', '', true);
+        }
+
         sb_set_auth_cookie("aid", $aid, time()+LOGIN_COOKIE_LIFETIME);
         sb_set_auth_cookie("password", $password, time()+LOGIN_COOKIE_LIFETIME);
 
