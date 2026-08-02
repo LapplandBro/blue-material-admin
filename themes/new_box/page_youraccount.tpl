@@ -289,20 +289,38 @@
 					</div>
 				</form>
 				-{elseif $totp_setup_secret}-
-				<p>Секрет: <code style="font-size:1.1em;">-{$totp_setup_secret|escape}-</code></p>
-				<p><a href="-{$totp_otpauth|escape}-">Открыть otpauth://</a></p>
+				<div class="totp-setup m-b-20">
+					<p class="m-b-15">1. Отсканируйте QR в Google Authenticator / Aegis / 1Password.</p>
+					<div id="totp-qr" class="totp-qr m-b-15" style="display:inline-block;padding:12px;background:#fff;border-radius:4px;" data-otpauth="-{$totp_otpauth|escape}-"></div>
+					<p class="m-b-5 text-muted">Если камеры нет — введите секрет вручную:</p>
+					<p class="m-b-10"><code id="totp-secret-text" style="font-size:1.05em;letter-spacing:.04em;word-break:break-all;">-{$totp_setup_secret|escape}-</code>
+						<button type="button" class="btn btn-xs bgm-bluegray m-l-10" onclick="(function(){var t=document.getElementById('totp-secret-text');if(!t)return;var r=document.createRange();r.selectNodeContents(t);var s=window.getSelection();s.removeAllRanges();s.addRange(r);})();">Выделить</button>
+					</p>
+					<p class="m-b-20"><a class="btn btn-link btn-sm" href="-{$totp_otpauth|escape}-">Открыть otpauth:// на этом устройстве</a></p>
+				</div>
 				<form method="post" action="account">
 					-{if $sb_csrf}-<input type="hidden" name="sb_csrf" value="-{$sb_csrf|escape}-" />-{/if}-
 					<input type="hidden" name="totp_action" value="confirm" />
 					<div class="form-group m-b-5">
-						<label class="col-sm-3 control-label" for="totp_en_code">Код из приложения</label>
-						<div class="col-sm-9"><input type="text" class="form-control" id="totp_en_code" name="code" required inputmode="numeric" autocomplete="one-time-code" maxlength="8"></div>
+						<label class="col-sm-3 control-label" for="totp_en_code">2. Код из приложения</label>
+						<div class="col-sm-9"><input type="text" class="form-control" id="totp_en_code" name="code" required inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="6 цифр"></div>
 					</div>
 					<div class="form-group m-b-5 account-form-actions">
 						<label class="col-sm-3 control-label"></label>
 						<div class="col-sm-9"><button type="submit" class="btn bgm-blue btn-icon-text waves-effect"><i class="zmdi zmdi-shield-check"></i> Подтвердить и включить</button></div>
 					</div>
 				</form>
+				<script src="./scripts/qrcode.min.js"></script>
+				<script>
+				(function () {
+					var box = document.getElementById('totp-qr');
+					if (!box || typeof QRCode === 'undefined') return;
+					var uri = box.getAttribute('data-otpauth') || '';
+					if (!uri) return;
+					box.innerHTML = '';
+					new QRCode(box, { text: uri, width: 192, height: 192, correctLevel: QRCode.CorrectLevel.M });
+				})();
+				</script>
 				-{else}-
 				<p>После включения вход по паролю или через Steam потребует код из приложения.</p>
 				<form method="post" action="account">
