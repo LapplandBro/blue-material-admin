@@ -1274,6 +1274,78 @@ function sb_sanitize_admin_html_url_allowed($url, $allow_relative = true)
 	return ($lower[0] === '/' || $lower[0] === '#' || $lower[0] === '?' || substr($lower, 0, 2) === './' || substr($lower, 0, 3) === '../');
 }
 
+/**
+ * Inline style для Summernote-правил: keep allowlist CSS, drop expression/js/url(data).
+ */
+function sb_sanitize_admin_html_style($style)
+{
+	$style = html_entity_decode((string)$style, ENT_QUOTES, 'UTF-8');
+	$style = preg_replace('/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/', '', $style);
+	if ($style === null || $style === '')
+		return '';
+
+	$lower = strtolower($style);
+	if (strpos($lower, 'expression(') !== false
+		|| strpos($lower, 'javascript:') !== false
+		|| strpos($lower, 'vbscript:') !== false
+		|| strpos($lower, 'behavior:') !== false
+		|| strpos($lower, '-moz-binding') !== false
+		|| strpos($lower, '@import') !== false)
+		return '';
+
+	$allowed = array(
+		'color' => true, 'background' => true, 'background-color' => true, 'background-image' => true,
+		'background-repeat' => true, 'background-position' => true, 'background-size' => true,
+		'font' => true, 'font-family' => true, 'font-size' => true, 'font-weight' => true, 'font-style' => true,
+		'line-height' => true, 'letter-spacing' => true, 'text-align' => true, 'text-decoration' => true,
+		'text-transform' => true, 'text-shadow' => true, 'white-space' => true, 'word-break' => true,
+		'overflow-wrap' => true, 'vertical-align' => true,
+		'margin' => true, 'margin-top' => true, 'margin-right' => true, 'margin-bottom' => true, 'margin-left' => true,
+		'padding' => true, 'padding-top' => true, 'padding-right' => true, 'padding-bottom' => true, 'padding-left' => true,
+		'border' => true, 'border-top' => true, 'border-right' => true, 'border-bottom' => true, 'border-left' => true,
+		'border-color' => true, 'border-style' => true, 'border-width' => true, 'border-radius' => true,
+		'border-collapse' => true, 'border-spacing' => true,
+		'width' => true, 'max-width' => true, 'min-width' => true, 'height' => true, 'max-height' => true, 'min-height' => true,
+		'display' => true, 'float' => true, 'clear' => true, 'opacity' => true, 'box-sizing' => true,
+		'list-style' => true, 'list-style-type' => true, 'list-style-position' => true,
+		'overflow' => true, 'overflow-x' => true, 'overflow-y' => true,
+		'flex' => true, 'flex-direction' => true, 'flex-wrap' => true, 'justify-content' => true, 'align-items' => true, 'gap' => true,
+		'box-shadow' => true, 'outline' => true, 'cursor' => true,
+	);
+
+	$out = array();
+	foreach (explode(';', $style) as $decl) {
+		$decl = trim($decl);
+		if ($decl === '' || strpos($decl, ':') === false)
+			continue;
+		$parts = explode(':', $decl, 2);
+		$prop = strtolower(trim($parts[0]));
+		$val = trim($parts[1]);
+		if ($prop === '' || $val === '' || !isset($allowed[$prop]))
+			continue;
+		$vlow = strtolower($val);
+		if (strpos($vlow, 'expression(') !== false || strpos($vlow, 'javascript:') !== false || strpos($vlow, 'vbscript:') !== false)
+			continue;
+		if (preg_match('/url\s*\(\s*[\'"]?\s*data\s*:/i', $val) || preg_match('/url\s*\(\s*[\'"]?\s*javascript\s*:/i', $val))
+			continue;
+		// url(...) только http(s)/relative
+		if (preg_match_all('/url\s*\(\s*(.*)\s*\)/i', $val, $um)) {
+			$badUrl = false;
+			foreach ($um[1] as $u) {
+				$u = trim($u, " \t\"'");
+				if ($u !== '' && !sb_sanitize_admin_html_url_allowed($u, true)) {
+					$badUrl = true;
+					break;
+				}
+			}
+			if ($badUrl)
+				continue;
+		}
+		$out[] = $prop . ': ' . $val;
+	}
+	return implode('; ', $out);
+}
+
 function sb_sanitize_admin_html_node(DOMNode $node, array $allowed_tags, array $allowed_attrs)
 {
 	for ($child = $node->firstChild; $child !== null; ) {
@@ -1295,8 +1367,16 @@ function sb_sanitize_admin_html_node(DOMNode $node, array $allowed_tags, array $
 					}
 				}
 				foreach ($attrs as $attr_name) {
-					if (strpos($attr_name, 'on') === 0 || $attr_name === 'style') {
+					if (strpos($attr_name, 'on') === 0) {
 						$child->removeAttribute($attr_name);
+						continue;
+					}
+					if ($attr_name === 'style') {
+						$safe = sb_sanitize_admin_html_style($child->getAttribute('style'));
+						if ($safe === '')
+							$child->removeAttribute('style');
+						else
+							$child->setAttribute('style', $safe);
 						continue;
 					}
 					if (!in_array($attr_name, $allowed_attrs[$tag], true)) {
@@ -1359,6 +1439,7 @@ function sb_sanitize_admin_html($html)
 		'center' => true,
 		'div' => true,
 		'em' => true,
+		'font' => true,
 		'h1' => true,
 		'h2' => true,
 		'h3' => true,
@@ -1396,46 +1477,50 @@ function sb_sanitize_admin_html($html)
 			'meta' => true,
 			'object' => true,
 			'script' => true,
+			// <style> блок по-прежнему drop; inline style= чистится отдельно
 			'style' => true,
 		),
 	);
+	// style обрабатывается отдельно (allowlist CSS), здесь перечислен для прохождения проверки in_array
+	$common = array('class', 'id', 'title', 'style', 'align');
 	$allowed_attrs = array(
-		'b' => array('class', 'id', 'title'),
+		'b' => $common,
 		'br' => array(),
-		'a' => array('class', 'id', 'href', 'name', 'rel', 'target', 'title'),
-		'blockquote' => array('class', 'id', 'title'),
-		'center' => array('class', 'id', 'title'),
-		'code' => array('class', 'id', 'title'),
-		'div' => array('class', 'id', 'title'),
-		'em' => array('class', 'id', 'title'),
-		'h1' => array('class', 'id', 'title'),
-		'h2' => array('class', 'id', 'title'),
-		'h3' => array('class', 'id', 'title'),
-		'h4' => array('class', 'id', 'title'),
-		'h5' => array('class', 'id', 'title'),
-		'h6' => array('class', 'id', 'title'),
-		'hr' => array('class', 'id', 'title'),
-		'i' => array('class', 'id', 'title'),
-		'img' => array('alt', 'class', 'height', 'id', 'loading', 'src', 'title', 'width'),
-		'li' => array('class', 'id', 'title'),
-		'ol' => array('class', 'id', 'title'),
-		'p' => array('class', 'id', 'title'),
-		'pre' => array('class', 'id', 'title'),
-		's' => array('class', 'id', 'title'),
-		'small' => array('class', 'id', 'title'),
-		'span' => array('class', 'id', 'title'),
-		'strong' => array('class', 'id', 'title'),
-		'sub' => array('class', 'id', 'title'),
-		'sup' => array('class', 'id', 'title'),
-		'table' => array('class', 'id', 'title'),
-		'tbody' => array('class', 'id', 'title'),
-		'td' => array('class', 'colspan', 'id', 'rowspan', 'scope', 'title'),
-		'th' => array('class', 'colspan', 'id', 'rowspan', 'scope', 'title'),
-		'thead' => array('class', 'id', 'title'),
-		'tfoot' => array('class', 'id', 'title'),
-		'tr' => array('class', 'id', 'title'),
-		'u' => array('class', 'id', 'title'),
-		'ul' => array('class', 'id', 'title'),
+		'a' => array_merge($common, array('href', 'name', 'rel', 'target')),
+		'blockquote' => $common,
+		'center' => $common,
+		'code' => $common,
+		'div' => $common,
+		'em' => $common,
+		'font' => array_merge($common, array('color', 'face', 'size')),
+		'h1' => $common,
+		'h2' => $common,
+		'h3' => $common,
+		'h4' => $common,
+		'h5' => $common,
+		'h6' => $common,
+		'hr' => $common,
+		'i' => $common,
+		'img' => array_merge($common, array('alt', 'height', 'loading', 'src', 'width')),
+		'li' => $common,
+		'ol' => $common,
+		'p' => $common,
+		'pre' => $common,
+		's' => $common,
+		'small' => $common,
+		'span' => $common,
+		'strong' => $common,
+		'sub' => $common,
+		'sup' => $common,
+		'table' => array_merge($common, array('border', 'cellpadding', 'cellspacing', 'width')),
+		'tbody' => $common,
+		'td' => array_merge($common, array('colspan', 'rowspan', 'scope', 'width', 'height', 'valign')),
+		'th' => array_merge($common, array('colspan', 'rowspan', 'scope', 'width', 'height', 'valign')),
+		'thead' => $common,
+		'tfoot' => $common,
+		'tr' => $common,
+		'u' => $common,
+		'ul' => $common,
 	);
 
 	$prev = libxml_use_internal_errors(true);
