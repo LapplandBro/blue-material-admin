@@ -295,24 +295,37 @@ class CUserManager
 			return false;
 
 		$this->upgrade_password_hash($aid, $password);
+		return $this->login_by_aid($aid, $save);
+	}
+
+	/**
+	 * Выдать сессионные куки по aid (после MFA / Steam), без plaintext-пароля.
+	 */
+	function login_by_aid($aid, $save = true)
+	{
+		$aid = (int)$aid;
+		if ($aid <= 0)
+			return false;
+		if (empty($this->admins[$aid]))
+			$this->GetUserArray($aid);
+		if (empty($this->admins[$aid]['password']))
+			return false;
 		$stored = (string)$this->admins[$aid]['password'];
 
-		// Фиксация session fixation после успешной аутентификации.
 		if (session_status() === PHP_SESSION_ACTIVE)
 			@session_regenerate_id(true);
 
-		if($save)
-		{
-			sb_set_auth_cookie("aid", $aid, time()+LOGIN_COOKIE_LIFETIME);
-			sb_set_auth_cookie("password", $stored, time()+LOGIN_COOKIE_LIFETIME);
-			setcookie("user", isset($_SESSION['user']['user'])?$_SESSION['user']['user']:null, time()+LOGIN_COOKIE_LIFETIME, COOKIE_PATH, COOKIE_DOMAIN, COOKIE_SECURE, true);
-		}
-		else
-		{
+		$user = isset($this->admins[$aid]['user']) ? $this->admins[$aid]['user'] : null;
+		if ($save) {
+			sb_set_auth_cookie("aid", $aid, time() + LOGIN_COOKIE_LIFETIME);
+			sb_set_auth_cookie("password", $stored, time() + LOGIN_COOKIE_LIFETIME);
+			setcookie("user", $user, time() + LOGIN_COOKIE_LIFETIME, COOKIE_PATH, COOKIE_DOMAIN, COOKIE_SECURE, true);
+		} else {
 			sb_set_auth_cookie("aid", $aid, 0);
 			sb_set_auth_cookie("password", $stored, 0);
-			setcookie("user", isset($_SESSION['user']['user'])?$_SESSION['user']['user']:null, 0, COOKIE_PATH, COOKIE_DOMAIN, COOKIE_SECURE, true);
+			setcookie("user", $user, 0, COOKIE_PATH, COOKIE_DOMAIN, COOKIE_SECURE, true);
 		}
+		$this->aid = $aid;
 		return true;
 	}
 	

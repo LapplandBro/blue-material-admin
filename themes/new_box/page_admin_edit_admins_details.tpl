@@ -115,3 +115,23 @@
         {$server_script}
 		</div>
 </form>
+
+{if $can_reset_totp}
+<div class="card banlist-panel admin-form m-t-15">
+	<div class="card-header">
+		<h2>Двухфакторная аутентификация
+			<small>{if $totp_enabled_admin}У админа включена 2FA — при lockout можно сбросить.{else}2FA не настроена.{/if}</small>
+		</h2>
+	</div>
+	<div class="card-body card-padding">
+		{if $totp_admin_msg}<div class="alert alert-info" role="alert">{$totp_admin_msg|escape}</div>{/if}
+		{if $totp_enabled_admin}
+		<form method="post" action="" onsubmit="return confirm('Сбросить 2FA для этого администратора?');">
+			{if $sb_csrf}<input type="hidden" name="sb_csrf" value="{$sb_csrf|escape}" />{/if}
+			<input type="hidden" name="reset_totp" value="1" />
+			<button type="submit" class="btn bgm-orange btn-icon-text waves-effect"><i class="zmdi zmdi-shield-check"></i> Сбросить 2FA</button>
+		</form>
+		{/if}
+	</div>
+</div>
+{/if}

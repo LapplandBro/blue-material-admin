@@ -115,6 +115,10 @@ if (!$useDefault && !preg_match('/^[a-zA-Z0-9_]+$/', $pRaw)) {
 			RewritePageTitle("Lost your password");
 			$page = TEMPLATES_PATH . "/page.lostpassword.php";
 			break;
+		case "login2fa":
+			RewritePageTitle("Two-factor authentication");
+			$page = TEMPLATES_PATH . "/page.login2fa.php";
+			break;
 		case "home":
 			RewritePageTitle("Dashboard");
 			$page = TEMPLATES_PATH . "/page.home.php";

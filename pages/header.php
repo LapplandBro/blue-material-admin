@@ -294,7 +294,7 @@ if ($seo_image !== '' && !preg_match('#^https?://#i', $seo_image))
 if ($seo_image === '' || preg_match('/\.(svg)$/i', $seo_image))
 	$seo_image = $site_base . '/images/logos/sb-dark.png';
 
-$seo_noindex = ($seo_page === 'admin' || $seo_page === 'account' || $seo_page === 'login' || $seo_page === 'lostpassword');
+$seo_noindex = ($seo_page === 'admin' || $seo_page === 'account' || $seo_page === 'login' || $seo_page === 'lostpassword' || $seo_page === 'login2fa');
 
 $theme->assign('seo_title', $seo_title);
 $theme->assign('seo_document_title', $seo_document_title);

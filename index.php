@@ -75,7 +75,7 @@ if (!$sb_is_ajax) {
 		// index.php?p=banlist → /banlist (и /admin/bans для c=)
 		$pretty_pages = array(
 			'login', 'logout', 'admin', 'submit', 'banlist', 'commslist', 'servers',
-			'protest', 'account', 'lostpassword', 'search_bans', 'search_comm',
+			'protest', 'account', 'lostpassword', 'login2fa', 'search_bans', 'search_comm',
 			'pay', 'adminlist',
 		);
 		if ($page_param !== '' && in_array($page_param, $pretty_pages, true)) {
