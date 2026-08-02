@@ -1929,10 +1929,13 @@ function sb_smarty_pretty_urls($tpl_output, &$smarty)
 {
 	if (!is_string($tpl_output) || $tpl_output === '' || strpos($tpl_output, 'index.php?') === false)
 		return $tpl_output;
-	// Только безопасные символы query — иначе после htmlspecialchars(&#039;)
-	// жадный [^"'] съедает JS-хвост sbGo('…&#039;) и ломает onclick.
+	// Query: обычные символы + «&» + HTML-entity «&amp;».
+	// Нельзя брать [^"']+ — после htmlspecialchars JS-кавытка становится &#039;
+	// и жадный матч съедает хвост sbGo('…&#039;).
+	// Нельзя и просто […&…]+ без &amp; — матч обрывается на «;» внутри &amp;,
+	// и href «index.php?p=admin&amp;c=admins…» превращается в «admin?amp=;c=…».
 	return preg_replace_callback(
-		'#(?:\.\./)*(?:\./)?index\.php\?[a-zA-Z0-9_=&%.+-]+#i',
+		'#(?:\.\./)*(?:\./)?index\.php\?(?:[a-zA-Z0-9_.=+%.-]|&amp;|&)+#i',
 		function ($m) {
 			return sb_legacy_to_pretty_url($m[0]);
 		},
