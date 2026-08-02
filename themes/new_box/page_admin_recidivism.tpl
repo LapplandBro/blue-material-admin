@@ -1,6 +1,6 @@
 {if NOT $permission_ok}
 	<div id="msg-red">
-		<i><img src="images/icons/warning.svg" alt="Внимание" /></i>
+		<i><img class="sb-ico" src="images/icons/warning.svg" width="22" height="22" alt="Внимание" /></i>
 		<b>Ошибка</b><br />
 		У вас нет доступа к истории нарушений.
 	</div>

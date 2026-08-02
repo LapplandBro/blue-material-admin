@@ -76,6 +76,18 @@
 	border: 0;
 	flex-shrink: 0;
 }
+/* Legacy #msg-red: SVG без width/height иначе раздувается на весь экран */
+#msg-red img,
+#msg-red-debug img,
+#msg-green-dbg img {
+	display: inline-block;
+	width: 22px !important;
+	height: 22px !important;
+	max-width: 22px !important;
+	max-height: 22px !important;
+	vertical-align: middle;
+	object-fit: contain;
+}
 /* Список серверов: крупнее, на уровне строки с названием */
 .servers-table .banlist-td-mod .sb-ico,
 .servers-table .servers-td-ico .sb-ico,

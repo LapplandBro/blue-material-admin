@@ -35,23 +35,13 @@ global $theme, $userbank;
 if(!$userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_SERVERS))
 {
 	$log = new CSystemLog("w", "Попытка взлома", $userbank->GetProperty("user") . " пытался редактировать сервер, не имея на это прав.");
-	echo '<div id="msg-red" >
-	<i><img src="images/icons/warning.svg" alt="Внимание" /></i>
-	<b>Ошибка</b>
-	<br />
-	Вы не имеете прав редактирования серверов.
-</div>';
+	CreateRedBox("Ошибка", "Вы не имеете прав редактирования серверов.");
 	PageDie();
 }
 
 if(!isset($_GET['id']))
 {
-	echo '<div id="msg-red" >
-	<i><img src="images/icons/warning.svg" alt="Warning" /></i>
-	<b>Ошибка</b>
-	<br />
-	Идентефикатор сервера не указан
-</div>';
+	CreateRedBox("Ошибка", "Идентификатор сервера не указан");
 	die();
 }
 $_GET['id'] = (int)$_GET['id'];
@@ -60,12 +50,7 @@ $server = $GLOBALS['db']->GetRow("SELECT * FROM ".DB_PREFIX."_servers WHERE sid 
 if(!$server)
 {
 	$log = new CSystemLog("e", "Получение данных сервера не удалось", "Не удается найти данные для сервера с идентификатором '".$_GET['id']."'");
-	echo '<div id="msg-red" >
-	<i><img src="images/icons/warning.svg" alt="Warning" /></i>
-	<b>Ошибка</b>
-	<br />
-	Ошибка получения текущих данных .
-</div></div>';
+	CreateRedBox("Ошибка", "Ошибка получения текущих данных.");
 	PageDie();
 }
 

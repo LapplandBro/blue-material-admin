@@ -63,7 +63,7 @@
                         </h2>
                     </div> -->
                 <div id="msg-red-debug" style="display:none;" >
-                    <i><img src="images/icons/warning.svg" alt="Warning" /></i>
+                    <i><img class="sb-ico" src="images/icons/warning.svg" width="22" height="22" alt="Warning" /></i>
                     <b>Debug</b>
                     <br />
                     <div id="debug-text"></div></i>
