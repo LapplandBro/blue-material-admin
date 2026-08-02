@@ -25,14 +25,18 @@
 		</div>
 		<p><a class="btn bgm-blue btn-icon-text waves-effect" href="account"><i class="zmdi zmdi-check"></i> Продолжить</a></p>
 		{elseif $login2fa_mode == 'enroll'}
-		<p>1. Добавьте аккаунт в Google Authenticator / Aegis / 1Password.</p>
-		<p>Секрет (ручной ввод): <code style="font-size:1.15em;letter-spacing:.05em;">{$totp_secret|escape}</code></p>
-		<p><a href="{$totp_otpauth|escape}">Открыть otpauth:// в приложении</a></p>
-		<form method="post" action="login2fa" class="form-horizontal m-t-20">
+		<div class="totp-setup m-b-20">
+			<p class="m-b-15">1. Отсканируйте QR в Google Authenticator / Aegis / 1Password.</p>
+			<div id="totp-qr" class="totp-qr m-b-15" style="display:inline-block;padding:12px;background:#fff;border-radius:4px;" data-otpauth="{$totp_otpauth|escape}"></div>
+			<p class="m-b-5 text-muted">Если камеры нет — введите секрет вручную:</p>
+			<p class="m-b-10"><code id="totp-secret-text" style="font-size:1.05em;letter-spacing:.04em;word-break:break-all;">{$totp_secret|escape}</code></p>
+			<p class="m-b-20"><a class="btn btn-link btn-sm" href="{$totp_otpauth|escape}">Открыть otpauth:// на этом устройстве</a></p>
+		</div>
+		<form method="post" action="login2fa" class="form-horizontal m-t-10">
 			{if $sb_csrf}<input type="hidden" name="sb_csrf" value="{$sb_csrf|escape}" />{/if}
 			<input type="hidden" name="totp_enroll" value="1" />
 			<div class="form-group">
-				<label for="code" class="col-sm-3 control-label">Код подтверждения</label>
+				<label for="code" class="col-sm-3 control-label">2. Код подтверждения</label>
 				<div class="col-sm-6">
 					<input type="text" class="form-control" id="code" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="6 цифр" required>
 				</div>
@@ -43,6 +47,17 @@
 				</div>
 			</div>
 		</form>
+		<script src="./scripts/qrcode.min.js"></script>
+		<script>
+		(function () {
+			var box = document.getElementById('totp-qr');
+			if (!box || typeof QRCode === 'undefined') return;
+			var uri = box.getAttribute('data-otpauth') || '';
+			if (!uri) return;
+			box.innerHTML = '';
+			new QRCode(box, { text: uri, width: 192, height: 192, correctLevel: QRCode.CorrectLevel.M });
+		})();
+		</script>
 		{else}
 		<form method="post" action="login2fa" class="form-horizontal">
 			{if $sb_csrf}<input type="hidden" name="sb_csrf" value="{$sb_csrf|escape}" />{/if}
