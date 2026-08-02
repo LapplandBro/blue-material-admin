@@ -129,8 +129,25 @@ if(!defined('SB_VERSION')){
 define('LOGIN_COOKIE_LIFETIME', (60*60*24*7)*2);
 define('COOKIE_PATH', '/');
 define('COOKIE_DOMAIN', '');
-// Куки авторизации должны уходить только по HTTPS, если сайт вообще доступен по HTTPS (см. SB_WP_URL в config.php).
-define('COOKIE_SECURE', (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (!empty($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443) || (defined('SB_WP_URL') && stripos(SB_WP_URL, 'https://') === 0));
+// Secure-cookie только для реального HTTPS-запроса.
+// Нельзя опираться только на SB_WP_URL: localhost с боевым https://… в конфиге
+// ставил Secure=true по HTTP → PHP-сессия MFA/2FA не сохранялась в браузере.
+$sb_cookie_secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+	|| (!empty($_SERVER['SERVER_PORT']) && (int)$_SERVER['SERVER_PORT'] === 443);
+if (!$sb_cookie_secure && !empty($_SERVER['HTTP_X_FORWARDED_PROTO'])) {
+	$xf = explode(',', $_SERVER['HTTP_X_FORWARDED_PROTO']);
+	$sb_cookie_secure = (strtolower(trim($xf[0])) === 'https');
+}
+if (!$sb_cookie_secure && !empty($_SERVER['HTTP_X_FORWARDED_SSL']) && $_SERVER['HTTP_X_FORWARDED_SSL'] === 'on')
+	$sb_cookie_secure = true;
+// TLS-terminating proxy без X-Forwarded-*: Secure только если Host совпадает с SB_WP_URL.
+if (!$sb_cookie_secure && defined('SB_WP_URL') && stripos(SB_WP_URL, 'https://') === 0) {
+	$wp_host = parse_url(SB_WP_URL, PHP_URL_HOST);
+	$req_host = isset($_SERVER['HTTP_HOST']) ? strtolower(preg_replace('/:\\d+$/', '', $_SERVER['HTTP_HOST'])) : '';
+	if ($wp_host && $req_host !== '' && strtolower($wp_host) === $req_host)
+		$sb_cookie_secure = true;
+}
+define('COOKIE_SECURE', $sb_cookie_secure);
 define('SB_SALT', 'SourceBans');
 
 /**
