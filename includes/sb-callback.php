@@ -159,12 +159,18 @@ function Plogin($username, $password, $remember, $redirect, $nopass)
 	global $userbank;
 	$objResponse = new xajaxResponse();
 	if (empty($password)) {
-		ShowBox_ajx("Информация", "Не введён пароль. Введите пароль, и повторите попытку ещё раз.", "blue", "", true, $objResponse);
+		ShowBox_ajx("Информация", "Не введён пароль. Введите пароль, и повторите попытку ещё раз.", "blue", $objResponse, "", true);
+		return $objResponse;
+	}
+	// auth.type: 2 = только Steam - вход по логину/паролю запрещён настройками сайта.
+	$at = isset($GLOBALS['config']['auth.type']) ? $GLOBALS['config']['auth.type'] : 0;
+	if ($at == 2) {
+		ShowBox_ajx("Вход неудался", "Вход по логину и паролю отключён. Используйте вход через Steam.", "red", $objResponse, "", true);
 		return $objResponse;
 	}
 	// Антибрутфорс: 8 попыток / 15 минут с одного IP.
 	if (function_exists('sb_rate_limit_hit') && sb_rate_limit_hit('plogin', 8, 900)) {
-		ShowBox_ajx("Слишком много попыток", "Подождите несколько минут и попробуйте снова.", "red", "", true, $objResponse);
+		ShowBox_ajx("Слишком много попыток", "Подождите несколько минут и попробуйте снова.", "red", $objResponse, "", true);
 		return $objResponse;
 	}
 	$q = $GLOBALS['db']->GetRow("SELECT `aid`, `password`, `expired` FROM `" . DB_PREFIX . "_admins` WHERE `user` = ?", array($username));
@@ -264,11 +270,12 @@ function LostPassword($email)
 
 	$objResponse->addScript("$('msg-red').setStyle('display', 'none');");
 
-	// В БД храним только хеш токена; в письме — сырой секрет (64 hex).
+	// В БД храним только хеш токена + срок годности (`hash:expiry`); в письме — сырой секрет (64 hex).
 	$validation = bin2hex(function_exists('random_bytes') ? random_bytes(32) : openssl_random_pseudo_bytes(32));
+	$validate_expiry = time() + 3600; // токен сброса пароля действителен 1 час
 	$GLOBALS['db']->Execute(
 		"UPDATE `" . DB_PREFIX . "_admins` SET `validate` = ? WHERE `aid` = ?",
-		array(hash('sha256', $validation), (int)$q['aid'])
+		array(hash('sha256', $validation) . ':' . $validate_expiry, (int)$q['aid'])
 	);
 	$message = "";
 	$message .= "Привет " . $q['user'] . "\n";
@@ -718,20 +725,23 @@ function RemoveAdmin($aid)
 		$objResponse->addAlert("Ошибка: Админ не найден.");
 		return $objResponse;
 	}
-	if((intval($gid['extraflags']) & ADMIN_OWNER) != 0)
+	if(!function_exists('sb_can_manage_admin') || !sb_can_manage_admin($aid))
 	{
-		$objResponse->addAlert("Ошибка: Вы не можете удалить владельца.");
+		$protected_steamids = array_filter(array_map('trim', explode(',', defined('SB_PROTECTED_STEAMIDS') ? SB_PROTECTED_STEAMIDS : '')));
+		if(!empty($gid['authid']) && in_array($gid['authid'], $protected_steamids))
+		{
+			$objResponse->addAlert("Ошибка: Этот администратор защищён в конфиге (SB_PROTECTED_STEAMIDS). Удаление запрещено.");
+			$log = new CSystemLog("w", "Попытка удаления защищённого админа", $username . " попытался удалить защищённый SteamID: " . $gid['authid']);
+			sb_tripwire_punish_actor($objResponse, 'попытался удалить защищённого админа');
+			return $objResponse;
+		}
+		$objResponse->addAlert("Ошибка: Вы не можете удалить этого администратора.");
+		$log = new CSystemLog("w", "Ошибка доступа", $username . " пытался удалить OWNER/защищённого админа #$aid.");
 		return $objResponse;
 	}
-
-	// Защита из конфига: SteamID в SB_PROTECTED_STEAMIDS нельзя удалить из админов
-	$protected_steamids = array_filter(array_map('trim', explode(',', defined('SB_PROTECTED_STEAMIDS') ? SB_PROTECTED_STEAMIDS : '')));
-	if(!empty($gid['authid']) && in_array($gid['authid'], $protected_steamids))
+	if($userbank->HasAccess(ADMIN_OWNER, $aid))
 	{
-		$objResponse->addAlert("Ошибка: Этот администратор защищён в конфиге (SB_PROTECTED_STEAMIDS). Удаление запрещено.");
-		$log = new CSystemLog("w", "Попытка удаления защищённого админа", $username . " попытался удалить защищённый SteamID: " . $gid['authid']);
-		// Наказание: виновник (не из защищённых) — срок админки = истёк, доступ заблокирован
-		sb_tripwire_punish_actor($objResponse, 'попытался удалить защищённого админа');
+		$objResponse->addAlert("Ошибка: Вы не можете удалить владельца.");
 		return $objResponse;
 	}
 
@@ -1048,12 +1058,21 @@ function AddAdmin_pay($mask, $srv_mask, $a_name, $a_steam, $a_email, $a_password
 		return $objResponse;
 	}
 	
+	// БАГ-ФИКС: старое условие подменяло клиентский $singlesrv значением из БД только когда
+	// в `servers` одновременно была запятая И буква "s" (т.е. только для списка "s1,s2,...").
+	// Ваучер с ОДНИМ фиксированным сервером ("s5", без запятой) клиентское значение не трогал -
+	// пользователь мог прислать через xajax произвольный $singlesrv в обход ограничения ваучера
+	// (privilege escalation: доступ к серверам, не разрешённым купленным ваучером).
+	// Теперь `servers` из БД - источник истины всегда, кроме пустой строки (свободный выбор).
 	$srv_sql_val = $GLOBALS['db']->GetOne("SELECT `servers` FROM `" . DB_PREFIX . "_vay4er` WHERE `value` = ?", array($a_code));
-	if($srv_sql_val == "-1"){
+	if ($srv_sql_val === "-1") {
+		// Ваучер не даёт доступа ни к одному конкретному серверу.
 		$singlesrv = "";
-	}elseif((stristr($srv_sql_val, ',') && stristr($srv_sql_val, 's')) == TRUE){
+	} elseif ($srv_sql_val !== "" && $srv_sql_val !== null) {
+		// Один сервер ("s5") или список ("s1,s2") - жёстко фиксируем значением из ваучера.
 		$singlesrv = $srv_sql_val;
 	}
+	// Иначе (пустая строка в `servers`) - ваучер не ограничивает выбор, оставляем выбор клиента.
 	
 	$qwe = $GLOBALS['db']->GetOne("SELECT `activ` FROM `" . DB_PREFIX . "_vay4er` WHERE `value` = ?", array($a_code));
 	if($qwe == "0" || $qwe != "1"){
@@ -1333,7 +1352,7 @@ function AddAdmin_pay($mask, $srv_mask, $a_name, $a_steam, $a_email, $a_password
 	// Ohnoes! something went wrong, stop and show errs
 	if($error)
 	{
-		ShowBox_ajx("Ошибка", "Допущены ошибки. Пожалуйста, исправьте их.", "red", "", true, $objResponse);
+		ShowBox_ajx("Ошибка", "Допущены ошибки. Пожалуйста, исправьте их.", "red", $objResponse, "", true);
 		return $objResponse;
 	}
 
@@ -1424,10 +1443,22 @@ function AddAdmin_pay($mask, $srv_mask, $a_name, $a_steam, $a_email, $a_password
 		$server_admin_group = "";
 	}
 
+	// БАГ-ФИКС (race condition): раньше ваучер гасился (activ=0) ПОСЛЕ создания администратора,
+	// без проверки affected rows. Два параллельных запроса с одним и тем же кодом могли оба
+	// пройти проверку "activ=1" выше, оба вызвать AddAdmin() и оба потом выполнить этот UPDATE -
+	// в итоге по одному ваучеру создавалось два администратора. Теперь гасим ваучер атомарно
+	// ДО создания администратора и проверяем, что реально обновилась ровно одна строка - только
+	// в этом случае продолжаем. Если строка не обновилась - ваучер уже погашен другим запросом.
+	$GLOBALS['db']->Execute("UPDATE `" . DB_PREFIX . "_vay4er` SET `activ` = '0' WHERE `value` = ? AND `activ` = '1'", array($a_code));
+	if ((int)$GLOBALS['db']->Affected_Rows() !== 1) {
+		$objResponse->addScript("ShowBox('Активация', 'Ваш ваучер уже был успешно активирован! Повторная активация - невозможна. Переадресация...', 'red', 'index.php', false);");
+		$log = new CSystemLog("w", "Ваучер", $a_name . " пытался активировать ваучер повторно (конкурентный запрос).");
+		return $objResponse;
+	}
+
 	$aid = $userbank->AddAdmin($a_name, $a_steam, $a_password, $a_email, $web_gruop_sql, $mask, $server_admin_group, $srv_mask, $immunity, $a_serverpass, $pay_days_sql, $discord, '', $vk);
 	if ($aid > -1)
 	{
-		$GLOBALS['db']->Execute("UPDATE `" . DB_PREFIX . "_vay4er` SET `activ` = '0' WHERE `value` = ? AND `activ` = '1'", array($a_code));
 		if (function_exists('sb_voucher_unlock_clear'))
 			sb_voucher_unlock_clear();
 		if (function_exists('sb_voucher_rehash_set'))
@@ -1482,7 +1513,11 @@ function AddAdmin_pay($mask, $srv_mask, $a_name, $a_steam, $a_email, $a_password
 	}
 	else
 	{
+		// Ваучер уже погашен атомарным UPDATE выше. Слепо реактивировать его здесь (activ=1)
+		// небезопасно - это создаёт новое окно гонки с параллельным запросом активации.
+		// Оставляем ваучер погашенным и явно логируем инцидент - решение принимает владелец сайта.
 		$objResponse->addScript("ShowBox('Ваучер', 'Ошибка при активации ваучера. Свяжитесь с главной администрацией, для проверки лога на наличие SQL ошибок.', 'red', 'index.php');");
+		new CSystemLog("e", "Ваучер", "Ваучер " . $a_code . " погашен, но создание администратора '" . $a_name . "' не удалось. Ваучер оставлен неактивным, требуется ручная проверка.");
 	}
 }
 
@@ -1799,7 +1834,7 @@ function AddAdmin($mask, $srv_mask, $a_name, $a_steam, $a_email, $a_password, $a
 	// Ohnoes! something went wrong, stop and show errs
 	if($error)
 	{
-		ShowBox_ajx("Ошибка", "Допущены ошибки. Пожалуйста, исправьте их.", "red", "", true, $objResponse);
+		ShowBox_ajx("Ошибка", "Допущены ошибки. Пожалуйста, исправьте их.", "red", $objResponse, "", true);
 		return $objResponse;
 	}
 
@@ -1942,6 +1977,10 @@ function ServerHostPlayers($sid, $type="servers", $obId="", $tplsid="", $open=""
 {
 	$objResponse = new xajaxResponse();
 	global $userbank;
+	// Soft rate-limit по IP: опрос игровых серверов (A2S) дёшево дёргать через xajax в цикле,
+	// не давая при этом реально мешать обычному использованию (авто-обновление списка серверов).
+	if (function_exists('sb_rate_limit_hit') && sb_rate_limit_hit('server_host_players', 60, 60))
+		return $objResponse;
 	require INCLUDES_PATH.'/CServerControl.php';
 	
 	$sid = (int)$sid;
@@ -2270,6 +2309,9 @@ function ServerHostPlayers_list($sid, $type="servers", $obId="")
 function ServerPlayers($sid)
 {
 	$objResponse = new xajaxResponse();
+	// Soft rate-limit по IP: см. ServerHostPlayers().
+	if (function_exists('sb_rate_limit_hit') && sb_rate_limit_hit('server_players', 60, 60))
+		return $objResponse;
 	require INCLUDES_PATH.'/CServerControl.php';
 
 	$sid = (int)$sid;
@@ -2757,6 +2799,12 @@ function ChangeAdminsInfos($aid, $vk, $discord)
 		$log = new CSystemLog("w", "Ошибка доступа", $_SERVER["REMOTE_ADDR"] . " пытался сменить vk или discord, не имея на это прав.");
 		return $objResponse;
 	}
+	if($aid != $userbank->aid && (!function_exists('sb_can_manage_admin') || !sb_can_manage_admin($aid)))
+	{
+		$objResponse->redirect("index.php?p=login&m=no_access", 0);
+		$log = new CSystemLog("w", "Ошибка доступа", $_SERVER["REMOTE_ADDR"] . " пытался сменить vk или discord OWNER/защищённого админа #$aid.");
+		return $objResponse;
+	}
 
 	$vk = RemoveCode($vk);
 	$vk = str_replace(array("http://","https://","/","vk.com"), "", $vk);
@@ -2865,6 +2913,12 @@ function EditAdminPerms($aid, $web_flags, $srv_flags)
 		$log = new CSystemLog("w", "Ошибка доступа", $username . " пытался изменить права OWNER/чужого админа #$aid, не имея на это прав.");
 		return $objResponse;
 	}
+	if($aid == $userbank->aid && !$userbank->HasAccess(ADMIN_OWNER))
+	{
+		$objResponse->redirect("index.php?p=login&m=no_access", 0);
+		$log = new CSystemLog("w", "Ошибка доступа", $username . " пытался изменить собственные разрешения, не имея прав OWNER.");
+		return $objResponse;
+	}
 
 	// Users require a password and email to have web permissions
 	$password = $GLOBALS['userbank']->GetProperty('password', $aid);
@@ -2958,7 +3012,14 @@ function EditGroup($gid, $web_flags, $srv_flags, $type, $name, $overrides, $newO
 
 	if($type == "srv")
 	{
-		$gname = $GLOBALS['db']->GetRow("SELECT name FROM ".DB_PREFIX."_srvgroups WHERE id = $gid");
+		$gname = $GLOBALS['db']->GetRow("SELECT name, flags FROM ".DB_PREFIX."_srvgroups WHERE id = ?", array($gid));
+
+		if(!$userbank->HasAccess(ADMIN_OWNER) && (strpos((string)$srv_flags, SM_ROOT) !== false || (!empty($gname) && strpos((string)$gname['flags'], SM_ROOT) !== false)))
+		{
+			$objResponse->redirect("index.php?p=login&m=no_access", 0);
+			$log = new CSystemLog("w", "Ошибка доступа", $username . " пытался изменить ROOT-группу сервера #$gid или выдать SM_ROOT.");
+			return $objResponse;
+		}
 
 		if(strstr($srv_flags, "#"))
 		{
@@ -3349,7 +3410,7 @@ function Maintenance($type) {
     
     $objResponse = new xajaxResponse();
     if (!$userbank->HasAccess(ADMIN_OWNER|ADMIN_WEB_SETTINGS)) {
-        ShowBox_ajx("Ошибка", "Вы не имеете прав для выполнения данного действия!", "red", "", true, $objResponse);
+        ShowBox_ajx("Ошибка", "Вы не имеете прав для выполнения данного действия!", "red", $objResponse, "", true);
         new CSystemLog("w", "Ошибка доступа", $username . " пытался произвести операцию по обслуживанию системы, не имея на это прав.");
         return $objResponse;
     }
@@ -3357,25 +3418,25 @@ function Maintenance($type) {
     switch($type) {
         case "themecache": {
             $theme->clear_compiled_tpl();
-            ShowBox_ajx("Успех", "Кеш шаблона очищен успешно.", "green", "", true, $objResponse);
+            ShowBox_ajx("Успех", "Кеш шаблона очищен успешно.", "green", $objResponse, "", true);
             break;
         }
         
         case "avatarcache": {
             $GLOBALS['db']->Execute(sprintf("TRUNCATE `%s_avatars`", DB_PREFIX));
-            ShowBox_ajx("Успех", "Кеш аватарок очищен успешно.", "green", "", true, $objResponse);
+            ShowBox_ajx("Успех", "Кеш аватарок очищен успешно.", "green", $objResponse, "", true);
             break;
         }
         
         case "bansexpired": {
             $GLOBALS['db']->Execute(sprintf("DELETE FROM `%s_bans` WHERE `RemoveType` IS NOT NULL", DB_PREFIX));
-            ShowBox_ajx("Успех", "Истёкшие баны удалены успешно.", "green", "", true, $objResponse);
+            ShowBox_ajx("Успех", "Истёкшие баны удалены успешно.", "green", $objResponse, "", true);
             break;
         }
         
         case "commsexpired": {
             $GLOBALS['db']->Execute(sprintf("DELETE FROM `%s_comms` WHERE `RemoveType` IS NOT NULL", DB_PREFIX));
-            ShowBox_ajx("Успех", "Истёкшие муты удалены успешно.", "green", "", true, $objResponse);
+            ShowBox_ajx("Успех", "Истёкшие муты удалены успешно.", "green", $objResponse, "", true);
             break;
         }
 
@@ -3385,7 +3446,7 @@ function Maintenance($type) {
             // значения не было case - срабатывал default ("Неизвестная операция"). Используем ту же
             // логику удаления, что и в отдельной функции removeExpiredAdmins().
             $GLOBALS['db']->Execute("DELETE FROM `" . DB_PREFIX . "_admins` WHERE `expired` < " . time() . " AND `expired` <> 0");
-            ShowBox_ajx("Успех", "Все истёкшие администраторы удалены успешно.", "green", "", true, $objResponse);
+            ShowBox_ajx("Успех", "Все истёкшие администраторы удалены успешно.", "green", $objResponse, "", true);
             break;
         }
 
@@ -3442,13 +3503,13 @@ function Maintenance($type) {
             if ($failed > 0)
                 $msg .= ", пропущено/ошибка (lock/timeout): <b>" . (int)$failed . "</b>";
             $msg .= " (префикс <code>" . htmlspecialchars($prefix, ENT_QUOTES, 'UTF-8') . "*</code>). HLStats и прочие таблицы не затрагивались.";
-            ShowBox_ajx("Успех", $msg, "green", "", true, $objResponse);
+            ShowBox_ajx("Успех", $msg, "green", $objResponse, "", true);
             break;
         }
         
         case "cleancountrycache": {
             $GLOBALS['db']->Execute("UPDATE `sb_bans` SET `country` = NULL;");
-            ShowBox_ajx("Успех", "Кеш стран банлиста очищен успешно.<br /><br /><span style=\"color: #f00;\">Внимание!</span> Это может отрицательно сказаться на первой загрузке каждой страницы Вашего банлиста. Рекомендуем произвести операцию \"Обновить кеш стран в банлисте\".", "green", "", true, $objResponse);
+            ShowBox_ajx("Успех", "Кеш стран банлиста очищен успешно.<br /><br /><span style=\"color: #f00;\">Внимание!</span> Это может отрицательно сказаться на первой загрузке каждой страницы Вашего банлиста. Рекомендуем произвести операцию \"Обновить кеш стран в банлисте\".", "green", $objResponse, "", true);
             break;
         }
         
@@ -3458,7 +3519,7 @@ function Maintenance($type) {
                 $GLOBALS['db']->Execute("UPDATE `" . DB_PREFIX . "_bans` SET `country` = " . $GLOBALS['db']->qstr(FetchIp($ban['ip'])) . " WHERE `bid` = " . (int)$ban['bid'] . ";");
             }
             
-            ShowBox_ajx("Успех", "Операция обновлений стран в кеше завершена.", "green", "", true, $objResponse);
+            ShowBox_ajx("Успех", "Операция обновлений стран в кеше завершена.", "green", $objResponse, "", true);
             break;
         }
         
@@ -3475,7 +3536,7 @@ function Maintenance($type) {
             $CountryFile = INCLUDES_PATH . '/IpToCountry.csv';
             $canWrite = file_exists($CountryFile) ? @is_writable($CountryFile) : @is_writable(dirname($CountryFile));
             if (!$canWrite) {
-                ShowBox_ajx("Ошибка", "Невозможно произвести обновление GeoIP базы: запись в файл <em>/includes/IpToCountry.csv</em> запрещена. Установите права <b>777</b> на файл (или папку) <em>/includes/</em>", "red", "", true, $objResponse);
+                ShowBox_ajx("Ошибка", "Невозможно произвести обновление GeoIP базы: запись в файл <em>/includes/IpToCountry.csv</em> запрещена. Установите права <b>777</b> на файл (или папку) <em>/includes/</em>", "red", $objResponse, "", true);
                 break;
             }
 
@@ -3505,7 +3566,7 @@ function Maintenance($type) {
                 && preg_match('/^\d{1,10},\d{1,10},[A-Z]{2}\b/m', $data);
 
             if (!$looksValid) {
-                ShowBox_ajx("Ошибка", "Не удалось загрузить актуальную базу GeoIP с сервера-источника (сервер недоступен или вернул некорректные данные). Текущий файл базы НЕ изменён.", "red", "", true, $objResponse);
+                ShowBox_ajx("Ошибка", "Не удалось загрузить актуальную базу GeoIP с сервера-источника (сервер недоступен или вернул некорректные данные). Текущий файл базы НЕ изменён.", "red", $objResponse, "", true);
                 break;
             }
 
@@ -3515,17 +3576,17 @@ function Maintenance($type) {
             $tmpFile = $CountryFile . '.tmp';
             if (@file_put_contents($tmpFile, $data) === false || !@rename($tmpFile, $CountryFile)) {
                 @unlink($tmpFile);
-                ShowBox_ajx("Ошибка", "Невозможно произвести обновление GeoIP базы: не удалось записать файл <em>/includes/IpToCountry.csv</em>.", "red", "", true, $objResponse);
+                ShowBox_ajx("Ошибка", "Невозможно произвести обновление GeoIP базы: не удалось записать файл <em>/includes/IpToCountry.csv</em>.", "red", $objResponse, "", true);
                 break;
             }
 
-            ShowBox_ajx("Успех", "Файл GeoIP базы обновлён.", "green", "", true, $objResponse);
+            ShowBox_ajx("Успех", "Файл GeoIP базы обновлён.", "green", $objResponse, "", true);
             break;
         }
         
         case "warningsexpired": {
             $GLOBALS['db']->Execute(sprintf("DELETE FROM `%s_warns` WHERE `expires` < %d", DB_PREFIX, time()));
-            ShowBox_ajx("Успех", "Все истёкшие и снятые предупреждения были успешно удалены.", "green", "", true, $objResponse);
+            ShowBox_ajx("Успех", "Все истёкшие и снятые предупреждения были успешно удалены.", "green", $objResponse, "", true);
             break;
         }
         
@@ -3534,31 +3595,31 @@ function Maintenance($type) {
             $users = $GLOBALS['db']->GetAll(sprintf("SELECT `authid` FROM `%s_admins`", DB_PREFIX));
             foreach ($users as &$user)
                 GetUserAvatar($user['authid']);
-            ShowBox_ajx("Успех", "Кеш аватаров Администраторов обновлён.", "green", "", true, $objResponse);
+            ShowBox_ajx("Успех", "Кеш аватаров Администраторов обновлён.", "green", $objResponse, "", true);
             break;
         }
         
         case "commentsclean": {
             $GLOBALS['db']->Execute(sprintf("TRUNCATE `%s_comments`;", DB_PREFIX));
-            ShowBox_ajx("Успех", "Все комментарии были успешно удалены.", "green", "", true, $objResponse);
+            ShowBox_ajx("Успех", "Все комментарии были успешно удалены.", "green", $objResponse, "", true);
             break;
         }
         
         case "banlogclean": {
             $GLOBALS['db']->Execute(sprintf("TRUNCATE `%s_banlog`;", DB_PREFIX));
-            ShowBox_ajx("Успех", "История заблокированных соединений к серверам успешно очищена.", "green", "", true, $objResponse);
+            ShowBox_ajx("Успех", "История заблокированных соединений к серверам успешно очищена.", "green", $objResponse, "", true);
             break;
         }
         
         case "protests": {
             $GLOBALS['db']->Execute(sprintf("TRUNCATE `%s_protests`;", DB_PREFIX));
-            ShowBox_ajx("Успех", "Протесты успешно удалены.", "green", "", true, $objResponse);
+            ShowBox_ajx("Успех", "Протесты успешно удалены.", "green", $objResponse, "", true);
             break;
         }
         
         case "reports": {
             $GLOBALS['db']->Execute(sprintf("TRUNCATE `%s_submissions`;", DB_PREFIX));
-            ShowBox_ajx("Успех", "Предложения бана (репорты) успешно удалены.", "green", "", true, $objResponse);
+            ShowBox_ajx("Успех", "Предложения бана (репорты) успешно удалены.", "green", $objResponse, "", true);
             break;
         }
 
@@ -3587,12 +3648,12 @@ function Maintenance($type) {
             $GLOBALS['db']->Execute(sprintf("TRUNCATE `%s_demos`;", DB_PREFIX));
 
             new CSystemLog("m", "Обслуживание системы", $username . " очистил все демки и медиафайлы пользователей (удалено файлов: " . $removed . ", освобождено: " . sizeFormat($freed) . ").");
-            ShowBox_ajx("Успех", "Удалено файлов: <b>" . $removed . "</b>, освобождено места: <b>" . sizeFormat($freed) . "</b>. Записи о демо/медиафайлах в базе очищены.", "green", "", true, $objResponse);
+            ShowBox_ajx("Успех", "Удалено файлов: <b>" . $removed . "</b>, освобождено места: <b>" . sizeFormat($freed) . "</b>. Записи о демо/медиафайлах в базе очищены.", "green", $objResponse, "", true);
             break;
         }
         
         default: {
-            ShowBox_ajx("Ошибка", "Неизвестная операция", "red", "", true, $objResponse);
+            ShowBox_ajx("Ошибка", "Неизвестная операция", "red", $objResponse, "", true);
             break;
         }
     }
@@ -3603,6 +3664,9 @@ function Maintenance($type) {
 function RefreshServer($sid)
 {
 	$objResponse = new xajaxResponse();
+	// Soft rate-limit по IP: см. ServerHostPlayers().
+	if (function_exists('sb_rate_limit_hit') && sb_rate_limit_hit('refresh_server', 60, 60))
+		return $objResponse;
 	$sid = (int)$sid;
 	if (function_exists('sb_session_start')) {
 		sb_session_start();
@@ -3616,7 +3680,7 @@ function RefreshServer($sid)
 	return $objResponse;
 }
 
-function RehashAdmins_pay($server, $do=0, $card)
+function RehashAdmins_pay($server, $card, $do=0)
 {
 	if (function_exists('sb_rate_limit_hit') && sb_rate_limit_hit('vay4er_rehash', 10, 900)) {
 		exit();
@@ -3641,7 +3705,7 @@ function RehashAdmins_pay($server, $do=0, $card)
 	$servers = explode(",",$server);
 	if(sizeof($servers)>0) {
 		if(sizeof($servers)-1 > $do)
-			$objResponse->addScriptCall("xajax_RehashAdmins_pay", $server, $do+1, $card);
+			$objResponse->addScriptCall("xajax_RehashAdmins_pay", $server, $card, $do+1);
 		else if (function_exists('sb_voucher_rehash_clear'))
 			sb_voucher_rehash_clear();
 
@@ -4383,11 +4447,28 @@ function SendMessage($sid, $name, $message)
 		$log = new CSystemLog("w", "Ошибка доступа", $username . " пытался отправить сообщение '".addslashes(htmlspecialchars($name))."' (\"".RemoveCode($message)."\"), не имея на это прав.");
 		return $objResponse;
 	}
+	// SECURITY FIX: одного is_admin() мало — нужен флаг админского чата/RCON либо OWNER.
+	if(!$userbank->HasAccess(SM_CHAT . SM_RCON . SM_ROOT) && !$userbank->HasAccess(ADMIN_OWNER))
+	{
+		$objResponse->redirect("index.php?p=login&m=no_access", 0);
+		$log = new CSystemLog("w", "Ошибка доступа", $username . " пытался отправить сообщение игроку, не имея флага чата/РКОН.");
+		return $objResponse;
+	}
 	$sid = (int)$sid;
 	if(!sb_admin_has_server_access($sid))
 	{
 		$objResponse->redirect("index.php?p=login&m=no_access", 0);
 		$log = new CSystemLog("w", "Попытка взлома", $username . " пытался отправить сообщение через RCON на sid=$sid без доступа к серверу.");
+		return $objResponse;
+	}
+	// SECURITY FIX: addslashes НЕ защищает консоль Source — кавычка/`;`/перевод строки в нике
+	// или тексте позволяли склеить произвольную RCON-команду. Такие строки отклоняем целиком.
+	$safeName = sb_sanitize_rcon_string($name, 128);
+	$safeMessage = sb_sanitize_rcon_string($message, 512);
+	if($safeName === '' || $safeMessage === '')
+	{
+		$objResponse->addScript("ShowBox('Ошибка', 'Ник или текст сообщения содержит недопустимые символы (кавычки, ; или перевод строки).', 'red', '', true);");
+		$log = new CSystemLog("w", "Попытка взлома", $username . " пытался отправить сообщение с недопустимыми символами (sid=$sid).");
 		return $objResponse;
 	}
 	require INCLUDES_PATH.'/CServerControl.php';
@@ -4407,7 +4488,7 @@ function SendMessage($sid, $name, $message)
 		$objResponse->addScript("ShowBox('Ошибка', 'Невозможно отправить сообщение для ".addslashes(htmlspecialchars($name)).". Неверноый РКОН пароль!', 'red', '', true);");
 		return $objResponse;
 	}
-	$ret = $r->SendCommand('sm_psay "'.addslashes($name).'" "'.addslashes($message).'"');
+	$ret = $r->SendCommand('sm_psay "'.$safeName.'" "'.$safeMessage.'"');
 	new CSystemLog("m", "Сообщение отправлено", "Данное сообщение было отправлено " . addslashes(htmlspecialchars($name)) . " on server " . $data['ip'] . ":" . $data['port'] . ": " . RemoveCode($message));
 	$objResponse->addScript("ShowBox('Сообщение отправлено', 'Сообщение для игрока \'".addslashes(htmlspecialchars($name))."\' успешно отправлено!', 'green', '', true);$('dialog-control').setStyle('display', 'none');");
 	return $objResponse;
@@ -4658,25 +4739,27 @@ function AddWarning($id, $days, $reason) {
 	$objResponse = new xajaxResponse();
 	$id = (int) $id;
 	if (!$userbank->HasAccess(ADMIN_OWNER|ADMIN_DELETE_ADMINS) || $userbank->GetProperty("srv_immunity", $id) > $userbank->GetProperty("srv_immunity")) {
-		ShowBox_ajx("Ошибка", "Отказано в доступе.", "red", "", true, $objResponse);
+		ShowBox_ajx("Ошибка", "Отказано в доступе.", "red", $objResponse, "", true);
 		new CSystemLog("w", "Попытка несанкционированного доступа", "Администратор пытался выдать предупреждение, не имея на это прав.");
+		return $objResponse;
+	}
+	if (!function_exists('sb_can_manage_admin') || !sb_can_manage_admin($id)) {
+		$targetAuthid = $userbank->GetProperty('authid', $id);
+		if(!empty($targetAuthid) && in_array($targetAuthid, sb_protected_steamids(), true))
+		{
+			ShowBox_ajx("Ошибка", "Этот администратор защищён в конфиге (SB_PROTECTED_STEAMIDS). Предупреждение запрещено.", "red", $objResponse, "", true);
+			new CSystemLog("w", "Попытка предупреждения защищённого админа", $username . " попытался выдать предупреждение защищённому SteamID: " . $targetAuthid);
+			sb_tripwire_punish_actor($objResponse, "попытался предупредить защищённого SteamID: " . $targetAuthid);
+			return $objResponse;
+		}
+		ShowBox_ajx("Ошибка", "Отказано в доступе.", "red", $objResponse, "", true);
+		new CSystemLog("w", "Попытка несанкционированного доступа", "Администратор пытался выдать предупреждение OWNER/защищённому администратору.");
 		return $objResponse;
 	}
 	
 	if ((int) $days <= 0) {
-        ShowBox_ajx("Ошибка", "Пожалуйста, введите число дней более нуля.", "red", "", true, $objResponse);
+        ShowBox_ajx("Ошибка", "Пожалуйста, введите число дней более нуля.", "red", $objResponse, "", true);
         return $objResponse;
-	}
-
-	// Защита из конфига: SteamID в SB_PROTECTED_STEAMIDS нельзя предупреждать/отстранять от должности
-	$protected_steamids = array_filter(array_map('trim', explode(',', defined('SB_PROTECTED_STEAMIDS') ? SB_PROTECTED_STEAMIDS : '')));
-	$targetAuthid = $userbank->GetProperty('authid', $id);
-	if(!empty($targetAuthid) && in_array($targetAuthid, $protected_steamids))
-	{
-		ShowBox_ajx("Ошибка", "Этот администратор защищён в конфиге (SB_PROTECTED_STEAMIDS). Предупреждение запрещено.", "red", "", true, $objResponse);
-		new CSystemLog("w", "Попытка предупреждения защищённого админа", $username . " попытался выдать предупреждение защищённому SteamID: " . $targetAuthid);
-		sb_tripwire_punish_actor($objResponse, "попытался предупредить защищённого SteamID: " . $targetAuthid);
-		return $objResponse;
 	}
 
 	$removedAccess = false;
@@ -4694,7 +4777,7 @@ function AddWarning($id, $days, $reason) {
 	if ($removedAccess)
 		$msg .= "<br /><br />Поскольку Администратор превысил лимит максимально активных предупреждений, он <span style=\"color: #f00;\">отстранён от должности</span>.";
 
-	ShowBox_ajx("Успех", $msg, "green", "", true, $objResponse);
+	ShowBox_ajx("Успех", $msg, "green", $objResponse, "", true);
 	return $objResponse;
 }
 
@@ -4703,17 +4786,24 @@ function RemoveWarning($warningId) {
 
     $objResponse = new xajaxResponse();
     if (!$userbank->HasAccess(ADMIN_OWNER|ADMIN_DELETE_ADMINS)) {
-        ShowBox_ajx("Ошибка", "Отказано в доступе.", "red", "", true, $objResponse);
+        ShowBox_ajx("Ошибка", "Отказано в доступе.", "red", $objResponse, "", true);
         new CSystemLog("w", "Попытка несанкционированного доступа", "Администратор пытался снять предупреждение, не имея на это прав.");
         return $objResponse;
     }
 
-    if ((int) $GLOBALS['db']->GetOne("SELECT COUNT(*) FROM `" . DB_PREFIX . "_warns` WHERE `expires` > " . time() . " AND `id` = ". (int) $warningId) == 1) {
-        ShowBox_ajx("Успех", "Предупреждение снято", "green", "", true, $objResponse);
-        new CSystemLog("m", "Предупреждение снято", "Администратор снял предупреждение Администратору " . $userbank->getProperty('user', $GLOBALS['db']->GetOne("SELECT `arecipient` FROM `" . DB_PREFIX . "_warns` WHERE `id` = " . (int) $warningId)) . " с идентификатором " . $warningId);
-        $GLOBALS['db']->Execute("UPDATE `" . DB_PREFIX . "_warns` SET `expires` = -1 WHERE `id` = " . (int) $warningId);
+    $warning = $GLOBALS['db']->GetRow("SELECT `arecipient` FROM `" . DB_PREFIX . "_warns` WHERE `expires` > " . time() . " AND `id` = ?", array((int) $warningId));
+    if (!empty($warning) && (!function_exists('sb_can_manage_admin') || !sb_can_manage_admin((int) $warning['arecipient']))) {
+        ShowBox_ajx("Ошибка", "Отказано в доступе.", "red", $objResponse, "", true);
+        new CSystemLog("w", "Попытка несанкционированного доступа", "Администратор пытался снять предупреждение OWNER/защищённого администратора.");
+        return $objResponse;
+    }
+
+    if (!empty($warning)) {
+        ShowBox_ajx("Успех", "Предупреждение снято", "green", $objResponse, "", true);
+        new CSystemLog("m", "Предупреждение снято", "Администратор снял предупреждение Администратору " . $userbank->getProperty('user', (int) $warning['arecipient']) . " с идентификатором " . $warningId);
+        $GLOBALS['db']->Execute("UPDATE `" . DB_PREFIX . "_warns` SET `expires` = -1 WHERE `id` = ?", array((int) $warningId));
     } else
-        ShowBox_ajx("Ошибка", "Действующее предупреждение с идентификатором " . $warningId . " не найдено. Может быть, оно уже истекло?", "red", "", true, $objResponse);
+        ShowBox_ajx("Ошибка", "Действующее предупреждение с идентификатором " . $warningId . " не найдено. Может быть, оно уже истекло?", "red", $objResponse, "", true);
     
     return $objResponse;
 }

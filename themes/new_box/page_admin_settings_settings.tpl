@@ -1,4 +1,5 @@
 <form action="" method="post">
+	<input type="hidden" name="sb_csrf" value="{$sb_csrf}" />
 	<input type="hidden" name="settingsGroup" value="mainsettings" />
 	<div class="card banlist-panel admin-form" id="group.details">
 		<div class="form-horizontal" role="form">
@@ -166,7 +167,7 @@
 				<div class="form-group m-b-5">
 					<label class="col-sm-3 control-label">{help_icon title="Текст приветствия" message="Введите текст приветствия, отображаемого на главной странице."} Приветствие</label>
 					<div class="col-sm-9">
-						<textarea TABINDEX=6 cols="80" rows="20" id="dash_intro_text" name="dash_intro_text" class="html-editor">{$config_dash_text}</textarea>
+						<textarea TABINDEX=6 cols="80" rows="20" id="dash_intro_text" name="dash_intro_text" class="html-editor">{$config_dash_text|escape}</textarea>
 					</div>
 				</div>
 				

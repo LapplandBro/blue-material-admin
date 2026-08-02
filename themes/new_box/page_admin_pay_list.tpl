@@ -89,7 +89,11 @@ define('SB_VOUCHER_API_ALLOW_IPS', ''); // опционально: 1.2.3.4,5.6.7
 									{/if}
 								</td>
 								<td>
-									<a href="index.php?p=admin&c=pay_card&o=del&id={$card.aid}">Удалить</a>
+									<form action="index.php?p=admin&c=pay_card" method="post" style="display:inline;margin:0;" onsubmit="return confirm('Удалить ваучер?');">
+										<input type="hidden" name="sb_csrf" value="{$sb_csrf}" />
+										<input type="hidden" name="voucher_delete_id" value="{$card.aid}" />
+										<button type="submit" name="voucher_delete" value="1" class="admin-action admin-action--danger" style="border:none;font:inherit;cursor:pointer;">Удалить</button>
+									</form>
 								</td>
 							</tr>
 						{/foreach}

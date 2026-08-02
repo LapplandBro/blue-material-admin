@@ -99,16 +99,36 @@ if ($confirm_post) {
 	$token_hash = hash('sha256', $validation);
 
 	$q = $GLOBALS['db']->GetRow(
-		"SELECT `aid`, `user` FROM `" . DB_PREFIX . "_admins` WHERE `email` = ? AND `validate` IS NOT NULL AND `validate` = ?",
-		array($email, $token_hash)
+		"SELECT `aid`, `user`, `validate` FROM `" . DB_PREFIX . "_admins` WHERE `email` = ? AND `validate` IS NOT NULL",
+		array($email)
 	);
 
+	// Формат хранения: `hash:expiry`. Старый формат (просто hash без ":") - токены,
+	// выданные до этого фикса, без срока годности - принимаем один раз для обратной
+	// совместимости, затем в любом случае затираем `validate`.
+	$aid = 0;
 	if ($q && !empty($q['aid'])) {
+		$stored = (string)$q['validate'];
+		$sep = strrpos($stored, ':');
+		if ($sep !== false) {
+			$stored_hash = substr($stored, 0, $sep);
+			$expiry = (int)substr($stored, $sep + 1);
+			if ($expiry > time() && hash_equals($stored_hash, $token_hash))
+				$aid = (int)$q['aid'];
+		} elseif (hash_equals($stored, $token_hash)) {
+			$aid = (int)$q['aid'];
+		}
+	}
+
+	if ($aid > 0) {
 		$newpass = generate_salt(MIN_PASS_LENGTH + 8);
 		$GLOBALS['db']->Execute(
 			"UPDATE `" . DB_PREFIX . "_admins` SET `password` = ?, `validate` = NULL WHERE `aid` = ?",
-			array($userbank->hash_password($newpass), (int)$q['aid'])
+			array($userbank->hash_password($newpass), $aid)
 		);
+		// Сбрасываем активные web-сессии администратора - смена пароля должна выкидывать все входы.
+		if (function_exists('sb_clear_web_session'))
+			sb_clear_web_session($aid);
 		$message = "Привет " . $q['user'] . ",\n\n";
 		$message .= "Ваш пароль был успешно сброшен.\n";
 		$message .= "Ваш пароль изменен на: ".$newpass."\n\n";

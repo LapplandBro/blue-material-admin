@@ -827,11 +827,14 @@ function CreateLinkR($title, $url, $tooltip="", $target="_self", $wide=false, $o
 	else
 		$class = "tip";
 	$title = sb_normalize_html_attr_quotes($title);
+	// XSS: $url часто содержит значения из запроса (поиск, фильтры и т.п.). Без экранирования
+	// кавычки в $url позволяли вырваться из атрибута href и внедрить произвольные атрибуты/JS.
+	$url_attr = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
 	if(strlen($tooltip) == 0)
 	{
-		return '<a href="' . $url . '" onclick="' . $onclick . '" target="' . $target . '">' . $title .' </a>';
+		return '<a href="' . $url_attr . '" onclick="' . $onclick . '" target="' . $target . '">' . $title .' </a>';
 	}else{
-		return '<a href="' . $url . '" class="' . $class .'" data-original-title="' .  htmlspecialchars($tooltip, ENT_QUOTES, 'UTF-8') . '" target="' . $target . '" data-toggle="tooltip" data-placement="top">' . $title .' </a>';
+		return '<a href="' . $url_attr . '" class="' . $class .'" data-original-title="' .  htmlspecialchars($tooltip, ENT_QUOTES, 'UTF-8') . '" target="' . $target . '" data-toggle="tooltip" data-placement="top">' . $title .' </a>';
 	}
 }
 
@@ -1248,11 +1251,236 @@ function RemoveCode($text)
 	return htmlspecialchars(strip_tags((string)$text), ENT_QUOTES, 'UTF-8');
 }
 
+function sb_sanitize_admin_html_url_allowed($url, $allow_relative = true)
+{
+	$url = html_entity_decode(trim((string)$url), ENT_QUOTES, 'UTF-8');
+	if ($url === '')
+		return false;
+
+	$url = preg_replace('/[\x00-\x20\x7f]+/u', '', $url);
+	if ($url === '')
+		return false;
+
+	$lower = strtolower($url);
+	if (preg_match('/^(javascript|data|vbscript)\s*:/i', $lower))
+		return false;
+
+	if (preg_match('/^([a-z][a-z0-9+.-]*)\s*:/i', $lower, $m))
+		return in_array($m[1], array('http', 'https', 'mailto', 'tel'), true);
+
+	if (!$allow_relative)
+		return false;
+
+	return ($lower[0] === '/' || $lower[0] === '#' || $lower[0] === '?' || substr($lower, 0, 2) === './' || substr($lower, 0, 3) === '../');
+}
+
+function sb_sanitize_admin_html_node(DOMNode $node, array $allowed_tags, array $allowed_attrs)
+{
+	for ($child = $node->firstChild; $child !== null; ) {
+		$next = $child->nextSibling;
+
+		if ($child->nodeType === XML_COMMENT_NODE || $child->nodeType === XML_PI_NODE) {
+			$node->removeChild($child);
+			$child = $next;
+			continue;
+		}
+
+		if ($child->nodeType === XML_ELEMENT_NODE) {
+			$tag = strtolower($child->nodeName);
+			if (isset($allowed_tags[$tag])) {
+				$attrs = array();
+				if ($child->hasAttributes()) {
+					foreach ($child->attributes as $attr) {
+						$attrs[] = strtolower($attr->nodeName);
+					}
+				}
+				foreach ($attrs as $attr_name) {
+					if (strpos($attr_name, 'on') === 0 || $attr_name === 'style') {
+						$child->removeAttribute($attr_name);
+						continue;
+					}
+					if (!in_array($attr_name, $allowed_attrs[$tag], true)) {
+						$child->removeAttribute($attr_name);
+						continue;
+					}
+					if (($attr_name === 'href' || $attr_name === 'src') && !sb_sanitize_admin_html_url_allowed($child->getAttribute($attr_name), $tag === 'a')) {
+						if ($attr_name === 'src' && $tag === 'img') {
+							$node->removeChild($child);
+							$child = $next;
+							continue 2;
+						}
+						$child->removeAttribute($attr_name);
+					}
+				}
+
+				if ($tag === 'a' && strtolower($child->getAttribute('target')) === '_blank' && !$child->hasAttribute('rel')) {
+					$child->setAttribute('rel', 'noopener noreferrer');
+				}
+
+				sb_sanitize_admin_html_node($child, $allowed_tags, $allowed_attrs);
+			} else {
+				if (isset($allowed_tags['_drop'][$tag])) {
+					$node->removeChild($child);
+				} else {
+					while ($child->firstChild) {
+						$node->insertBefore($child->firstChild, $child);
+					}
+					$node->removeChild($child);
+				}
+			}
+		} elseif ($child->nodeType !== XML_TEXT_NODE && $child->nodeType !== XML_CDATA_SECTION_NODE) {
+			$node->removeChild($child);
+		}
+
+		$child = $next;
+	}
+}
+
+/**
+ * Allowlist-санация HTML из админки (dash intro, info block и т.п.).
+ * Сохраняет ограниченный набор тегов и безопасных атрибутов, остальное удаляет.
+ */
+function sb_sanitize_admin_html($html)
+{
+	$html = (string)$html;
+	if ($html === '')
+		return '';
+
+	if (!class_exists('DOMDocument')) {
+		return htmlspecialchars(strip_tags($html), ENT_QUOTES, 'UTF-8');
+	}
+
+	$allowed_tags = array(
+		'a' => true,
+		'b' => true,
+		'blockquote' => true,
+		'br' => true,
+		'code' => true,
+		'center' => true,
+		'div' => true,
+		'em' => true,
+		'h1' => true,
+		'h2' => true,
+		'h3' => true,
+		'h4' => true,
+		'h5' => true,
+		'h6' => true,
+		'hr' => true,
+		'i' => true,
+		'img' => true,
+		'li' => true,
+		'ol' => true,
+		'p' => true,
+		'pre' => true,
+		's' => true,
+		'small' => true,
+		'span' => true,
+		'strong' => true,
+		'sub' => true,
+		'sup' => true,
+		'table' => true,
+		'tbody' => true,
+		'td' => true,
+		'th' => true,
+		'thead' => true,
+		'tfoot' => true,
+		'tr' => true,
+		'u' => true,
+		'ul' => true,
+		'_drop' => array(
+			'base' => true,
+			'embed' => true,
+			'form' => true,
+			'iframe' => true,
+			'link' => true,
+			'meta' => true,
+			'object' => true,
+			'script' => true,
+			'style' => true,
+		),
+	);
+	$allowed_attrs = array(
+		'b' => array('class', 'id', 'title'),
+		'br' => array(),
+		'a' => array('class', 'id', 'href', 'name', 'rel', 'target', 'title'),
+		'blockquote' => array('class', 'id', 'title'),
+		'center' => array('class', 'id', 'title'),
+		'code' => array('class', 'id', 'title'),
+		'div' => array('class', 'id', 'title'),
+		'em' => array('class', 'id', 'title'),
+		'h1' => array('class', 'id', 'title'),
+		'h2' => array('class', 'id', 'title'),
+		'h3' => array('class', 'id', 'title'),
+		'h4' => array('class', 'id', 'title'),
+		'h5' => array('class', 'id', 'title'),
+		'h6' => array('class', 'id', 'title'),
+		'hr' => array('class', 'id', 'title'),
+		'i' => array('class', 'id', 'title'),
+		'img' => array('alt', 'class', 'height', 'id', 'loading', 'src', 'title', 'width'),
+		'li' => array('class', 'id', 'title'),
+		'ol' => array('class', 'id', 'title'),
+		'p' => array('class', 'id', 'title'),
+		'pre' => array('class', 'id', 'title'),
+		's' => array('class', 'id', 'title'),
+		'small' => array('class', 'id', 'title'),
+		'span' => array('class', 'id', 'title'),
+		'strong' => array('class', 'id', 'title'),
+		'sub' => array('class', 'id', 'title'),
+		'sup' => array('class', 'id', 'title'),
+		'table' => array('class', 'id', 'title'),
+		'tbody' => array('class', 'id', 'title'),
+		'td' => array('class', 'colspan', 'id', 'rowspan', 'scope', 'title'),
+		'th' => array('class', 'colspan', 'id', 'rowspan', 'scope', 'title'),
+		'thead' => array('class', 'id', 'title'),
+		'tfoot' => array('class', 'id', 'title'),
+		'tr' => array('class', 'id', 'title'),
+		'u' => array('class', 'id', 'title'),
+		'ul' => array('class', 'id', 'title'),
+	);
+
+	$prev = libxml_use_internal_errors(true);
+	$dom = new DOMDocument('1.0', 'UTF-8');
+	$dom->preserveWhiteSpace = true;
+	$dom->formatOutput = false;
+
+	$wrapped = '<div id="sb-html-root">' . $html . '</div>';
+	if (@$dom->loadHTML('<?xml encoding="UTF-8">' . $wrapped, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD) === false) {
+		libxml_clear_errors();
+		libxml_use_internal_errors($prev);
+		return htmlspecialchars(strip_tags($html), ENT_QUOTES, 'UTF-8');
+	}
+
+	$root = null;
+	foreach ($dom->getElementsByTagName('div') as $div) {
+		if ($div->getAttribute('id') === 'sb-html-root') {
+			$root = $div;
+			break;
+		}
+	}
+	if (!$root instanceof DOMElement) {
+		libxml_clear_errors();
+		libxml_use_internal_errors($prev);
+		return htmlspecialchars(strip_tags($html), ENT_QUOTES, 'UTF-8');
+	}
+
+	sb_sanitize_admin_html_node($root, $allowed_tags, $allowed_attrs);
+
+	$out = '';
+	foreach ($root->childNodes as $child) {
+		$out .= $dom->saveHTML($child);
+	}
+
+	libxml_clear_errors();
+	libxml_use_internal_errors($prev);
+
+	return $out;
+}
+
 /**
  * Грубая санация «доверенного» HTML из админки (dash intro и т.п.):
  * убирает script/iframe и inline-обработчики / javascript: URL.
  */
-function sb_sanitize_admin_html($html)
+function sb_sanitize_admin_html_legacy($html)
 {
 	$html = (string)$html;
 	if ($html === '')
@@ -2089,6 +2317,54 @@ function sb_admin_has_server_access($sid, $aid = null)
 		}
 	}
 	return false;
+}
+
+/**
+ * Валидация идентификатора игрока перед подстановкой в RCON-команду.
+ * Пропускает только SteamID2 (STEAM_0:1:2), SteamID3 ([U:1:5]) и Steam64 (7656…).
+ * Любые разделители команд (`;`, кавычки, пробелы, переводы строк) отсекаются формой.
+ *
+ * @param string $id
+ * @return string|false нормализованный ID либо false
+ */
+function sb_sanitize_steamid_for_rcon($id)
+{
+	$id = trim((string)$id);
+	if ($id === '' || strlen($id) > 32)
+		return false;
+	if (preg_match('/^STEAM_[0-9]:[0-1]:[0-9]+$/', $id))
+		return $id;
+	if (preg_match('/^\[U:[0-9]:[0-9]+\]$/', $id))
+		return $id;
+	if (preg_match('/^[0-9]{15,20}$/', $id))
+		return $id;
+	return false;
+}
+
+/**
+ * Подготовка произвольной строки (ник, текст сообщения) для консоли Source.
+ * Кавычки, `;`, переводы строк и непечатаемые символы делают команду небезопасной,
+ * поэтому такая строка отклоняется целиком, а не «чистится».
+ *
+ * @param string $s
+ * @param int $maxLen 0 = без ограничения
+ * @return string '' если строка непригодна
+ */
+function sb_sanitize_rcon_string($s, $maxLen = 0)
+{
+	$s = trim((string)$s);
+	if ($s === '')
+		return '';
+	$maxLen = (int)$maxLen;
+	if ($maxLen > 0 && strlen($s) > $maxLen)
+		return '';
+	// " — конец аргумента, ; — разделитель команд, \r\n\t — новая команда в консоли
+	if (strpbrk($s, "\";\r\n\t") !== false)
+		return '';
+	// управляющие символы (в т.ч. \0) и байты, которые консоль трактует по-своему
+	if (preg_match('/[\x00-\x1F\x7F]/', $s))
+		return '';
+	return $s;
 }
 
 /**
@@ -3616,13 +3892,18 @@ function RecidivismHttpGetJson($url, $timeoutSec = 3, $cacheTtl = 300)
 {
 	$timeoutSec = max(1, (int)$timeoutSec);
 	$cacheTtl = max(0, (int)$cacheTtl);
+	$headers = array();
+	$parsecToken = defined('PARSEC_API_PLAYER_TOKEN') ? trim((string)PARSEC_API_PLAYER_TOKEN) : '';
+	if ($parsecToken !== '')
+		$headers[] = 'X-SB-Player-Token: ' . $parsecToken;
+
 	$cacheFile = '';
 	if ($cacheTtl > 0 && defined('ROOT')) {
 		$cacheDir = ROOT . 'cache';
 		if (!is_dir($cacheDir))
 			@mkdir($cacheDir, 0755, true);
 		if (is_dir($cacheDir) && is_writable($cacheDir)) {
-			$cacheFile = $cacheDir . '/parsec_' . md5($url) . '.json';
+			$cacheFile = $cacheDir . '/parsec_' . md5($url . '|' . $parsecToken) . '.json';
 			if (is_file($cacheFile) && (time() - filemtime($cacheFile)) < $cacheTtl) {
 				$cached = @file_get_contents($cacheFile);
 				if ($cached !== false) {
@@ -3645,14 +3926,19 @@ function RecidivismHttpGetJson($url, $timeoutSec = 3, $cacheTtl = 300)
 			CURLOPT_SSL_VERIFYPEER => true,
 			CURLOPT_USERAGENT => 'SibnetMA-Recidivism/1.0'
 		));
+		if (!empty($headers))
+			curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
 		$raw = curl_exec($ch);
 		$code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
 		curl_close($ch);
 		if ($raw === false || $code < 200 || $code >= 300)
 			return null;
 	} else {
+		$http = array('timeout' => $timeoutSec, 'ignore_errors' => true);
+		if (!empty($headers))
+			$http['header'] = implode("\r\n", $headers);
 		$ctx = stream_context_create(array(
-			'http' => array('timeout' => $timeoutSec, 'ignore_errors' => true),
+			'http' => $http,
 			'ssl' => array('verify_peer' => true)
 		));
 		$raw = @file_get_contents($url, false, $ctx);

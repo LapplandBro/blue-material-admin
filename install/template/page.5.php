@@ -59,6 +59,8 @@ define('REBANNER_USE_MA_DB', true);
 
 /** PARSEC public API (LinkedAccounts). Пустая строка отключает HTTP lookup. */
 define('PARSEC_API_PLAYER_URL', '" . $esc($parsecApi) . "');
+/** Токен доступа к приватным LinkedAccounts PARSEC API. Пусто = публичный режим. */
+define('PARSEC_API_PLAYER_TOKEN', '');
 
 /**
  * Панель admin&c=parsec — запись is_banned только для этих SteamID

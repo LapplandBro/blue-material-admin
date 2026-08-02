@@ -45,6 +45,11 @@ function CommunityIDToSteamID($communityid) {
     return sprintf("STEAM_0:%d:%d", $authserver, $authid);
 }
 
+// auth.type: 1 = только логин/пароль - вход через Steam запрещён настройками сайта.
+$at = isset($GLOBALS['config']['auth.type']) ? $GLOBALS['config']['auth.type'] : 0;
+if ($at == 1)
+    RedirectToSite(SB_WP_URL, 'Вход через Steam отключён. Используйте логин и пароль.', false);
+
 $Site = SB_WP_URL;
 $Site = str_replace(array('https', 'http', '://'), '', $Site);
 

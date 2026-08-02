@@ -7,21 +7,26 @@ global $userbank, $theme;
 	{
 		echo '<div id="0" style="display:none;">Доступ запрещен!</div>';
 	} else {
-		
-		if((isset($_GET['o']) && $_GET['o'] == "del")){
-			if(!isset($_GET['id']) || !is_numeric($_GET['id'])){
-				echo '<script>setTimeout(\'ShowBox("Ошибка", "ID бана не указан!", "red", "index.php");\', 1200);</script>';
-				PageDie();
+
+		$sb_csrf_tok = function_exists('sb_csrf_token') ? sb_csrf_token() : '';
+
+		// Удаление ваучера: только POST + CSRF (раньше это делалось по GET-ссылке - CSRF/prefetch риск).
+		if(isset($_SERVER['REQUEST_METHOD']) && strtoupper($_SERVER['REQUEST_METHOD']) === 'POST' && isset($_POST['voucher_delete'])){
+			$csrf = isset($_POST['sb_csrf']) ? $_POST['sb_csrf'] : '';
+			if(!function_exists('sb_csrf_validate') || !sb_csrf_validate($csrf)){
+				echo '<script>setTimeout(\'ShowBox("Ошибка", "Неверный CSRF-токен. Обновите страницу и попробуйте снова.", "red", "index.php?p=admin&c=pay_card");\', 1200);</script>';
+			}elseif(!isset($_POST['voucher_delete_id']) || !is_numeric($_POST['voucher_delete_id'])){
+				echo '<script>setTimeout(\'ShowBox("Ошибка", "ID ваучера не указан!", "red", "index.php?p=admin&c=pay_card");\', 1200);</script>';
 			}else{
-				$qwer = $GLOBALS['db']->GetRow("SELECT * FROM `" . DB_PREFIX . "_vay4er` WHERE aid = ?", array((int)$_GET['id']));
+				$qwer = $GLOBALS['db']->GetRow("SELECT * FROM `" . DB_PREFIX . "_vay4er` WHERE aid = ?", array((int)$_POST['voucher_delete_id']));
 				if($qwer){
-					$qww = $GLOBALS['db']->Execute("DELETE FROM `" . DB_PREFIX . "_vay4er` WHERE aid = ?", array((int)$_GET['id']));
+					$qww = $GLOBALS['db']->Execute("DELETE FROM `" . DB_PREFIX . "_vay4er` WHERE aid = ?", array((int)$_POST['voucher_delete_id']));
 					if($qww){
 						echo '<script>setTimeout(\'ShowBox("Успешно", "Ваучер был успешно удален!", "green", "index.php?p=admin&c=pay_card");\', 1200);</script>';
 						$log = new CSystemLog("m", "Ваучер удалён", $userbank->GetProperty("user") . " удалил ваучер (ключ: " . $qwer['value'] . ", дней: " . $qwer['days'] . ").");
 					}
 				}else{
-					echo '<script>setTimeout(\'ShowBox("Ошибка", "ID бана не указан!", "red", "index.php");\', 1200);</script>';
+					echo '<script>setTimeout(\'ShowBox("Ошибка", "ID ваучера не указан!", "red", "index.php?p=admin&c=pay_card");\', 1200);</script>';
 				}
 			}
 		}
@@ -49,6 +54,7 @@ global $userbank, $theme;
 			$apiBase = (defined('SB_WP_URL') && SB_WP_URL !== '') ? rtrim(SB_WP_URL, '/') : '';
 			$theme->assign('voucher_api_url', ($apiBase !== '' ? $apiBase . '/' : '') . 'api/voucher_create.php');
 			$theme->assign('voucher_api_enabled', (function_exists('sb_voucher_api_enabled') && sb_voucher_api_enabled()) ? '1' : '0');
+			$theme->assign('sb_csrf', $sb_csrf_tok);
 			$theme->display('page_admin_pay_list.tpl');	
 		echo '</div>';
 		#########/[list]###############
@@ -138,7 +144,7 @@ global $userbank, $theme;
 				? (function_exists('sb_voucher_format_key') ? sb_voucher_format_key(sb_voucher_generate_key(16)) : sb_voucher_generate_key(16))
 				: '';
 			$theme->assign('card_key_default', $gen_key);
-			$theme->assign('sb_csrf', function_exists('sb_csrf_token') ? sb_csrf_token() : '');
+			$theme->assign('sb_csrf', $sb_csrf_tok);
 			$theme->display('page_admin_pay_add.tpl');	
 		echo '</div>';
 		#########/[add]###############

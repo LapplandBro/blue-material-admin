@@ -130,7 +130,7 @@ define('LOGIN_COOKIE_LIFETIME', (60*60*24*7)*2);
 define('COOKIE_PATH', '/');
 define('COOKIE_DOMAIN', '');
 // Куки авторизации должны уходить только по HTTPS, если сайт вообще доступен по HTTPS (см. SB_WP_URL в config.php).
-define('COOKIE_SECURE', (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (!empty($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443));
+define('COOKIE_SECURE', (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (!empty($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443) || (defined('SB_WP_URL') && stripos(SB_WP_URL, 'https://') === 0));
 define('SB_SALT', 'SourceBans');
 
 /**
@@ -347,28 +347,51 @@ function sb_rate_limit_hit($bucket, $max_attempts, $window_sec)
 		@mkdir($dir, 0700, true);
 	$file = $dir . DIRECTORY_SEPARATOR . preg_replace('/[^a-zA-Z0-9_-]/', '', $bucket) . '_' . hash('sha256', $ip) . '.json';
 	$now = time();
-	$data = array('t' => array());
-	if (is_file($file)) {
-		$raw = @file_get_contents($file);
-		$decoded = $raw !== false ? @json_decode($raw, true) : null;
+	$handle = @fopen($file, 'c+');
+	if (!$handle) {
+		return false;
+	}
+
+	$hit = false;
+	if (@flock($handle, LOCK_EX)) {
+		$raw = '';
+		rewind($handle);
+		while (!feof($handle)) {
+			$raw .= (string)fread($handle, 8192);
+		}
+
+		$data = array('t' => array());
+		$decoded = $raw !== '' ? @json_decode($raw, true) : null;
 		if (is_array($decoded) && isset($decoded['t']) && is_array($decoded['t']))
 			$data = $decoded;
-	}
-	$keep = array();
-	foreach ($data['t'] as $ts) {
-		$ts = (int)$ts;
-		if ($ts > $now - (int)$window_sec)
-			$keep[] = $ts;
-	}
-	if (count($keep) >= (int)$max_attempts) {
+
+		$keep = array();
+		foreach ($data['t'] as $ts) {
+			$ts = (int)$ts;
+			if ($ts > $now - (int)$window_sec)
+				$keep[] = $ts;
+		}
+
+		if (count($keep) >= (int)$max_attempts) {
+			$hit = true;
+		} else {
+			$keep[] = $now;
+		}
+
 		$data['t'] = $keep;
-		@file_put_contents($file, json_encode($data), LOCK_EX);
-		return true;
+		$json = json_encode($data);
+		if ($json === false) {
+			$json = '{"t":[]}';
+		}
+		rewind($handle);
+		ftruncate($handle, 0);
+		fwrite($handle, $json);
+		fflush($handle);
+		flock($handle, LOCK_UN);
 	}
-	$keep[] = $now;
-	$data['t'] = $keep;
-	@file_put_contents($file, json_encode($data), LOCK_EX);
-	return false;
+
+	fclose($handle);
+	return $hit;
 }
 
 function sb_sanitize_comment_text($text)
