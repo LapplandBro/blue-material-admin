@@ -869,10 +869,11 @@ function SubMenu($el)
 	$first = true;
 	foreach($el AS $e)
 	{
-        preg_match('/.*?&c=(.*)/', html_entity_decode($e['url']), $matches);
-        if(!empty($matches[1]))
-            $c = $matches[1];
-        
+		$c = '';
+		preg_match('/.*?&c=(.*)/', html_entity_decode($e['url']), $matches);
+		if (!empty($matches[1]))
+			$c = $matches[1];
+
 		$output .= "<li style=\"".($first?"":"").(isset($_GET['c'])&&$_GET['c']==$c?"background-color: rgba(0, 0, 0, 0.075);":"")."\"><a href=\"" . $e['url'] . "\">" . $e['title']. "</a></li>";
 		$first = false;
 	}
