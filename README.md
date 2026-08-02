@@ -1,6 +1,6 @@
 # Blue Material Admin | SourceBans 2.0.6
 
-Веб-панель от **Крузяры** ([lapplandbro](https://github.com/lapplandbro)) для игровых серверов Source (**CS:GO / CS2**, **TF2** и др.) на базе **SourceBans++** с темой **Blue Admin** собственной разработки.
+Веб-панель от **Крузяры** (Разработка собственная - [lapplandbro](https://github.com/lapplandbro)) для игровых серверов Source (**CS:GO / CS2**, **TF2** и др.) на базе **SourceBans++** с темой **Blue Admin** собственной разработки.
 
 <img width="1920" height="946" alt="image" src="https://github.com/user-attachments/assets/50bd68c2-0e93-49a3-ac72-c868d3a56aa8" />
 
