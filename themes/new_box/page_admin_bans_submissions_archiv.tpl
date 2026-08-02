@@ -29,11 +29,11 @@
 						{if $sub.archiv != "2" and $sub.archiv != "3"}
 							<a class="admin-action" href="#" onclick="xajax_SetupBan({$sub.subid}); return false;">Забанить</a>
 							{if $permissions_editsub}
-								<a class="admin-action" href="#" onclick="RemoveSubmission({$sub.subid}, '{$sub.name|stripslashes|stripquotes}', '2'); return false;">Восстановить</a>
+								<a class="admin-action" href="#" onclick="RemoveSubmission({$sub.subid}, {$sub.name_js}, '2'); return false;">Восстановить</a>
 							{/if}
 						{/if}
 						{if $permissions_editsub}
-							<a class="admin-action admin-action--danger" href="#" onclick="RemoveSubmission({$sub.subid}, '{$sub.name|stripslashes|stripquotes}', '0'); return false;">Удалить</a>
+							<a class="admin-action admin-action--danger" href="#" onclick="RemoveSubmission({$sub.subid}, {$sub.name_js}, '0'); return false;">Удалить</a>
 						{/if}
 						<a class="admin-action" href="index.php?p=admin&amp;c=bans&amp;o=email&amp;type=s&amp;id={$sub.subid}">Контакты</a>
 					</span>

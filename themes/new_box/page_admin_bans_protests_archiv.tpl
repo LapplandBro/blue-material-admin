@@ -34,8 +34,8 @@
 					<td class="text-right">
 						<span class="admin-actions">
 							{if $permission_editban}
-								<a class="admin-action" href="#" onclick="RemoveProtest('{$protest.pid}', '{if $protest.authid!=""}{$protest.authid}{else}{$protest.ip}{/if}', '2'); return false;">Восстановить</a>
-								<a class="admin-action admin-action--danger" href="#" onclick="RemoveProtest('{$protest.pid}', '{if $protest.authid!=""}{$protest.authid}{else}{$protest.ip}{/if}', '0'); return false;">Удалить</a>
+								<a class="admin-action" href="#" onclick="RemoveProtest('{$protest.pid}', {$protest.label_js}, '2'); return false;">Восстановить</a>
+								<a class="admin-action admin-action--danger" href="#" onclick="RemoveProtest('{$protest.pid}', {$protest.label_js}, '0'); return false;">Удалить</a>
 							{/if}
 							<a class="admin-action" href="index.php?p=admin&amp;c=bans&amp;o=email&amp;type=p&amp;id={$protest.pid}">Контакты</a>
 						</span>
