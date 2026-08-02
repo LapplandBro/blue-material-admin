@@ -48,6 +48,7 @@
 			</div>
 		</form>
 		<script src="./scripts/qrcode.min.js"></script>
+		{literal}
 		<script>
 		(function () {
 			var box = document.getElementById('totp-qr');
@@ -58,6 +59,7 @@
 			new QRCode(box, { text: uri, width: 192, height: 192, correctLevel: QRCode.CorrectLevel.M });
 		})();
 		</script>
+		{/literal}
 		{else}
 		<form method="post" action="login2fa" class="form-horizontal">
 			{if $sb_csrf}<input type="hidden" name="sb_csrf" value="{$sb_csrf|escape}" />{/if}
