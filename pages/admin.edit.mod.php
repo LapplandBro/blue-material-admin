@@ -35,12 +35,7 @@ if(!isset($_GET['id']))
 if(!$userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_MODS))
 {
 	$log = new CSystemLog("w", "Попытка взлома", $userbank->GetProperty("user") . " пытался изменить МОД, не имея на это прав.");
-	echo '<div id="msg-red" >
-	<i><img src="images/icons/warning.svg" alt="Внимание" /></i>
-	<b>Ошибка</b>
-	<br />
-	У вас нет прав редактирования МОДов.
-</div>';
+	CreateRedBox("Ошибка", "У вас нет прав редактирования МОДов.");
 	PageDie();
 }
 

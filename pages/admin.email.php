@@ -31,23 +31,13 @@ global $theme, $userbank;
 
 if(!isset($_GET['id']))
 {
-	echo '<div id="msg-red" >
-	<i><img src="images/icons/warning.svg" alt="Warning" /></i>
-	<b>Ошибка</b>
-	<br />
-	Идентификатор жалобы или протеста не указан
-</div>';
+	CreateRedBox("Ошибка", "Идентификатор жалобы или протеста не указан");
 	PageDie();
 }
 
 if(!isset($_GET['type']) || ($_GET['type'] != 's' && $_GET['type'] != 'p'))
 {
-	echo '<div id="msg-red" >
-	<i><img src="images/icons/warning.svg" alt="Warning" /></i>
-	<b>Ошибка</b>
-	<br />
-	Неверный тип.
-</div>';
+	CreateRedBox("Ошибка", "Неверный тип.");
 	PageDie();
 }
 
@@ -65,12 +55,7 @@ else if($_GET['type'] == 'p')
 
 if(empty($email))
 {
-	echo '<div id="msg-red" >
-	<i><img src="images/icons/warning.svg" alt="Warning" /></i>
-	<b>Ошибка</b>
-	<br />
-	Нет E-mail чтобы отправить письмо.
-</div>';
+	CreateRedBox("Ошибка", "Нет E-mail чтобы отправить письмо.");
 	PageDie();
 }
 

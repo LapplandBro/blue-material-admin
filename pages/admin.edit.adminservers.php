@@ -29,12 +29,7 @@ if(!defined("IN_SB")){echo "Ошибка доступа!";die();}
 global $theme;
 if(!isset($_GET['id']))
 {
-	echo '<div id="msg-red" >
-	<i><img src="images/icons/warning.svg" alt="Warning" /></i>
-	<b>Ошибка</b>
-	<br />
-	ID администратора не указан
-</div>';
+	CreateRedBox("Ошибка", "ID администратора не указан");
 	PageDie();
 }
 
@@ -44,24 +39,14 @@ $aid = (int)$_GET['id'];
 if(!$userbank->GetProperty("user", $aid))
 {
 	$log = new CSystemLog("e", "Получение данных администратора не удалось", "Не могу найти данные для администратора с идентификатором '".$aid."'");
-	echo '<div id="msg-red" >
-	<i><img src="images/icons/warning.svg" alt="Warning" /></i>
-	<b>Ошибка</b>
-	<br />
-	Ошибка получения текущих данных.
-</div>';
+	CreateRedBox("Ошибка", "Ошибка получения текущих данных.");
 	PageDie();
 }
 
 if(!$userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_ADMINS) || !sb_can_manage_admin($aid))
 {
 	$log = new CSystemLog("w", "Попытка взлома", $userbank->GetProperty("user") . " пытался изменить доступ к серверу админа ".$userbank->GetProperty('user', $aid).", не имея на это прав.");
-	echo '<div id="msg-red" >
-	<i><img src="images/icons/warning.svg" alt="Внимание" /></i>
-	<b>Ошибка</b>
-	<br />
-	Вы не имеете прав редактирования доступа админа к серверу.
-</div>';
+	CreateRedBox("Ошибка", "Вы не имеете прав редактирования доступа админа к серверу.");
 	PageDie();
 }
 

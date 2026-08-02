@@ -8,12 +8,7 @@ global $userbank;
 // понятного сообщения об ошибке (как это уже сделано в соседних admin.edit.*.php).
 if(!isset($_GET['id']) || !$userbank->GetProperty("user", (int)$_GET['id']))
 {
-	echo '<div id="msg-red" >
-	<i><img src="images/icons/warning.svg" alt="Внимание" /></i>
-	<b>Ошибка</b>
-	<br />
-	Администратор с указанным ID не найден.
-</div>';
+	CreateRedBox("Ошибка", "Администратор с указанным ID не найден.");
 	PageDie();
 }
 

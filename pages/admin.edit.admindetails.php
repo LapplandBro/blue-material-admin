@@ -30,12 +30,7 @@ global $userbank, $theme;
 
 if(!isset($_GET['id']))
 {
-	echo '<div id="msg-red" >
-	<i><img src="./images/warning.png" alt="Warning" /></i>
-	<b>Ошибка</b>
-	<br />
-	ID администратора не указан
-</div>';
+	CreateRedBox("Ошибка", "ID администратора не указан");
 	PageDie();
 }
 $_GET['id'] = (int)$_GET['id'];
@@ -43,12 +38,7 @@ $_GET['id'] = (int)$_GET['id'];
 if(!$userbank->GetProperty("user", $_GET['id']))
 {
 	$log = new CSystemLog("e", "Получение данных администратора не удалось", "Не могу найти данные для администратора с идентификатором '".$_GET['id']."'");
-	echo '<div id="msg-red" >
-	<i><img src="./images/warning.png" alt="Warning" /></i>
-	<b>Ошибка</b>
-	<br />
-	Ошибка получения текущих данных.
-</div>';
+	CreateRedBox("Ошибка", "Ошибка получения текущих данных.");
 	PageDie();
 }
 
@@ -59,12 +49,7 @@ if (!$userbank->HasAccess(ADMIN_OWNER)) {
 	$can = $editing_self || ($userbank->HasAccess(ADMIN_EDIT_ADMINS) && function_exists('sb_can_manage_admin') && sb_can_manage_admin((int)$_GET['id']));
 	if (!$can) {
 		$log = new CSystemLog("w", "Попытка взлома", $userbank->GetProperty("user") . " пытался редактировать детали ".$userbank->GetProperty('user', $_GET['id']).", не имея на это прав.");
-		echo '<div id="msg-red" >
-		<i><img src="./images/warning.png" alt="Внимание" /></i>
-		<b>Ошибка</b>
-		<br />
-		Вы не имеете прав редактирования других профилей.
-	</div>';
+		CreateRedBox("Ошибка", "Вы не имеете прав редактирования других профилей.");
 		PageDie();
 	}
 }
