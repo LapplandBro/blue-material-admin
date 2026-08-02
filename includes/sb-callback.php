@@ -213,39 +213,57 @@ function Plogin($username, $password, $remember, $redirect, $nopass)
 function LostPassword($email)
 {
 	$objResponse = new xajaxResponse();
-	// Сканеры шлют email[] / nested array / serialize-мусор → ADOdb склеивает "Array" в SQL.
+	// Один и тот же ответ — без enumeration email.
+	$generic_ok = "ShowBox('Проверьте почту', 'Если этот e-mail есть в системе, мы отправили письмо со ссылкой для сброса пароля.', 'blue', '', true);";
+	$generic_err = "ShowBox('Ошибка', 'Введите корректный e-mail.', 'red', '', true);";
+	$rate_err = "ShowBox('Слишком много попыток', 'Подождите несколько минут и попробуйте снова.', 'red', '', true);";
+
+	// Rate-limit ДО любых обращений к БД (в т.ч. мусор от сканеров).
+	if (function_exists('sb_rate_limit_hit') && sb_rate_limit_hit('lostpass', 5, 900)) {
+		$objResponse->addScript($rate_err);
+		return $objResponse;
+	}
+
+	// Сканеры шлют email[] / nested array / serialize-мусор → раньше ADOdb клеил "Array" в SQL.
 	if (!is_string($email)) {
-		$objResponse->addScript("ShowBox('Ошибка', 'Введите корректный e-mail.', 'red', '', true);");
+		new CSystemLog("w", "LostPassword probe", "Non-string email argument from IP " . (isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '?'));
+		$objResponse->addScript($generic_err);
 		return $objResponse;
 	}
 	$email = trim($email);
 	if ($email === '' || strlen($email) > 255 || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-		$objResponse->addScript("ShowBox('Проверьте почту', 'Если этот e-mail есть в системе, мы отправили письмо со ссылкой для сброса пароля.', 'blue', '', true);");
+		$objResponse->addScript($generic_ok);
 		return $objResponse;
 	}
-	if (function_exists('sb_rate_limit_hit') && sb_rate_limit_hit('lostpass', 5, 900)) {
-		$objResponse->addScript("ShowBox('Слишком много попыток', 'Подождите несколько минут и попробуйте снова.', 'red', '', true);");
+
+	// Отдельный лимит на адрес — защита от email-bombing жертвы с разных IP.
+	if (function_exists('sb_rate_limit_hit') && sb_rate_limit_hit('lostpass_mail_' . hash('sha256', strtolower($email)), 3, 3600)) {
+		$objResponse->addScript($generic_ok);
 		return $objResponse;
 	}
-	$q = $GLOBALS['db']->GetRow("SELECT * FROM `" . DB_PREFIX . "_admins` WHERE `email` = ?", array($email));
 
-	// Один и тот же ответ — без enumeration email.
-	$generic_ok = "ShowBox('Проверьте почту', 'Если этот e-mail есть в системе, мы отправили письмо со ссылкой для сброса пароля.', 'blue', '', true);";
+	$q = $GLOBALS['db']->GetRow(
+		"SELECT `aid`, `user`, `email` FROM `" . DB_PREFIX . "_admins` WHERE `email` = ?",
+		array($email)
+	);
 
-	if(!$q || empty($q[0]))
-	{
+	if (!$q || empty($q['aid'])) {
 		$objResponse->addScript($generic_ok);
 		return $objResponse;
 	}
 
 	$objResponse->addScript("$('msg-red').setStyle('display', 'none');");
 
+	// В БД храним только хеш токена; в письме — сырой секрет (64 hex).
 	$validation = bin2hex(function_exists('random_bytes') ? random_bytes(32) : openssl_random_pseudo_bytes(32));
-	$query = $GLOBALS['db']->Execute("UPDATE `" . DB_PREFIX . "_admins` SET `validate` = ? WHERE `email` = ?", array($validation, $email));
+	$GLOBALS['db']->Execute(
+		"UPDATE `" . DB_PREFIX . "_admins` SET `validate` = ? WHERE `aid` = ?",
+		array(hash('sha256', $validation), (int)$q['aid'])
+	);
 	$message = "";
 	$message .= "Привет " . $q['user'] . "\n";
 	$message .= "Вы запросили смену пароля в системе Sourcebans.\n";
-	$message .= "Для завершения процедуры смены пароля перейдите по ссылке ниже.\n";
+	$message .= "Для завершения процедуры смены пароля перейдите по ссылке ниже и подтвердите сброс кнопкой на странице.\n";
 	$message .= "ПРИМЕЧАНИЕ: если Вы не запрашивали смену пароля, просто проигнорируйте это сообщение.\n\n";
 
 	// Ссылка для сброса пароля и заголовок From строятся на основе доверенного SB_WP_URL,

@@ -27,66 +27,134 @@
 
 global $theme, $userbank;
 
-if(isset($_GET['validation'],$_GET['email']) && !empty($_GET['email']) && !empty($_GET['validation']))
-{  
-	$email = $_GET['email'];
-	$validation = $_GET['validation'];
-	$tryHack = false;
-	
-	if (is_array($email) || is_array($validation))
-		$tryHack = true;
-	
-	if ($tryHack) {
-		CreateRedBox("Ошибка", "Была зафиксирована попытка взлома системы через некорректно построенный запрос. Данная попытка была записана в системный лог.");
-		require(TEMPLATES_PATH . "/footer.php");
-		$log = new CSystemLog("e", "Попытка взлома", "Произошла попытка взлома системы с использованием некорректно построенного запроса SQL.");
-		exit();
-	}
-	
-	preg_match("@^(?:http://)?([^/]+)@i", $_SERVER['HTTP_HOST'], $match);
+/**
+ * Проверка формата параметров ссылки сброса (без обращения к БД).
+ * @return string|null текст ошибки или null если ок
+ */
+function sb_lostpass_validate_params($email, $validation)
+{
+	if (!is_string($email) || !is_string($validation))
+		return 'Некорректный запрос.';
+	$email = trim($email);
+	$validation = trim($validation);
+	if ($email === '' || strlen($email) > 255 || !filter_var($email, FILTER_VALIDATE_EMAIL))
+		return 'Некорректный запрос.';
+	// Сырой токен из письма — ровно 64 hex-символа.
+	if (!preg_match('/^[a-f0-9]{64}$/i', $validation))
+		return 'Некорректный запрос.';
+	return null;
+}
 
-	if($match[0] != $_SERVER['HTTP_HOST']) 
-	{ 
-		echo '<div class="alert alert-danger" role="alert" id="msg-red"><h4>Ошибка!</h4><span class="p-l-10">Произошла неизвестная ошибка.</span></div>';
-	
+function sb_lostpass_alert($type, $title, $text)
+{
+	$class = ($type === 'success') ? 'alert-success' : 'alert-danger';
+	$id = ($type === 'success') ? 'msg-blue' : 'msg-red';
+	echo '<div class="alert ' . $class . '" role="alert" id="' . $id . '"><h4>'
+		. htmlspecialchars($title, ENT_QUOTES, 'UTF-8')
+		. '</h4><span class="p-l-10">'
+		. $text
+		. '</span></div>';
+}
+
+$confirm_get = (
+	isset($_GET['validation'], $_GET['email'])
+	&& $_GET['email'] !== ''
+	&& $_GET['validation'] !== ''
+	&& (!isset($_SERVER['REQUEST_METHOD']) || strtoupper((string)$_SERVER['REQUEST_METHOD']) !== 'POST')
+);
+
+$confirm_post = (
+	isset($_SERVER['REQUEST_METHOD'])
+	&& strtoupper((string)$_SERVER['REQUEST_METHOD']) === 'POST'
+	&& isset($_POST['confirm_reset'], $_POST['email'], $_POST['validation'])
+);
+
+if ($confirm_post) {
+	$email = $_POST['email'];
+	$validation = $_POST['validation'];
+
+	$csrf = isset($_POST['sb_csrf']) ? $_POST['sb_csrf'] : '';
+	if (function_exists('sb_csrf_validate') && !sb_csrf_validate($csrf)) {
+		sb_lostpass_alert('error', 'Ошибка!', 'Сессия истекла или неверный CSRF-токен. Откройте ссылку из письма ещё раз.');
 		require(TEMPLATES_PATH . "/footer.php");
-		$log = new CSystemLog("w", "Попытка взлома", "Попытка сброса пароля с использованием: " . $_SERVER['HTTP_HOST']);
 		exit();
 	}
 
-	if(strlen($validation) < 60)
-	{
-		echo '<div class="alert alert-danger" role="alert" id="msg-red"><h4>Ошибка!</h4><span class="p-l-10">Строка проверки является слишком короткой.</span></div>';
-	
+	if (function_exists('sb_rate_limit_hit') && sb_rate_limit_hit('lostpass_confirm', 10, 900)) {
+		sb_lostpass_alert('error', 'Ошибка!', 'Слишком много попыток. Подождите несколько минут.');
 		require(TEMPLATES_PATH . "/footer.php");
 		exit();
 	}
-	
-	$q = $GLOBALS['db']->GetRow("SELECT aid, user FROM `" . DB_PREFIX . "_admins` WHERE `email` = ? && `validate` IS NOT NULL && `validate` = ?", array($email, $validation));
-	if($q)
-	{
-		$newpass = generate_salt(MIN_PASS_LENGTH+8);
-		$query = $GLOBALS['db']->Execute("UPDATE `" . DB_PREFIX . "_admins` SET `password` = ?, validate = NULL WHERE `aid` = ?", array($userbank->hash_password($newpass), $q['aid']));
+
+	$param_err = sb_lostpass_validate_params($email, $validation);
+	if ($param_err !== null) {
+		new CSystemLog("w", "LostPassword confirm probe", "Malformed confirm from IP " . (isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '?'));
+		sb_lostpass_alert('error', 'Ошибка!', 'Строка проверки не соответствует адресу электронной почты для запроса на сброс.');
+		require(TEMPLATES_PATH . "/footer.php");
+		exit();
+	}
+
+	$email = trim($email);
+	$validation = trim($validation);
+	$token_hash = hash('sha256', $validation);
+
+	$q = $GLOBALS['db']->GetRow(
+		"SELECT `aid`, `user` FROM `" . DB_PREFIX . "_admins` WHERE `email` = ? AND `validate` IS NOT NULL AND `validate` = ?",
+		array($email, $token_hash)
+	);
+
+	if ($q && !empty($q['aid'])) {
+		$newpass = generate_salt(MIN_PASS_LENGTH + 8);
+		$GLOBALS['db']->Execute(
+			"UPDATE `" . DB_PREFIX . "_admins` SET `password` = ?, `validate` = NULL WHERE `aid` = ?",
+			array($userbank->hash_password($newpass), (int)$q['aid'])
+		);
 		$message = "Привет " . $q['user'] . ",\n\n";
 		$message .= "Ваш пароль был успешно сброшен.\n";
 		$message .= "Ваш пароль изменен на: ".$newpass."\n\n";
 		$message .= "Войдите в ваш аккаунт SourceBans и смените пароль.\n";
 
-		// Раньше здесь использовался $_SERVER['HTTP_HOST'] (заголовок Host, полностью
-		// подконтрольный клиенту) для построения адреса отправителя - это позволяло бы
-		// внедрить произвольные заголовки письма при специально сформированном Host.
-		// Используем вместо этого доверенный домен из SB_WP_URL (config.php).
+		// From на основе SB_WP_URL, не HTTP_Host (header injection / spoof).
 		$headers = 'From: SourceBans@' . sb_get_site_host() . "\n" .
 		'X-Mailer: PHP/' . phpversion();
-		$m = EMail($email, "Сброс пароля SourceBans", $message, $headers);
-		
-		echo '<div class="alert alert-success" role="alert" id="msg-blue"><h4>Успешно!</h4><span class="p-l-10">Ваш пароль был сброшен и отправлен вам на почту.<br />Проверьте папку "Спам" тоже.<br />Пожалуйста, войдите, используя этот пароль, затем смените пароль в вашей учетной записи на свой, нормальный :).</span></div>';
+		EMail($email, "Сброс пароля SourceBans", $message, $headers);
+
+		sb_lostpass_alert(
+			'success',
+			'Успешно!',
+			'Ваш пароль был сброшен и отправлен вам на почту.<br />Проверьте папку "Спам" тоже.<br />Пожалуйста, войдите, используя этот пароль, затем смените пароль в вашей учетной записи на свой, нормальный :).'
+		);
+	} else {
+		sb_lostpass_alert('error', 'Ошибка!', 'Строка проверки не соответствует адресу электронной почты для запроса на сброс.');
 	}
-	else 
-	{
-		echo '<div class="alert alert-danger" role="alert" id="msg-red"><h4>Ошибка!</h4><span class="p-l-10">Строка проверки не соответствует адресу электронной почты для запроса на сброс.</span></div>';
+	require(TEMPLATES_PATH . "/footer.php");
+	exit();
+}
+
+if ($confirm_get) {
+	$email = $_GET['email'];
+	$validation = $_GET['validation'];
+
+	// GET только показывает форму подтверждения — пароль НЕ меняем.
+	// Иначе prefetch почтовых сканеров / антивирусов сжигает токен и сбрасывает пароль.
+	$param_err = sb_lostpass_validate_params($email, $validation);
+	if ($param_err !== null) {
+		if (!is_string($email) || !is_string($validation)) {
+			new CSystemLog("e", "Попытка взлома", "Произошла попытка взлома системы с использованием некорректно построенного запроса SQL.");
+			sb_lostpass_alert('error', 'Ошибка', 'Была зафиксирована попытка взлома системы через некорректно построенный запрос. Данная попытка была записана в системный лог.');
+		} else {
+			sb_lostpass_alert('error', 'Ошибка!', 'Некорректная ссылка сброса пароля.');
+		}
+		require(TEMPLATES_PATH . "/footer.php");
+		exit();
 	}
-}else 
-{
+
+	$theme->assign('lostpass_confirm', true);
+	$theme->assign('lostpass_email', trim($email));
+	$theme->assign('lostpass_validation', trim($validation));
+	$theme->assign('sb_csrf', function_exists('sb_csrf_token') ? sb_csrf_token() : '');
+	$theme->display('page_lostpassword.tpl');
+} else {
+	$theme->assign('lostpass_confirm', false);
 	$theme->display('page_lostpassword.tpl');
 }
