@@ -213,6 +213,16 @@ function Plogin($username, $password, $remember, $redirect, $nopass)
 function LostPassword($email)
 {
 	$objResponse = new xajaxResponse();
+	// Сканеры шлют email[] / nested array / serialize-мусор → ADOdb склеивает "Array" в SQL.
+	if (!is_string($email)) {
+		$objResponse->addScript("ShowBox('Ошибка', 'Введите корректный e-mail.', 'red', '', true);");
+		return $objResponse;
+	}
+	$email = trim($email);
+	if ($email === '' || strlen($email) > 255 || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+		$objResponse->addScript("ShowBox('Проверьте почту', 'Если этот e-mail есть в системе, мы отправили письмо со ссылкой для сброса пароля.', 'blue', '', true);");
+		return $objResponse;
+	}
 	if (function_exists('sb_rate_limit_hit') && sb_rate_limit_hit('lostpass', 5, 900)) {
 		$objResponse->addScript("ShowBox('Слишком много попыток', 'Подождите несколько минут и попробуйте снова.', 'red', '', true);");
 		return $objResponse;
