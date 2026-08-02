@@ -339,7 +339,9 @@ if(defined("SB_MEM"))
 // случаях ошибки логируются, но не выводятся в браузер.
 ini_set('display_errors', defined('DEVELOPER_MODE') ? 1 : 0);
 ini_set('log_errors', 1);
-error_reporting(E_ALL ^ E_NOTICE);
+// E_DEPRECATED глушим всегда: старый Smarty 2.x орёт на PHP 8.2+ (dynamic properties),
+// а полезные баги (Warning/Error) в debug всё равно видны.
+error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED & ~E_STRICT);
 
 
 // ---------------------------------------------------
@@ -577,7 +579,7 @@ if(!@is_writable(SB_THEMES_COMPILE))
 	die("<b>Ошибка шаблона</b>: Папка <b>".SB_THEMES_COMPILE."</b> не перезаписываемая! Установите права 777 на папку через FTP-клиент.");
 
 $theme = new Smarty();
-$theme->error_reporting 	= 	E_ALL ^ E_NOTICE;
+$theme->error_reporting 	= 	E_ALL & ~E_NOTICE & ~E_DEPRECATED & ~E_STRICT;
 $theme->use_sub_dirs 		= 	false;
 $theme->compile_id			= 	SB_THEME;
 $theme->caching 			= 	false;

@@ -61,6 +61,7 @@ define('SMARTY_PHP_ALLOW',      3);
 /**
  * @package Smarty
  */
+#[\AllowDynamicProperties]
 class Smarty
 {
     /**#@+
@@ -546,6 +547,13 @@ class Smarty
      * @var array
      */
     var $_cache_serials = array();
+
+    /**
+     * info for cache include compilation (Smarty 2.x)
+     *
+     * @var array|null
+     */
+    var $_cache_include_info = null;
 
     /**
      * name of optional cache include file
