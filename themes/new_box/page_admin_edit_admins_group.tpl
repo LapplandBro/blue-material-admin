@@ -1,4 +1,5 @@
 <form action="" method="post">
+	<input type="hidden" name="sb_csrf" value="{$sb_csrf}" />
 	<div class="card banlist-panel admin-form" id="add-group">
 		<div class="form-horizontal" role="form">
 			<div class="card-header">

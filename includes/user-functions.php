@@ -62,6 +62,11 @@ function generate_salt($length=5)
  * @return true.
  */
 function logout() {
+	$aid = 0;
+	if (isset($_COOKIE['aid']))
+		$aid = (int)$_COOKIE['aid'];
+	if ($aid > 0 && function_exists('sb_clear_web_session'))
+		sb_clear_web_session($aid);
 	if (function_exists('sb_set_auth_cookie')) {
 		sb_set_auth_cookie('aid', '', time()-86400);
 		sb_set_auth_cookie('password', '', time()-86400);

@@ -13,6 +13,14 @@ define('IN_INSTALL', true);
 // Live-сайт читает ROOT/config.php (рядом с index.php), не data/config.php.
 define('SB_CONFIG_PATH', dirname(ROOT) . '/config.php');
 
+// После установки config.php блокирует повторный запуск инсталлятора (не только .htaccess).
+if (is_file(SB_CONFIG_PATH)) {
+	header('HTTP/1.1 403 Forbidden');
+	header('Content-Type: text/plain; charset=utf-8');
+	echo "Installer locked: config.php already exists.\nRemove or rename config.php to reinstall.";
+	exit;
+}
+
 if (!isset($_SERVER['REQUEST_URI']) || trim($_SERVER['REQUEST_URI']) === '') {
 	$_SERVER['REQUEST_URI'] = $_SERVER['SCRIPT_NAME'];
 	if (!empty($_SERVER['QUERY_STRING']))

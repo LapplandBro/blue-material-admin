@@ -2131,6 +2131,28 @@ function sb_clear_auth_cookies()
 }
 
 /**
+ * Не-OWNER не может выдавать ADMIN_OWNER через bitmask (AddAdmin/AddGroup).
+ */
+function sb_strip_nonowner_web_flags($flags)
+{
+	global $userbank;
+	$flags = (int)$flags;
+	if (!isset($userbank) || !is_object($userbank) || !$userbank->HasAccess(ADMIN_OWNER))
+		$flags = $flags & ~ADMIN_OWNER;
+	return $flags;
+}
+
+/** Веб-группа содержит бит ADMIN_OWNER? */
+function sb_web_group_has_owner($gid)
+{
+	$gid = (int)$gid;
+	if ($gid <= 0 || empty($GLOBALS['db']))
+		return false;
+	$flags = $GLOBALS['db']->GetOne("SELECT flags FROM `" . DB_PREFIX . "_groups` WHERE gid = ?", array($gid));
+	return (((int)$flags) & ADMIN_OWNER) !== 0;
+}
+
+/**
  * Tripwire: отозвать права (expired=1), мгновенно выкинуть из сессии.
  * Сообщение: «Превышение полномочий».
  *
