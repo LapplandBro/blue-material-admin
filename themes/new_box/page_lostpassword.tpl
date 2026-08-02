@@ -9,7 +9,7 @@
 			<input type="hidden" name="email" value="{$lostpass_email|escape}" />
 			<input type="hidden" name="validation" value="{$lostpass_validation|escape}" />
 			<input type="hidden" name="confirm_reset" value="1" />
-			{sb_button text="Подтвердить сброс пароля" onclick="" icon="<i class='zmdi zmdi-key'></i>" class="bgm-blue btn-icon-text" id=aconfirm submit=true}
+			{sb_button text="Подтвердить сброс пароля" icon="<i class='zmdi zmdi-key'></i>" class="bgm-blue btn-icon-text" id=aconfirm submit=true}
 		</form>
 	</div>
 	{else}
