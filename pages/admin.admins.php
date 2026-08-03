@@ -161,9 +161,9 @@ else
 $pages = ceil($admin_count/$AdminsPerPage);
 if($pages > 1) {
 	if (isset($_GET['showexpiredadmins']))
-		$admin_nav_p = ' / Страницы: <select class="form-control" onchange="window.location=\'index.php?p=admin&c=admins&showexpiredadmins=true&page=\' + $(\'PageChanger\').value;" style="display: inline-block;width: 40px;" id="PageChanger">';
+		$admin_nav_p = ' / Страницы: <select class="form-control" onchange="window.location=sbLoc(\'admin/admins\',\'showexpiredadmins=true&amp;page=\'+$(\'PageChanger\').value);" style="display: inline-block;width: 40px;" id="PageChanger">';
 	else
-		$admin_nav_p = ' / Страницы: <select class="form-control" onchange="changePage(this,\'A\',\''.htmlspecialchars(addslashes($_GET['advSearch'])).'\',\''.htmlspecialchars(addslashes($_GET['advType'])).'\');" style="display: inline-block;width: 40px;">';
+		$admin_nav_p = ' / Страницы: <select class="form-control" onchange="changePage(this,\'A\',\''.htmlspecialchars(addslashes(isset($_GET['advSearch'])?$_GET['advSearch']:'')).'\',\''.htmlspecialchars(addslashes(isset($_GET['advType'])?$_GET['advType']:'')).'\');" style="display: inline-block;width: 40px;">';
 	
 	for($i=1;$i<=$pages;$i++) {
 		if($i==$_GET["page"]) {

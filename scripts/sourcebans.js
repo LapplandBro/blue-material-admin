@@ -1181,7 +1181,7 @@ function search_admins(chek)
 		input = $('server').value;
 	}
 	if(type!="" && input!="")
-		window.location = "index.php?p=admin&c=admins&advSearch=" + input + "&advType=" + type +""+ add_search;
+		window.location = sbLoc("admin/admins", "advSearch=" + encodeURIComponent(input) + "&advType=" + encodeURIComponent(type) + add_search);
 }
 
 function search_log()
@@ -1558,7 +1558,7 @@ function changePage(newPage, type, advSearch, advType)
 	 if (nextPage != 0)
 	 {
 		if(type == "A")
-            window.location = "index.php?p=admin&c=admins"+searchlink+"&page="+nextPage;
+            window.location = sbLoc("admin/admins", searchlink.replace(/^&/, "") + (searchlink ? "&" : "") + "page=" + nextPage);
 		if(type == "B")
             window.location = sbLoc("banlist", searchlink + "&page=" + nextPage);
 		if(type == "C")

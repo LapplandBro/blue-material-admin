@@ -358,9 +358,9 @@ class xajaxResponse
 			$sURL = str_replace($queryPart, $queryPart, $sURL);
 		}
 		if ($iDelay)
-			$this->addScript('window.setTimeout("window.location = \''.$sURL.'\';",'.($iDelay*1000).');');
+			$this->addScript('window.setTimeout(function(){var u='.json_encode((string)$sURL, JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT).';if(typeof sbGo==="function")sbGo(u);else if(typeof sbAbs==="function")window.location.href=sbAbs(u);else window.location.href=u;},'.($iDelay*1000).');');
 		else
-			$this->addScript('window.location = "'.$sURL.'";');
+			$this->addScript('(function(){var u='.json_encode((string)$sURL, JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT).';if(typeof sbGo==="function")sbGo(u);else if(typeof sbAbs==="function")window.location.href=sbAbs(u);else window.location.href=u;})();');
 		return $this;
 	}
 	

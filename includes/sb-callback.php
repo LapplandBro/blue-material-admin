@@ -3703,6 +3703,10 @@ function RehashAdmins_pay($server, $card, $do=0)
 	$objResponse = new xajaxResponse();
     global $userbank, $username;
 	$do = (int)$do;
+	$homeJs = json_encode(function_exists('sb_url') ? sb_url('home') : './', JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+	if ($homeJs === '"./"' || $homeJs === '""')
+		$homeJs = json_encode('./', JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+	$navJs = "setTimeout(function(){ if(typeof sbGo==='function') sbGo(".$homeJs."); else if(typeof sbAbs==='function') window.location.href=sbAbs(".$homeJs."); else window.location.href=".$homeJs."; }, 1800);";
 
 	$servers = explode(",",$server);
 	if(sizeof($servers)>0) {
@@ -3717,7 +3721,7 @@ function RehashAdmins_pay($server, $card, $do=0)
 			if($do >= sizeof($servers)-1) {
 				$objResponse->addAppend("rehashDiv", "innerHTML", "<b>Выполнено, переадресация....</b>");
 				$objResponse->addScript("$('dialog-control').setStyle('display', 'block');");
-				$objResponse->addScript("setTimeout(\"window.location = 'index.php';\", 1800);");
+				$objResponse->addScript($navJs);
 			}
 			return $objResponse;
 		}
@@ -3728,7 +3732,7 @@ function RehashAdmins_pay($server, $card, $do=0)
 			if($do >= sizeof($servers)-1) {
 				$objResponse->addAppend("rehashDiv", "innerHTML", "<b>Выполнено, переадресация....</b>");
 				$objResponse->addScript("$('dialog-control').setStyle('display', 'block');");
-				$objResponse->addScript("setTimeout(\"window.location = 'index.php';\", 1800);");
+				$objResponse->addScript($navJs);
 			}
 			return $objResponse;
 		}
@@ -3745,7 +3749,7 @@ function RehashAdmins_pay($server, $card, $do=0)
 			if($do >= sizeof($servers)-1) {
 				$objResponse->addAppend("rehashDiv", "innerHTML", "<b>Выполнено, переадресация....</b>");
 				$objResponse->addScript("$('dialog-control').setStyle('display', 'block');");
-				$objResponse->addScript("setTimeout(\"window.location = 'index.php';\", 1800);");
+				$objResponse->addScript($navJs);
 			}
 			return $objResponse;
 		}
@@ -3760,11 +3764,12 @@ function RehashAdmins_pay($server, $card, $do=0)
 		if($do >= sizeof($servers)-1) {
 			$objResponse->addAppend("rehashDiv", "innerHTML", "<b>Выполнено, переадресация....</b>");
 			$objResponse->addScript("$('dialog-control').setStyle('display', 'block');");
-			$objResponse->addScript("setTimeout(\"window.location = 'index.php';\", 1800);");
+			$objResponse->addScript($navJs);
 		}
 	} else {
 		$objResponse->addAppend("rehashDiv", "innerHTML", "Не выбран сервер.");
 		$objResponse->addScript("$('dialog-control').setStyle('display', 'block');");
+		$objResponse->addScript($navJs);
 	}
 	return $objResponse;
 }

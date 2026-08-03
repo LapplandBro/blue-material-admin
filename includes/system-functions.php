@@ -1262,7 +1262,9 @@ function CheckAdminAccess($mask)
 
 function RedirectJS($url)
 {
-	echo '<script>window.location = "' . $url .'";</script>';
+	$url = function_exists('sb_abs_url') ? sb_abs_url($url) : (string)$url;
+	$js = json_encode((string)$url, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+	echo '<script>if(typeof sbGo==="function")sbGo(' . $js . ');else if(typeof sbAbs==="function")window.location.href=sbAbs(' . $js . ');else window.location.href=' . $js . ';</script>';
 }
 
 function RemoveCode($text)
@@ -2311,12 +2313,14 @@ function sb_list_action_done($title, $msg, $color, $redirect)
 	$redirect = (string)$redirect;
 	if ($redirect === '')
 		$redirect = 'index.php';
+	$redirect = function_exists('sb_abs_url') ? sb_abs_url($redirect) : $redirect;
 	if (!headers_sent())
 	{
 		header('Location: ' . $redirect);
 		exit;
 	}
-	echo '<script>window.location=' . json_encode($redirect) . ';</script>';
+	$js = json_encode($redirect, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+	echo '<script>if(typeof sbGo==="function")sbGo(' . $js . ');else window.location.href=' . $js . ';</script>';
 	exit;
 }
 
