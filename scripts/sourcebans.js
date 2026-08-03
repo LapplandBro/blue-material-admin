@@ -106,21 +106,30 @@ var accordionInstances = {};
 /**
  * Абсолютный URL относительно <base href>.
  * Важно: window.location = 'index.php?…' / 'admin/admins' НЕ учитывает <base>,
- * и с /admin/admins уезжает в /admin/index.php (кнопка «Назад» «ничего не делает»).
+ * и с /admin/admins уезжает в /admin/admin/admins (или /admin/index.php) → «главная».
  */
 function sbAbs(url) {
-	url = (url == null) ? '' : String(url);
-	if (url === '' || url.charAt(0) === '#' || /^[a-z][a-z0-9+.-]*:/i.test(url))
+	url = (url == null) ? '' : String(url).trim();
+	if (url === '' || url.charAt(0) === '#')
 		return url;
-	// Ведущий «/» = корень хоста, а не каталог панели в подпапке — снимаем, резолвим через <base>.
-	if (url.charAt(0) === '/')
-		url = url.substring(1);
+	// Уже абсолютный (http:, https:, …)
+	if (/^[a-z][a-z0-9+.-]*:/i.test(url))
+		return url;
+	var baseEl = document.getElementsByTagName('base')[0];
+	var origin = window.location.protocol + '//' + window.location.host;
+	var base = (baseEl && baseEl.href) ? baseEl.href : (origin + '/');
 	try {
-		var a = document.createElement('a');
-		a.href = url;
-		return a.href;
+		if (url.charAt(0) === '/')
+			return new URL(url, origin).href;
+		return new URL(url, base).href;
 	} catch (e) {
-		return url;
+		try {
+			var a = document.createElement('a');
+			a.href = url;
+			return a.href;
+		} catch (e2) {
+			return url;
+		}
 	}
 }
 
@@ -1262,6 +1271,9 @@ function ShowBox(title, msg, color, redir, noclose, timer)
 		type = "info";
 	else if (color == "green")
 		type = "success";
+
+	if (redir && typeof sbAbs === "function")
+		redir = sbAbs(redir);
 
 	// Legacy hooks for kickit/blockit iframes (they poke parent #dialog-control)
 	function ensureDialogNode(id) {
