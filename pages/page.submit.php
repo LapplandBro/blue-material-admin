@@ -32,6 +32,11 @@ if($GLOBALS['config']['config.enablesubmit']!="1")
 	CreateRedBox("Ошибка", "Страница отключена.");
 	PageDie();
 }
+if ($userbank->is_logged_in())
+{
+	CreateRedBox("Недоступно", "Вы вошли как администратор. Жалобы на игроков оставляют гости; бан выдаётся из админ-панели или с сервера.");
+	PageDie();
+}
 
 require_once(INCLUDES_PATH.'/CServerControl.php');
 $sinfo = new CServerControl();
