@@ -134,10 +134,28 @@ else
 		$errors .=  '* Введите ник игрока<br>';
 		$validsubmit = false;
 	}
+	elseif (strlen($PlayerName) > 128)
+	{
+		$errors .=  '* Ник игрока слишком длинный (макс. 128).<br>';
+		$validsubmit = false;
+	}
 	if (strlen($UnbanReason) == 0)
 	{
 		$errors .=  '* Напишите пару строк коментария<br>';
 		$validsubmit = false;
+	}
+	elseif (strlen($UnbanReason) > 512)
+	{
+		$errors .=  '* Комментарий слишком длинный (макс. 512).<br>';
+		$validsubmit = false;
+	}
+	$rawProbe = (isset($_POST['PlayerName']) ? (string)$_POST['PlayerName'] : '')
+		. (isset($_POST['BanReason']) ? (string)$_POST['BanReason'] : '');
+	if ($validsubmit && preg_match('/xajax_|\bjavascript\s*:|<\s*script|on(?:error|load|click)\s*=/i', $rawProbe)) {
+		$errors .=  '* Некорректные данные в форме.<br>';
+		$validsubmit = false;
+		if (class_exists('CSystemLog'))
+			new CSystemLog('w', 'Подозрительный протест', 'Отклонён протест с признаками инъекции с IP ' . (isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '?'));
 	}
 	if (!check_email($Email))
 	{

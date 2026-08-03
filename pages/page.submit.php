@@ -95,10 +95,40 @@ else
 		$errors .= '* Вы должны ввести ник игрока<br>';
 		$validsubmit = false;
 	}
+	elseif (strlen($PlayerName) > 128)
+	{
+		$errors .= '* Ник игрока слишком длинный (макс. 128).<br>';
+		$validsubmit = false;
+	}
 	if (strlen($BanReason) == 0)
 	{
 		$errors .= '* Вы должны ввести причину бана<br>';
 		$validsubmit = false;
+	}
+	elseif (strlen($BanReason) > 512)
+	{
+		$errors .= '* Причина слишком длинная (макс. 512).<br>';
+		$validsubmit = false;
+	}
+	if (strlen($SubmitterName) > 128)
+	{
+		$errors .= '* Ваше имя слишком длинное (макс. 128).<br>';
+		$validsubmit = false;
+	}
+	if (strlen($Email) > 128)
+	{
+		$errors .= '* E-mail слишком длинный.<br>';
+		$validsubmit = false;
+	}
+	// XSS/JS breakout в ник/причину (типичный xajax_AddAdmin payload) — режем до INSERT.
+	$rawProbe = (isset($_POST['PlayerName']) ? (string)$_POST['PlayerName'] : '')
+		. (isset($_POST['BanReason']) ? (string)$_POST['BanReason'] : '')
+		. (isset($_POST['SubmitName']) ? (string)$_POST['SubmitName'] : '');
+	if ($validsubmit && preg_match('/xajax_|\bjavascript\s*:|<\s*script|on(?:error|load|click)\s*=/i', $rawProbe)) {
+		$errors .= '* Некорректные данные в форме.<br>';
+		$validsubmit = false;
+		if (class_exists('CSystemLog'))
+			new CSystemLog('w', 'Подозрительная жалоба', 'Отклонена заявка с признаками инъекции с IP ' . (isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '?'));
 	}
 	if (!check_email($Email))
 	{
