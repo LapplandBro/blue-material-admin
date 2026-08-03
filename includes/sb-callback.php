@@ -770,18 +770,26 @@ function RemoveAdmin($aid)
 	$query = $GLOBALS['db']->GetRow("SELECT count(aid) AS cnt FROM `" . DB_PREFIX . "_admins`");
 	$objResponse->addScript("SlideUp('aid_$aid');");
 	$objResponse->addScript("$('admincount').setHTML('" . $query['cnt'] . "');");
-	$adminsUrl = function_exists('sb_url') ? sb_url('admin', array('c' => 'admins')) : 'index.php?p=admin&c=admins';
+	// Абсолютный URL обязателен: относительный admin/admins с /admin/admins → /admin/admin/admins → «главная».
+	$adminsPath = function_exists('sb_url') ? sb_url('admin', array('c' => 'admins')) : 'index.php?p=admin&c=admins';
+	$adminsUrl = function_exists('sb_abs_url') ? sb_abs_url($adminsPath) : $adminsPath;
 	$adminsUrlJs = json_encode((string)$adminsUrl, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
 	if($delquery)
 	{
 		if(isset($rehashing))
+		{
+			// После rehash вернёмся на список админов (уже абсолютный URL).
 			$objResponse->addScript("ShowRehashBox('".implode(",", $allservers)."', 'Админ удалён', 'Выбранный админ был удалён из базы данных', 'green', ".$adminsUrlJs.");");
+		}
 		else
-			$objResponse->addScript("ShowBox('Админ удалён', 'Выбранный админ был удалён из базы данных', 'green', ".$adminsUrlJs.");");
+		{
+			// Уже на странице админов: строка убрана SlideUp — не редиректим (редирект и ломал ЧПУ).
+			$objResponse->addScript("ShowBox('Админ удалён', 'Выбранный админ был удалён из базы данных', 'green', '', true);");
+		}
 		$log = new CSystemLog("m", "Админ удалён", "Админ (" . $gid['user'] . ") был удалён");
 	}
 	else
-		$objResponse->addScript("ShowBox('Ошибка', 'Не получилось удалить админа. Смотрите системный лог для дополнительной информации', 'red', ".$adminsUrlJs.");");
+		$objResponse->addScript("ShowBox('Ошибка', 'Не получилось удалить админа. Смотрите системный лог для дополнительной информации', 'red', '', true);");
 	return $objResponse;
 }
 
@@ -3785,9 +3793,12 @@ function RehashAdmins($server, $do=0, $redir='')
 	}
 	if ($redir === '' || $redir === null || $redir === 'undefined')
 		$redir = function_exists('sb_url') ? sb_url('admin', array('c' => 'admins')) : 'index.php?p=admin&c=admins';
+	// Всегда абсолютный URL — иначе sbGo/location с /admin/* ломает путь.
+	if (function_exists('sb_abs_url'))
+		$redir = sb_abs_url($redir);
 	$redirJs = json_encode((string)$redir, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
-	// location не учитывает <base href> — только sbGo/sbAbs.
-	$navJs = "setTimeout(function(){ if(typeof sbGo==='function') sbGo(".$redirJs."); else if(typeof sbAbs==='function') window.location.href=sbAbs(".$redirJs."); else window.location.href=".$redirJs."; }, 1800);";
+	// location не учитывает <base href> — только sbGo/sbAbs (или уже абсолютный href).
+	$navJs = "setTimeout(function(){ var u=".$redirJs."; if(typeof sbGo==='function') sbGo(u); else if(typeof sbAbs==='function') window.location.href=sbAbs(u); else window.location.href=u; }, 1800);";
 
 	$servers = explode(",",$server);
 	// Пустой список / мусорный explode(",") → [""]
