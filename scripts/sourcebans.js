@@ -1345,8 +1345,9 @@ function sbNavigateOrReload(redir)
 	if (!redir || redir === "undefined")
 		return;
 	try {
+		var abs = (typeof sbAbs === "function") ? sbAbs(redir) : redir;
 		var a = document.createElement("a");
-		a.href = redir;
+		a.href = abs;
 		var targetBase = a.href.split("#")[0];
 		var curBase = window.location.href.split("#")[0];
 		var hash = a.hash || "";
@@ -1360,7 +1361,10 @@ function sbNavigateOrReload(redir)
 		window.location.replace(a.href);
 		return;
 	} catch (e) {}
-	window.location = redir;
+	if (typeof sbGo === "function")
+		sbGo(redir);
+	else
+		window.location = redir;
 }
 // Убрать одноразовый _sb= из адресной строки после принудительного GET.
 (function () {
@@ -1580,18 +1584,18 @@ function ShowKickBox(check, type)
 
 function ShowRehashBox(servers, title, msg, color, redir)
 {
-	// Don't show anything sm_rehash related, if there are no servers to rcon.
-	if(servers == '')
+	if (typeof redir === "undefined" || redir === null || redir === "undefined")
+		redir = "";
+	// Нет серверов для RCON — просто уведомление и редирект (redir через sbAbs/sbGo).
+	if (servers == "" || servers == null)
 	{
-		ShowBox(title, msg, color, '', true);
-		$('dialog-control').setStyle('display', 'none');
-		xajax_RehashAdmins(servers);
-	}else{
-		msg = msg + '<br /><hr /><i>Обновление данных администратора и группы по всем связанным серверам...</i><div id="rehashDiv" name="rehashDiv" width="100%"></div>';
-		ShowBox(title, msg, color, '', false);
-		$('dialog-control').setStyle('display', 'none');
-		xajax_RehashAdmins(servers);
+		ShowBox(title, msg, color, redir, false);
+		return;
 	}
+	msg = msg + '<br /><hr /><i>Обновление данных администратора и группы по всем связанным серверам...</i><div id="rehashDiv" name="rehashDiv" width="100%"></div>';
+	ShowBox(title, msg, color, '', false);
+	$('dialog-control').setStyle('display', 'none');
+	xajax_RehashAdmins(servers, 0, redir);
 }
 
 function ShowRehashBox_pay(servers, title, msg, color, redir, card)

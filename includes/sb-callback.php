@@ -770,16 +770,18 @@ function RemoveAdmin($aid)
 	$query = $GLOBALS['db']->GetRow("SELECT count(aid) AS cnt FROM `" . DB_PREFIX . "_admins`");
 	$objResponse->addScript("SlideUp('aid_$aid');");
 	$objResponse->addScript("$('admincount').setHTML('" . $query['cnt'] . "');");
+	$adminsUrl = function_exists('sb_url') ? sb_url('admin', array('c' => 'admins')) : 'index.php?p=admin&c=admins';
+	$adminsUrlJs = json_encode((string)$adminsUrl, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
 	if($delquery)
 	{
 		if(isset($rehashing))
-			$objResponse->addScript("ShowRehashBox('".implode(",", $allservers)."', 'Админ удалён', 'Выбранный админ был удалён из базы данных', 'green', 'index.php?p=admin&c=admins', true);");
+			$objResponse->addScript("ShowRehashBox('".implode(",", $allservers)."', 'Админ удалён', 'Выбранный админ был удалён из базы данных', 'green', ".$adminsUrlJs.");");
 		else
-			$objResponse->addScript("ShowBox('Админ удалён', 'Выбранный админ был удалён из базы данных', 'green', 'index.php?p=admin&c=admins', true);");
+			$objResponse->addScript("ShowBox('Админ удалён', 'Выбранный админ был удалён из базы данных', 'green', ".$adminsUrlJs.");");
 		$log = new CSystemLog("m", "Админ удалён", "Админ (" . $gid['user'] . ") был удалён");
 	}
 	else
-		$objResponse->addScript("ShowBox('Ошибка', 'Не получилось удалить админа. Смотрите системный лог для дополнительной информации', 'red', 'index.php?p=admin&c=admins', true);");
+		$objResponse->addScript("ShowBox('Ошибка', 'Не получилось удалить админа. Смотрите системный лог для дополнительной информации', 'red', ".$adminsUrlJs.");");
 	return $objResponse;
 }
 
@@ -3767,7 +3769,7 @@ function RehashAdmins_pay($server, $card, $do=0)
 	return $objResponse;
 }
 
-function RehashAdmins($server, $do=0)
+function RehashAdmins($server, $do=0, $redir='')
 {
 	$objResponse = new xajaxResponse();
     global $userbank, $username;
@@ -3778,18 +3780,33 @@ function RehashAdmins($server, $do=0)
 		$log = new CSystemLog("w", "Ошибка доступа", $username . " пытался обновить админов, не имея на это прав.");
 		return $objResponse;
 	}
+	if ($redir === '' || $redir === null || $redir === 'undefined')
+		$redir = function_exists('sb_url') ? sb_url('admin', array('c' => 'admins')) : 'index.php?p=admin&c=admins';
+	$redirJs = json_encode((string)$redir, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+	// location не учитывает <base href> — только sbGo/sbAbs.
+	$navJs = "setTimeout(function(){ if(typeof sbGo==='function') sbGo(".$redirJs."); else if(typeof sbAbs==='function') window.location.href=sbAbs(".$redirJs."); else window.location.href=".$redirJs."; }, 1800);";
+
 	$servers = explode(",",$server);
+	// Пустой список / мусорный explode(",") → [""]
+	if (sizeof($servers) === 1 && trim((string)$servers[0]) === '') {
+		$objResponse->addAppend("rehashDiv", "innerHTML", "<b>Нет серверов для обновления. Переадресация....</b>");
+		$objResponse->addScript("$('dialog-control').setStyle('display', 'block');");
+		$objResponse->addScript($navJs);
+		return $objResponse;
+	}
 	if(sizeof($servers)>0) {
 		if(sizeof($servers)-1 > $do)
-			$objResponse->addScriptCall("xajax_RehashAdmins", $server, $do+1);
+			$objResponse->addScriptCall("xajax_RehashAdmins", $server, $do+1, $redir);
 
 		$serv = $GLOBALS['db']->GetRow("SELECT ip, port, rcon FROM ".DB_PREFIX."_servers WHERE sid = '".(int)$servers[$do]."';");
-		if(empty($serv['rcon'])) {
-			$objResponse->addAppend("rehashDiv", "innerHTML", "".$serv['ip'].":".$serv['port']." (".($do+1)."/".sizeof($servers).") <font color='red'>Ошибка: не задан РКОН пароль</font>.<br />");
+		if(empty($serv) || empty($serv['rcon'])) {
+			$ip = isset($serv['ip']) ? $serv['ip'] : '?';
+			$port = isset($serv['port']) ? $serv['port'] : '?';
+			$objResponse->addAppend("rehashDiv", "innerHTML", "".$ip.":".$port." (".($do+1)."/".sizeof($servers).") <font color='red'>Ошибка: не задан РКОН пароль</font>.<br />");
 			if($do >= sizeof($servers)-1) {
 				$objResponse->addAppend("rehashDiv", "innerHTML", "<b>Выполнено, переадресация....</b>");
 				$objResponse->addScript("$('dialog-control').setStyle('display', 'block');");
-				$objResponse->addScript("setTimeout(\"window.location = 'index.php?p=admin&c=admins';\", 1800);");
+				$objResponse->addScript($navJs);
 			}
 			return $objResponse;
 		}
@@ -3800,7 +3817,7 @@ function RehashAdmins($server, $do=0)
 			if($do >= sizeof($servers)-1) {
 				$objResponse->addAppend("rehashDiv", "innerHTML", "<b>Выполнено, переадресация....</b>");
 				$objResponse->addScript("$('dialog-control').setStyle('display', 'block');");
-				$objResponse->addScript("setTimeout(\"window.location = 'index.php?p=admin&c=admins';\", 1800);");
+				$objResponse->addScript($navJs);
 			}
 			return $objResponse;
 		}
@@ -3817,7 +3834,7 @@ function RehashAdmins($server, $do=0)
 			if($do >= sizeof($servers)-1) {
 				$objResponse->addAppend("rehashDiv", "innerHTML", "<b>Выполнено, переадресация....</b>");
 				$objResponse->addScript("$('dialog-control').setStyle('display', 'block');");
-				$objResponse->addScript("setTimeout(\"window.location = 'index.php?p=admin&c=admins';\", 1800);");
+				$objResponse->addScript($navJs);
 			}
 			return $objResponse;
 		}
@@ -3832,11 +3849,12 @@ function RehashAdmins($server, $do=0)
 		if($do >= sizeof($servers)-1) {
 			$objResponse->addAppend("rehashDiv", "innerHTML", "<b>Выполнено, переадресация....</b>");
 			$objResponse->addScript("$('dialog-control').setStyle('display', 'block');");
-			$objResponse->addScript("setTimeout(\"window.location = 'index.php?p=admin&c=admins';\", 1800);");
+			$objResponse->addScript($navJs);
 		}
 	} else {
 		$objResponse->addAppend("rehashDiv", "innerHTML", "Не выбран сервер.");
 		$objResponse->addScript("$('dialog-control').setStyle('display', 'block');");
+		$objResponse->addScript($navJs);
 	}
 	return $objResponse;
 }
