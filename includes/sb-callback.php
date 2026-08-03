@@ -3704,8 +3704,6 @@ function RehashAdmins_pay($server, $card, $do=0)
     global $userbank, $username;
 	$do = (int)$do;
 	$homeJs = json_encode(function_exists('sb_url') ? sb_url('home') : './', JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
-	if ($homeJs === '"./"' || $homeJs === '""')
-		$homeJs = json_encode('./', JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
 	$navJs = "setTimeout(function(){ if(typeof sbGo==='function') sbGo(".$homeJs."); else if(typeof sbAbs==='function') window.location.href=sbAbs(".$homeJs."); else window.location.href=".$homeJs."; }, 1800);";
 
 	$servers = explode(",",$server);
