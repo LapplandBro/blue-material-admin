@@ -117,7 +117,7 @@
 													<li class="waves-effect admin-admins-tab-warn"><a href="index.php?p=admin&amp;c=admins&amp;o=warnings&amp;id={$admin.aid}">Предупр. ({$admin.warnings}/{$maxWarnings})</a></li>
 												{/if}
 												{if $permission_deleteadmin}
-													<li class="waves-effect admin-admins-tab-danger"><a href="#" onclick="{$admin.del_link_d}">Удалить</a></li>
+													<li class="waves-effect admin-admins-tab-danger"><a href="#" onclick="{$admin.del_link_d}; return false;">Удалить</a></li>
 												{/if}
 											</ul>
 										{/if}

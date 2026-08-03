@@ -119,14 +119,14 @@ foreach($admins AS $admin)
 	}
 	if($admin['expired'] == 0) {
 		$admin['expired_cv'] = 'Навсегда';
-		$admin['del_link_d'] = 'if(confirm(\'У этого админа Вечная админка.\nВы действительно хотите удалить его?\')) { RemoveAdmin('.$admin['aid'].', \''.$admin['user'].'\'); }';
+		$admin['del_link_d'] = 'if(confirm(\'У этого админа Вечная админка.\nВы действительно хотите удалить его?\')) { RemoveAdmin('.$admin['aid'].', \''.$admin['user'].'\'); } return false;';
 	}
 	elseif($admin['expired'] < time()) {
 		$admin['expired_cv'] = 'Уже <b>Истек</b>';
-		$admin['del_link_d'] = 'RemoveAdmin('.$admin['aid'].', \''.$admin['user'].'\');';
+		$admin['del_link_d'] = 'RemoveAdmin('.$admin['aid'].', \''.$admin['user'].'\'); return false;';
 	} else {
 		$admin['expired_cv'] = date('До d.m.Y в <b>H:i</b>',$admin['expired']);
-		$admin['del_link_d'] = 'if(confirm(\'У этого админа не истёк срок админки.\nВы действительно хотите удалить его?\')) { RemoveAdmin('.$admin['aid'].', \''.$admin['user'].'\'); }';
+		$admin['del_link_d'] = 'if(confirm(\'У этого админа не истёк срок админки.\nВы действительно хотите удалить его?\')) { RemoveAdmin('.$admin['aid'].', \''.$admin['user'].'\'); } return false;';
 	}
 	
 	$lastvisit = $userbank->GetProperty("lastvisit", $admin['aid']);
