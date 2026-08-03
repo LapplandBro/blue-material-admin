@@ -662,6 +662,26 @@ function BuildPageTabs()
 		}
 	}
 
+	// Жалоба / апелляция — для игроков. Залогиненным админам в меню не показываем
+	// (бан/разбан и очереди заявок — в админ-панели).
+	if ($userbank->is_logged_in())
+	{
+		foreach ($groups as $gk => $glist)
+		{
+			$filtered = array();
+			foreach ($glist as $it)
+			{
+				$u = isset($it['url']) ? (string)$it['url'] : '';
+				if (preg_match('/(?:\?|&)p=submit\b/', $u) || preg_match('#(?:^|/)submit(?:\?|$)#', $u))
+					continue;
+				if (preg_match('/(?:\?|&)p=protest\b/', $u) || preg_match('#(?:^|/)protest(?:\?|$)#', $u))
+					continue;
+				$filtered[] = $it;
+			}
+			$groups[$gk] = $filtered;
+		}
+	}
+
 	foreach ($groups as $gkey => $list)
 	{
 		if (empty($list))

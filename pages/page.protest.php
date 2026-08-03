@@ -32,6 +32,11 @@ if($GLOBALS['config']['config.enableprotest']!="1")
 	PageDie();
 }
 if(!defined("IN_SB")){echo "Ошибка доступа!"; die();}
+if ($userbank->is_logged_in())
+{
+	CreateRedBox("Недоступно", "Вы вошли как администратор. Апелляции оставляют игроки; разбан — из банлиста или админ-панели.");
+	PageDie();
+}
 
 if (function_exists('sb_session_start'))
 	sb_session_start();
