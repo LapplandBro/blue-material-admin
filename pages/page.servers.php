@@ -64,7 +64,7 @@ while (!$res->EOF)
 	$info['icon_html'] = sb_game_icon_html($res->fields[5], 'Игра', 24);
 	$info['index'] = $i;
 	if(defined('IN_HOME'))
-		$info['evOnClick'] = "window.location = 'index.php?p=servers&s=".$info['sid']."';";	
+		$info['evOnClick'] = "if(typeof sbGo==='function'){sbGo('servers?s=".(int)$info['sid']."');}else{window.location=sbLoc('servers','s=".(int)$info['sid']."');}";	
 	
 	// 4th param is the server's own sid (used to be the loop index $i - see comment above).
 	$GLOBALS['server_qry'] .= "xajax_ServerHostPlayers({$info['sid']}, 'servers', '', '".$info['sid']."', '".$number."', '".defined('IN_HOME')."', 70);";

@@ -86,7 +86,11 @@ function set_counter(count)
 				if (typeof parent.swal === 'function') parent.swal.close();
 			} catch (e2) {}
 		}, 4500);
-		setTimeout(function(){ window.location='../index.php?p=admin&c=comms'; }, 4500);
+		setTimeout(function(){
+			var go = (window.parent && typeof window.parent.sbGo === 'function') ? window.parent.sbGo : (typeof sbGo === 'function' ? sbGo : null);
+			if (go) go('admin/comms');
+			else window.location = (window.parent && window.parent.location ? window.parent.location.protocol + '//' + window.parent.location.host + '/' : '/') + 'admin/comms';
+		}, 4500);
 	}
 	resizeFrame();
 }
