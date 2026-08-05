@@ -756,7 +756,8 @@ $ban_nav_p = '';
 if($pages > 1) {
 	$advSearchJs = json_encode(isset($_GET['advSearch']) ? (string)$_GET['advSearch'] : '', JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
 	$advTypeJs = json_encode(isset($_GET['advType']) ? (string)$_GET['advType'] : '', JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
-	$ban_nav_p = ' / Страница: <span class="select" style="display: inline-block;"><select class="form-control" onchange="changePage(this,\'B\',' . $advSearchJs . ',' . $advTypeJs . ');" style="display: inline-block;width: 50px;">';
+	// Атрибут в одинарных кавычках: json_encode даёт "...", иначе onchange="…,"",""…" рвётся и страница не листается.
+	$ban_nav_p = ' / Страница: <span class="select" style="display: inline-block;"><select class="form-control" onchange=\'changePage(this,"B",' . $advSearchJs . ',' . $advTypeJs . ');\' style="display: inline-block;width: 50px;">';
 	for($i=1;$i<=$pages;$i++)
 	{
 		if(isset($_GET["page"]) && $i == $page) {
