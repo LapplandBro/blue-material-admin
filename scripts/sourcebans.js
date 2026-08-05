@@ -1563,20 +1563,21 @@ function changePage(newPage, type, advSearch, advType)
 {		
 	nextPage = newPage.options[newPage.selectedIndex].value
 	if(advSearch!="" && advType !="") { 
-		var searchlink = "&advSearch="+advSearch+"&advType="+advType; 
+		var searchlink = "advSearch="+encodeURIComponent(advSearch)+"&advType="+encodeURIComponent(advType); 
 	} else { 
 		var searchlink =""; 
 	}
 	 if (nextPage != 0)
 	 {
+		var pageQ = (searchlink ? (searchlink + "&") : "") + "page=" + nextPage;
 		if(type == "A")
-            window.location = sbLoc("admin/admins", searchlink.replace(/^&/, "") + (searchlink ? "&" : "") + "page=" + nextPage);
+            window.location = sbLoc("admin/admins", pageQ);
 		if(type == "B")
-            window.location = sbLoc("banlist", searchlink + "&page=" + nextPage);
+            window.location = sbLoc("banlist", pageQ);
 		if(type == "C")
-            window.location = sbLoc("commslist", searchlink + "&page=" + nextPage);
+            window.location = sbLoc("commslist", pageQ);
 		if(type == "L")
-            window.location = sbLoc("admin/settings", searchlink + "&page=" + nextPage) + "#^2";
+            window.location = sbLoc("admin/settings", pageQ) + "#^2";
         if(type == "P")
             window.location = sbLoc("admin/bans", "ppage=" + nextPage) + "#^1";
         if(type == "PA")
@@ -1598,6 +1599,8 @@ function ShowRehashBox(servers, title, msg, color, redir)
 {
 	if (typeof redir === "undefined" || redir === null || redir === "undefined")
 		redir = "";
+	if (redir && typeof sbAbs === "function")
+		redir = sbAbs(redir);
 	// Нет серверов для RCON — просто уведомление и редирект (redir через sbAbs/sbGo).
 	if (servers == "" || servers == null)
 	{
