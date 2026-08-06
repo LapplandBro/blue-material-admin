@@ -61,13 +61,13 @@
 
 			<div class="lv-body p-15">                                    
 				Перед установкой этого программного обеспечения Вы должны прочесть и принять условия лицензии. Если Вы не согласны с условиями — не устанавливайте ПО.<br />
-				Полный текст: файл <code>LICENSE</code> в корне дистрибутива или
-				<a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank" rel="noopener">GNU GPL v3</a>.
+				Код панели: <code>LICENSE</code> (<a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank" rel="noopener">GNU GPL v3</a>).
+				Слои и оговорка по UI-теме: файл <code>NOTICE</code> в корне.
 			</div>
 
 			<div class="lv-header-alt clearfix">
 				<div class="lvh-label">
-					<span class="c-black">GNU General Public License, version 3 (GPLv3)</span>
+					<span class="c-black">GNU GPLv3 (код) + NOTICE (тема / vendors)</span>
 				</div>
 			</div>
 			<div class="lv-body p-15" id="submit-introduction">
@@ -76,35 +76,23 @@
 						<textarea class="form-control" id="license" cols="105" rows="15" name="license">
 Blue Material Admin — форк SourceBans++.
 
-Это свободное программное обеспечение: вы можете распространять и/или изменять
-его на условиях GNU General Public License версии 3 (или, по вашему выбору,
-любой более поздней версии), опубликованной Фондом свободного программного
-обеспечения (Free Software Foundation).
+КОД ПАНЕЛИ (PHP, логика) — GNU General Public License v3 (файл LICENSE).
+Вы можете распространять и изменять код на условиях GPLv3 (или более поздней
+версии по вашему выбору). ПО без гарантий — см. полный текст GPL.
 
-ПО распространяется в надежде, что оно будет полезным, но БЕЗ КАКИХ-ЛИБО
-ГАРАНТИЙ; даже без подразумеваемых гарантий КОММЕРЧЕСКОЙ ЦЕННОСТИ или
-ПРИГОДНОСТИ ДЛЯ ОПРЕДЕЛЁННОЙ ЦЕЛИ. Подробности — в GNU General Public License.
+UI-ОБОЛОЧКА themes/new_box (кроме vendors/) — наследник Material Admin /
+IceMan-адаптаций. Это НЕ «чистый GPL/MIT». Пока тема не заменена
+(docs/THEME_MIGRATION.md), не заявляйте весь дистрибутив как чисто
+коммерческий GPL-продукт. Подробности — файл NOTICE.
 
-Вы должны были получить копию GNU GPL вместе с этой программой (файл LICENSE).
-Если нет, см. https://www.gnu.org/licenses/
+Vendors (Bootstrap 3 и др.) — свои лицензии, чаще MIT.
 
-Краткие условия GPLv3 (не заменяют полный текст лицензии):
- • можно запускать, изучать, изменять и распространять программу;
- • производные работы при распространении должны оставаться под GPLv3;
- • исходный код должен быть доступен получателям на условиях GPL;
- • указание авторства / уведомлений о лицензии сохраняется.
+Кратко по GPLv3 (не заменяет LICENSE):
+ • можно запускать, изучать, менять и распространять код;
+ • производные при распространении — под GPLv3;
+ • исходники доступны получателям на условиях GPL.
 
-Upstream / связанные проекты:
-	SourceBans++ — GNU GPL v3
-	Copyright (C) 2014-2016 Sarabveer Singh
-	https://github.com/sbpp/sourcebans-pp
-
-	SourceBans 1.4.11
-	Copyright (C) 2007-2015 SourceBans Team - Part of GameConnect
-	http://www.sourcebans.net/
-
-	Тема Material / TF2-вариант
-	Copyright (C) 2014 IceMan и последующие авторы форка
+Upstream: SourceBans++ (GPLv3) — https://github.com/sbpp/sourcebans-pp
 						</textarea>
 					</div>
 				</form>

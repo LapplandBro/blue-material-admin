@@ -1,11 +1,10 @@
 # Blue Material Admin | SourceBans 2.0.6
 
-Веб-панель от **Крузяры** (Разработка собственная - [lapplandbro](https://github.com/lapplandbro)) для игровых серверов Source (**CS:GO / CS2**, **TF2** и др.) на базе **SourceBans++** с темой **Blue Admin** собственной разработки.
+Веб-панель от **Крузяры** ([lapplandbro](https://github.com/lapplandbro)) для игровых серверов Source (**CS:GO / CS2**, **TF2** и др.) на базе **SourceBans++** с темой **Blue Admin** собственной разработки.
 
-<img width="1920" height="946" alt="image" src="https://github.com/user-attachments/assets/50bd68c2-0e93-49a3-ac72-c868d3a56aa8" />
+<img width="1921" height="946" alt="Blue Material Admin" src="https://github.com/user-attachments/assets/690db1d7-344c-4724-877a-1f76792c45c7" />
 
-
-> Target PHP **7.1.33** (на PHP 8.x не рассчитана в ветке main, в ветке php 8.3.22 работает исправно).
+> Ветка **`php-8.3`**: целевая PHP **8.3.22** (минимум 8.2). Для PHP **7.1.33** бери [`main`](https://github.com/LapplandBro/blue-material-admin/tree/main).
 
 **Topics:** `sourcebans` `sourcemod` `csgo` `cs2` `tf2` `php` `moderation` `material-admin`
 
@@ -102,9 +101,9 @@ Blue Material Admin — тёмный Firewatch-стиль, свой логоти
 
 | | Минимум | Рекомендуется |
 |---|---|---|
-| PHP | 7.1 | **7.1.33** (В ветке main, в ветке php 8.3.22 работает исправно) |
+| PHP | **8.2** | **8.3.22** (эта ветка) |
 | MySQL / MariaDB | 5.0 | 5.5+ / 10.x |
-| Расширения | mysqli, bcmath, xml, json, mbstring, openssl, curl | gd, gmp |
+| Расширения | mysqli, bcmath, xml, json, mbstring, openssl, curl | gd, gmp (или 64-bit PHP) |
 
 Нужны права на запись: `demos/`, `themes_c/`, `data/`, `config.php` (или корень сайта).
 
@@ -209,23 +208,38 @@ ZIP с ветки `main`: https://github.com/LapplandBro/blue-material-admin
 
 Обычное обновление файлов **не требует** SQL. Миграции — только если явно написано в релизе.
 
-Целевая PHP: **7.1.33**. На PHP 8.x панель не рассчитана — это не «баг обновления».
+Целевая PHP этой ветки: **8.3.22** (минимум **8.2** из‑за SourceQuery 6).  
+Для хостинга на **PHP 7.1.33** бери ветку [`main`](https://github.com/LapplandBro/blue-material-admin/tree/main).  
+Подробности порта: [`docs/PHP83.md`](docs/PHP83.md).
 
 ---
 
 ## Стек
 
 - PHP + MySQL (ADOdb)  
-- Тема Blue Admin / Material (`themes/new_box`)  
+- Тема Blue Admin / Material shell (`themes/new_box`) — **легаси, под замену**  
 - SourceBans++ 2.0.x  
+
+План выпила темы / Smarty 2 / Bootstrap 3: [`docs/THEME_MIGRATION.md`](docs/THEME_MIGRATION.md).
 
 ## Лицензия
 
-SourceBans / SourceBans++ — **GNU GPL v3**.  
-Форк сохраняет ту же лицензию. Копирайты upstream при распространении не выкидывай.
+Слои разные — читай [`NOTICE`](NOTICE) и корневой [`LICENSE`](LICENSE) (GNU GPLv3).
+
+| Слой | Лицензия |
+|------|----------|
+| Код панели (PHP, форк SourceBans++) | **GNU GPLv3** (`LICENSE`) |
+| UI-каркас `themes/new_box` (кроме `vendors/`) | **Наследник Material Admin / IceMan-адаптаций** — не заявлять как чистый GPL/MIT; см. `NOTICE` |
+| Vendors (Bootstrap 3, jQuery, …) | Обычно **MIT** / свои SPDX в пакетах |
+| ADOdb, Smarty 2, SourceQuery | BSD/LGPL — как у upstream |
+
+**Важно:** смена цветов и логотипа не обнуляет происхождение UI-shell.  
+Пока жив Material-каркас — **не упаковывай панель как «чисто GPL коммерческий продукт»** без замены темы. Донат/оплата на своём сайте ≠ «продаём GPL+спорную тему одним zip».
+
+Цель: заменить shell ([`THEME_MIGRATION.md`](docs/THEME_MIGRATION.md)) и оставить честный GPLv3 + обычные OSS-зависимости.
 
 ## Credits
 
 - [SourceBans++](https://sbpp.github.io/) / GameConnect SourceBans  
-- Material Admin (база темы) → доработка **Blue Admin**  
+- Material Admin–класс UI (легаси-база) → кастом **Blue Admin** (под выпил)  
 - [lapplandbro](https://github.com/lapplandbro) / Крузяра — развитие и сборка  

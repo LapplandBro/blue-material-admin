@@ -1,0 +1,11 @@
+themes/new_box — UI shell notice
+================================
+
+This directory is the Blue Admin skin on top of a Material Admin–class layout.
+
+- Application / SourceBans++ logic outside this folder: GPLv3 (see ../../LICENSE).
+- Vendors in ./vendors/: their own licenses (mostly MIT) — see each package.
+- Layout CSS/JS/tpl structure here: legacy derivative — see ../../NOTICE.
+
+Do not remove this notice until the shell is rewritten per
+../../docs/THEME_MIGRATION.md.
