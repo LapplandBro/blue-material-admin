@@ -91,12 +91,12 @@ if(!defined("IN_SB")){echo "Ошибка доступа!";die();}
 	$log_count = $logs->LogCount($where);
 	$log = $logs->getAll($list_start, intval($GLOBALS['config']['banlist.bansperpage']), $where);
 	if(($page > 1))
-		$prev = CreateLinkR('<- пред',"index.php?p=admin&c=settings" . $searchlink . "&page=" .($page-1) . "#^2");
+		$prev = CreateLinkR('<- пред', sb_url_query('admin', $searchlink . '&c=settings&page=' . ($page-1)) . '#^2');
 	else 
 		$prev = "";
 		
 	if($list_end < $log_count)
-		$next = CreateLinkR('след ->',"index.php?p=admin&c=settings" . $searchlink . "&page=" .($page+1)."#^2");
+		$next = CreateLinkR('след ->', sb_url_query('admin', $searchlink . '&c=settings&page=' . ($page+1)) . '#^2');
 	else 
 		$next = "";
 
@@ -114,7 +114,9 @@ if(!defined("IN_SB")){echo "Ошибка доступа!";die();}
 			$_GET['advSearch'] = "";
 			$_GET['advType'] = "";
 		}
-		$page_numbers .= '&nbsp;<select onchange="changePage(this,\'L\',\''.htmlspecialchars(addslashes($_GET['advSearch'])).'\',\''.htmlspecialchars(addslashes($_GET['advType'])).'\');">';
+		$advSearchJs = json_encode((string)$_GET['advSearch'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+		$advTypeJs = json_encode((string)$_GET['advType'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+		$page_numbers .= '&nbsp;<select onchange=\'changePage(this,"L",' . $advSearchJs . ',' . $advTypeJs . ');\'>';
 		for($i=1;$i<=$pages;$i++) {
 			if(isset($_GET["page"]) && $i==$_GET["page"]) {
 				$page_numbers .= '<option value="' . $i . '" selected="selected">' . $i . '</option>';

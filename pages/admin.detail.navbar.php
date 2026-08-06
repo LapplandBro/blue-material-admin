@@ -70,6 +70,15 @@ foreach($var AS $v)
 			$tabBase = sb_url($tp, $textra);
 			if ($tabBase === './')
 				$tabBase = '';
+			// Сохраняем query (ppage/spage/page/…) — иначе клик по вкладке сбрасывает пагинацию
+			// и обработчик #^ считает URL «другим» и уводит на путь без ?page=.
+			if (!empty($_SERVER['QUERY_STRING'])) {
+				parse_str((string)$_SERVER['QUERY_STRING'], $tabQs);
+				unset($tabQs['p'], $tabQs['c']);
+				if (!empty($tabQs)) {
+					$tabBase .= (strpos($tabBase, '?') !== false ? '&' : '?') . http_build_query($tabQs);
+				}
+			}
 		}
 		$hrefAttr = htmlspecialchars($tabBase . "#^" . $v['id'], ENT_QUOTES, 'UTF-8');
 		$click = "SwapPane(". (int)$v['id'] .");";
