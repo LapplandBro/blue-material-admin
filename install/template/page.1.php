@@ -60,39 +60,51 @@
 			</div>
 
 			<div class="lv-body p-15">                                    
-				Перед установкой этого программного обеспечения, Вы должны прочесть и принять условия лицензионного соглашения. Если Вы не согласны с условиями, создавайте свою систему банов.<br />
-				Объяснения этого лицензионного соглашения можно прочесть <a href="https://creativecommons.org/licenses/by-nc-sa/3.0/" target="_blank">здесь</a>.
+				Перед установкой этого программного обеспечения Вы должны прочесть и принять условия лицензии. Если Вы не согласны с условиями — не устанавливайте ПО.<br />
+				Полный текст: файл <code>LICENSE</code> в корне дистрибутива или
+				<a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank" rel="noopener">GNU GPL v3</a>.
 			</div>
 
 			<div class="lv-header-alt clearfix">
 				<div class="lvh-label">
-					<span class="c-black">Creative Commons - Attribution-NonCommercial-ShareAlike 3.0</span>
+					<span class="c-black">GNU General Public License, version 3 (GPLv3)</span>
 				</div>
 			</div>
 			<div class="lv-body p-15" id="submit-introduction">
 				<form action="index.php?p=submit" method="POST" enctype="multipart/form-data">
 					<div id="submit-main">
 						<textarea class="form-control" id="license" cols="105" rows="15" name="license">
-Эта программа является частью SourceBans ++.
+Blue Material Admin — форк SourceBans++.
 
-Все права защищены © 2014-2016 Sarabveer Singh <me@sarabveer.me>
+Это свободное программное обеспечение: вы можете распространять и/или изменять
+его на условиях GNU General Public License версии 3 (или, по вашему выбору,
+любой более поздней версии), опубликованной Фондом свободного программного
+обеспечения (Free Software Foundation).
 
-SourceBans++ is под лицензией
-Creative Commons Attribution-NonCommercial-ShareAlike 3.0.
+ПО распространяется в надежде, что оно будет полезным, но БЕЗ КАКИХ-ЛИБО
+ГАРАНТИЙ; даже без подразумеваемых гарантий КОММЕРЧЕСКОЙ ЦЕННОСТИ или
+ПРИГОДНОСТИ ДЛЯ ОПРЕДЕЛЁННОЙ ЦЕЛИ. Подробности — в GNU General Public License.
 
-Вы должны были получить копию лицензии вместе с этой работой. Если нет, см <http://creativecommons.org/licenses/by-nc-sa/3.0/>.
+Вы должны были получить копию GNU GPL вместе с этой программой (файл LICENSE).
+Если нет, см. https://www.gnu.org/licenses/
 
-ПРОГРАММНОЕ ОБЕСПЕЧЕНИЕ ПРЕДОСТАВЛЯЕТСЯ «КАК ЕСТЬ», БЕЗ КАКИХ-ЛИБО ГАРАНТИЙ, ЯВНЫХ ИЛИ ПОДРАЗУМЕВАЕМЫХ, ВКЛЮЧАЯ, НО НЕ ОГРАНИЧИВАЯСЬ, ГАРАНТИИ ПРИГОДНОСТИ ДЛЯ КОНКРЕТНЫХ ЦЕЛЕЙ И НЕНАРУШЕНИЯ. НИ ПРИ КАКИХ ОБСТОЯТЕЛЬСТВАХ АВТОРЫ ИЛИ ПРАВООБЛАДАТЕЛИ НЕ НЕСУТ ОТВЕТСТВЕННОСТИ ЗА ЛЮБЫЕ ПРЕТЕНЗИИ, ИЛИ УБЫТКИ, НЕЗАВИСИМО ОТ ДЕЙСТВИЯ ДОГОВОРА, ГРАЖДАНСКОГО ПРАВОНАРУШЕНИЯ ИЛИ ИНАЧЕ, ВОЗНИКАЮЩИЕ ИЗ, ИЛИ В СВЯЗИ С ПРОГРАММНЫМ ОБЕСПЕЧЕНИЕМ ИЛИ ИСПОЛЬЗОВАНИЕМ ИЛИ ИНЫМИ ДЕЙСТВИЯМИ ПРОГРАММНОГО ОБЕСПЕЧЕНИЯ.
+Краткие условия GPLv3 (не заменяют полный текст лицензии):
+ • можно запускать, изучать, изменять и распространять программу;
+ • производные работы при распространении должны оставаться под GPLv3;
+ • исходный код должен быть доступен получателям на условиях GPL;
+ • указание авторства / уведомлений о лицензии сохраняется.
 
-Эта программа базируется на работе, охватываемой следующим авторским правом (ами):
+Upstream / связанные проекты:
+	SourceBans++ — GNU GPL v3
+	Copyright (C) 2014-2016 Sarabveer Singh
+	https://github.com/sbpp/sourcebans-pp
+
 	SourceBans 1.4.11
-	Copyright © 2007-2014 SourceBans Team - Part of GameConnect
-	Licensed under CC BY-NC-SA 3.0
-	Страница: <http://www.sourcebans.net/> - <http://www.gameconnect.net/>
+	Copyright (C) 2007-2015 SourceBans Team - Part of GameConnect
+	http://www.sourcebans.net/
 
-	SourceBans TF2 Theme v1.0
-	Copyright © 2014 IceMan
-	Страница: <https://forums.alliedmods.net/showthread.php?t=252533>
+	Тема Material / TF2-вариант
+	Copyright (C) 2014 IceMan и последующие авторы форка
 						</textarea>
 					</div>
 				</form>
