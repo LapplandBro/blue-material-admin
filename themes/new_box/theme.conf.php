@@ -25,17 +25,20 @@
 //
 // *************************************************************************
 
+// UI shell: Material Admin–class layout (legacy). Provenance: see NOTICE in this
+// folder and ../../NOTICE. Planned replacement: docs/THEME_MIGRATION.md
+
 // Set the name of this theme here
-define('theme_name', "SourceBans Theme (DeluxeEdition)");
+define('theme_name', "Blue Admin (Material shell — legacy)");
  
 // Set the author of this theme here
-define('theme_author', "ASTRO & XaH JoB & Vampir & SAZONISCHE & NoTiCE & CrazyHackGUT & Серый™");
+define('theme_author', "Blue Material Admin contributors (shell inherited; see NOTICE)");
 
 // Set the version of the theme here
 define('theme_version', "2.0.6");
 
 // Set the link of the theme here
-define('theme_link', "https://discord.gg/BrTP9Cu");
+define('theme_link', "https://github.com/LapplandBro/blue-material-admin");
 
 // Set the screenshot filename for your theme (must be inside your theme folder) 
 // Must be:  250px wide  X 170px High

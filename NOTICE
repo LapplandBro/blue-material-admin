@@ -1,0 +1,61 @@
+Blue Material Admin — licensing notice
+======================================
+
+This project is a fork of SourceBans++ with an inherited Material Admin–style UI.
+Licenses are layered. Do not treat the whole tree as a single “pure GPL” product
+until the legacy theme layer is replaced (see docs/THEME_MIGRATION.md).
+
+
+1) Application code (PHP logic, installer, most of pages/, includes/)
+--------------------------------------------------------------------
+License: GNU General Public License v3.0 or later
+File:    LICENSE
+
+Upstream:
+  - SourceBans++ — GPLv3 (https://github.com/sbpp/sourcebans-pp)
+  - Original SourceBans lineage — see file headers / upstream history
+
+This is what GitHub SPDX detection refers to when it shows GPL-3.0.
+
+
+2) UI theme shell (themes/new_box — excluding third-party vendors/)
+------------------------------------------------------------------
+Status: DERIVATIVE / LEGACY — not cleared as pure GPLv3
+
+The template structure, compiled CSS (app.min.*), layout JS (functions.js),
+and Material Design–style markup (fg-line, zmdi, waves, card layouts, etc.)
+descend from Material Admin–class admin templates and SourceBans Material /
+IceMan TF2 theme adaptations.
+
+There is no separate clean SPDX grant for that shell inside this repo.
+Visual re-skinning (colors, logo, dark theme) does NOT remove that provenance.
+
+Until themes/new_box is rewritten (THEME_MIGRATION.md):
+  - Do not claim the UI shell is MIT or “your exclusive commercial IP”.
+  - Commercial redistribution / “sell the panel as a product” with this theme
+    is at your own legal risk.
+  - Prefer replacing the theme before packaging a paid/commercial offering.
+
+
+3) Third-party libraries (examples)
+-----------------------------------
+  - Bootstrap 3, jQuery, Waves, many vendors under themes/new_box/vendors/
+      → typically MIT (see each package)
+  - ADOdb → BSD-3-Clause / LGPL-2.1 (includes/adodb)
+  - SourceQuery → LGPL-2.1 (includes/SourceQuery)
+  - Smarty 2.x → LGPL-2.1 (includes/smarty)
+
+Always keep their original license files.
+
+
+4) Branding note
+----------------
+“Material Admin” in titles/footer is a product brand name used by this fork.
+It does not by itself grant rights to ThemeForest / upstream theme authors.
+
+
+5) Contact / intent
+-------------------
+Goal: keep application code under GPLv3 and replace the legacy UI shell with
+an original (or clearly MIT/Apache-licensed) front-end so the distribution
+can be honestly described as GPLv3 + standard OSS dependencies only.

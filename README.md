@@ -217,16 +217,29 @@ ZIP с ветки `main`: https://github.com/LapplandBro/blue-material-admin
 ## Стек
 
 - PHP + MySQL (ADOdb)  
-- Тема Blue Admin / Material (`themes/new_box`)  
+- Тема Blue Admin / Material shell (`themes/new_box`) — **легаси, под замену**  
 - SourceBans++ 2.0.x  
+
+План выпила темы / Smarty 2 / Bootstrap 3: [`docs/THEME_MIGRATION.md`](docs/THEME_MIGRATION.md).
 
 ## Лицензия
 
-SourceBans / SourceBans++ — **GNU GPL v3**.  
-Форк сохраняет ту же лицензию. Копирайты upstream при распространении не выкидывай.
+Слои разные — читай [`NOTICE`](NOTICE) и корневой [`LICENSE`](LICENSE) (GNU GPLv3).
+
+| Слой | Лицензия |
+|------|----------|
+| Код панели (PHP, форк SourceBans++) | **GNU GPLv3** (`LICENSE`) |
+| UI-каркас `themes/new_box` (кроме `vendors/`) | **Наследник Material Admin / IceMan-адаптаций** — не заявлять как чистый GPL/MIT; см. `NOTICE` |
+| Vendors (Bootstrap 3, jQuery, …) | Обычно **MIT** / свои SPDX в пакетах |
+| ADOdb, Smarty 2, SourceQuery | BSD/LGPL — как у upstream |
+
+**Важно:** смена цветов и логотипа не обнуляет происхождение UI-shell.  
+Пока жив Material-каркас — **не упаковывай панель как «чисто GPL коммерческий продукт»** без замены темы. Донат/оплата на своём сайте ≠ «продаём GPL+спорную тему одним zip».
+
+Цель: заменить shell ([`THEME_MIGRATION.md`](docs/THEME_MIGRATION.md)) и оставить честный GPLv3 + обычные OSS-зависимости.
 
 ## Credits
 
 - [SourceBans++](https://sbpp.github.io/) / GameConnect SourceBans  
-- Material Admin (база темы) → доработка **Blue Admin**  
+- Material Admin–класс UI (легаси-база) → кастом **Blue Admin** (под выпил)  
 - [lapplandbro](https://github.com/lapplandbro) / Крузяра — развитие и сборка  
