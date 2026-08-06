@@ -234,8 +234,7 @@ ZIP с ветки `main`: https://github.com/LapplandBro/blue-material-admin
 | ADOdb, Smarty 2, SourceQuery | BSD/LGPL — как у upstream |
 
 **Важно:** смена цветов и логотипа не обнуляет происхождение UI-shell.  
-Пока жив Material-каркас — **не упаковывай панель как «чисто GPL коммерческий продукт»** без замены темы. Донат/оплата на своём сайте ≠ «продаём GPL+спорную тему одним zip».
-
+Пока жив Material-каркас — **Это не чисто GPL коммерческий продукт**.
 Цель: заменить shell ([`THEME_MIGRATION.md`](docs/THEME_MIGRATION.md)) и оставить честный GPLv3 + обычные OSS-зависимости.
 
 ## Credits
