@@ -3633,11 +3633,18 @@ function PushScriptToExecuteAfterLoadPage($script) {
 }
 
 function FatalRefresh($url = 0) {
-	if ($url === 0)
-		$url = $_SERVER['REQUEST_URI'];
-	
-	ob_end_clean();
-	Header("Location: " . $url);
+	if ($url === 0 || $url === '' || $url === null)
+		$url = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '/';
+	$url = (string)$url;
+	// Location НЕ учитывает <base href>: с /admin/menu относительный index.php
+	// уезжает в /admin/index.php → 404. Канонизируем в ЧПУ и абсолютный URL.
+	if (function_exists('sb_legacy_to_pretty_url'))
+		$url = sb_legacy_to_pretty_url($url);
+	if (function_exists('sb_abs_url'))
+		$url = sb_abs_url($url);
+	while (ob_get_level() > 0)
+		@ob_end_clean();
+	header('Location: ' . $url);
 	exit(0);
 }
 

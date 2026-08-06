@@ -38,7 +38,7 @@ global $userbank, $theme;
 					$db_error = $GLOBALS['db']->ErrorMsg();
 					PushScriptToExecuteAfterLoadPage(sprintf("setTimeout(function() { %s; }, 1350);", generateMsgBoxJS("Ошибка", "Не удалось сохранить ссылку!" . (!empty($db_error) ? " (" . htmlspecialchars($db_error) . ")" : ""), "red", "", true)));
 				}
-				FatalRefresh("index.php?p=admin&c=menu");
+				FatalRefresh(sb_url('admin', array('c' => 'menu')));
 			}
 		}
 			
