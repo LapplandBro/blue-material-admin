@@ -142,7 +142,7 @@ echo '<div id="admin-page-content">';
         if ($PageEnd > $page_count) $PageEnd = $page_count;
         if ($page > 1)
         {
-            $prev = CreateLinkR('<- Предыдущие',"index.php?p=admin&c=bans&ppage=" .($page-1). "#^1");
+            $prev = CreateLinkR('<- Предыдущие', sb_url('admin', array('c' => 'bans', 'ppage' => ($page-1))) . '#^1');
         }
         else
         {
@@ -150,7 +150,7 @@ echo '<div id="admin-page-content">';
         }
         if ($PageEnd < $page_count)
         {
-            $next = CreateLinkR('Следующие ->',"index.php?p=admin&c=bans&ppage=" .($page+1). "#^1");
+            $next = CreateLinkR('Следующие ->', sb_url('admin', array('c' => 'bans', 'ppage' => ($page+1))) . '#^1');
         }
         else
             $next = "";
@@ -164,7 +164,7 @@ echo '<div id="admin-page-content">';
 
         $pages = ceil($page_count/$ItemsPerPage);
         if($pages > 1) {
-            $page_nav .= '&nbsp;<select onchange="changePage(this,\'P\',\'\',\'\');">';
+            $page_nav .= '&nbsp;<select onchange=\'changePage(this,"P","","");\'>';
             for($i=1;$i<=$pages;$i++) {
                 if($i==$page) {
                     $page_nav .= '<option value="' . $i . '" selected="selected">' . $i . '</option>';
@@ -297,7 +297,7 @@ echo '<div id="admin-page-content">';
         if ($PageEnd > $page_count) $PageEnd = $page_count;
         if ($page > 1)
         {
-            $prev = CreateLinkR('<- предыдущая',"index.php?p=admin&c=bans&papage=" .($page-1). "#^1~p1");
+            $prev = CreateLinkR('<- предыдущая', sb_url('admin', array('c' => 'bans', 'papage' => ($page-1))) . '#^1~p1');
         }
         else
         {
@@ -305,7 +305,7 @@ echo '<div id="admin-page-content">';
         }
         if ($PageEnd < $page_count)
         {
-            $next = CreateLinkR('следующая ->',"index.php?p=admin&c=bans&papage=" .($page+1). "#^1~p1");
+            $next = CreateLinkR('следующая ->', sb_url('admin', array('c' => 'bans', 'papage' => ($page+1))) . '#^1~p1');
         }
         else
             $next = "";
@@ -319,7 +319,7 @@ echo '<div id="admin-page-content">';
 
         $pages = ceil($page_count/$ItemsPerPage);
         if($pages > 1) {
-            $page_nav .= '&nbsp;<select onchange="changePage(this,\'PA\',\'\',\'\');">';
+            $page_nav .= '&nbsp;<select onchange=\'changePage(this,"PA","","");\'>';
             for($i=1;$i<=$pages;$i++) {
                 if($i==$page) {
                     $page_nav .= '<option value="' . $i . '" selected="selected">' . $i . '</option>';
@@ -477,7 +477,7 @@ echo '<div id="admin-page-content">';
             if ($PageEnd > $page_count) $PageEnd = $page_count;
             if ($page > 1)
             {
-                $prev = CreateLinkR('<- предыдущая',"index.php?p=admin&c=bans&spage=" .($page-1). "#^2");
+                $prev = CreateLinkR('<- предыдущая', sb_url('admin', array('c' => 'bans', 'spage' => ($page-1))) . '#^2');
             }
             else
             {
@@ -485,7 +485,7 @@ echo '<div id="admin-page-content">';
             }
             if ($PageEnd < $page_count)
             {
-                $next = CreateLinkR('следующая ->',"index.php?p=admin&c=bans&spage=" .($page+1). "#^2");
+                $next = CreateLinkR('следующая ->', sb_url('admin', array('c' => 'bans', 'spage' => ($page+1))) . '#^2');
             }
             else
                 $next = "";
@@ -499,7 +499,7 @@ echo '<div id="admin-page-content">';
 
             $pages = ceil($page_count/$ItemsPerPage);
             if($pages > 1) {
-                $page_nav .= '&nbsp;<select onchange="changePage(this,\'S\',\'\',\'\');">';
+                $page_nav .= '&nbsp;<select onchange=\'changePage(this,"S","","");\'>';
                 for($i=1;$i<=$pages;$i++) {
                     if($i==$page) {
                         $page_nav .= '<option value="' . $i . '" selected="selected">' . $i . '</option>';
@@ -618,7 +618,7 @@ echo '<div id="admin-page-content">';
             if ($PageEnd > $page_count) $PageEnd = $page_count;
             if ($page > 1)
             {
-                $prev = CreateLinkR('<- prev',"index.php?p=admin&c=bans&sapage=" .($page-1). "#^2~s1");
+                $prev = CreateLinkR('<- prev', sb_url('admin', array('c' => 'bans', 'sapage' => ($page-1))) . '#^2~s1');
             }
             else
             {
@@ -626,7 +626,7 @@ echo '<div id="admin-page-content">';
             }
             if ($PageEnd < $page_count)
             {
-                $next = CreateLinkR('next ->',"index.php?p=admin&c=bans&sapage=" .($page+1). "#^2~s1");
+                $next = CreateLinkR('next ->', sb_url('admin', array('c' => 'bans', 'sapage' => ($page+1))) . '#^2~s1');
             }
             else
                 $next = "";
@@ -640,7 +640,7 @@ echo '<div id="admin-page-content">';
 
             $pages = ceil($page_count/$ItemsPerPage);
             if($pages > 1) {
-                $page_nav .= '&nbsp;<select onchange="changePage(this,\'SA\',\'\',\'\');">';
+                $page_nav .= '&nbsp;<select onchange=\'changePage(this,"SA","","");\'>';
                 for($i=1;$i<=$pages;$i++) {
                     if($i==$page) {
                         $page_nav .= '<option value="' . $i . '" selected="selected">' . $i . '</option>';

@@ -142,7 +142,7 @@ foreach($admins AS $admin)
 
 if ($page > 1)
 {
-	$prev = CreateLinkR('<i class="zmdi zmdi-chevron-left"></i>',"index.php?p=admin&c=admins&page=" .($page-1). $advSearchString);
+	$prev = CreateLinkR('<i class="zmdi zmdi-chevron-left"></i>', sb_url_query('admin', 'c=admins&page=' . ($page-1) . $advSearchString . (isset($_GET['showexpiredadmins']) ? '&showexpiredadmins=true' : '')));
 }
 else
 {
@@ -150,7 +150,7 @@ else
 }
 if ($AdminsEnd < $admin_count)
 {
-	$next = CreateLinkR('<i class="zmdi zmdi-chevron-right"></i>',"index.php?p=admin&c=admins&page=" .($page+1).$advSearchString);
+	$next = CreateLinkR('<i class="zmdi zmdi-chevron-right"></i>', sb_url_query('admin', 'c=admins&page=' . ($page+1) . $advSearchString . (isset($_GET['showexpiredadmins']) ? '&showexpiredadmins=true' : '')));
 }
 else
 	$next = "";
@@ -160,13 +160,15 @@ else
 
 $pages = ceil($admin_count/$AdminsPerPage);
 if($pages > 1) {
+	$advSearchJs = json_encode(isset($_GET['advSearch']) ? (string)$_GET['advSearch'] : '', JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+	$advTypeJs = json_encode(isset($_GET['advType']) ? (string)$_GET['advType'] : '', JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
 	if (isset($_GET['showexpiredadmins']))
-		$admin_nav_p = ' / Страницы: <select class="form-control" onchange="window.location=sbLoc(\'admin/admins\',\'showexpiredadmins=true&amp;page=\'+$(\'PageChanger\').value);" style="display: inline-block;width: 40px;" id="PageChanger">';
+		$admin_nav_p = ' / Страницы: <select class="form-control" onchange=\'sbGo("admin/admins?showexpiredadmins=true&page="+this.value);\' style="display: inline-block;width: 40px;" id="PageChanger">';
 	else
-		$admin_nav_p = ' / Страницы: <select class="form-control" onchange="changePage(this,\'A\',\''.htmlspecialchars(addslashes(isset($_GET['advSearch'])?$_GET['advSearch']:'')).'\',\''.htmlspecialchars(addslashes(isset($_GET['advType'])?$_GET['advType']:'')).'\');" style="display: inline-block;width: 40px;">';
+		$admin_nav_p = ' / Страницы: <select class="form-control" onchange=\'changePage(this,"A",' . $advSearchJs . ',' . $advTypeJs . ');\' style="display: inline-block;width: 40px;">';
 	
 	for($i=1;$i<=$pages;$i++) {
-		if($i==$_GET["page"]) {
+		if(isset($_GET["page"]) && $i==$_GET["page"]) {
 			$admin_nav_p .= '<option value="' . $i . '" selected="selected">' . $i . '</option>';
 			continue;
 		}
@@ -191,12 +193,12 @@ $admin_nav .= '</ul>&nbsp;';
 if(isset($_GET["showexpiredadmins"]) && $_GET["showexpiredadmins"] == "true") {
 	$btn_icon = "zmdi-alarm";
 	$btn_helpa = 'data-trigger="hover" data-toggle="tooltip" data-placement="top" data-original-title="Показать действующих администраторов" title=""';
-	$btn_href = "index.php?p=admin&c=admins";
+	$btn_href = sb_url('admin', array('c' => 'admins'));
 	$btn_rem = '<button type="button" onclick="removeExpiredAdmins()" class="btn bgm-bluegray btn-block waves-effect">Удалить всех истёкших админов</button>';
 } else{
 	$btn_icon = "zmdi-timer-off";
 	$btn_helpa = 'data-trigger="hover" data-toggle="tooltip" data-placement="top" data-original-title="Показать истекших администраторов" title=""';
-	$btn_href = "index.php?p=admin&c=admins&showexpiredadmins=true";
+	$btn_href = sb_url('admin', array('c' => 'admins', 'showexpiredadmins' => 'true'));
 	$btn_rem = '';
 }
 

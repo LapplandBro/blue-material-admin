@@ -180,6 +180,7 @@ function sbLoc(page, q) {
 
 // <base href> ломает якоря href="#^N": браузер ведёт на главную (/#^N).
 // Ловим SourceBans-вкладки: голый #^N и path#^N (admin/admins#^1).
+// Если path+query другие (пагинация ppage/spage) — явный переход через sbAbs.
 (function () {
 	if (typeof document === 'undefined' || !document.addEventListener)
 		return;
@@ -197,13 +198,16 @@ function sbLoc(page, q) {
 			return;
 		var hash = href.substring(hashIdx); // #^N или #^N~…
 		var pathPart = href.substring(0, hashIdx);
-		// Чужие якоря не трогаем; path должен быть пустым или вести на текущую страницу.
 		if (pathPart !== '') {
 			try {
-				var abs = sbAbs(pathPart);
-				var cur = window.location.href.split('#')[0];
-				if (abs.split('#')[0] !== cur)
-					return; // другой URL — обычный переход
+				var destHref = (typeof sbAbs === 'function') ? sbAbs(pathPart) : pathPart;
+				var dest = new URL(destHref, window.location.href);
+				var cur = new URL(window.location.href);
+				if (dest.pathname !== cur.pathname || dest.search !== cur.search) {
+					e.preventDefault();
+					window.location.href = dest.href.split('#')[0] + hash;
+					return;
+				}
 			} catch (err) {
 				return;
 			}
@@ -1571,21 +1575,21 @@ function changePage(newPage, type, advSearch, advType)
 	 {
 		var pageQ = (searchlink ? (searchlink + "&") : "") + "page=" + nextPage;
 		if(type == "A")
-            window.location = sbLoc("admin/admins", pageQ);
+            window.location.href = sbLoc("admin/admins", pageQ);
 		if(type == "B")
-            window.location = sbLoc("banlist", pageQ);
+            window.location.href = sbLoc("banlist", pageQ);
 		if(type == "C")
-            window.location = sbLoc("commslist", pageQ);
+            window.location.href = sbLoc("commslist", pageQ);
 		if(type == "L")
-            window.location = sbLoc("admin/settings", pageQ) + "#^2";
+            window.location.href = sbLoc("admin/settings", pageQ) + "#^2";
         if(type == "P")
-            window.location = sbLoc("admin/bans", "ppage=" + nextPage) + "#^1";
+            sbGo("admin/bans?ppage=" + nextPage + "#^1");
         if(type == "PA")
-            window.location = sbLoc("admin/bans", "papage=" + nextPage) + "#^1~p1";
+            sbGo("admin/bans?papage=" + nextPage + "#^1~p1");
         if(type == "S")
-            window.location = sbLoc("admin/bans", "spage=" + nextPage) + "#^2";
+            sbGo("admin/bans?spage=" + nextPage + "#^2");
         if(type == "SA")
-            window.location = sbLoc("admin/bans", "sapage=" + nextPage) + "#^2~s1";
+            sbGo("admin/bans?sapage=" + nextPage + "#^2~s1");
 	 }
 }
 
