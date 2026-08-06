@@ -1,6 +1,6 @@
 # Blue Material Admin | SourceBans 2.0.6
 
-Веб-панель от **Крузяры** ([lapplandbro](https://github.com/lapplandbro)) для игровых серверов Source (**CS:GO / CS2**, **TF2** и др.) на базе **SourceBans++** с темой **Blue Admin** собственной разработки.
+Веб-панель от **[Lappland](https://github.com/LapplandBro)** ([lapplandbro](https://github.com/lapplandbro)) для игровых серверов Source (**CS:GO / CS2**, **TF2** и др.) на базе **SourceBans++** с темой **Blue Admin**.
 
 <img width="1921" height="946" alt="Blue Material Admin" src="https://github.com/user-attachments/assets/690db1d7-344c-4724-877a-1f76792c45c7" />
 
@@ -240,6 +240,7 @@ ZIP с ветки `main`: https://github.com/LapplandBro/blue-material-admin
 
 ## Credits
 
+- **[Lappland](https://github.com/LapplandBro)** / [lapplandbro](https://github.com/lapplandbro) — развитие и сборка **Blue Material Admin**  
 - [SourceBans++](https://sbpp.github.io/) / GameConnect SourceBans  
 - Material Admin–класс UI (легаси-база) → кастом **Blue Admin** (под выпил)  
-- [lapplandbro](https://github.com/lapplandbro) / Крузяра — развитие и сборка  
+- [Крузяра (Kruzya)](https://hlmod.net/members/kruzya.72654/) / CrazyHackGUT — отдельный автор экосистемы SB Material; **не** автор этого форка
