@@ -64,7 +64,7 @@
 			<div class="card-body card-padding text-center">
 				{sb_button text="Сохранить" icon="<i class='zmdi zmdi-check-all'></i>" class="bgm-blue btn-icon-text" submit=true}
 			    &nbsp;
-			    {sb_button text="Назад" onclick="sbGo('index.php?p=admin&c=menu')" icon="<i class='zmdi zmdi-undo'></i>" class="bgm-lightblue btn-icon-text" id="back" submit=false}
+			    {sb_button text="Назад" onclick="sbGo('admin/menu')" icon="<i class='zmdi zmdi-undo'></i>" class="bgm-lightblue btn-icon-text" id="back" submit=false}
 			</div>
 		</div>
 	</div>

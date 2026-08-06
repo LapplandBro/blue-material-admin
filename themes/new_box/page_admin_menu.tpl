@@ -43,14 +43,14 @@
 								<td><a href="{$menu.url}">{$menu.url}</a></td>
 								<td class="text-right">
 									<span class="admin-actions">
-										<a class="admin-action" href="index.php?p=admin&amp;c=menu&amp;o=edit&amp;id={$menu.id}">Изменить</a>
+										<a class="admin-action" href="admin/menu?o=edit&amp;id={$menu.id}">Изменить</a>
 										{if $menu.enabled != "1"}
-											<a class="admin-action" href="index.php?p=admin&amp;c=menu&amp;o=on&amp;id={$menu.id}">Вкл</a>
+											<a class="admin-action" href="admin/menu?o=on&amp;id={$menu.id}">Вкл</a>
 										{else}
-											<a class="admin-action" href="index.php?p=admin&amp;c=menu&amp;o=off&amp;id={$menu.id}">Выкл</a>
+											<a class="admin-action" href="admin/menu?o=off&amp;id={$menu.id}">Выкл</a>
 										{/if}
 										{if $menu.system != "1"}
-											<a class="admin-action admin-action--danger" href="index.php?p=admin&amp;c=menu&amp;o=del&amp;id={$menu.id}">Удалить</a>
+											<a class="admin-action admin-action--danger" href="admin/menu?o=del&amp;id={$menu.id}">Удалить</a>
 										{/if}
 									</span>
 								</td>
@@ -131,7 +131,7 @@
 			<div class="card-body card-padding text-center">
 				{sb_button text="Добавить" icon="<i class='zmdi zmdi-check-all'></i>" class="bgm-blue btn-icon-text" submit=true}
 			    &nbsp;
-			    {sb_button text="Назад" onclick="sbGo('index.php?p=admin&c=menu')" icon="<i class='zmdi zmdi-undo'></i>" class="bgm-bluegray btn-icon-text" id="back" submit=false}
+			    {sb_button text="Назад" onclick="sbGo('admin/menu')" icon="<i class='zmdi zmdi-undo'></i>" class="bgm-bluegray btn-icon-text" id="back" submit=false}
 			</div>
 		</div>
 		</div>

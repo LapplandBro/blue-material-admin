@@ -69,6 +69,9 @@ ErrorDocument 504 /errors/504.html
 	RewriteCond %{REQUEST_FILENAME} -d
 	RewriteRule ^ - [L]
 
+	# Старые Location/JS: /admin/index.php?p=… → корневой index.php (не путать с /admin/menu)
+	RewriteRule ^admin/index\.php$ index.php [L,QSA]
+
 	# /admin/recidivism/STEAM_0-0-123 (двоеточия → дефисы)
 	RewriteRule ^admin/(recidivism|parsec)/(STEAM_[0-9]+-[01]-[0-9]+)/?$ index.php?p=admin&c=$1&steam=$2 [L,QSA]
 	RewriteRule ^admin/([a-zA-Z0-9_]+)/?$ index.php?p=admin&c=$1 [L,QSA]

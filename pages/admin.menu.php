@@ -13,31 +13,31 @@ global $userbank, $theme;
 					if($check_sys != "1"){
 						$gg_check_sys = $GLOBALS['db']->Execute("DELETE FROM `" . DB_PREFIX . "_menu` WHERE id = '".(int)$_GET['id']."'");
 						if($gg_check_sys)
-							AddScriptWithReload(sprintf("setTimeout(function() { %s; }, 1350);", generateMsgBoxJS("Успех!", "Ссылка была успешно удалена!", "green", "", true)), "index.php?p=admin&c=menu");
+							AddScriptWithReload(sprintf("setTimeout(function() { %s; }, 1350);", generateMsgBoxJS("Успех!", "Ссылка была успешно удалена!", "green", "", true)), sb_url('admin', array('c' => 'menu')));
 						else
-							AddScriptWithReload(sprintf("setTimeout(function() { %s; }, 1350);", generateMsgBoxJS("Ошибка", "Не удалось удалить ссылку! (" . htmlspecialchars($GLOBALS['db']->ErrorMsg()) . ")", "red", "", true)), "index.php?p=admin&c=menu");
+							AddScriptWithReload(sprintf("setTimeout(function() { %s; }, 1350);", generateMsgBoxJS("Ошибка", "Не удалось удалить ссылку! (" . htmlspecialchars($GLOBALS['db']->ErrorMsg()) . ")", "red", "", true)), sb_url('admin', array('c' => 'menu')));
 					}else
-						AddScriptWithReload(sprintf("setTimeout(function() { %s; }, 1350);", generateMsgBoxJS("Ошибка", "Системную ссылку удалить невозможно!", "red", "", true)), "index.php?p=admin&c=menu");
+						AddScriptWithReload(sprintf("setTimeout(function() { %s; }, 1350);", generateMsgBoxJS("Ошибка", "Системную ссылку удалить невозможно!", "red", "", true)), sb_url('admin', array('c' => 'menu')));
 			}elseif(($_GET['o'] == "on") and !empty($_GET['o'])){
 				$check_sys = $GLOBALS['db']->GetOne("SELECT enabled FROM `" . DB_PREFIX . "_menu` WHERE id = '".(int)$_GET['id']."'");
 				if($check_sys == "0"){
 					$gg_check_sys = $GLOBALS['db']->Execute("UPDATE `" . DB_PREFIX . "_menu` SET `enabled` = '1' WHERE id = '".(int)$_GET['id']."'");
 					if($gg_check_sys)
-						AddScriptWithReload(sprintf("setTimeout(function() { %s; }, 1350);", generateMsgBoxJS("Успех!", "Ссылка была успешно добавлена в главное меню SourceBans!", "green", "", true)), "index.php?p=admin&c=menu");
+						AddScriptWithReload(sprintf("setTimeout(function() { %s; }, 1350);", generateMsgBoxJS("Успех!", "Ссылка была успешно добавлена в главное меню SourceBans!", "green", "", true)), sb_url('admin', array('c' => 'menu')));
 					else
-						AddScriptWithReload(sprintf("setTimeout(function() { %s; }, 1350);", generateMsgBoxJS("Ошибка", "Не удалось включить ссылку! (" . htmlspecialchars($GLOBALS['db']->ErrorMsg()) . ")", "red", "", true)), "index.php?p=admin&c=menu");
+						AddScriptWithReload(sprintf("setTimeout(function() { %s; }, 1350);", generateMsgBoxJS("Ошибка", "Не удалось включить ссылку! (" . htmlspecialchars($GLOBALS['db']->ErrorMsg()) . ")", "red", "", true)), sb_url('admin', array('c' => 'menu')));
 				}else
-					AddScriptWithReload(sprintf("setTimeout(function() { %s; }, 1350);", generateMsgBoxJS("Ошибка", "Данная ссылка уже и так отключена!", "red", "", true)), "index.php?p=admin&c=menu");
+					AddScriptWithReload(sprintf("setTimeout(function() { %s; }, 1350);", generateMsgBoxJS("Ошибка", "Данная ссылка уже и так отключена!", "red", "", true)), sb_url('admin', array('c' => 'menu')));
 			}elseif(($_GET['o'] == "off") and !empty($_GET['o'])){
 				$check_sys = $GLOBALS['db']->GetOne("SELECT enabled FROM `" . DB_PREFIX . "_menu` WHERE id = '".(int)$_GET['id']."'");
 				if($check_sys == "1"){
 				$gg_check_sys = $GLOBALS['db']->Execute("UPDATE `" . DB_PREFIX . "_menu` SET `enabled` = '0' WHERE id = '".(int)$_GET['id']."'");
 				if($gg_check_sys)
-					AddScriptWithReload(sprintf("setTimeout(function() { %s; }, 1350);", generateMsgBoxJS("Успех!", "Ссылка была успешно удалена из главного меню!", "green", "", true)), "index.php?p=admin&c=menu");
+					AddScriptWithReload(sprintf("setTimeout(function() { %s; }, 1350);", generateMsgBoxJS("Успех!", "Ссылка была успешно удалена из главного меню!", "green", "", true)), sb_url('admin', array('c' => 'menu')));
 				else
-					AddScriptWithReload(sprintf("setTimeout(function() { %s; }, 1350);", generateMsgBoxJS("Ошибка", "Не удалось отключить ссылку! (" . htmlspecialchars($GLOBALS['db']->ErrorMsg()) . ")", "red", "", true)), "index.php?p=admin&c=menu");
+					AddScriptWithReload(sprintf("setTimeout(function() { %s; }, 1350);", generateMsgBoxJS("Ошибка", "Не удалось отключить ссылку! (" . htmlspecialchars($GLOBALS['db']->ErrorMsg()) . ")", "red", "", true)), sb_url('admin', array('c' => 'menu')));
 			}else
-					AddScriptWithReload(sprintf("setTimeout(function() { %s; }, 1350);", generateMsgBoxJS("Ошибка", "Данная ссылка уже и так включена!", "red", "", true)), "index.php?p=admin&c=menu");
+					AddScriptWithReload(sprintf("setTimeout(function() { %s; }, 1350);", generateMsgBoxJS("Ошибка", "Данная ссылка уже и так включена!", "red", "", true)), sb_url('admin', array('c' => 'menu')));
 			}
 		}
 		if(isset($_POST['Link']))
@@ -53,11 +53,11 @@ global $userbank, $theme;
 				// показывалось всегда, даже если INSERT реально провалился (например, ошибка БД).
 				// Теперь при неудаче показываем реальную ошибку из ErrorMsg() вместо лживого "успеха".
 				if($add) {
-					AddScriptWithReload(sprintf("setTimeout(function() { %s; }, 1350);", generateMsgBoxJS("Успех!", sprintf("Ссылка была успешно создана%s!", ($on_act==1)?" и добавлена в меню":""), "green", "", true)), "index.php?p=admin&c=menu");
+					AddScriptWithReload(sprintf("setTimeout(function() { %s; }, 1350);", generateMsgBoxJS("Успех!", sprintf("Ссылка была успешно создана%s!", ($on_act==1)?" и добавлена в меню":""), "green", "", true)), sb_url('admin', array('c' => 'menu')));
 					$log = new CSystemLog("m", "Пункт меню добавлен", $userbank->GetProperty("user") . " добавил пункт меню \"" . htmlspecialchars(sb_menu_strip_icon($names_link)) . "\".");
 				} else {
 					$db_error = $GLOBALS['db']->ErrorMsg();
-					AddScriptWithReload(sprintf("setTimeout(function() { %s; }, 1350);", generateMsgBoxJS("Ошибка", "Не удалось создать ссылку!" . (!empty($db_error) ? " (" . htmlspecialchars($db_error) . ")" : ""), "red", "", true)), "index.php?p=admin&c=menu");
+					AddScriptWithReload(sprintf("setTimeout(function() { %s; }, 1350);", generateMsgBoxJS("Ошибка", "Не удалось создать ссылку!" . (!empty($db_error) ? " (" . htmlspecialchars($db_error) . ")" : ""), "red", "", true)), sb_url('admin', array('c' => 'menu')));
 				}
 			}
 		}
