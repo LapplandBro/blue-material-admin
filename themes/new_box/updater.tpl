@@ -57,7 +57,17 @@
 	</section>
 
 	<footer id="footer">
-		<div id="sm">Создано <a class="footer_link" href="https://github.com/lapplandbro" target="_blank" rel="noopener">lapplandbro</a></div>
+		<div id="sm">
+			Создано <a class="footer_link" href="https://github.com/lapplandbro" target="_blank" rel="noopener">lapplandbro</a>
+			<span class="footer-stack">
+				· стек:
+				<a class="footer_link" href="https://www.sourcemod.net/" target="_blank" rel="noopener">SourceMod</a>,
+				<a class="footer_link" href="https://jquery.com/" target="_blank" rel="noopener">jQuery</a>,
+				<a class="footer_link" href="https://github.com/Xajax/Xajax" target="_blank" rel="noopener">xAjax</a>,
+				<a class="footer_link" href="https://www.php.net/" target="_blank" rel="noopener">PHP</a>,
+				<a class="footer_link" href="https://getbootstrap.com/docs/3.4/" target="_blank" rel="noopener">Bootstrap&nbsp;3</a>
+			</span>
+		</div>
 	</footer>
 
 	<script src="../themes/new_box/vendors/bower_components/jquery/dist/jquery.min.js"></script>
