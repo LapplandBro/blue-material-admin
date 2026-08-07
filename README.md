@@ -242,5 +242,6 @@ ZIP с ветки `main`: https://github.com/LapplandBro/blue-material-admin
 
 - **[Lappland](https://github.com/LapplandBro)** / [lapplandbro](https://github.com/lapplandbro) — развитие и сборка **Blue Material Admin**  
 - [SourceBans++](https://sbpp.github.io/) / GameConnect SourceBans  
+- Стек (футер панели): [SourceMod](https://www.sourcemod.net/), [jQuery](https://jquery.com/), [xAjax](https://github.com/Xajax/Xajax), [PHP](https://www.php.net/), [Bootstrap 3](https://getbootstrap.com/docs/3.4/)  
 - Material Admin–класс UI (легаси-база) → кастом **Blue Admin** (под выпил)  
 - [Крузяра (Kruzya)](https://hlmod.net/members/kruzya.72654/) / CrazyHackGUT — отдельный автор экосистемы SB Material; **не** автор этого форка

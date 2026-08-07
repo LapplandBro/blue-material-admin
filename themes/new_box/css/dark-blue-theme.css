@@ -1183,6 +1183,17 @@ blockquote small {
 
 #footer {
   color: #3d607f !important;
+  height: auto !important;
+  min-height: 110px;
+  padding-bottom: 12px;
+}
+
+#footer #sm .footer-stack {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.85em;
+  line-height: 1.45;
+  opacity: 0.9;
 }
 
 #footer .f-menu > li > a,
