@@ -311,13 +311,15 @@ function sb_ui_v2_render($template, array $vars)
 	$headerTitle = '';
 	if (!empty($GLOBALS['config']['template.title']))
 		$headerTitle = stripslashes((string)$GLOBALS['config']['template.title']);
-	$brandPrimary = 'Material Admin';
+	$brandPrimary = 'Blue Admin';
 	$brandSecondary = 'SourceBans';
 	if ($headerTitle !== '') {
 		$parts = explode('|', $headerTitle, 2);
 		$brandPrimary = trim($parts[0]);
 		$brandSecondary = isset($parts[1]) ? trim($parts[1]) : '';
 	}
+	if ($brandPrimary === '' || strcasecmp($brandPrimary, 'Material Admin') === 0)
+		$brandPrimary = 'Blue Admin';
 	$vars += array(
 		'asset_base' => sb_ui_v2_base_href(),
 		'xajax_js' => sb_ui_v2_xajax_js(),

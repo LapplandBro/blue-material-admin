@@ -111,7 +111,7 @@ function sb_install_write_seo_files($siteRoot, $baseUrl = '')
 }
 
 /**
- * Заглушка Open Graph 1200×630 (Material Admin | SourceBans).
+ * Заглушка Open Graph 1200×630 (Blue Admin | SourceBans).
  * Свой баннер: просто замени images/og-cover.jpg или SB_OG_IMAGE в config.php.
  *
  * @param string $siteRoot
@@ -185,11 +185,11 @@ function sb_install_write_og_cover($siteRoot)
 		}
 	}
 	if ($font) {
-		imagettftext($im, 48, 0, 320, 280, $white, $font, 'Material Admin');
+		imagettftext($im, 48, 0, 320, 280, $white, $font, 'Blue Admin');
 		imagettftext($im, 36, 0, 320, 350, $muted, $font, 'SourceBans');
 		imagettftext($im, 22, 0, 320, 420, $muted, $font, 'Banlist · Servers · Moderation');
 	} else {
-		imagestring($im, 5, 320, 250, 'Material Admin | SourceBans', $white);
+		imagestring($im, 5, 320, 250, 'Blue Admin | SourceBans', $white);
 		imagestring($im, 4, 320, 280, 'Banlist / Servers / Moderation', $muted);
 	}
 

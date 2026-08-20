@@ -137,7 +137,7 @@ $theme->assign('def_ch_chenger',  $def_ch);
 $theme->assign('def_body_chenger',  $def_body);
 $theme->assign('xajax_functions',  $xajax->printJavascript("scripts", "sb-api.js"));
 $theme->assign('sb_csrf', function_exists('sb_csrf_token') ? sb_csrf_token() : '');
-// Шапка Material Admin | SourceBans — путь логотипа в настройках заблокирован.
+// Шапка Blue Admin | название сайта — путь логотипа в настройках заблокирован.
 $logo = 'images/icons/logo-material-admin.svg';
 $theme->assign('header_logo', $logo);
 $theme->assign('header_title', $GLOBALS['config']['template.title']);

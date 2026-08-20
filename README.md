@@ -1,6 +1,8 @@
 # Blue Material Admin | SourceBans 2.0.6
 
-Веб-панель от **[Lappland](https://github.com/LapplandBro)** ([lapplandbro](https://github.com/lapplandbro)) для игровых серверов Source (**CS:GO / CS2**, **TF2** и др.) на базе **SourceBans++** с темой **Blue Admin**.
+Веб-панель от **[Lappland](https://github.com/LapplandBro)** ([lapplandbro](https://github.com/lapplandbro)) для игровых серверов Source (**CS:GO / CS2**, **TF2** и др.). Это **самостоятельный форк [SourceBans](https://github.com/GameConnect/sourcebansv1) / [SourceBans++](https://github.com/sbpp/sourcebans-pp)** с темой **Blue Admin**, лицензия **[GNU GPLv3](LICENSE)**.
+
+Идея оформления взята с публичного рефорка Material Admin на HLMod — [тема на форуме](https://hlmod.net/threads/alpha-material-admin-refork-na-osnove-sb-1-5-4-7-bootstrap-3.36382/) — как дань уважения той работе; профиль **[Kruzya](https://github.com/CrazyHackGUT)** ([HLMod](https://hlmod.net/members/kruzya.72654/)). Дальше панель живёт **своей жизнью**, отдельно от остальных сборок.
 
 <img width="1921" height="946" alt="Blue Material Admin" src="https://github.com/user-attachments/assets/690db1d7-344c-4724-877a-1f76792c45c7" />
 
@@ -223,21 +225,25 @@ ZIP с ветки `main`: https://github.com/LapplandBro/blue-material-admin
 
 ## Лицензия
 
-Слои разные — читай [`NOTICE`](NOTICE) и корневой [`LICENSE`](LICENSE) (GNU GPLv3).
+**GNU GPLv3** (или более поздняя по вашему выбору) — файл [`LICENSE`](LICENSE).  
+Слои и атрибуция — [`NOTICE`](NOTICE).
+
+Это **форк SourceBans / SourceBans++**. Код панели и оболочка Blue V2 — GPLv3. Vendors (Bootstrap 5, иконки, SweetAlert, Twig, ADOdb, SourceQuery, TinyMCE) остаются на своих лицензиях (MIT / BSD / LGPL / GPL).
 
 | Слой | Лицензия |
 |------|----------|
 | Код панели (PHP, форк SourceBans++) | **GNU GPLv3** (`LICENSE`) |
-| UI-оболочка `themes/blue_v2` (кроме `vendor/`) | **GPLv3** вместе с панелью; см. `NOTICE` |
-| Vendors (Bootstrap 5, иконки, SweetAlert, …) | Обычно **MIT** / свои SPDX в пакетах |
-| ADOdb, Twig, SourceQuery | BSD/LGPL — как у upstream |
+| UI-оболочка `themes/blue_v2` (кроме `vendor/`) | **GPLv3** вместе с панелью |
+| Vendors | MIT / BSD / LGPL / GPL — как у upstream |
 
-Донат/оплата на своём сайте ≠ «продаём чужой UI одним zip». Слои лицензий — [`NOTICE`](NOTICE).
+Донат на своём сайте ≠ продажа чужого UI одним zip.
+
+**Независимость:** этот репозиторий не является официальным продолжением SB-MaterialAdmin, сборок Kruzya или других Material Admin. Развивается отдельно.
 
 ## Credits
 
-- **[Lappland](https://github.com/LapplandBro)** / [lapplandbro](https://github.com/lapplandbro) — развитие и сборка **Blue Material Admin**  
-- [SourceBans++](https://sbpp.github.io/) / GameConnect SourceBans  
-- Стек (футер панели): [SourceMod](https://www.sourcemod.net/), [jQuery](https://jquery.com/), [xAjax](https://github.com/Xajax/Xajax), [PHP](https://www.php.net/), [Bootstrap 3](https://getbootstrap.com/docs/3.4/)  
-- Material Admin–класс UI (легаси-база) → кастом **Blue Admin** (под выпил)  
-- [Крузяра (Kruzya)](https://hlmod.net/members/kruzya.72654/) / CrazyHackGUT — отдельный автор экосистемы SB Material; **не** автор этого форка
+- **SourceBans** — [GameConnect](https://github.com/GameConnect/sourcebansv1); **SourceBans++** — [sbpp/sourcebans-pp](https://github.com/sbpp/sourcebans-pp) ([сайт](https://sbpp.github.io/))  
+- **[Lappland](https://github.com/LapplandBro)** / [lapplandbro](https://github.com/lapplandbro) — этот форк, Blue V2  
+- **Идея оформления** — публичный рефорк на HLMod: [Alpha Material Admin на базе SB 1.5.4.7](https://hlmod.net/threads/alpha-material-admin-refork-na-osnove-sb-1-5-4-7-bootstrap-3.36382/) (дань уважения той работе; CSS Blue V2 написан заново)  
+- **[Kruzya](https://github.com/CrazyHackGUT)** ([профиль HLMod](https://hlmod.net/members/kruzya.72654/)) — экосистема SB Material Admin; **не** автор и не мейнтейнер *этого* форка  
+- Стек: [SourceMod](https://www.sourcemod.net/), [PHP](https://www.php.net/), [Bootstrap](https://getbootstrap.com/), Twig, ADOdb

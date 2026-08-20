@@ -61,8 +61,8 @@
 
 			<div class="lv-body p-15">                                    
 				Перед установкой этого программного обеспечения Вы должны прочесть и принять условия лицензии. Если Вы не согласны с условиями — не устанавливайте ПО.<br />
-				Код панели: <code>LICENSE</code> (<a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank" rel="noopener">GNU GPL v3</a>).
-				Слои и оговорка по UI-теме: файл <code>NOTICE</code> в корне.
+				Код панели: <code>LICENSE</code> (<a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank" rel="noopener">GNU GPL v3</a>) — форк SourceBans / SourceBans++.
+				Атрибуция и независимость форка: файл <code>NOTICE</code> в корне.
 			</div>
 
 			<div class="lv-header-alt clearfix">
@@ -74,22 +74,30 @@
 				<form action="index.php?p=submit" method="POST" enctype="multipart/form-data">
 					<div id="submit-main">
 						<textarea class="form-control" id="license" cols="105" rows="15" name="license">
-Blue V2 — форк SourceBans++.
+Blue Material Admin — самостоятельный форк SourceBans / SourceBans++.
 
-КОД ПАНЕЛИ (PHP, логика) — GNU General Public License v3 (файл LICENSE).
-Вы можете распространять и изменять код на условиях GPLv3 (или более поздней
-версии по вашему выбору). ПО без гарантий — см. полный текст GPL.
+ЛИЦЕНЗИЯ КОДА: GNU General Public License v3 (файл LICENSE в корне).
+Можно запускать, изучать, менять и распространять код на условиях GPLv3
+(или более поздней версии по вашему выбору). ПО без гарантий.
 
-UI-ОБОЛОЧКА themes/blue_v2 — Twig + Bootstrap 5, оболочка этой сборки
-(GPLv3 вместе с кодом панели). Vendors (Bootstrap 5, иконки, SweetAlert,
-Twig, TinyMCE) — свои лицензии, чаще MIT / BSD. Подробности — NOTICE.
+ЭТО ФОРК SOURCEBANS:
+  SourceBans (GameConnect) — https://github.com/GameConnect/sourcebansv1
+  SourceBans++ — https://github.com/sbpp/sourcebans-pp
+
+ИДЕЯ ОФОРМЛЕНИЯ (дань уважения той работе, не копия чужого CSS):
+  https://hlmod.net/threads/alpha-material-admin-refork-na-osnove-sb-1-5-4-7-bootstrap-3.36382/
+  Kruzya (CrazyHackGUT) — https://github.com/CrazyHackGUT
+  https://hlmod.net/members/kruzya.72654/
+
+Этот репозиторий живёт своей жизнью и НЕ является официальным продолжением
+SB-MaterialAdmin, сборок Kruzya или других Material Admin.
+
+ОБОЛОЧКА themes/blue_v2 — Twig + Bootstrap 5, написана в этом форке (GPLv3).
+Vendors — свои лицензии (MIT / BSD / LGPL / GPL). Подробности: NOTICE.
 
 Кратко по GPLv3 (не заменяет LICENSE):
- • можно запускать, изучать, менять и распространять код;
  • производные при распространении — под GPLv3;
  • исходники доступны получателям на условиях GPL.
-
-Upstream: SourceBans++ (GPLv3) — https://github.com/sbpp/sourcebans-pp
 						</textarea>
 					</div>
 				</form>

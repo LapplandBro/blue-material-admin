@@ -671,7 +671,8 @@ html:not(.sidebar-off) .menu-trigger-lines span:nth-child(3) {
   align-items: flex-start;
 }
 .app-footer-copy strong { color: var(--text-heading); font-weight: 700; letter-spacing: 0.05em; }
-.app-footer-copy p { margin: 0.22rem 0 0; max-width: 42rem; line-height: 1.45; }
+.app-footer-copy p { margin: 0.22rem 0 0; max-width: 52rem; line-height: 1.45; }
+.app-footer-copy a { color: var(--accent); font-weight: 650; }
 .app-footer-author { margin-top: 0.35rem !important; }
 .app-footer-author a { color: var(--accent); font-weight: 650; }
 

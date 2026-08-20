@@ -35,7 +35,7 @@
     <a class="header-brand" href="index.php?p=home" title="На главную">
       {% include 'partials/brand_icon.twig' %}
       <span class="header-brand-text">
-        <span class="header-brand-primary">{{ brand_primary|default('Material Admin') }}</span>
+        <span class="header-brand-primary">{{ brand_primary|default('Blue Admin') }}</span>
         {% if brand_secondary %}
         <span class="header-brand-sep" aria-hidden="true">|</span>
         <span class="header-brand-secondary">{{ brand_secondary }}</span>
@@ -159,8 +159,9 @@
       <div class="app-footer-inner">
         <div class="app-footer-copy">
           <strong>BLUE ADMIN</strong>{% if sb_version %} · {{ sb_version }}{% endif %}
-          <p>Свободное ПО под GNU GPLv3. Оболочка v2 — original CSS + Twig, Bootstrap 5.3.</p>
-          <p class="app-footer-author">Автор: <a href="https://github.com/LapplandBro/blue-material-admin" target="_blank" rel="noopener noreferrer">LapplandBro · GitHub</a></p>
+          <p>Свободное ПО под <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank" rel="noopener noreferrer">GNU GPLv3</a>. Форк <a href="https://github.com/sbpp/sourcebans-pp" target="_blank" rel="noopener noreferrer">SourceBans++</a> / <a href="https://github.com/GameConnect/sourcebansv1" target="_blank" rel="noopener noreferrer">SourceBans</a>.</p>
+          <p class="app-footer-author">Автор сборки: <a href="https://github.com/LapplandBro/blue-material-admin" target="_blank" rel="noopener noreferrer">LapplandBro</a></p>
+          <p>Идея оформления: <a href="https://hlmod.net/threads/alpha-material-admin-refork-na-osnove-sb-1-5-4-7-bootstrap-3.36382/" target="_blank" rel="noopener noreferrer">Material Admin (HLMod)</a> · <a href="https://github.com/CrazyHackGUT" target="_blank" rel="noopener noreferrer">Kruzya</a>. Самостоятельный форк — живёт отдельно от остальных сборок.</p>
         </div>
         <nav class="app-footer-nav">
           <a href="index.php?p=home">Главная</a>
