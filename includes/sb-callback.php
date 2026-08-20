@@ -4420,8 +4420,8 @@ function ViewCommunityProfile($sid, $name)
 		if(strpos($steam, "[U:") === 0) {
 			$steam = renderSteam2(getAccountId($steam), 0);
 		}
-        $objResponse->addScript("ShowBox('Profile', 'Ссылка на игрока \"".addslashes(htmlspecialchars($name))."\", была успешно создана: <a href=\"http://www.steamcommunity.com/profiles/".SteamIDToFriendID($steam)."/\" title=\"".addslashes(htmlspecialchars($name))."\'s Profile\" target=\"_blank\">Открыть</a>', 'green', '', true);");
-		$objResponse->addScript("window.open('http://www.steamcommunity.com/profiles/".SteamIDToFriendID($steam)."/', 'Community_".$steam."');");
+        $objResponse->addScript("ShowBox('Профиль Steam', 'Ссылка на игрока \"".addslashes(htmlspecialchars($name))."\" создана: <a href=\"https://steamcommunity.com/profiles/".SteamIDToFriendID($steam)."/\" target=\"_blank\" rel=\"noopener noreferrer\">Открыть</a>', 'green', '', false);");
+		$objResponse->addScript("window.open('https://steamcommunity.com/profiles/".SteamIDToFriendID($steam)."/', 'Community_".$steam."');");
 	} else {
 		$objResponse->addScript("ShowBox('Ошибка', 'Невозможно получить информацию о игроке ".addslashes(htmlspecialchars($name)).". Игрок ушёл с сервера!', 'red', '', true);");
 	}

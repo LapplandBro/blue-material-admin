@@ -763,6 +763,12 @@ html.sidebar-off .sb-toasts--top-left {
   box-shadow: var(--shadow-elevated), 0 0 80px rgba(30, 144, 255, 0.08);
 }
 .login-brand { margin-bottom: 0.8rem; }
+.login-brand .header-brand-mark {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  border-radius: 8px;
+}
 .login-kicker {
   margin: 0 0 0.18rem;
   color: var(--muted);
@@ -1285,19 +1291,41 @@ code, kbd, samp {
 .msg-err { color: #ff8aa0; font-size: 0.82rem; display: none; }
 
 /* SweetAlert 1 default skin is light; restyle for the dark panel. */
+.blue-v2 .sweet-overlay {
+  background: rgba(4, 8, 20, 0.72) !important;
+  z-index: 4700 !important;
+}
 .blue-v2 .sweet-alert {
+  box-sizing: border-box !important;
+  width: min(28rem, calc(100vw - 2rem)) !important;
+  max-width: calc(100vw - 2rem) !important;
+  left: 0 !important;
+  right: 0 !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
   background-color: var(--bg-card) !important;
   color: var(--text) !important;
   border: 1px solid var(--border-hairline) !important;
   border-radius: var(--radius-md) !important;
   box-shadow: var(--shadow-elevated) !important;
-  padding: 1.35rem 1.4rem 1.15rem !important;
+  padding: 1.35rem 1.4rem 1.2rem !important;
+  text-align: center !important;
+  overflow: visible !important;
+  z-index: 4800 !important;
 }
 .blue-v2 .sweet-alert h2 {
   color: var(--text-heading) !important;
   font-size: 1.15rem !important;
   font-weight: 700 !important;
-  margin: 0.35rem 0 0.55rem !important;
+  line-height: 1.35 !important;
+  height: auto !important;
+  max-height: none !important;
+  margin: 0.55rem 0 0.65rem !important;
+  padding: 0 !important;
+  text-align: center !important;
+  overflow: visible !important;
+  position: relative;
+  z-index: 3;
 }
 .blue-v2 .sweet-alert p,
 .blue-v2 .sweet-alert .sweet-alert-body {
@@ -1307,17 +1335,23 @@ code, kbd, samp {
   color: var(--muted) !important;
   font-size: 0.9rem !important;
   line-height: 1.45;
-  text-align: left !important;
-  margin: 0 0 0.35rem !important;
+  text-align: center !important;
+  margin: 0 auto 0.55rem !important;
 }
-.blue-v2 .sweet-overlay { background: rgba(4, 8, 20, 0.72) !important; }
 .blue-v2 .sweet-alert button {
+  float: none !important;
+  width: auto !important;
+  min-width: 7.5rem;
   border-radius: var(--radius-sm) !important;
-  padding: 0.48rem 1.1rem !important;
+  padding: 0.48rem 1.25rem !important;
   font-size: 0.84rem !important;
   font-weight: 700 !important;
   box-shadow: none !important;
-  margin: 0.45rem 0.25rem 0 !important;
+  margin: 0.55rem 0.3rem 0 !important;
+}
+.blue-v2 .sweet-alert[data-has-cancel-button="false"] button.cancel,
+.blue-v2 .sweet-alert[data-has-confirm-button="false"] button.confirm {
+  display: none !important;
 }
 .blue-v2 .sweet-alert button.confirm {
   background: var(--accent) !important;
@@ -1350,15 +1384,21 @@ code, kbd, samp {
   border-radius: var(--radius-sm);
   font: inherit;
   resize: vertical;
+  text-align: left;
 }
 .blue-v2 .sweet-alert .btn-accent { min-width: 7.5rem; }
 .blue-v2 .sweet-alert.sweet-alert-srv {
-  width: 560px !important;
-  max-width: 94vw !important;
+  width: min(560px, calc(100vw - 2rem)) !important;
   padding-bottom: 18px !important;
 }
 .blue-v2 .sweet-alert.sweet-alert-srv p,
-.blue-v2 .sweet-alert.sweet-alert-srv .sweet-alert-body {
+.blue-v2 .sweet-alert.sweet-alert-srv .sweet-alert-body,
+.blue-v2 .sweet-alert:has(textarea) p,
+.blue-v2 .sweet-alert:has(textarea) .sweet-alert-body,
+.blue-v2 .sweet-alert:has(input[type="text"]) p,
+.blue-v2 .sweet-alert:has(input[type="text"]) .sweet-alert-body,
+.blue-v2 .sweet-alert:has(iframe) p,
+.blue-v2 .sweet-alert:has(iframe) .sweet-alert-body {
   max-height: none !important;
   text-align: left !important;
   color: var(--text) !important;
@@ -1379,10 +1419,17 @@ code, kbd, samp {
   text-align: center;
   font-size: 0.82rem;
 }
-.blue-v2 .sweet-alert .icon.success .fix,
+.blue-v2 .sweet-alert .icon {
+  margin-left: auto !important;
+  margin-right: auto !important;
+  overflow: hidden !important;
+}
 .blue-v2 .sweet-alert .icon.success::before,
-.blue-v2 .sweet-alert .icon.success::after {
-  background-color: var(--bg-card) !important;
+.blue-v2 .sweet-alert .icon.success::after,
+.blue-v2 .sweet-alert .icon.success .fix {
+  display: none !important;
+  background: transparent !important;
+  content: none !important;
 }
 
 @media (max-width: 991.98px) {

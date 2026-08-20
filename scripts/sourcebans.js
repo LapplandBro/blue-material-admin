@@ -1481,15 +1481,15 @@ function ShowBox(title, msg, color, redir, noclose, timer)
 		containerClass: hasSrvFrame ? "sweet-alert-srv" : ""
 	};
 
+	opts.showConfirmButton = false;
+	opts.showCancelButton = false;
 	if (timer) {
-		opts.showConfirmButton = false;
 		opts.timer = timer;
 	} else if (!noclose) {
 		opts.confirmButtonText = "OK";
 		opts.showConfirmButton = true;
 	} else {
 		opts.showCancelButton = true;
-		opts.showConfirmButton = false;
 		opts.cancelButtonText = "Закрыть";
 	}
 
@@ -1501,7 +1501,11 @@ function ShowBox(title, msg, color, redir, noclose, timer)
 	if (dt) dt.innerHTML = title || "";
 	if (dct) dct.innerHTML = msg || "";
 
+	ShowBox._gen = (ShowBox._gen || 0) + 1;
+	var boxGen = ShowBox._gen;
 	setTimeout(function () {
+		if (boxGen !== ShowBox._gen)
+			return;
 		var box = document.querySelector(".sweet-alert");
 		var pane = box ? (box.querySelector(".sweet-alert-body") || box.querySelector("p")) : null;
 		if (pane && pane.tagName === "P") {

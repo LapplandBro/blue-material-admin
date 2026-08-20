@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ title|default('Blue Admin') }}</title>
   {% if asset_base %}<base href="{{ asset_base }}">{% endif %}
+  <link rel="icon" href="{{ asset_base }}images/icons/logo-mark.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="{{ asset_base }}images/icons/logo-mark.svg">
   <link href="{{ asset_base }}themes/blue_v2/vendor/bootstrap/bootstrap.min.css" rel="stylesheet">
   <link href="{{ asset_base }}themes/blue_v2/vendor/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet">
   <link href="{{ asset_base }}themes/blue_v2/vendor/sweetalert/sweet-alert.css" rel="stylesheet">
@@ -31,7 +33,7 @@
 <header class="topbar">
   <div class="topbar-left">
     <a class="header-brand" href="index.php?p=home" title="На главную">
-      <img class="header-brand-mark" src="{{ asset_base }}images/icons/logo-mark.svg" width="32" height="32" alt="">
+      {% include 'partials/brand_icon.twig' %}
       <span class="header-brand-text">
         <span class="header-brand-primary">{{ brand_primary|default('Material Admin') }}</span>
         {% if brand_secondary %}

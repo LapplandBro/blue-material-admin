@@ -9,13 +9,7 @@
 <div class="login-screen">
   <div class="panel login-card{% if login2fa_mode == 'enroll' or login2fa_mode == 'recovery' %} auth-card-wide{% endif %}">
     <a class="brand login-brand" href="index.php?p=home">
-      <span class="brand-mark" aria-hidden="true">
-        <svg viewBox="0 0 32 32" width="28" height="28" focusable="false">
-          <path class="brand-mark-shield" d="M16 2.2l11 5v9.1c0 7.1-4.8 12.3-11 13.9C9.8 28.6 5 23.4 5 16.3v-9.1l11-5z"/>
-          <path class="brand-mark-core" d="M16 8.1l6.1 2.6v5.1c0 4-2.6 7-6.1 8.1-3.5-1.1-6.1-4.1-6.1-8.1v-5.1L16 8.1z"/>
-          <path class="brand-mark-flame" d="M16 13.1c1.5 1.3 2.4 2.5 2.4 3.9a2.4 2.4 0 1 1-4.8 0c0-1.4.9-2.6 2.4-3.9z"/>
-        </svg>
-      </span>
+      {% include 'partials/brand_icon.twig' %}
       <span class="brand-text">BLUE <span>ADMIN</span></span>
     </a>
     <p class="login-kicker">Панель администратора</p>
