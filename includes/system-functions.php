@@ -2233,36 +2233,63 @@ function CreateHostnameCache()
 	return($servers);
 }
 
+function sb_ipv4_uint($ip)
+{
+	$ip = trim((string)$ip);
+	if ($ip === '' || filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) === false)
+		return null;
+	$n = ip2long($ip);
+	if ($n === false)
+		return null;
+	return (int)sprintf('%u', $n);
+}
+
+function sb_geoip_ranges()
+{
+	static $ranges = null;
+	if (is_array($ranges))
+		return $ranges;
+	$ranges = array();
+	$path = INCLUDES_PATH . '/IpToCountry.csv';
+	if (!is_readable($path))
+		return $ranges;
+	$fh = @fopen($path, 'r');
+	if (!$fh)
+		return $ranges;
+	while (($row = fgetcsv($fh, 4096)) !== false) {
+		if (!isset($row[0], $row[1], $row[2]) || $row[0] === '')
+			continue;
+		if (isset($row[0][0]) && $row[0][0] === '#')
+			continue;
+		$cc = strtoupper(preg_replace('/[^A-Za-z]/', '', (string)$row[2]));
+		if (strlen($cc) !== 2)
+			continue;
+		$ranges[] = array((int)$row[0], (int)$row[1], $cc);
+	}
+	fclose($fh);
+	return $ranges;
+}
+
 function FetchIp($ip)
 {
-	$ip = sprintf('%u', ip2long($ip));
-	if(!isset($_SESSION['CountryFetchHndl']) || !is_resource($_SESSION['CountryFetchHndl'])) {
-		$handle = fopen(INCLUDES_PATH.'/IpToCountry.csv', "r");
-		$_SESSION['CountryFetchHndl'] = $handle;
+	$n = sb_ipv4_uint($ip);
+	if ($n === null || $n === 0)
+		return 'zz';
+	$ranges = sb_geoip_ranges();
+	$lo = 0;
+	$hi = count($ranges) - 1;
+	if ($hi < 0)
+		return 'zz';
+	while ($lo <= $hi) {
+		$mid = ($lo + $hi) >> 1;
+		if ($ranges[$mid][0] <= $n)
+			$lo = $mid + 1;
+		else
+			$hi = $mid - 1;
 	}
-	else {
-		$handle = $_SESSION['CountryFetchHndl'];
-		rewind($handle);
-	}
-
-	if (!$handle)
-		return "zz";
-
-	while (($ipdata = fgetcsv($handle, 4096)) !== FALSE) {
-		// If line is comment or IP is out of range
-		if ($ipdata[0][0] == '#' || $ip < $ipdata[0] || $ip > $ipdata[1])
-			continue;
-
-		// БАГ-ФИКС: формат IpToCountry.csv сменился со старого 7-колоночного
-		// (software77.net, сайт больше не существует) на новый 3-колоночный
-		// "ipFrom,ipTo,countryCode" (ip-location-db) - код страны теперь в
-		// индексе 2, а не 4.
-		if(empty($ipdata[2]))
-			return "zz";
-		return $ipdata[2];
-	}
-
-	return "zz";
+	if ($hi >= 0 && $n <= $ranges[$hi][1])
+		return $ranges[$hi][2];
+	return 'zz';
 }
 
 function PageDie()

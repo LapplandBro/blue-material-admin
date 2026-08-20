@@ -838,8 +838,6 @@ $theme->assign('view_comments',$view_comments);
 $theme->assign('comment', (isset($_GET["comment"])&&$view_comments?$_GET["comment"]:false));
 //----------------------------------------
 
-unset($_SESSION['CountryFetchHndl']);
-
 $theme->assign('searchlink', $searchlink);
 $theme->assign('hidetext', $hidetext);
 $theme->assign('hidetext_darf', $hidetext_darf);

@@ -325,7 +325,8 @@ function sb_ui_v2_render($template, array $vars)
 		'css_ver' => (string)max(
 			(int)(@filemtime((defined('ROOT') ? ROOT : '') . 'themes/blue_v2/css/blue.css') ?: time()),
 			(int)(@filemtime((defined('ROOT') ? ROOT : '') . 'themes/blue_v2/css/admin_embed.css') ?: 0),
-			(int)(@filemtime((defined('ROOT') ? ROOT : '') . 'themes/blue_v2/css/servers.css') ?: 0)
+			(int)(@filemtime((defined('ROOT') ? ROOT : '') . 'themes/blue_v2/css/servers.css') ?: 0),
+			(int)(@filemtime((defined('ROOT') ? ROOT : '') . 'themes/blue_v2/css/dashboard.css') ?: 0)
 		),
 		'sb_version' => defined('SB_VERSION') ? SB_VERSION : '',
 		'nav_active' => isset($_GET['p']) ? (string)$_GET['p'] : '',

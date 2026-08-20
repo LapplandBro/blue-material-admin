@@ -150,7 +150,20 @@
   user-select: all;
 }
 .servers-actions { display: flex; flex-direction: column; gap: 0.4rem; }
-.servers-actions .btn { width: 100%; }
+.servers-actions .btn {
+  width: 100%;
+  transform: none;
+  box-shadow: none;
+}
+.servers-actions .btn-accent,
+.servers-actions .btn-accent:hover,
+.servers-actions .btn-accent:focus,
+.servers-actions .btn-accent:focus-visible,
+.servers-actions .btn-accent:active {
+  background-image: none;
+  box-shadow: none;
+  transform: none;
+}
 
 .servers-empty {
   display: none;

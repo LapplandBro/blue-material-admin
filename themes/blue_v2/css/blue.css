@@ -872,7 +872,8 @@ div.opener5 {
 .admin-ticket,
 .banlist-detail,
 .commslist-detail-grid,
-.servers-window {
+.servers-window,
+.admin-log-detail {
   line-height: 1.4;
 }
 
@@ -967,21 +968,34 @@ div.opener5 {
   line-height: 1.2;
   text-decoration: none;
   cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 .btn:hover { color: var(--text-heading); }
 .btn-accent {
-  background: linear-gradient(180deg, #3aa0ff, var(--accent));
+  --bs-btn-color: #fff;
+  --bs-btn-bg: var(--accent);
+  --bs-btn-border-color: #1576d6;
+  --bs-btn-hover-color: #fff;
+  --bs-btn-hover-bg: var(--accent-hover);
+  --bs-btn-hover-border-color: var(--accent-hover);
+  --bs-btn-active-color: #fff;
+  --bs-btn-active-bg: var(--accent-hover);
+  --bs-btn-active-border-color: var(--accent-hover);
+  background-color: var(--accent);
+  background-image: none;
   border-color: #1576d6;
   color: #fff;
-  box-shadow: 0 6px 16px rgba(30, 144, 255, 0.28);
+  box-shadow: none;
 }
 .btn-accent:hover,
-.btn-accent:focus {
-  background: var(--accent-hover);
+.btn-accent:focus,
+.btn-accent:focus-visible,
+.btn-accent:active {
+  background-color: var(--accent-hover);
+  background-image: none;
   border-color: var(--accent-hover);
   color: #fff;
-  box-shadow: 0 8px 20px rgba(30, 144, 255, 0.38);
+  box-shadow: none;
 }
 .btn-outline-secondary {
   --bs-btn-color: var(--muted);

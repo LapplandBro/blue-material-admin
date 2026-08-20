@@ -3402,18 +3402,42 @@ function Maintenance($type) {
         }
         
         case "cleancountrycache": {
-            $GLOBALS['db']->Execute("UPDATE `sb_bans` SET `country` = NULL;");
+            $GLOBALS['db']->Execute("UPDATE `" . DB_PREFIX . "_bans` SET `country` = NULL");
             ShowBox_ajx("Успех", "Кеш стран банлиста очищен успешно.<br /><br /><span style=\"color: #f00;\">Внимание!</span> Это может отрицательно сказаться на первой загрузке каждой страницы Вашего банлиста. Рекомендуем произвести операцию \"Обновить кеш стран в банлисте\".", "green", $objResponse, "", true);
             break;
         }
         
         case "rehashcountries": {
-            $bans = $GLOBALS['db']->GetAll("SELECT `bid`, `ip` FROM `" . DB_PREFIX . "_bans` WHERE `country` IS NULL or `country` = 'zz'");
-            foreach ($bans as $ban) {
-                $GLOBALS['db']->Execute("UPDATE `" . DB_PREFIX . "_bans` SET `country` = " . $GLOBALS['db']->qstr(FetchIp($ban['ip'])) . " WHERE `bid` = " . (int)$ban['bid'] . ";");
+            // Старый код на каждый бан заново сканировал IpToCountry.csv (300k+ строк)
+            // линейно + отдельный UPDATE. На большом банлисте PHP упирался в
+            // max_execution_time (~30–40с) → HTTP 500 и «AJAX ошибка».
+            if (function_exists('session_write_close'))
+                @session_write_close();
+            @set_time_limit(120);
+            @ini_set('memory_limit', '256M');
+
+            $bans = $GLOBALS['db']->GetAll("SELECT `bid`, `ip` FROM `" . DB_PREFIX . "_bans` WHERE `country` IS NULL OR `country` = 'zz' OR `country` = '' OR `country` = ' '");
+            $updated = 0;
+            $byCountry = array();
+            if (is_array($bans)) {
+                foreach ($bans as $ban) {
+                    $cc = FetchIp(isset($ban['ip']) ? $ban['ip'] : '');
+                    if (!isset($byCountry[$cc]))
+                        $byCountry[$cc] = array();
+                    $byCountry[$cc][] = (int)$ban['bid'];
+                }
+                foreach ($byCountry as $cc => $ids) {
+                    foreach (array_chunk($ids, 400) as $chunk) {
+                        $ok = $GLOBALS['db']->Execute(
+                            "UPDATE `" . DB_PREFIX . "_bans` SET `country` = " . $GLOBALS['db']->qstr($cc)
+                            . " WHERE `bid` IN (" . implode(',', $chunk) . ")"
+                        );
+                        if ($ok !== false)
+                            $updated += count($chunk);
+                    }
+                }
             }
-            
-            ShowBox_ajx("Успех", "Операция обновлений стран в кеше завершена.", "green", $objResponse, "", true);
+            ShowBox_ajx("Успех", "Кеш стран обновлён: <b>" . (int)$updated . "</b> записей.", "green", $objResponse, "", true);
             break;
         }
         

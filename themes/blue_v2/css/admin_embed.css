@@ -441,13 +441,33 @@
 }
 .admin-embed-body .admin-log-detail {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 0.85rem 1.2rem;
-  padding: 0.6rem 0;
+  padding: 0.75rem 1rem 0.95rem;
+  line-height: 1.45;
+}
+.admin-embed-body .admin-log-detail-col {
+  min-width: 0;
+}
+.admin-embed-body .admin-log-query,
+.admin-embed-body .admin-log-stack {
+  display: block;
+  margin: 0;
+  padding: 0.45rem 0.55rem;
+  max-height: 12rem;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  font-family: var(--font-mono, ui-monospace, Consolas, monospace);
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--text);
+  background: rgba(8, 15, 31, 0.55);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-sm);
 }
 .admin-embed-body .admin-log-query {
-  word-break: break-all;
-  font-size: 0.78rem;
   color: var(--muted);
 }
 

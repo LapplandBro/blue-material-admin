@@ -124,9 +124,9 @@
                 </div>
                 <div class="admin-log-detail-col">
                   <div class="parsec-muted">Функция</div>
-                  <div><code>{{ log.function }}</code></div>
+                  <pre class="admin-log-stack">{{ log.function }}</pre>
                   <div class="parsec-muted mt-2">Запрос</div>
-                  <div class="admin-log-query">{{ log.query }}</div>
+                  <pre class="admin-log-query">{{ log.query }}</pre>
                   <div class="parsec-muted mt-2">IP</div>
                   <div>{{ log.host }}</div>
                 </div>

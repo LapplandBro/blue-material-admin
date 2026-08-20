@@ -138,7 +138,12 @@ if(!defined("IN_SB")){echo "Ошибка доступа!";die();}
 			$log_item['type_img'] = "<img class='sb-ico' src='images/icons/warning.svg' width='16' height='16' alt='Error'>"; 
 		$log_item['user'] = !empty($l['user'])?$l['user']:'Guest';
 		$log_item['date_str'] = SBDate($dateformat, $l['created']);
-		$log_item = array_merge($l, $log_item);	
+		$log_item = array_merge($l, $log_item);
+		$log_item['function'] = function_exists('sb_log_plain_stack')
+			? sb_log_plain_stack(isset($l['function']) ? $l['function'] : '')
+			: (isset($l['function']) ? $l['function'] : '');
+		$log_item['query'] = isset($l['query']) ? html_entity_decode(strip_tags((string)$l['query']), ENT_QUOTES, 'UTF-8') : '';
+		$log_item['message'] = isset($l['message']) ? html_entity_decode(strip_tags((string)$l['message']), ENT_QUOTES, 'UTF-8') : '';
 		array_push($log_list, $log_item);
 	}
 ?>

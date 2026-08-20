@@ -143,15 +143,20 @@
 }
 .dash-intro-body { padding: 0 1.1rem 1.05rem; }
 
-/* HTML from PHP (|raw) — Summernote: h2/h3/p/ul */
+/* HTML from PHP (|raw) — TinyMCE; inline font-family (PT Sans) must not win over local Rubik */
 .dash-prose {
   color: #c8d8f0;
+  font-family: var(--font-sans);
   font-size: 13px;
   line-height: 1.55;
   overflow-x: auto;
   overflow-wrap: break-word;
   word-wrap: break-word;
   -webkit-overflow-scrolling: touch;
+}
+.dash-prose,
+.dash-prose *:not(code):not(pre):not(kbd):not(samp) {
+  font-family: var(--font-sans) !important;
 }
 .dash-prose > :first-child { margin-top: 0; }
 .dash-prose > :last-child { margin-bottom: 0; }

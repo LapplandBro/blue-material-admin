@@ -110,14 +110,22 @@ class CSystemLog {
 	
 	function _getCaller()
 	{
-		$bt = debug_backtrace();
-	
-		$functions = "";
+		$bt = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
+		$root = defined('ROOT') ? str_replace('\\', '/', rtrim((string)ROOT, '/\\')) : '';
+		$lines = array();
 		$count = count($bt);
-		for ($idx = 2; $idx<$count; $idx++)
-			if ($bt[$idx]['function'] != "sbError")
-				$functions .= "<b>". ($count-$idx) . "</b>: " . str_replace(ROOT, "/", $bt[$idx]['file']) . "::".$bt[$idx]['function']."(".$this->FormatArguments(isset($bt[$idx]['args'])?$bt[$idx]['args']:array(), $bt[$idx]['function']).") - " . $bt[$idx]['line'] . "<br />\n";
-		return $this->SanitizeSensitive($functions);
+		$limit = min($count, 12);
+		for ($idx = 2; $idx < $limit; $idx++) {
+			if (!empty($bt[$idx]['function']) && $bt[$idx]['function'] === 'sbError')
+				continue;
+			$file = isset($bt[$idx]['file']) ? str_replace('\\', '/', (string)$bt[$idx]['file']) : '';
+			if ($root !== '' && $file !== '' && strncmp($file, $root, strlen($root)) === 0)
+				$file = substr($file, strlen($root));
+			$fn = isset($bt[$idx]['function']) ? (string)$bt[$idx]['function'] : '?';
+			$line = isset($bt[$idx]['line']) ? (int)$bt[$idx]['line'] : 0;
+			$lines[] = ($count - $idx) . ': ' . $file . '::' . $fn . '() - ' . $line;
+		}
+		return implode("\n", $lines);
 	}
 
 	/**
@@ -235,4 +243,15 @@ class CSystemLog {
 		}
 		return str_replace(", ]", "]", $result."]");
 	}
+}
+
+/** HTML-стек из старых записей лога → обычный многострочный текст. */
+function sb_log_plain_stack($html)
+{
+	$s = str_replace(array("\r\n", "\r"), "\n", (string)$html);
+	$s = preg_replace('/<br\s*\/?>/i', "\n", $s);
+	$s = html_entity_decode(strip_tags($s), ENT_QUOTES, 'UTF-8');
+	$s = preg_replace("/[ \t]+/", ' ', $s);
+	$s = preg_replace("/\n{3,}/", "\n\n", $s);
+	return trim($s);
 }
