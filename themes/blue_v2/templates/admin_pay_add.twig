@@ -4,38 +4,40 @@
   <input type="hidden" id="card_gr_web" name="card_gr_web">
   <input type="hidden" id="card_gr_srv" name="card_gr_srv">
   <input type="hidden" id="srv_check_int" name="srv_check_int">
-  <div class="form-page admin-form">
+  <div class="form-page admin-form voucher-add">
     <header class="form-page-head">
       <p class="form-page-kicker">Админка</p>
       <h2 class="form-page-title">Новый ваучер</h2>
       <p class="form-page-lead">Ключ для гостя · создаёт админа при активации на сайте.</p>
     </header>
-    <div class="form-flash form-flash--info">
-      <p class="form-flash-title">Краткая памятка</p>
-      <ul>
-        <li><b>Ключ</b> — 32 hex-символа (16 случайных байт). Жмите «Сгенерировать», не выдумывайте вручную.</li>
-        <li><b>Срок админки</b> — целое число <b>дней</b> (например <code>30</code>). <code>0</code> = навсегда.</li>
-        <li><b>Группа (сервер)</b> — права в игре (SourceMod). «Без группы» — только веб или как настроите дальше.</li>
-        <li><b>Группа (веб)</b> — права в этой панели. Не выдавайте «Главный админ» случайным людям.</li>
-        <li><b>Сервер</b> — на каких серверах будут права. «Без сервера» / ничего не отмечено — гость сам выберет при активации.</li>
-      </ul>
-      <p class="mb-0">Активирует ключ <b>только гость</b> (не залогиненный): меню «Активировать ваучер» или <code>index.php?p=pay</code>. Автовыдача из магазина — API <code>api/voucher_create.php</code> (токен в <code>config.php</code>, справка на вкладке списка).</p>
-    </div>
+    <details class="form-fold">
+      <summary>Краткая памятка</summary>
+      <div class="form-fold-body">
+        <ul>
+          <li><b>Ключ</b> — 32 hex-символа. Жмите «Сгенерировать».</li>
+          <li><b>Срок</b> — дни с активации. <code>0</code> = навсегда.</li>
+          <li><b>Группа (сервер)</b> — права в игре. «Без группы» — только веб.</li>
+          <li><b>Группа (веб)</b> — права в панели. Не выдавайте «Главный админ» случайно.</li>
+          <li><b>Сервер</b> — где будут права. Ничего / «Без сервера» — гость выберет сам.</li>
+        </ul>
+        <p class="mb-0">Активирует только гость: меню «Активировать ваучер» или <code>index.php?p=pay</code>. Магазин — API <code>api/voucher_create.php</code> (справка на вкладке списка).</p>
+      </div>
+    </details>
     <div class="form-grid">
-      <div class="form-field form-field--full">
+      <div class="form-field">
         <label class="form-label" for="card_key">{% include 'partials/help_icon.twig' with { title: 'Ключ', message: '32 hex-символа (0-9, a-f), 128 bit энтропии. Нажмите «Сгенерировать».' } %} Ключ</label>
         <div class="input-group">
           <input type="text" tabindex="1" class="form-control" id="card_key" name="card_key" placeholder="a1b2-c3d4-e5f6-7890-abcd-ef01-2345-6789" value="{{ card_key_default }}" maxlength="39" spellcheck="false" autocomplete="off">
           <button type="button" class="btn btn-outline-secondary" onclick="var el=document.getElementById('card_key'); if(el) el.value=sbVoucherGenerateHex(16);">Сгенерировать</button>
         </div>
       </div>
-      <div class="form-field form-field--full">
+      <div class="form-field">
         <label class="form-label" for="card_exp">{% include 'partials/help_icon.twig' with { title: 'Срок (дни)', message: 'Число дней действия админки с момента активации. Примеры: 7, 30, 90. Ноль (0) — навсегда, без срока.' } %} Срок админки (дни)</label>
-        <input type="text" tabindex="1" class="form-control" id="card_exp" name="card_exp" placeholder="Например: 30  или  0 = навсегда">
+        <input type="text" tabindex="1" class="form-control" id="card_exp" name="card_exp" placeholder="30  или  0 = навсегда">
       </div>
-      <div class="form-field form-field--full">
+      <div class="form-field">
         <label class="form-label">{% include 'partials/help_icon.twig' with { title: 'Серверная группа', message: 'Группа прав в игре (флаги SourceMod). Будет выдана тому, кто активирует ключ.' } %} Группа (сервер)</label>
-        <div class="form-checkboxes">
+        <div class="form-checkboxes form-checkboxes--grid">
           {% for server_wg in server_admin_group_list %}
           <div class="form-check">
             <input class="form-check-input" type="radio" value="{{ server_wg.name }}" id="dd_{{ server_wg.id }}_dd" name="inlineRadioOptions_srv" onchange="var el=$id('card_gr_srv'); if(el) el.value=this.value;">
@@ -48,9 +50,9 @@
           </div>
         </div>
       </div>
-      <div class="form-field form-field--full">
+      <div class="form-field">
         <label class="form-label">{% include 'partials/help_icon.twig' with { title: 'Веб-группа', message: 'Права в этой панели (баны, настройки и т.д.). Будет выдана при активации ключа гостем.' } %} Группа (веб)</label>
-        <div class="form-checkboxes">
+        <div class="form-checkboxes form-checkboxes--grid">
           {% for server_g in server_group_list %}
           <div class="form-check">
             <input class="form-check-input" type="radio" value="{{ server_g.name }}" id="dp_{{ server_g.gid }}_pd" name="inlineRadioOptions_web" onchange="var el=$id('card_gr_web'); if(el) el.value=this.value;">
@@ -65,7 +67,7 @@
       </div>
       <div class="form-field form-field--full">
         <label class="form-label">{% include 'partials/help_icon.twig' with { title: 'Серверы', message: 'Отметьте серверы, где будут права. Если ничего не выбрать (или только «Без сервера») — гость сам выберет серверы при активации.' } %} Серверы</label>
-        <div class="form-checkboxes">
+        <div class="form-checkboxes form-checkboxes--grid">
           {% for server in server_list %}
           <div class="form-check">
             <input class="form-check-input" type="checkbox" name="servers[]" id="s_{{ server.sid }}_s" value="s{{ server.sid }}" onchange="Check_cal();">

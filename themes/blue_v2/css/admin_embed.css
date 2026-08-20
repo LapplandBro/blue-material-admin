@@ -646,6 +646,40 @@
   font-size: 0.7rem;
   font-weight: 700;
 }
+
+.voucher-admin-help {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.55rem 0.75rem;
+  padding: 0.7rem 1.1rem 0.35rem;
+}
+.voucher-admin-help .form-fold {
+  margin: 0;
+}
+.voucher-table .voucher-col-id {
+  width: 3.2rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.voucher-table .admin-manage-chip {
+  margin-left: 0;
+}
+.voucher-key {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  word-break: break-all;
+  color: var(--text-heading);
+  background: rgba(8, 15, 31, 0.45);
+  padding: 0.12rem 0.38rem;
+  border-radius: 0.28rem;
+}
+.voucher-table td {
+  white-space: nowrap;
+}
+.voucher-table td:nth-child(3) {
+  white-space: normal;
+}
 .admin-detail-row > td {
   padding: 0;
   border-top: 0;
@@ -1038,6 +1072,7 @@
 
 @media (max-width: 991.98px) {
   .perms-section--grid { grid-template-columns: 1fr; }
+  .voucher-admin-help { grid-template-columns: 1fr; }
 }
 @media (max-width: 719.98px) {
   .admin-embed-body .form-horizontal .form-group {

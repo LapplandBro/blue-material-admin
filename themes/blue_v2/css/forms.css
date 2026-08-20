@@ -186,6 +186,16 @@
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-sm);
 }
+.form-checkboxes--grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(13.2rem, 1fr));
+  gap: 0.28rem 0.7rem;
+  padding: 0.45rem 0.6rem;
+}
+.form-checkboxes--grid .form-check {
+  margin: 0;
+  min-width: 0;
+}
 .form-checkboxes .form-check-label {
   color: var(--text);
 }
@@ -226,6 +236,71 @@
 }
 .voucher-meta b {
   color: var(--text-heading);
+}
+
+.form-fold {
+  margin: 0 0 0.75rem;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-sm);
+  background: rgba(30, 144, 255, 0.06);
+}
+.form-fold > summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 0.5rem 0.8rem;
+  color: var(--text-heading);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+.form-fold > summary::-webkit-details-marker,
+.form-fold > summary::marker {
+  display: none;
+  content: "";
+}
+.form-fold > summary::before {
+  content: "▸";
+  display: inline-block;
+  width: 0.9rem;
+  color: var(--accent);
+  font-weight: 700;
+}
+.form-fold[open] > summary::before {
+  content: "▾";
+}
+.form-fold[open] > summary {
+  border-bottom: 1px solid var(--border-hairline);
+}
+.form-fold-body {
+  padding: 0.6rem 0.8rem 0.75rem;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: var(--text);
+}
+.form-fold-body > *:last-child {
+  margin-bottom: 0;
+}
+.form-fold-body ol,
+.form-fold-body ul {
+  margin: 0.25rem 0 0.45rem;
+  padding-left: 1.15rem;
+}
+.form-fold-body li + li {
+  margin-top: 0.18rem;
+}
+
+.voucher-page .form-page-head,
+.voucher-add .form-page-head {
+  margin-bottom: 0.7rem;
+}
+.voucher-add .form-grid {
+  gap: 0.7rem 0.9rem;
+}
+.voucher-empty {
+  margin: 0;
+  padding: 1rem 1.15rem 1.2rem;
+  color: var(--muted);
+  font-size: 0.9rem;
 }
 
 #name\.msg,
