@@ -1483,12 +1483,21 @@ function ShowBox(title, msg, color, redir, noclose, timer)
 
 	opts.showConfirmButton = false;
 	opts.showCancelButton = false;
+	// Старые вызовы передавали задержку 5-м аргументом (noclose), а не 6-м (timer).
+	if (timer == null && noclose != null && noclose !== false && noclose !== true && noclose !== "") {
+		var asDelay = parseInt(noclose, 10);
+		if (asDelay > 0 && String(asDelay) === String(noclose).replace(/^\s+|\s+$/g, "")) {
+			timer = asDelay;
+			noclose = false;
+		}
+	}
 	if (timer) {
 		opts.timer = timer;
-	} else if (!noclose) {
+	}
+	if (!noclose) {
 		opts.confirmButtonText = "OK";
 		opts.showConfirmButton = true;
-	} else {
+	} else if (!timer) {
 		opts.showCancelButton = true;
 		opts.cancelButtonText = "Закрыть";
 	}
@@ -2046,7 +2055,7 @@ function KickPlayerConfirm(sid, name, conf)
 				showConfirmButton: true,
 				confirmButtonText: "Кикнуть",
 				cancelButtonText: "Отмена",
-				closeOnConfirm: true,
+				closeOnConfirm: false,
 				allowOutsideClick: true
 			}, function (ok) {
 				if (ok) KickPlayerConfirm(sid, name, 1);
@@ -2058,6 +2067,8 @@ function KickPlayerConfirm(sid, name, conf)
 		$('dialog-control').setStyle('display', 'inline-block');
 		$('kbutton').addEvent('click', function(){KickPlayerConfirm(sid, name, 1);});
 	} else if(conf==1) {
+		var waitName = String(name).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+		ShowBox("Кик игрока", "Кикаем «" + waitName + "»…", "blue", "", true);
 		var dc = $id("dialog-control");
 		if (dc) dc.style.display = "none";
 		if (typeof xajax_KickPlayer === "function")

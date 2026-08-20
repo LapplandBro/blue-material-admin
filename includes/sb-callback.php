@@ -2319,7 +2319,8 @@ function KickPlayer($sid, $name)
 			}
 
 			$log = new CSystemLog("m", "Игрок кикнут", $username . " кикнул игрока '".htmlspecialchars($name)."' (".$steam.") from ".$data['ip'].":".$data['port'].".", true, true);
-			$objResponse->addScript("ShowBox('Игрок кикнут', 'Игрок \'".addslashes(htmlspecialchars($name))."\' был кикнут с сервера.', 'green', 'index.php?p=servers', 1500);$('dialog-control').setStyle('display', 'none');");
+			$objResponse->addScript("ShowBox('Игрок кикнут', 'Игрок \"".addslashes(htmlspecialchars($name))."\" кикнут с сервера.', 'green', '', false, 4000);");
+			$objResponse->addScript("if (typeof xajax_RefreshServer === 'function') xajax_RefreshServer(".(int)$sid.");");
 		} else {
 			$objResponse->addScript("ShowBox('Ошибка', 'Невозможно кикнуть ".addslashes(htmlspecialchars($name)).". У него иммунитет!', 'red', '', true);");
 		}
