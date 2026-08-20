@@ -371,10 +371,17 @@
 }
 
 .admin-embed-body .form-section-title {
-  margin: 1.15rem 0 0.7rem;
-  color: var(--text-heading);
-  font-size: 0.92rem;
-  font-weight: 700;
+  margin: 1.45rem 0 0.85rem;
+  padding-bottom: 0.42rem;
+  border-bottom: 1px solid var(--border-hairline);
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.admin-embed-body .form-section-title:first-of-type {
+  margin-top: 0.2rem;
 }
 .admin-embed-body .form-check {
   min-height: 1.5rem;
@@ -385,8 +392,72 @@
 .admin-embed-body .form-check-input {
   float: none;
   margin: 0;
-  width: 1.05em;
-  height: 1.05em;
+}
+
+.settings-page .form-grid {
+  gap: 1rem 1.2rem;
+}
+.settings-page .settings-block {
+  margin-top: 0.85rem;
+}
+.settings-page .settings-note {
+  margin: 0 0 0.75rem;
+  max-width: 52rem;
+}
+.settings-toggles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem 0.85rem;
+  margin-top: 0.85rem;
+}
+.settings-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  margin: 0;
+  padding: 0.78rem 0.9rem;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-sm);
+  background: rgba(8, 15, 31, 0.4);
+  cursor: pointer;
+  min-height: 3.1rem;
+}
+.settings-toggle:hover {
+  border-color: rgba(30, 144, 255, 0.42);
+  background: rgba(30, 144, 255, 0.08);
+}
+.settings-toggle:has(.form-check-input:focus-visible) {
+  box-shadow: var(--shadow-focus);
+}
+.settings-toggle .form-check-input {
+  margin-top: 0.12rem;
+}
+.settings-toggle-copy {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.settings-toggle-title {
+  display: block;
+  color: var(--text-heading);
+  font-size: 0.9rem;
+  font-weight: 650;
+  line-height: 1.4;
+}
+.settings-toggle-title .sb-ico-help,
+.settings-page .form-label .sb-ico-help {
+  width: 14px;
+  height: 14px;
+  margin-right: 0.28rem;
+  opacity: 0.72;
+  vertical-align: -0.12em;
+}
+.settings-toggle--span {
+  grid-column: 1 / -1;
+}
+.settings-reasons {
+  display: grid;
+  gap: 0.5rem;
+  max-width: 36rem;
 }
 .admin-embed-body .admin-actions {
   display: inline-flex;
@@ -1073,6 +1144,7 @@
 @media (max-width: 991.98px) {
   .perms-section--grid { grid-template-columns: 1fr; }
   .voucher-admin-help { grid-template-columns: 1fr; }
+  .settings-toggles { grid-template-columns: 1fr; }
 }
 @media (max-width: 719.98px) {
   .admin-embed-body .form-horizontal .form-group {

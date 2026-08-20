@@ -2,8 +2,12 @@
   max-width: 46rem;
   padding: 1.15rem 1.2rem 1.3rem;
 }
-.form-page.admin-manage {
+.form-page.admin-manage,
+.form-page.settings-page {
   max-width: none;
+}
+.form-page.settings-page {
+  padding: 1.3rem 1.4rem 1.5rem;
 }
 .form-page-head {
   margin: 0 0 1.05rem;
