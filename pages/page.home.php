@@ -216,18 +216,25 @@ while (!$res->EOF)
 $counts = $GLOBALS['db']->GetRow("SELECT 
          (SELECT COUNT(aid) FROM `" . DB_PREFIX . "_admins` WHERE aid > 0) AS admins,
          (SELECT COUNT(sid) FROM `" . DB_PREFIX . "_servers`) AS servers"); // +
+if (!is_array($counts))
+	$counts = array('admins' => 0, 'servers' => 0);
+if (!isset($counts['admins']))
+	$counts['admins'] = 0;
+if (!isset($counts['servers']))
+	$counts['servers'] = 0;
 
 		 
 $theme->assign('total_admins', $counts['admins']); // +
 $theme->assign('total_servers', $counts['servers']); // +
-$theme->assign('nocountryshow', ($GLOBALS['config']['banlist.nocountryfetch'] == "1" && !$GLOBALS['userbank']->is_logged_in()));
-$theme->assign('listing_block',  $GLOBALS['config']['config.home.comms']);
+$theme->assign('nocountryshow', (isset($GLOBALS['config']['banlist.nocountryfetch']) && $GLOBALS['config']['banlist.nocountryfetch'] == "1" && !$GLOBALS['userbank']->is_logged_in()));
+$theme->assign('listing_block',  isset($GLOBALS['config']['config.home.comms']) ? $GLOBALS['config']['config.home.comms'] : '');
 
 require(TEMPLATES_PATH . "/page.servers.php"); //Set theme vars from servers page
 
-$theme->assign('dashboard_title',  stripslashes($GLOBALS['config']['dash.intro.title']));
+$dashIntroTitle = isset($GLOBALS['config']['dash.intro.title']) ? $GLOBALS['config']['dash.intro.title'] : '';
+$theme->assign('dashboard_title',  stripslashes($dashIntroTitle));
 
-$dashboard_text = stripslashes($GLOBALS['config']['dash.intro.text']);
+$dashboard_text = stripslashes(isset($GLOBALS['config']['dash.intro.text']) ? $GLOBALS['config']['dash.intro.text'] : '');
 if (function_exists('sb_sanitize_admin_html'))
 	$dashboard_text = sb_sanitize_admin_html($dashboard_text);
 // SEO: убрать вложенные теги/<br> из заголовков; сдвинуть иерархию (на странице уже будет H1 «Главная»).
@@ -245,7 +252,7 @@ $dashboard_text = preg_replace_callback(
 	$dashboard_text
 );
 $theme->assign('dashboard_text', $dashboard_text);
-$theme->assign('dashboard_info_block',  $GLOBALS['config']['dash.info_block']);
+$theme->assign('dashboard_info_block',  isset($GLOBALS['config']['dash.info_block']) ? $GLOBALS['config']['dash.info_block'] : '');
 $info_block_text = isset($GLOBALS['config']['dash.info_block_text']) ? stripslashes($GLOBALS['config']['dash.info_block_text']) : '';
 $info_block_text_p = isset($GLOBALS['config']['dash.info_block_text_t']) ? stripslashes($GLOBALS['config']['dash.info_block_text_t']) : '';
 if (function_exists('sb_sanitize_admin_html')) {
@@ -254,10 +261,20 @@ if (function_exists('sb_sanitize_admin_html')) {
 }
 $theme->assign('dashboard_info_block_text',  $info_block_text);
 $theme->assign('dashboard_info_block_text_p',  $info_block_text_p);
-$theme->assign('dashboard_info_vk',  function_exists('sb_safe_http_url') ? sb_safe_http_url($GLOBALS['config']['dash.info_vk']) : $GLOBALS['config']['dash.info_vk']);
-$theme->assign('dashboard_info_steam',  function_exists('sb_safe_http_url') ? sb_safe_http_url($GLOBALS['config']['dash.info_steam']) : $GLOBALS['config']['dash.info_steam']);
-$theme->assign('dashboard_info_yout',  function_exists('sb_safe_http_url') ? sb_safe_http_url($GLOBALS['config']['dash.info_yout']) : $GLOBALS['config']['dash.info_yout']);
-$theme->assign('dashboard_info_face',  function_exists('sb_safe_http_url') ? sb_safe_http_url($GLOBALS['config']['dash.info_face']) : $GLOBALS['config']['dash.info_face']);
+$dash_vk = isset($GLOBALS['config']['dash.info_vk']) ? $GLOBALS['config']['dash.info_vk'] : '';
+$dash_steam = isset($GLOBALS['config']['dash.info_steam']) ? $GLOBALS['config']['dash.info_steam'] : '';
+$dash_yout = isset($GLOBALS['config']['dash.info_yout']) ? $GLOBALS['config']['dash.info_yout'] : '';
+$dash_face = isset($GLOBALS['config']['dash.info_face']) ? $GLOBALS['config']['dash.info_face'] : '';
+if (function_exists('sb_safe_http_url')) {
+	$dash_vk = sb_safe_http_url($dash_vk);
+	$dash_steam = sb_safe_http_url($dash_steam);
+	$dash_yout = sb_safe_http_url($dash_yout);
+	$dash_face = sb_safe_http_url($dash_face);
+}
+$theme->assign('dashboard_info_vk',  $dash_vk);
+$theme->assign('dashboard_info_steam',  $dash_steam);
+$theme->assign('dashboard_info_yout',  $dash_yout);
+$theme->assign('dashboard_info_face',  $dash_face);
 $theme->assign('players_blocked', $stopped);
 $theme->assign('total_blocked', $totalstopped);
 
@@ -267,6 +284,41 @@ $theme->assign('total_bans', $BanCount);
 $theme->assign('total_comms', $CommCount);
 $theme->assign('players_commed', $comms);
 
-$theme->assign('stats', ($GLOBALS['config']['theme.home.stats'] == "1"));
+$theme->assign('stats', (isset($GLOBALS['config']['theme.home.stats']) && $GLOBALS['config']['theme.home.stats'] == "1"));
+
+if (function_exists('sb_ui_v2_enabled') && sb_ui_v2_enabled()) {
+	$qry = isset($GLOBALS['server_qry']) ? (string)$GLOBALS['server_qry'] : '';
+	$extra_js = "<script>\n"
+		. "window.addEvent('domready', function(){ " . $qry . " });\n"
+		. "</script>\n";
+	$header_title = isset($GLOBALS['config']['template.title']) ? stripslashes($GLOBALS['config']['template.title']) : '';
+	sb_ui_v2_render('dashboard.twig', array(
+		'title' => ($header_title !== '' ? $header_title : 'Главная'),
+		'header_title' => $header_title,
+		'total_admins' => $counts['admins'],
+		'total_servers' => $counts['servers'],
+		'nocountryshow' => (isset($GLOBALS['config']['banlist.nocountryfetch']) && $GLOBALS['config']['banlist.nocountryfetch'] == '1' && !$GLOBALS['userbank']->is_logged_in()),
+		'listing_block' => isset($GLOBALS['config']['config.home.comms']) ? $GLOBALS['config']['config.home.comms'] : '',
+		'dashboard_title' => stripslashes($dashIntroTitle),
+		'dashboard_text' => $dashboard_text,
+		'dashboard_info_block' => isset($GLOBALS['config']['dash.info_block']) ? $GLOBALS['config']['dash.info_block'] : '',
+		'dashboard_info_block_text' => $info_block_text,
+		'dashboard_info_block_text_p' => $info_block_text_p,
+		'dashboard_info_vk' => $dash_vk,
+		'dashboard_info_steam' => $dash_steam,
+		'dashboard_info_yout' => $dash_yout,
+		'dashboard_info_face' => $dash_face,
+		'players_blocked' => $stopped,
+		'total_blocked' => $totalstopped,
+		'players_banned' => $bans,
+		'total_bans' => $BanCount,
+		'total_comms' => $CommCount,
+		'players_commed' => $comms,
+		'stats' => ($GLOBALS['config']['theme.home.stats'] == '1'),
+		'server_list' => isset($servers) ? $servers : array(),
+		'extra_js' => $extra_js,
+	));
+	return;
+}
 
 $theme->display('page_dashboard.tpl');

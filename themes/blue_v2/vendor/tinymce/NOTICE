@@ -1,0 +1,6 @@
+TinyMCE 7.9.1 — GPL-2.0-or-later
+https://github.com/tinymce/tinymce/tree/7.9.1
+
+Vendored slim build (silver theme, oxide-dark skin, selected plugins).
+license.md and notices.txt are next to tinymce.min.js.
+Self-hosted so v2 does not depend on Tiny Cloud.

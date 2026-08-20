@@ -139,6 +139,10 @@ if (!$useDefault && !preg_match('/^[a-zA-Z0-9_]+$/', $pRaw)) {
 			RewritePageTitle("АдминЛист");
 			$page = TEMPLATES_PATH . "/page.adminlist.php";
 			break;
+		case "ui_v2":
+			RewritePageTitle("UI v2 preview");
+			$page = TEMPLATES_PATH . "/page.ui_v2.php";
+			break;
 		default:
 			// Неизвестный p=foo — НЕ подменять на главную/банлист
 			$pageNotFound = true;
@@ -182,23 +186,36 @@ if ($pageNotFound) {
 	exit;
 }
 
-// Начинаем буферизовать вывод. Необходимо для более корректной работы хандлера ошибок.
+$pUi = isset($_GET['p']) ? (string)$_GET['p'] : '';
+$v2admin = ($pUi === 'admin');
+
+if (!function_exists('sb_ui_v2_twig') || !sb_ui_v2_twig()) {
+	if (!headers_sent())
+		header('Content-Type: text/html; charset=utf-8');
+	http_response_code(500);
+	echo '<!DOCTYPE html><html lang="ru"><head><meta charset="utf-8"><title>Blue V2</title></head><body>';
+	echo '<p>Twig не загружен. Нужен <code>includes/Twig-3.28.0</code> (PHP ≥8.1), <code>includes/twig</code> (PHP 7.1) или <code>composer install</code>.</p>';
+	echo '</body></html>';
+	exit;
+}
+
+if (defined('INCLUDES_PATH') && is_readable(INCLUDES_PATH . '/CTabsMenu.php'))
+	require_once INCLUDES_PATH . '/CTabsMenu.php';
 ob_start();
-
-// Подключаем графический фреймворк
-require_once(INCLUDES_PATH . "/theme_framework.php");
-
-global $ui;
-$ui = new CUI();
-BuildPageHeader();
-BuildPageTabs();
-BuildSubMenu();
-BuildContHeader();
-BuildBreadcrumbs();
-if(!empty($page))
+if (!empty($page))
 	include $page;
-if (function_exists('sb_ui_flash_script'))
-	echo sb_ui_flash_script();
-if (function_exists('sb_list_action_flash_script'))
-	echo sb_list_action_flash_script();
-include_once(TEMPLATES_PATH . '/footer.php');
+$buf = ob_get_clean();
+if ($v2admin && stripos($buf, '<!DOCTYPE') === false && function_exists('sb_ui_v2_wrap')) {
+	$textOnly = trim(strip_tags($buf));
+	$hasAdminStructure = preg_match('/\b(admin-page-content|admin-pane|form-page|admin-manage)\b/i', $buf);
+	if ($textOnly === '' && !$hasAdminStructure) {
+		$section = isset($_GET['c']) ? htmlspecialchars((string)$_GET['c'], ENT_QUOTES, 'UTF-8') : 'admin';
+		$buf = '<div class="form-page"><div class="form-flash form-flash--err">'
+			. 'Раздел «' . $section . '» не сформировал содержимое. Проверьте журнал PHP и права доступа.'
+			. '</div></div>';
+	}
+	sb_ui_v2_wrap($buf);
+} else {
+	echo $buf;
+}
+exit;

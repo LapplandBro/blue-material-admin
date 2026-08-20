@@ -59,16 +59,16 @@ if (!defined('MAX_GAMEICON_SIZE_BYTES'))
 	define('MAX_GAMEICON_SIZE_BYTES', 2 * 1024 * 1024);
 
 define('SB_THEMES', ROOT . 'themes/');
-define('SB_THEMES_COMPILE', ROOT . 'themes_c/');
 
 define('IN_SB', true);
 define('SB_AID', isset($_COOKIE['aid'])?$_COOKIE['aid']:null);
-define('XAJAX_REQUEST_URI', './index.php');
+define('SB_AJAX_URI', './index.php');
+define('XAJAX_REQUEST_URI', SB_AJAX_URI);
 
 include_once(INCLUDES_PATH . "/CSystemLog.php");
 include_once(INCLUDES_PATH . "/CUserManager.php");
 include_once(INCLUDES_PATH . "/CUI.php");
-include_once("themes/new_box/theme.conf.php");
+include_once("themes/blue_v2/theme.conf.php");
 // ---------------------------------------------------
 //  Fix some $_SERVER vars
 // ---------------------------------------------------
@@ -275,8 +275,7 @@ function sb_send_security_headers()
 	header('Permissions-Policy: geolocation=(), microphone=(), camera=(), payment=(), usb=()');
 	header('Cross-Origin-Opener-Policy: same-origin-allow-popups');
 	header('Cross-Origin-Resource-Policy: same-site');
-	// CSP: сайт исторически опирается на inline JS/CSS (xajax, MooTools, Summernote) —
-	// поэтому unsafe-inline/unsafe-eval необходимы, иначе админка развалится.
+	// CSP: inline JS/CSS (админка, MooTools) — unsafe-inline/unsafe-eval.
 	header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: http:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'");
 }
 
@@ -294,7 +293,7 @@ function sb_get_site_host()
 }
 
 /**
- * CSRF для xajax / форм.
+ * CSRF для AJAX / форм.
  */
 function sb_csrf_token()
 {
@@ -436,7 +435,7 @@ if(defined("SB_MEM"))
 // случаях ошибки логируются, но не выводятся в браузер.
 ini_set('display_errors', defined('DEVELOPER_MODE') ? 1 : 0);
 ini_set('log_errors', 1);
-// E_DEPRECATED глушим всегда: старый Smarty 2.x орёт на PHP 8.2+ (dynamic properties),
+// E_DEPRECATED глушим всегда: легаси PHP на 8.2+ (dynamic properties и т.п.),
 // а полезные баги (Warning/Error) в debug всё равно видны.
 error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED & ~E_STRICT);
 
@@ -674,32 +673,27 @@ else
 
 
 // ---------------------------------------------------
-// Setup our templater
+// Setup our templater (assign-bag; live UI is Twig / Blue V2)
 // ---------------------------------------------------
-require(INCLUDES_PATH . '/smarty/Smarty.class.php');
+require_once INCLUDES_PATH . '/CThemeBag.php';
 
 global $theme, $userbank;
 
-define('SB_THEME', 'new_box');
+define('SB_THEME', 'blue_v2');
 
 if(!@file_exists(SB_THEMES . SB_THEME . "/theme.conf.php"))
 	die("<b>Ошибка шаблона</b>: Шаблон повреждён. Отсутствует файл <b>theme.conf.php</b>.");
 
-if(!@is_writable(SB_THEMES_COMPILE))
-	die("<b>Ошибка шаблона</b>: Папка <b>".SB_THEMES_COMPILE."</b> не перезаписываемая! Установите права 777 на папку через FTP-клиент.");
-
-$theme = new Smarty();
-$theme->error_reporting 	= 	E_ALL & ~E_NOTICE & ~E_DEPRECATED & ~E_STRICT;
-$theme->use_sub_dirs 		= 	false;
+$theme = new CThemeBag();
 $theme->compile_id			= 	SB_THEME;
-$theme->caching 			= 	false;
 $theme->template_dir 		= 	SB_THEMES . SB_THEME;
-$theme->compile_dir 		= 	SB_THEMES_COMPILE;
 
-if ((isset($_GET['debug']) && $_GET['debug'] == 1) || defined("DEVELOPER_MODE") )
-{
-	$theme->force_compile = true;
-}
+if (is_readable(INCLUDES_PATH . '/CTabsMenu.php'))
+	require_once INCLUDES_PATH . '/CTabsMenu.php';
+if (is_readable(INCLUDES_PATH . '/theme_v2.php'))
+	require_once INCLUDES_PATH . '/theme_v2.php';
+if (function_exists('sb_ui_v2_boot'))
+	sb_ui_v2_boot();
 
 // ---------------------------------------------------
 // Setup our user manager

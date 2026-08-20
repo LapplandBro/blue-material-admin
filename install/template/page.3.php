@@ -138,7 +138,6 @@ if (!is_dir('../data')) {
 $translations = [$yes, $no];
 $fs = [
   ['Папка для демок',                   'demos',            $yes, $unknown, $translations, false],
-  ['Папка кеша шаблона',                'themes_c',         $yes, $unknown, $translations, false],
   ['Папка иконок МОДов',                'images/games',     $unknown, $yes, $translations, true],
   ['Папка изображений карт',            'images/maps',      $unknown, $yes, $translations, true],
   ['Конфиг (корень сайта)',             'config.php',       $yes, $unknown, $translations, false],
@@ -152,10 +151,10 @@ foreach ($fs as $f) {
   $req_FS[$name] = $data;
 }
 
-$req_FS['Тема new_box (themes/new_box)'] = [
+$req_FS['Тема Blue V2 (themes/blue_v2)'] = [
   'required' => $yes,
   'recommended' => $unknown,
-  'result' => is_dir('../themes/new_box'),
+  'result' => is_dir('../themes/blue_v2'),
   'display' => [$yes, $no]
 ];
 ?>

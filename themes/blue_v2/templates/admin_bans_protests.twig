@@ -1,0 +1,97 @@
+{% if not permission_protests %}
+<div class="form-page">
+  <p class="form-flash form-flash--err">Нет доступа к протестам.</p>
+</div>
+{% else %}
+<div id="protests" class="panel">
+  <header class="form-page-head">
+    <p class="form-page-kicker">Админка</p>
+    <h2 class="form-page-title">Протесты</h2>
+    <p class="form-page-lead">{{ protest_count }} · клик по строке — детали и комментарий</p>
+    <ul class="actions" id="banlist-nav">{{ protest_nav|raw }}</ul>
+  </header>
+  <div class="table-responsive">
+    <table class="table table-v2">
+      <thead>
+        <tr>
+          <th>Ник</th>
+          <th>SteamID / IP</th>
+          <th class="text-end">Действия</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for protest in protest_list %}
+        <tr id="pid_{{ protest.pid }}" class="opener2 banlist-row">
+          <td class="toggler"><a href="index.php?p=banlist&amp;advSearch={{ protest.authid }}&amp;advType=steamid" title="Показать бан">{{ protest.name }}</a></td>
+          <td>{% if protest.authid != "" %}{{ protest.authid }}{% else %}{{ protest.ip }}{% endif %}</td>
+          <td class="text-end">
+            {% if permission_editban %}
+            <a class="btn btn-sm btn-outline-danger" href="#" onclick='RemoveProtest("{{ protest.pid }}", {{ protest.label_js|raw }}, "1"); return false;'>Удалить</a>
+            {% endif %}
+            <a class="btn btn-sm btn-outline-secondary" href="index.php?p=admin&amp;c=bans&amp;o=email&amp;type=p&amp;id={{ protest.pid }}">Контакты</a>
+          </td>
+        </tr>
+        <tr id="pid_{{ protest.pid }}a" class="banlist-detail-row">
+          <td colspan="3">
+            <div class="opener2 admin-ticket">
+              <div class="admin-detail-head">
+                <div class="admin-detail-title">Детали протеста</div>
+                <div class="admin-detail-actions">{{ protest.protaddcomment|raw }}</div>
+              </div>
+              <div class="admin-facts admin-facts--ticket">
+                <div class="admin-fact">
+                  <span class="admin-fact-label">Игрок</span>
+                  <span class="admin-fact-value">{{ protest.name }}</span>
+                </div>
+                <div class="admin-fact">
+                  <span class="admin-fact-label">SteamID</span>
+                  <span class="admin-fact-value">{% if protest.authid == "" %}<span class="admin-muted">не указан</span>{% else %}{{ protest.authid }}{% endif %}</span>
+                </div>
+                <div class="admin-fact">
+                  <span class="admin-fact-label">IP</span>
+                  <span class="admin-fact-value">{% if protest.ip == 'none' or protest.ip == '' %}<span class="admin-muted">не указан</span>{% else %}{{ protest.ip }}{% endif %}</span>
+                </div>
+                <div class="admin-fact">
+                  <span class="admin-fact-label">Прислан</span>
+                  <span class="admin-fact-value">{{ protest.date }}</span>
+                </div>
+                <div class="admin-fact">
+                  <span class="admin-fact-label">Истекает</span>
+                  <span class="admin-fact-value">{% if protest.ends == 'never' %}<span class="admin-muted">никогда</span>{% else %}{{ protest.ends }}{% endif %}</span>
+                </div>
+                <div class="admin-fact">
+                  <span class="admin-fact-label">Админ</span>
+                  <span class="admin-fact-value">{{ protest.admin }}</span>
+                </div>
+                <div class="admin-fact admin-fact--span">
+                  <span class="admin-fact-label">Причина бана</span>
+                  <span class="admin-fact-value">{{ protest.ban_reason|raw }}</span>
+                </div>
+                <div class="admin-fact">
+                  <span class="admin-fact-label">Сервер</span>
+                  <span class="admin-fact-value">{{ protest.server }}</span>
+                </div>
+                <div class="admin-fact">
+                  <span class="admin-fact-label">IP заявителя</span>
+                  <span class="admin-fact-value">{{ protest.pip }}</span>
+                </div>
+                <div class="admin-fact">
+                  <span class="admin-fact-label">Дата протеста</span>
+                  <span class="admin-fact-value">{{ protest.datesubmitted }}</span>
+                </div>
+                <div class="admin-fact admin-fact--span">
+                  <span class="admin-fact-label">Сообщение</span>
+                  <span class="admin-fact-value">{{ protest.reason|raw }}</span>
+                </div>
+                {% include 'partials/admin_ticket_comments.twig' with { comments: protest.commentdata } %}
+              </div>
+            </div>
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+<script>InitAccordion('tr.opener2', 'div.opener2', 'protests');</script>
+{% endif %}

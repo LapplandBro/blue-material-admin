@@ -25,7 +25,15 @@
 //
 // *************************************************************************
 
-global $userbank, $theme; if(!defined("IN_SB")){echo "Ошибка доступа!";die();}if(isset($GLOBALS['IN_ADMIN']))define('CUR_AID', $userbank->GetAid());
+global $userbank, $theme;
+if(!defined("IN_SB")){echo "Ошибка доступа!";die();}
+
+if (!isset($userbank) || !is_object($userbank)) {
+	echo '<div id="admin-page-content"><div id="0" class="admin-pane is-on"><div class="form-page"><p class="form-flash form-flash--err">Нет сессии администратора.</p></div></div></div>';
+	return;
+}
+if(isset($GLOBALS['IN_ADMIN']) && !defined('CUR_AID'))
+	define('CUR_AID', $userbank->GetAid());
 
 
 if(isset($_GET["rebanid"]))
@@ -34,16 +42,25 @@ if(isset($_GET["rebanid"]))
 }elseif(isset($_GET["blockfromban"]))
 {
 	echo '<script type="text/javascript">xajax_PrepareBlockFromBan("'.(int)$_GET["blockfromban"].'");</script>';
-}elseif((isset($_GET['action']) && $_GET['action'] == "pasteBan") && isset($_GET['pName']) && isset($_GET['sid'])) {
-	echo "<script type=\"text/javascript\">setTimeout(\"ShowBox('Загрузка..','<i>Подождите!</i>', 'blue', '', false, 5000);\", 800);xajax_PastePlayerData('".(int)$_GET['sid']."', '".htmlspecialchars(addslashes($_GET['pName']))."');</script>";
+}elseif((isset($_GET['action']) && $_GET['action'] == "pasteBan") && isset($_GET['pName']) && is_string($_GET['pName']) && isset($_GET['sid'])) {
+	echo "<script type=\"text/javascript\">setTimeout(\"ShowBox('Загрузка..','<i>Подождите!</i>', 'blue', '', false, 5000);\", 800);xajax_PastePlayerData('".(int)$_GET['sid']."', '".htmlspecialchars(addslashes($_GET['pName']), ENT_QUOTES, 'UTF-8')."');</script>";
 }
 
 echo '<div id="admin-page-content">';
-	// Add Block
-	// Keep pane visible by default — tab SwapPane is flaky when URL has no #^N hash
-	echo '<div id="0" style="display:block;">';
-		$theme->assign('permission_addban', $userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_BAN));
-		$theme->display('page_admin_comms_add.tpl');
+	echo '<div id="0" class="admin-pane is-on">';
+		$canAddComms = $userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_BAN);
+		$crRaw = isset($GLOBALS['config']['bans.customreasons']) ? $GLOBALS['config']['bans.customreasons'] : '';
+		if (is_array($crRaw))
+			$customreason = $crRaw;
+		elseif (is_string($crRaw) && $crRaw !== '') {
+			$crUn = @unserialize($crRaw);
+			$customreason = is_array($crUn) ? $crUn : false;
+		} else
+			$customreason = false;
+		sb_admin_echo_twig_fragment('admin_comms_add.twig', array(
+			'permission_addban' => $canAddComms,
+			'customreason' => $customreason,
+		));
 	echo '</div>';
 ?>
 

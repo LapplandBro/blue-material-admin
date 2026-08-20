@@ -1,12 +1,8 @@
 /**
- * Минимальный JS установщика (jQuery + SweetAlert).
- * Legacy-шаги используют $('fieldId') как getElementById (стиль MooTools).
+ * JS установщика: vanilla + SweetAlert. Без jQuery / MooTools / Waves.
  */
-(function (window) {
+(function (window, document) {
 	'use strict';
-
-	var jQ = window.jQuery.noConflict(true);
-	window.jQuery = jQ;
 
 	window.$id = function (id) {
 		return typeof id === 'string' ? document.getElementById(id) : id;
@@ -19,13 +15,10 @@
 		var type = 'info';
 		if (color === 'red') type = 'error';
 		else if (color === 'green') type = 'success';
-
 		var plain = msg.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '');
-
 		function afterClose() {
 			if (redirect && !noclose) window.location = redirect;
 		}
-
 		if (typeof window.swal === 'function') {
 			window.swal({
 				title: title,
@@ -40,12 +33,12 @@
 		afterClose();
 	};
 
-	jQ(function () {
-		jQ(document).on('keydown', function (e) {
-			if (e.which === 13 && typeof window.sbInstallEnter === 'function') {
+	document.addEventListener('DOMContentLoaded', function () {
+		document.addEventListener('keydown', function (e) {
+			if (e.key === 'Enter' && typeof window.sbInstallEnter === 'function') {
 				e.preventDefault();
 				window.sbInstallEnter();
 			}
 		});
 	});
-})(window);
+})(window, document);

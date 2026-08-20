@@ -73,10 +73,32 @@ while (!$res->EOF)
 	$res->MoveNext();
 }
 
-$theme->assign('access_bans', ($userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_BAN)?true:false));
+$access_bans = ($userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_BAN)?true:false);
+$theme->assign('access_bans', $access_bans);
 $theme->assign('server_list', $servers);
 $theme->assign('IN_SERVERS_PAGE', !defined('IN_HOME'));
 $theme->assign('opened_server', $number);
 
-if(!defined('IN_HOME'))
-	$theme->display('page_servers.tpl');
+// IN_HOME: dashboard widget. Smarty-only (page_dashboard.tpl includes page_servers.tpl).
+// Never Twig here — v2 intercepts only the full servers page.
+if (defined('IN_HOME'))
+	return;
+
+if (function_exists('sb_ui_v2_enabled') && sb_ui_v2_enabled()) {
+	// V2 skips pages/footer.php, so xajax polling must ride extra_js (layout dumps it after #content).
+	$qry = isset($GLOBALS['server_qry']) ? (string)$GLOBALS['server_qry'] : '';
+	$extra_js = "<script>\n"
+		. "window.addEvent('domready', function(){ " . $qry . " });\n"
+		. "InitAccordion('tr.opener', 'div.opener', 'content');\n"
+		. "</script>\n";
+	sb_ui_v2_render('servers.twig', array(
+		'title' => 'Серверы — Blue Admin',
+		'server_list' => $servers,
+		'access_bans' => $access_bans,
+		'opened_server' => $number,
+		'extra_js' => $extra_js,
+	));
+	return;
+}
+
+$theme->display('page_servers.tpl');

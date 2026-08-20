@@ -32,14 +32,14 @@ if(!$userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_BAN))
     echo "Нет доступа";
     die();
 }
-require_once(INCLUDES_PATH . '/xajax.inc.php');
+require_once(INCLUDES_PATH . '/SbAjax.php');
 require_once(INCLUDES_PATH . '/system-functions.php');
-$xajax = new xajax();
-//$xajax->debugOn();
-$xajax->setRequestURI("./admin.kickit.php");
-$xajax->registerFunction("KickPlayer");
-$xajax->registerFunction("LoadServers");
-$xajax->processRequests();
+$sbAjax = new SbAjax();
+$sbAjax->setRequestURI("./admin.kickit.php");
+$sbAjax->registerFunction("KickPlayer");
+$sbAjax->registerFunction("LoadServers");
+$sbAjax->processRequests();
+$xajax = $sbAjax;
 $username = $userbank->GetProperty("user");
 
 // SECURITY FIX: kickClient() ищет игрока по SteamID либо по IPv4 — всё остальное отклоняем,
@@ -178,16 +178,14 @@ while(!$servers->EOF) {
     $num++;
     $servers->MoveNext();
 }
-$theme->assign('total', $num);
-$theme->assign('servers', $serverlinks);
-$theme->assign('xajax_functions',  $xajax->printJavascript("../scripts", "xajax.js"));
-$theme->assign('sb_csrf', function_exists('sb_csrf_token') ? sb_csrf_token() : '');
 // SECURITY FIX: в шаблон уходит только валидный SteamID/IPv4 (вставляется в JS-строку).
 $checkParam = isset($_GET["check"]) ? kickit_validate_check($_GET["check"]) : false;
-$theme->assign('check', $checkParam === false ? '' : htmlspecialchars($checkParam));// steamid or ip address
+$kickitVars = array(
+    'total' => $num,
+    'servers' => $serverlinks,
+    'xajax_functions' => $sbAjax->printJavascript("../scripts", "sb-api.js"),
+    'sb_csrf' => function_exists('sb_csrf_token') ? sb_csrf_token() : '',
+    'check' => $checkParam === false ? '' : htmlspecialchars($checkParam),
+);
 
-$theme->left_delimiter = "-{";
-$theme->right_delimiter = "}-";
-$theme->display('page_kickit.tpl');
-$theme->left_delimiter = "{";
-$theme->right_delimiter = "}";
+echo sb_ui_v2_fragment('kickit.twig', $kickitVars);

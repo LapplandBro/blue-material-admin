@@ -1,0 +1,96 @@
+<div class="form-page admin-form">
+  <header class="form-page-head">
+    <p class="form-page-kicker">Админка</p>
+    <h2 class="form-page-title">Ваучеры</h2>
+    <p class="form-page-lead">Выпуск ключей · активирует только гость на <code>index.php?p=pay</code></p>
+  </header>
+
+  <div class="form-flash form-flash--info">
+    <p class="form-flash-title">Как это работает</p>
+    <ol>
+      <li>Владелец выпускает HEX-ключ на вкладке «Добавить» (срок, группы, серверы).</li>
+      <li>Ключ отдаёте покупателю / новому админу.</li>
+      <li>Он заходит <b>без авторизации</b> (гость) → «Активировать ваучер» → вводит ключ и данные аккаунта.</li>
+      <li>Создаётся новый админ; ключ становится «Использованный».</li>
+    </ol>
+    <p class="mb-0">Залогиненный админ активировать ваучер не может — иначе получится путаница с уже существующим аккаунтом.</p>
+  </div>
+
+  <div class="form-flash form-flash--info">
+    <p class="form-flash-title">API для магазина / бота
+      {% if voucher_api_enabled == "1" %}
+      <span class="parsec-text-ok">· включён</span>
+      {% else %}
+      <span class="parsec-text-danger">· выключен</span> (пустой <code>SB_VOUCHER_API_TOKEN</code> в <code>config.php</code>)
+      {% endif %}
+    </p>
+    <p>Эндпоинт: <code>{{ voucher_api_url }}</code> · только <b>POST</b> · JSON или form · не пароль админа, а отдельный токен.</p>
+    <p>В <code>config.php</code>:</p>
+    <pre class="admin-pre">define('SB_VOUCHER_API_TOKEN', 'сгенерируй_длинную_строку_32plus');
+define('SB_VOUCHER_API_ALLOW_IPS', ''); // опционально: 1.2.3.4,5.6.7.8</pre>
+    <p>Поля: <code>days</code>, <code>group_web</code> (имя как в панели или <code>0</code>), <code>group_srv</code> (опц.), <code>servers</code> (<code>""</code> / <code>-1</code> / <code>s1,s2</code>). Токен: тело <code>token</code>, заголовок <code>Authorization: Bearer …</code> или <code>X-SB-Voucher-Token</code>.</p>
+    <pre class="admin-pre">curl -s -X POST '{{ voucher_api_url }}' \
+  -H 'Content-Type: application/json' \
+  -H 'Authorization: Bearer YOUR_TOKEN' \
+  -d '{"days":30,"group_web":"Admin","group_srv":"","servers":""}'</pre>
+    <p class="mb-0">
+      <a class="btn btn-outline-secondary btn-sm" href="api/voucher_test.php" target="_blank" rel="noopener">Тестер API</a>
+      <span class="parsec-muted"> или CLI: <code>php api/voucher_test.php</code></span>
+    </p>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-striped" id="group.details">
+      <thead>
+        <tr>
+          <th>№</th>
+          <th>Статус</th>
+          <th>Ключ</th>
+          <th>Срок</th>
+          <th>Группа(сервер)</th>
+          <th>Группа(веб)</th>
+          <th>Сервер</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for card in card_list %}
+        <tr>
+          <td>{{ card.aid }}</td>
+          <td>
+            {% if card.activ == "1" %}<span class="parsec-text-ok">Рабочий</span>{% else %}<span class="parsec-text-danger">Использованный</span>{% endif %}
+          </td>
+          <td>
+            {% if card.value != "" %}{{ card.value }}{% else %}<span class="parsec-text-danger">Нету ключа</span>{% endif %}
+          </td>
+          <td>
+            {% if card.days == "0" %}Навсегда{% else %}{{ card.days }} дн.{% endif %}
+          </td>
+          <td>
+            {% if card.group_srv != "" %}{{ card.group_srv }}{% else %}<span class="parsec-text-danger">Нету группы</span>{% endif %}
+          </td>
+          <td>
+            {% if card.group_web != "0" %}{{ card.group_web }}{% else %}<span class="parsec-text-danger">Нету группы</span>{% endif %}
+          </td>
+          <td>
+            {% if card.servers == "" %}
+            <span class="parsec-text-ok">Свободный выбор</span>
+            {% elseif card.servers == "-1" %}
+            <span class="parsec-text-danger">Без доступа</span>
+            {% else %}
+            <span class="parsec-text-danger">Выбор ограничен</span>
+            {% endif %}
+          </td>
+          <td>
+            <form action="index.php?p=admin&amp;c=pay_card" method="post" class="d-inline" onsubmit="return confirm('Удалить ваучер?');">
+              <input type="hidden" name="sb_csrf" value="{{ sb_csrf }}">
+              <input type="hidden" name="voucher_delete_id" value="{{ card.aid }}">
+              <button type="submit" name="voucher_delete" value="1" class="admin-action admin-action--danger">Удалить</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>

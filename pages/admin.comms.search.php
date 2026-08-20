@@ -45,12 +45,28 @@ $serverscript .= "</script>";
 $page = isset($_GET['page'])?$_GET['page']:1;
 
 $theme->assign('hideplayerips', (isset($GLOBALS['config']['banlist.hideplayerips']) && $GLOBALS['config']['banlist.hideplayerips'] == "1" && !$userbank->is_admin()));
+$theme->assign('hideadminname', (isset($GLOBALS['config']['banlist.hideadminname']) && $GLOBALS['config']['banlist.hideadminname'] == "1" && !$userbank->is_admin()));
 $theme->assign('is_admin', $userbank->is_admin());
 $theme->assign('admin_list', $admin_list);
 $theme->assign('server_list', $servers);
 $theme->assign('server_script', $serverscript);
 
-$theme->display('box_admin_comms_search.tpl');
+if (function_exists('sb_ui_v2_enabled') && sb_ui_v2_enabled() && function_exists('sb_ui_v2_fragment')) {
+	$vars = array();
+	if (isset($theme) && is_object($theme) && isset($theme->_tpl_vars) && is_array($theme->_tpl_vars)) {
+		foreach ($theme->_tpl_vars as $k => $v)
+			$vars[$k] = $v;
+	} elseif (isset($theme) && is_object($theme) && method_exists($theme, 'get_template_vars')) {
+		$all = $theme->get_template_vars();
+		if (is_array($all)) {
+			foreach ($all as $k => $v)
+				$vars[$k] = $v;
+		}
+	}
+	echo sb_ui_v2_fragment('search_comms.twig', $vars);
+} else {
+	$theme->display('box_admin_comms_search.tpl');
+}
 ?>
 <script type="text/javascript">
 function switch_length(opt)

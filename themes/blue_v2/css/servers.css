@@ -1,0 +1,258 @@
+.servers-dialog-sink { display: none; }
+
+.servers-panel { overflow: hidden; }
+.servers-head {
+  padding: 0.95rem 1.15rem 0.8rem;
+}
+.servers-kicker {
+  margin: 0 0 0.12rem;
+  color: var(--muted);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.servers-title {
+  margin: 0;
+  color: var(--text-heading);
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+.servers-sub {
+  margin: 0.2rem 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+.servers-hint {
+  margin: 0;
+  border-radius: 0;
+  border-left: 0;
+  border-right: 0;
+  padding: 0.5rem 1.15rem;
+}
+.servers-muted { color: var(--muted); }
+.servers-scroll { overflow-x: auto; }
+
+.servers-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+.servers-table thead th {
+  padding: 0.38rem 0.55rem;
+  color: var(--muted);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: left;
+  background: rgba(16, 29, 53, 0.72);
+  border-bottom: 1px solid var(--border-hairline);
+  white-space: nowrap;
+}
+.servers-table tbody td {
+  padding: 0.38rem 0.55rem;
+  border-bottom: 1px solid var(--border-hairline);
+  vertical-align: middle;
+  color: var(--text);
+}
+.servers-col-ico { width: 2.4rem; text-align: center; }
+.servers-col-players { width: 5.5rem; text-align: right; }
+.servers-col-map { width: 18%; }
+.servers-col-chevron { width: 1.6rem; }
+
+.servers-row { cursor: pointer; }
+.servers-row:hover td { background: rgba(30, 144, 255, 0.06); }
+.servers-td-mod,
+.servers-td-ico,
+.servers-td-chevron { text-align: center; }
+.servers-td-mod .sb-ico,
+.servers-td-mod img,
+.servers-td-ico .sb-ico,
+.servers-td-ico img {
+  width: 20px;
+  height: 20px;
+  max-width: 20px;
+  max-height: 20px;
+  object-fit: contain;
+  vertical-align: middle;
+}
+.servers-td-host {
+  color: var(--text-heading);
+  font-weight: 650;
+  font-size: 0.88rem;
+}
+.servers-td-map {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 0.75rem;
+  color: var(--muted);
+  word-break: break-all;
+}
+.servers-td-players {
+  font-family: ui-monospace, Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+  text-align: right;
+  white-space: nowrap;
+}
+.servers-td-chevron { color: var(--muted); }
+.servers-chevron { display: inline-block; vertical-align: middle; }
+
+.servers-detail-row > td {
+  padding: 0;
+  border-bottom: 1px solid var(--border-hairline);
+}
+.servers-detail {
+  overflow: hidden;
+  background: var(--bg-sidebar);
+}
+.servers-window { padding: 0.85rem 1rem 1rem; height: auto !important; }
+.servers-detail-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.95rem;
+  align-items: flex-start;
+}
+.servers-players-col { flex: 1 1 320px; min-width: 0; }
+.servers-aside { flex: 0 0 260px; width: 260px; max-width: 100%; }
+.servers-map-frame {
+  margin-bottom: 0.65rem;
+  overflow: hidden;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-sm);
+  background: var(--bg-body);
+}
+.servers-map-frame img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 168px;
+  object-fit: cover;
+}
+.servers-addr { margin-bottom: 0.65rem; }
+.servers-addr-label {
+  display: block;
+  margin-bottom: 0.22rem;
+  color: var(--muted);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.servers-addr code {
+  display: block;
+  padding: 0.42rem 0.55rem;
+  color: var(--text-heading);
+  background: #111c30;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  user-select: all;
+}
+.servers-actions { display: flex; flex-direction: column; gap: 0.4rem; }
+.servers-actions .btn { width: 100%; }
+
+.servers-empty {
+  display: none;
+  padding: 1.35rem 0.5rem;
+  text-align: center;
+}
+.servers-empty-text { margin: 0; color: var(--muted); }
+.servers-empty-table {
+  padding: 1.4rem 1rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+.servers-players-table {
+  width: 100%;
+  margin: 0;
+  border-collapse: collapse;
+  background: transparent;
+}
+.servers-players-table .servers-player-th {
+  padding: 0.35rem 0.5rem;
+  color: var(--muted);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: left;
+  border-bottom: 1px solid var(--border-hairline);
+}
+.servers-players-table td {
+  padding: 0.32rem 0.5rem;
+  border-bottom: 1px solid var(--border-hairline);
+  color: var(--text);
+  vertical-align: middle;
+}
+.servers-players-table tr:hover td { background: rgba(30, 144, 255, 0.05); }
+.servers-player-name { font-weight: 650; color: var(--text-heading); }
+.servers-player-name a,
+.servers-player-name .js-player-menu {
+  display: inline-flex;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-heading);
+  font: inherit;
+  font-weight: 650;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.servers-player-name a:hover,
+.servers-player-name .js-player-menu:hover { color: var(--accent); }
+
+.blue-v2 i.zmdi-label,
+.servers-players-table i.zmdi-label,
+.servers-players-table i.bi-three-dots-vertical {
+  font-style: normal;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  margin-right: 0.4rem;
+  border: 1px solid var(--border-hairline);
+  border-radius: 0.3rem;
+  background: rgba(30, 144, 255, 0.1);
+  color: var(--accent);
+  cursor: pointer;
+  vertical-align: middle;
+}
+.blue-v2 i.zmdi-label,
+.servers-players-table i.zmdi-label {
+  font-family: inherit;
+}
+.blue-v2 i.zmdi-label::before,
+.servers-players-table i.zmdi-label::before {
+  content: "⋮";
+  font-size: 0.95rem;
+  line-height: 1;
+}
+.servers-players-table i.bi-three-dots-vertical {
+  font-size: 0.95rem;
+  line-height: 1;
+}
+.p-l-5 { padding-left: 0.4rem; }
+.p-l-10 { padding-left: 0.65rem; }
+
+.servers-player-score,
+.servers-player-time {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+@media (max-width: 767.98px) {
+  .servers-aside { flex: 1 1 100%; width: 100%; }
+  .servers-td-chevron,
+  .servers-col-chevron { display: none; }
+  .servers-col-map,
+  .servers-td-map { display: none; }
+}

@@ -125,7 +125,7 @@ $theme->assign('steam_universe', $res['steam_universe']);
 
 <div id="admin-page-content">
 <div id="1">
-<?php $theme->display('page_admin_edit_mod.tpl'); ?>
+<?php sb_ui_v2_theme_fragment('admin_edit_mod.twig'); ?>
 <script>
 $('enabled').checked = <?php echo (int)$res['enabled'] ?>;
 </script>

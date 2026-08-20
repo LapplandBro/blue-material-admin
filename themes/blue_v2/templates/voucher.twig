@@ -1,0 +1,155 @@
+{% extends 'layout.twig' %}
+{% block extra_head %}
+<link href="{{ asset_base }}themes/blue_v2/css/forms.css" rel="stylesheet">
+{% endblock %}
+{% block topbar_title %}
+<h1 class="h5 mb-0">Активация ваучера</h1>
+{% endblock %}
+{% block content %}
+<div class="panel form-page" id="voucher-activate">
+  <header class="form-page-head">
+    <p class="form-page-kicker">Ваучер</p>
+    <h1 class="form-page-title">Активация ваучера</h1>
+    <p class="form-page-lead">Ключ выдаёт администрация. После активации создаётся аккаунт админа.</p>
+  </header>
+
+  {% if page_blocked %}
+    {% if flash_html %}
+    <div class="form-flash {% if flash_type == 'success' %}form-flash--ok{% else %}form-flash--err{% endif %}" role="alert">
+      <div class="form-flash-title">{{ flash_title }}</div>
+      <div class="form-flash-body">{{ flash_html|raw }}</div>
+    </div>
+    {% endif %}
+  {% else %}
+    {% if error_msg %}
+    <div class="form-flash form-flash--err" role="alert">{{ error_msg }}</div>
+    {% endif %}
+
+    {% if param == "0" %}
+    <form action="{{ form_action }}" method="post" autocomplete="off">
+      {% if sb_csrf %}<input type="hidden" name="sb_csrf" value="{{ sb_csrf }}" />{% endif %}
+      <div class="form-grid">
+        <div class="form-field form-field--full">
+          <label class="form-label" for="pay_v4">Код ваучера <span class="mandatory">*</span></label>
+          <input type="text" class="form-control form-input-mask" id="pay_v4" name="pay_v4" data-mask="AAAA-AAAA-AAAA-AAAA-AAAA-AAAA-AAAA-AAAA" placeholder="a1b2-c3d4-e5f6-7890-abcd-ef01-2345-6789" required maxlength="39" spellcheck="false" autocomplete="off" />
+          <div class="form-help">32 hex-символа (0-9, a-f). Можно с дефисами: a1b2-c3d4-e5f6-…</div>
+        </div>
+        <div class="form-field form-field--captcha">
+          <label class="form-label" for="kapcha">Проверочный код <span class="mandatory">*</span></label>
+          <div class="form-captcha">
+            <img id="voucher_captcha_img" src="includes/captcha/captcha.php?t={{ captcha_t }}" width="170" height="56" alt="Капча" />
+            <button type="button" class="btn btn-outline-secondary form-captcha-refresh" title="Обновить код" onclick="var i=document.getElementById('voucher_captcha_img'); if(i) i.src='includes/captcha/captcha.php?t='+Date.now();">Обновить</button>
+            <input type="text" class="form-control" id="kapcha" name="kapcha" placeholder="Символы с картинки" required maxlength="8" autocomplete="off" />
+          </div>
+          <div class="form-help">Введите символы с картинки. Обновите, если не читается.</div>
+        </div>
+      </div>
+      <p class="form-legend"><span class="mandatory">*</span> = обязательные поля</p>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-accent" id="pay_send" name="pay_send" value="Проверить ваучер">Проверить ваучер</button>
+      </div>
+    </form>
+    {% else %}
+    <div class="form-flash form-flash--info voucher-meta" role="alert">
+      Ваучер <b>{{ klu4ik }}</b> принят. Заполните данные аккаунта и нажмите «Активировать».
+      Срок: <b>{{ days }}</b> · веб-группа: <b>{{ gr_web }}</b> · серверная: <b>{{ gr_srv }}</b>
+    </div>
+    <div class="form-grid">
+      <div class="form-field">
+        <label class="form-label" for="user_login">Логин <span class="mandatory">*</span></label>
+        <input type="text" class="form-control" id="user_login" name="user_login" placeholder="Логин" autocomplete="username" />
+        <div class="form-help">Логин для входа в веб-панель.</div>
+        <div id="name.msg" class="msg-err"></div>
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="user_steamid">SteamID <span class="mandatory">*</span></label>
+        <input type="text" class="form-control" id="user_steamid" name="user_steamid" placeholder="STEAM_0:0:12345" />
+        <div class="form-help">STEAM_0:X:Y или Community ID (7656…).</div>
+        <div id="steam.msg" class="msg-err"></div>
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="password">Пароль <span class="mandatory">*</span></label>
+        <input type="password" class="form-control" id="password" name="password" placeholder="Пароль" autocomplete="new-password" />
+        <div class="form-help">Минимальная длина задаётся в настройках сайта.</div>
+        <div id="password.msg" class="msg-err"></div>
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="password2">Пароль ещё раз <span class="mandatory">*</span></label>
+        <input type="password" class="form-control" id="password2" name="password2" placeholder="Повтор пароля" autocomplete="new-password" />
+        <div id="password2.msg" class="msg-err"></div>
+      </div>
+      <div class="form-field form-field--full">
+        <label class="form-label" for="user_email">E-mail <span class="mandatory">*</span></label>
+        <input type="email" class="form-control" id="user_email" name="user_email" placeholder="mail@example.com" autocomplete="email" />
+        <div class="form-help">Нужен для восстановления пароля.</div>
+        <div id="email.msg" class="msg-err"></div>
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="discord">Discord</label>
+        <input type="text" class="form-control" id="discord" name="discord" placeholder="name#0000 или username" />
+        <div class="form-help">Необязательно.</div>
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="vk">VK (ID)</label>
+        <input type="text" class="form-control" id="vk" name="vk" placeholder="123456789" />
+        <div class="form-help">Только ID профиля, не полная ссылка.</div>
+      </div>
+      {% if servers == "" %}
+      <div class="form-field form-field--full">
+        <label class="form-label">Серверы</label>
+        <div class="form-checkboxes">
+          {% for server in server_list %}
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="servers[]" id="s_{{ server.sid }}" value="s{{ server.sid }}" />
+            <label class="form-check-label" for="s_{{ server.sid }}">
+              <span id="sa{{ server.sid }}"><i>{{ server.ip }}:{{ server.port }}</i></span>
+            </label>
+          </div>
+          {% endfor %}
+        </div>
+        <p class="form-help">Отметьте серверы, на которых нужны права. Если список пуст — обратитесь к администрации.</p>
+      </div>
+      {% endif %}
+    </div>
+    {{ server_script|raw }}
+    <script>
+    function AddAdmin_pay() {
+      var g = function(id){ var e = document.getElementById(id); return e ? e.value : ''; };
+      var svr = '';
+      var el = document.getElementsByName('servers[]');
+      for (var i = 0; i < el.length; i++) {
+        if (el[i].checked) svr += ',' + el[i].value;
+      }
+      xajax_AddAdmin_pay('', '', g('user_login'), g('user_steamid'), g('user_email'),
+        g('password'), g('password2'), '', '', '-1', 0, 0, '', svr,
+        g('discord'), '', g('vk'), {{ klu4ik_js|raw }});
+    }
+    </script>
+    <p class="form-legend"><span class="mandatory">*</span> = обязательные поля</p>
+    <div class="form-actions form-actions--split">
+      <button type="button" class="btn btn-accent" id="pay_send_activ" name="pay_send_activ" value="Активировать" onclick="AddAdmin_pay();">Активировать</button>
+      <a class="btn btn-outline-secondary" href="{{ pay_url }}">Другой ваучер</a>
+    </div>
+    {% endif %}
+  {% endif %}
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+(function () {
+  var input = document.getElementById('pay_v4');
+  if (!input) return;
+
+  function formatVoucher() {
+    var raw = input.value.replace(/[^0-9a-f]/gi, '').slice(0, 32).toLowerCase();
+    var groups = [];
+    for (var i = 0; i < raw.length; i += 4)
+      groups.push(raw.slice(i, i + 4));
+    input.value = groups.join('-');
+  }
+
+  input.addEventListener('input', formatVoucher);
+  formatVoucher();
+})();
+</script>
+{% endblock %}

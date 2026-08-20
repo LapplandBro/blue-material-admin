@@ -1,0 +1,116 @@
+<form action="index.php?p=admin&amp;c=settings" method="post">
+  <input type="hidden" name="sb_csrf" value="{{ sb_csrf }}">
+  <input type="hidden" name="settingsGroup" value="features">
+  <div class="form-page admin-form" id="group.features">
+    <header class="form-page-head">
+      <p class="form-page-kicker">Настройки</p>
+      <h2 class="form-page-title">Опции</h2>
+      <p class="form-page-lead">Кик, групповые баны, рехеш и прочее. Подсказки на «?».</p>
+    </header>
+    <div class="form-grid">
+      <div class="form-field">
+        <label class="form-label" for="export_public">{% include 'partials/help_icon.twig' with { title: 'Экспорт банов', message: 'Публичная выгрузка списка банов для скачивания.' } %} Экспорт банов</label>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="export_public" id="export_public" value="on">
+          <label class="form-check-label" for="export_public">Вкл.</label>
+        </div>
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="enable_kickit">{% include 'partials/help_icon.twig' with { title: 'Кик при бане', message: 'Кикать игрока с сервера сразу после добавления бана в базу.' } %} Кик при бане</label>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="enable_kickit" id="enable_kickit" value="on">
+          <label class="form-check-label" for="enable_kickit">Вкл.</label>
+        </div>
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="enable_groupbanning">{% include 'partials/help_icon.twig' with { title: 'Групповые баны', message: 'Бан целой Steam-группы игрока.' } %} Групповые баны</label>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="enable_groupbanning" id="enable_groupbanning" value="on">
+          <label class="form-check-label" for="enable_groupbanning">Вкл.</label>
+        </div>
+        <div id="enable_groupbanning.msg" class="msg-err"></div>
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="enable_friendsbanning">{% include 'partials/help_icon.twig' with { title: 'Баны друзей', message: 'Бан всех Steam-друзей выбранного игрока.' } %} Баны друзей</label>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="enable_friendsbanning" id="enable_friendsbanning" value="on">
+          <label class="form-check-label" for="enable_friendsbanning">Вкл.</label>
+        </div>
+        <div id="enable_friendsbanning.msg" class="msg-err"></div>
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="enable_adminrehashing">{% include 'partials/help_icon.twig' with { title: 'Авто-рехеш админов', message: 'Перезагружать права на серверах при любом изменении админов или групп.' } %} Авто-рехеш админов</label>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="enable_adminrehashing" id="enable_adminrehashing" value="on">
+          <label class="form-check-label" for="enable_adminrehashing">Вкл.</label>
+        </div>
+        <div id="enable_adminrehashing.msg" class="msg-err"></div>
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="enable_admininfo">{% include 'partials/help_icon.twig' with { title: 'Информация об Администраторе', message: 'Показывает информацию (discord, вк, STEAMID) о забанившем игрока Администраторе в банлисте или мут/гаг листе.' } %} Информация об администраторе</label>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="enable_admininfo" id="enable_admininfo" value="on">
+          <label class="form-check-label" for="enable_admininfo">Вкл.</label>
+        </div>
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="allow_admininfo">{% include 'partials/help_icon.twig' with { title: 'Смена информации админом', message: 'Разрешить пользователю самому менять VK или Discord в своем профиле?' } %} Смена своей информации Админом</label>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="allow_admininfo" id="allow_admininfo" value="on">
+          <label class="form-check-label" for="allow_admininfo">Вкл.</label>
+        </div>
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="moder_group_st">{% include 'partials/help_icon.twig' with { title: 'Модерирование группы', message: 'Администратор может редактировать баны только на тех серверах, где у него есть права. Полезно для должности «управляющий сервером».' } %} Модерировать группу</label>
+        <select class="form-select" name="moder_group_st" id="moder_group_st">
+          <option value="0">Отключить</option>
+          {% for gr in wgroups %}
+          <option value="{{ gr.gid }}"{% if gr.gid == config_modergroup %} selected="selected"{% endif %}>{{ gr.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="old_serverside">{% include 'partials/help_icon.twig' with { title: 'Режим совместимости с плагинами SB', message: 'Переключает веб-панель в режим совместимости со старой серверной частью SourceBans.' } %} Режим совместимости с плагинами SB</label>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="old_serverside" id="old_serverside" value="on"{% if old_serverside %} checked="checked"{% endif %}>
+          <label class="form-check-label" for="old_serverside">Вкл.</label>
+        </div>
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="map_autofetch">{% include 'partials/help_icon.twig' with { title: 'Превью карт с GameTracker', message: 'Если у карты нет вручную загруженной иконки в images/maps, браузер подгружает превью напрямую с GameTracker (без кеша на диске сервера). Если картинки там нет — показывается локальный unknown map (nomap.jpg).' } %} Превью карт с GameTracker</label>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="map_autofetch" id="map_autofetch" value="on"{% if map_autofetch %} checked="checked"{% endif %}>
+          <label class="form-check-label" for="map_autofetch">Вкл.</label>
+        </div>
+      </div>
+      <div class="form-field form-field--full">
+        <label class="form-label" for="totp_enforce_owner">{% include 'partials/help_icon.twig' with { title: 'Обязательная 2FA для OWNER', message: 'Владельцы панели (флаг OWNER) не смогут завершить вход по паролю или Steam, пока не настроят TOTP. Остальные админы подключают 2FA добровольно в разделе «Аккаунт».' } %} Обязательная 2FA для OWNER</label>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="totp_enforce_owner" id="totp_enforce_owner" value="on"{% if totp_enforce_owner %} checked="checked"{% endif %}>
+          <label class="form-check-label" for="totp_enforce_owner">Вкл.</label>
+        </div>
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="admin_warns">{% include 'partials/help_icon.twig' with { title: 'Предупреждения', message: 'Позволяет включить систему предупреждений для Администраторов.' } %} Предупреждения</label>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="admin_warns" name="admin_warns" value="on"{% if warnings_enabled %} checked="checked"{% endif %}>
+          <label class="form-check-label" for="admin_warns">Вкл.</label>
+        </div>
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="admin_warns_max">Максимум предупреждений</label>
+        <input type="text" class="form-control" id="admin_warns_max" name="admin_warns_max" placeholder="Максимальное кол-во предупреждений" value="{{ maxWarnings }}">
+      </div>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-accent" id="fsettings">Сохранить</button>
+      <button type="button" class="btn btn-outline-secondary" id="fback" onclick="sbGo('index.php?p=admin&amp;c=settings')">Назад</button>
+    </div>
+  </div>
+</form>
+<script>
+document.getElementById('admin_warns').onclick = function() {
+  document.getElementById('admin_warns_max').disabled = !document.getElementById('admin_warns').checked;
+};
+document.getElementById('admin_warns').onclick();
+</script>

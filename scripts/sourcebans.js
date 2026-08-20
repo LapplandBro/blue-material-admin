@@ -31,9 +31,12 @@
  * Use $id() for DOM-by-id.
  */
 function $id(id) {
-	if (id === null || id === undefined || id === '')
+	if (id === null || id === undefined)
 		return null;
-	return document.getElementById(String(id));
+	id = String(id);
+	if (id === '')
+		return null;
+	return document.getElementById(id);
 }
 
 function sbSetChecked(id, on) {
@@ -104,6 +107,69 @@ var accordion;
 var accordionInstances = {};
 
 /**
+ * ЧПУ на Caddy без rewrite открывает сломанную Material-тему.
+ * Всегда query-string: admin/bans?x#y → index.php?p=admin&c=bans&x#y
+ */
+function sbAdminQs(url) {
+	var orig = (url == null) ? '' : String(url).trim();
+	if (orig === '' || orig.charAt(0) === '#')
+		return orig;
+	if (/^[a-z][a-z0-9+.-]*:/i.test(orig) || orig.indexOf('index.php') !== -1)
+		return orig;
+
+	var hash = '';
+	var path = orig;
+	var hi = path.indexOf('#');
+	if (hi !== -1) {
+		hash = path.substring(hi);
+		path = path.substring(0, hi);
+	}
+	var q = '';
+	var qi = path.indexOf('?');
+	if (qi !== -1) {
+		q = path.substring(qi + 1);
+		path = path.substring(0, qi);
+	}
+	path = path.replace(/^\.\//, '').replace(/^\/+/, '').replace(/\/+$/, '');
+
+	var pageNames = {
+		banlist: true,
+		commslist: true,
+		servers: true,
+		login: true,
+		logout: true,
+		submit: true,
+		protest: true,
+		account: true,
+		lostpassword: true,
+		login2fa: true,
+		search_bans: true,
+		search_comm: true,
+		pay: true,
+		adminlist: true,
+		home: true,
+		admin: true
+	};
+
+	if (path === 'admin')
+		return 'index.php?p=admin' + (q !== '' ? ('&' + q) : '') + hash;
+
+	var adminMatch = path.match(/^admin\/([^\/?#]+)$/);
+	if (adminMatch)
+		return 'index.php?p=admin&c=' + encodeURIComponent(adminMatch[1]) + (q !== '' ? ('&' + q) : '') + hash;
+
+	var pageMatch = path.match(/^([a-zA-Z0-9_]+)(?:\/(\d+))?$/);
+	if (pageMatch && pageNames[pageMatch[1]]) {
+		var out = 'index.php?p=' + encodeURIComponent(pageMatch[1]);
+		if (pageMatch[2])
+			out += '&page=' + encodeURIComponent(pageMatch[2]);
+		return out + (q !== '' ? ('&' + q) : '') + hash;
+	}
+
+	return orig;
+}
+
+/**
  * Абсолютный URL относительно <base href>.
  * Важно: window.location = 'index.php?…' / 'admin/admins' НЕ учитывает <base>,
  * и с /admin/admins уезжает в /admin/admin/admins (или /admin/index.php) → «главная».
@@ -112,6 +178,7 @@ function sbAbs(url) {
 	url = (url == null) ? '' : String(url).trim();
 	if (url === '' || url.charAt(0) === '#')
 		return url;
+	url = sbAdminQs(url);
 	// Уже абсолютный (http:, https:, …)
 	if (/^[a-z][a-z0-9+.-]*:/i.test(url))
 		return url;
@@ -159,22 +226,13 @@ function sbAdminBack(tabId, fallbackUrl) {
 		} catch (err) {}
 		return;
 	}
-	sbGo(fallbackUrl || 'admin');
+	sbGo(fallbackUrl || 'index.php?p=admin');
 }
 
-/** ЧПУ: sbLoc('banlist', '&page=2&a=unban') → абсолютный …/banlist/2?a=unban */
+/** URL страницы SourceBans через index.php?p=… с учётом <base href>. */
 function sbLoc(page, q) {
 	page = String(page);
 	q = (q == null) ? '' : String(q).replace(/^[&?]+/, '');
-	if ((page === 'banlist' || page === 'commslist') && q !== '') {
-		var pm = q.match(/(?:^|&)page=(\d+)(?=&|$)/);
-		if (pm) {
-			var pn = parseInt(pm[1], 10);
-			q = q.replace(/(?:^|&)page=\d+/g, '').replace(/^&+/, '').replace(/&+/g, '&');
-			if (pn > 1)
-				page = page + '/' + pn;
-		}
-	}
 	return sbAbs(page + (q !== '' ? ('?' + q) : ''));
 }
 
@@ -219,25 +277,71 @@ function sbLoc(page, q) {
 			else
 				window.location.hash = hash.substring(1);
 		} catch (err2) {}
+		var tabMatch = hash.match(/^#\^(\d+)/);
+		if (tabMatch && typeof SwapPane === 'function')
+			SwapPane(tabMatch[1]);
 	}, true);
+
+	// Голый href="#id" с <base href> уводит на главную (/#id). Модалки игроков и якоря
+	// остаются на текущей странице; Bootstrap всё ещё получит click на bubble.
+	document.addEventListener('click', function (e) {
+		var a = e.target;
+		while (a && a.nodeName !== 'A')
+			a = a.parentNode;
+		if (!a || !a.getAttribute)
+			return;
+		var href = a.getAttribute('href');
+		if (!href || href.charAt(0) !== '#' || href === '#' || href.indexOf('#^') === 0)
+			return;
+		if (/^[a-z][a-z0-9+.-]*:/i.test(href))
+			return;
+		e.preventDefault();
+	}, true);
+})();
+
+(function () {
+	function sbFixEmptyFormActions() {
+		var forms = document.getElementsByTagName('form');
+		var here = window.location.pathname + window.location.search;
+		var i;
+		for (i = 0; i < forms.length; i++) {
+			var act = forms[i].getAttribute('action');
+			if (act === null || act === '')
+				forms[i].setAttribute('action', here);
+		}
+	}
+	if (document.readyState === 'loading')
+		document.addEventListener('DOMContentLoaded', sbFixEmptyFormActions);
+	else
+		sbFixEmptyFormActions();
 })();
 
 function ProcessAdminTabs()
 {
 	var url = window.location.toString();
-	var hashPos = url.indexOf('^');
 	var tabNo = -1;
-	if (hashPos !== -1) {
-		tabNo = url.charAt(hashPos + 1);
-		if (tabNo !== '' && document.getElementById('tab-' + tabNo))
+	var tabMatch = url.match(/#\^(\d+)/);
+	if (tabMatch) {
+		tabNo = tabMatch[1];
+		// getElementById('0') is valid; tab-0 / pane 0 must not be treated as missing.
+		if (tabNo !== '' && (document.getElementById('tab-' + tabNo) || document.getElementById(tabNo)))
 			SwapPane(tabNo);
 		else
 			tabNo = -1;
 	}
 
-	// Нет #^N — показать первую существующую вкладку (иначе все pane остаются display:none).
-	if (tabNo === -1 && document.getElementById('tab-0') && document.getElementById('0'))
-		SwapPane(0);
+	if (tabNo === -1) {
+		var current = document.querySelector('.admin-pane.is-on');
+		var first = document.querySelector('.admin-embed-body .admin-pane')
+			|| document.querySelector('.admin-pane')
+			|| document.getElementById('0');
+		if (current && String(current.id) !== '')
+			SwapPane(current.id);
+		else if (first && first.classList && first.classList.contains('admin-pane'))
+			SwapPane(String(first.id) !== '' ? first.id : '0');
+		else if (first)
+			first.style.display = 'block';
+	}
 
 	var upos = url.indexOf('~');
 	if (upos !== -1) {
@@ -281,28 +385,79 @@ function Swap2ndPane(id, ttype)
 
 function SwapPane(id)
 {
-	var i = 0;
-	var i2 = 0;
-	if(document.getElementById("tab-" + id))
-	{
-		var paneEl;
-		while((paneEl = document.getElementById(i)))
-		{
-			paneEl.style.display = 'none';
-			i++;
-		}
-		while(i2 < 50)
-		{
-			var tabEl = document.getElementById("tab-" + i2);
-			if(tabEl)
-			{
-				tabEl.classList.remove('active');
+	id = (id === undefined || id === null) ? '0' : String(id);
+	var all = document.querySelectorAll('.admin-pane');
+	var root = document.getElementById('admin-page-wrap')
+		|| document.querySelector('.admin-embed-body')
+		|| document.getElementById('cpanel')
+		|| document.getElementById('admin-page-content');
+	var scoped = (root && root.querySelectorAll) ? root.querySelectorAll('.admin-pane') : [];
+	var panes = scoped.length ? scoped : all;
+	var i;
+	var show = document.getElementById(id);
+	if (!show || !show.classList || !show.classList.contains('admin-pane')) {
+		show = null;
+		for (i = 0; i < panes.length; i++) {
+			if (String(panes[i].id) === id) {
+				show = panes[i];
+				break;
 			}
-			i2++;
 		}
-		document.getElementById("tab-" + id).classList.add('active');
-		document.getElementById(id).style.display = 'block';
 	}
+	if (!show && panes.length)
+		show = panes[0];
+	if (!show && all.length)
+		show = all[0];
+
+	if (show && panes.length) {
+		var inList = false;
+		for (i = 0; i < panes.length; i++) {
+			if (panes[i] === show) {
+				inList = true;
+				break;
+			}
+		}
+		if (!inList)
+			panes = all;
+	}
+
+	if (panes.length) {
+		for (i = 0; i < panes.length; i++) {
+			if (panes[i] === show) {
+				panes[i].style.display = 'block';
+				panes[i].classList.add('is-on');
+			} else {
+				panes[i].style.display = 'none';
+				panes[i].classList.remove('is-on');
+			}
+		}
+	} else if (show) {
+		show.style.display = 'block';
+		if (show.classList)
+			show.classList.add('is-on');
+	}
+
+	var check = panes.length ? panes : all;
+	var anyOn = false;
+	for (i = 0; i < check.length; i++) {
+		if (check[i].classList && check[i].classList.contains('is-on')) {
+			anyOn = true;
+			break;
+		}
+	}
+	if (!anyOn && check.length) {
+		check[0].style.display = 'block';
+		check[0].classList.add('is-on');
+	}
+
+	for (i = 0; i < 50; i++) {
+		var tabEl = document.getElementById('tab-' + i);
+		if (tabEl)
+			tabEl.classList.remove('active');
+	}
+	var tab = document.getElementById('tab-' + id);
+	if (tab)
+		tab.classList.add('active');
 }
 
 function InitAccordion(opener, element, container, num)
@@ -347,6 +502,11 @@ function InitAccordion(opener, element, container, num)
 
 	if(num == null)
 		num = -1;
+	var wrap = (typeof $ === 'function') ? $(container) : document.getElementById(container);
+	if (!wrap)
+		return null;
+	var wrapEl = wrap.offsetHeight !== undefined ? wrap : (wrap.element || null);
+	var wrapVisible = !!(wrapEl && (wrapEl.offsetHeight > 0 || wrapEl.offsetWidth > 0));
 	var ExtendedAccordion = Accordion.extend({
 	showAll: function() {
 		var obj = {};
@@ -368,24 +528,40 @@ function InitAccordion(opener, element, container, num)
 		}, this);
 		return this.start(obj);
 	}
-  }); 
+  });
 
-	accordion = new ExtendedAccordion(opener, element, {
+	var togglers = (wrap.getElements) ? wrap.getElements(opener) : $$(opener);
+	var panels = (wrap.getElements) ? wrap.getElements(element) : $$(element);
+
+	accordion = new ExtendedAccordion(togglers, panels, {
 		opacity: true,
 		alwaysHide: true,
-		display: num,
+		display: false,
+		show: false,
 		transition:Fx.Transitions.Quart.easeOut,
 		onActive: function(toggler, element){
 			toggler.setStyle('cursor', 'pointer');
 			toggler.setStyle('background-color', '');
+			var el = element;
+			window.setTimeout(function () {
+				try {
+					if (el && el.setStyle)
+						el.setStyle('height', 'auto');
+					else if (el && el.style)
+						el.style.height = 'auto';
+				} catch (err) {}
+			}, 420);
 		},
 	 
 		onBackground: function(toggler, element){
 			//toggler.setStyle('cursor', 'pointer');
 			//toggler.setStyle('background-color', '');		
 		}
-	}, $(container));
-	accordion.hideAll();
+	});
+	if (accordion && accordion.elements && accordion.elements.length && wrapVisible)
+		accordion.hideAll();
+	if (num != null && num != -1 && accordion)
+		accordion.display(num);
 
 	accordionInstances[key] = accordion;
 	return accordion;
@@ -545,8 +721,8 @@ function RemoveServer(id, name)
 function RemoveBan(id, key, page, name, confirm, bulk)
 {
 	if(confirm==0) {
-		ShowBox('Удалить бан', '<p class="c-black m-t-20 f-14">Вы уверены, что хотите удалить бан '+(bulk=="true"?"выбранных игроков":"игрока \'"+ name +"\'")+'?</p>', 'blue', '', true);
-		$('dialog-control').setHTML('<input type="button" onclick="RemoveBan(\''+id+'\', \''+key+'\', \''+page+'\', \''+addslashes(name.replace(/\'/g,'\\\''))+'\', \'1\''+(bulk=="true"?", \'true\'":"")+');document.getElementById(\'rban\').disabled = true;" name="rban" class="btn btn-lg btn-primary waves-effect" id="rban" value="Удалить бан" />');
+		ShowBox('Удалить бан', '<p>Вы уверены, что хотите удалить бан '+(bulk=="true"?"выбранных игроков":"игрока \'"+ name +"\'")+'?</p>', 'blue', '', true);
+		$('dialog-control').setHTML('<input type="button" onclick="RemoveBan(\''+id+'\', \''+key+'\', \''+page+'\', \''+addslashes(name.replace(/\'/g,'\\\''))+'\', \'1\''+(bulk=="true"?", \'true\'":"")+');document.getElementById(\'rban\').disabled = true;" name="rban" class="btn btn-accent" id="rban" value="Удалить бан" />');
 	} else if(confirm==1) {
 		if(page != "") 
 			var pagelink = page;
@@ -559,8 +735,8 @@ function RemoveBan(id, key, page, name, confirm, bulk)
 function UnbanBan(id, key, page, name, popup, bulk)
 {
 	if(popup==1) {
-		ShowBox('Разбан', '<div class="form-group has-warning has-feedback"><label class="control-label f-14" for="inputWarning2">Пожалуйста, напишите краткий комментарий, почему вы собираетесь разбанить '+(bulk=="true"?"этих игроков":"игрока \'"+ name +"\'")+'!</label><div class="fg-line"><input type="text" class="form-control" id="inputWarning2" name="ureason"></div><span class="zmdi zmdi-alert-triangle form-control-feedback"></span><p class="help-block" id="ureason.msg"></p></div>', 'blue', '', true);
-		$('dialog-control').setHTML('<input type="button" onclick="if (UnbanBan(\''+id+'\', \''+key+'\', \''+page+'\', \''+addslashes(name.replace(/\'/g,'\\\''))+'\', \'0\''+(bulk=="true"?", \'true\'":"")+')) document.getElementById(\'uban\').disabled = true;" name="uban" class="btn btn-lg btn-primary waves-effect" id="uban" value="Разбанить" />');
+		ShowBox('Разбан', '<div class="form-field"><label class="form-label" for="inputWarning2">Пожалуйста, напишите краткий комментарий, почему вы собираетесь разбанить '+(bulk=="true"?"этих игроков":"игрока \'"+ name +"\'")+'!</label><input type="text" class="form-control" id="inputWarning2" name="ureason"><p class="msg-err" id="ureason.msg"></p></div>', 'blue', '', true);
+		$('dialog-control').setHTML('<input type="button" onclick="if (UnbanBan(\''+id+'\', \''+key+'\', \''+page+'\', \''+addslashes(name.replace(/\'/g,'\\\''))+'\', \'0\''+(bulk=="true"?", \'true\'":"")+')) document.getElementById(\'uban\').disabled = true;" name="uban" class="btn btn-accent" id="uban" value="Разбанить" />');
 	} else if(popup==0) {
 		if(page != "") 
 			var pagelink = page;
@@ -1302,7 +1478,7 @@ function ShowBox(title, msg, color, redir, noclose, timer)
 		html: true,
 		type: type,
 		allowOutsideClick: true,
-		customClass: hasSrvFrame ? "sweet-alert-srv" : ""
+		containerClass: hasSrvFrame ? "sweet-alert-srv" : ""
 	};
 
 	if (timer) {
@@ -1326,8 +1502,20 @@ function ShowBox(title, msg, color, redir, noclose, timer)
 	if (dct) dct.innerHTML = msg || "";
 
 	setTimeout(function () {
-		var pane = document.querySelector(".sweet-alert p");
-		if (pane && dControl && hasSrvFrame) {
+		var box = document.querySelector(".sweet-alert");
+		var pane = box ? (box.querySelector(".sweet-alert-body") || box.querySelector("p")) : null;
+		if (pane && pane.tagName === "P") {
+			var rich = pane.querySelector("textarea, input, iframe, table, .dialog-control-inline");
+			if (rich || (dControl && dControl.innerHTML && dControl.innerHTML.replace(/\s+/g, "") !== "")) {
+				var body = document.createElement("div");
+				body.className = "sweet-alert-body";
+				while (pane.firstChild)
+					body.appendChild(pane.firstChild);
+				pane.parentNode.replaceChild(body, pane);
+				pane = body;
+			}
+		}
+		if (pane && dControl && (hasSrvFrame || (dControl.innerHTML && dControl.innerHTML.replace(/\s+/g, "") !== ""))) {
 			dControl.className = "dialog-control-inline";
 			dControl.style.display = "block";
 			if (!pane.contains(dControl))
@@ -1813,8 +2001,15 @@ function BanFriendsProcess(fid, name)
 function OpenMessageBox(sid, name, popup)
 {
 	if(popup==1) {
-		ShowBox('Отправить сообщение', '<b>Пожалуйста, введите сообщение, которое вы хотите отправить <br>\''+name+'\'.</b><br>На сервере должен быть включён basechat.smx<br><i>&lt;sm_psay&gt;</i>.<br><textarea rows="3" cols="40" name="ingamemsg" id="ingamemsg" style="overflow:auto;"></textarea><br><div id="ingamemsg.msg" class="badentry"></div>', 'blue', '', true);
-		$('dialog-control').setHTML('<input type="button" name="ingmsg" class="btn btn-lg btn-primary waves-effect" onmouseover="ButtonOver(\'ingmsg\')" onmouseout="ButtonOver(\'ingmsg\')" id="ingmsg" value="Отправить" />');
+		ShowBox('Отправить сообщение', '<p class="sb-modal-lead">Сообщение для <strong></strong></p><p class="sb-modal-hint">Нужен плагин basechat.smx (<i>sm_psay</i>).</p><textarea rows="3" name="ingamemsg" id="ingamemsg" class="sb-modal-text" placeholder="Текст сообщения"></textarea><div id="ingamemsg.msg" class="badentry"></div>', 'blue', '', true);
+		var fillWho = function () {
+			var who = document.querySelector('.sweet-alert .sb-modal-lead strong');
+			if (who && !who.firstChild)
+				who.appendChild(document.createTextNode(name));
+		};
+		fillWho();
+		setTimeout(fillWho, 50);
+		$('dialog-control').setHTML('<input type="button" name="ingmsg" class="btn btn-accent" onmouseover="ButtonOver(\'ingmsg\')" onmouseout="ButtonOver(\'ingmsg\')" id="ingmsg" value="Отправить" />');
 		$('dialog-control').setStyle('display', 'inline-block');
 		$('ingmsg').addEvent('click', function(){OpenMessageBox(sid, name, 0);});
 	} else if(popup==0) {
@@ -1837,13 +2032,34 @@ function OpenMessageBox(sid, name, popup)
 function KickPlayerConfirm(sid, name, conf)
 {
 	if(conf==0)	{
+		if (typeof swal === "function") {
+			swal({
+				title: "Кик игрока",
+				text: "Кикнуть «" + String(name).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") + "» с сервера?",
+				html: true,
+				type: "warning",
+				showCancelButton: true,
+				showConfirmButton: true,
+				confirmButtonText: "Кикнуть",
+				cancelButtonText: "Отмена",
+				closeOnConfirm: true,
+				allowOutsideClick: true
+			}, function (ok) {
+				if (ok) KickPlayerConfirm(sid, name, 1);
+			});
+			return;
+		}
 		ShowBox('Кик игрока', '<b>Вы уверены, что хотите кикнуть игрока <br>\''+name+'\'?</b>', 'blue', '', true);
-		$('dialog-control').setHTML('<input type="button" name="kbutton" class="btn btn-lg btn-primary waves-effect" onmouseover="ButtonOver(\'kbutton\')" onmouseout="ButtonOver(\'kbutton\')" id="kbutton" value="Да" /> ');
+		$('dialog-control').setHTML('<input type="button" name="kbutton" class="btn btn-accent" onmouseover="ButtonOver(\'kbutton\')" onmouseout="ButtonOver(\'kbutton\')" id="kbutton" value="Да" /> ');
 		$('dialog-control').setStyle('display', 'inline-block');
 		$('kbutton').addEvent('click', function(){KickPlayerConfirm(sid, name, 1);});
 	} else if(conf==1) {
-		$('dialog-control').setStyle('display', 'none');
-		xajax_KickPlayer(sid, name);
+		var dc = $id("dialog-control");
+		if (dc) dc.style.display = "none";
+		if (typeof xajax_KickPlayer === "function")
+			xajax_KickPlayer(sid, name);
+		else
+			sbSiteAlert("Не удалось вызвать кик. Обновите страницу (Ctrl+F5) и войдите снова.", "Ошибка", "red");
 	}
 }
 
@@ -1893,7 +2109,7 @@ function RemoveBlock(id, key, page, name, confirm)
 {
 	if(confirm==0) {
 		ShowBox('Удалить блокировку', 'Вы уверены, что хотите удалить блокировку игрока '+ name + '?', 'blue', '', true);
-		$('dialog-control').setHTML('<input type="button" onclick="RemoveBlock(\''+id+'\', \''+key+'\', \''+page+'\', \''+addslashes(name.replace(/\'/g,'\\\''))+'\', \'1\''+');document.getElementById(\'rban\').disabled = true;" name="rban" class="btn btn-lg btn-primary waves-effect" id="rban" value="Удалить блокировку" />');
+		$('dialog-control').setHTML('<input type="button" onclick="RemoveBlock(\''+id+'\', \''+key+'\', \''+page+'\', \''+addslashes(name.replace(/\'/g,'\\\''))+'\', \'1\''+');document.getElementById(\'rban\').disabled = true;" name="rban" class="btn btn-accent" id="rban" value="Удалить блокировку" />');
 	} else if(confirm==1) {
 		if(page != "") 
 			var pagelink = page;
@@ -1906,8 +2122,8 @@ function RemoveBlock(id, key, page, name, confirm)
 function UnGag(id, key, page, name, popup)
 {
 	if(popup==1) {
-		ShowBox('Причина включения чата', '<div class="form-group has-warning has-feedback"><label class="control-label f-14" for="inputWarning2">Пожалуйста, оставьте короткий комментарий, почему вы хотите включить чат игроку \''+ name +'\'.</label><div class="fg-line"><input type="text" class="form-control" id="inputWarning2" name="ureason"></div><span class="zmdi zmdi-alert-triangle form-control-feedback"></span><p class="help-block" id="ureason.msg"></p></div>', 'blue', '', true);
-		$('dialog-control').setHTML('<input type="button" onclick="if (UnGag(\''+id+'\', \''+key+'\', \''+page+'\', \''+addslashes(name.replace(/\'/g,'\\\''))+'\', \'0\')) document.getElementById(\'uban\').disabled = true;" name="uban" class="btn btn-lg btn-primary waves-effect" id="uban" value="Вкл. чат" />');
+		ShowBox('Причина включения чата', '<div class="form-field"><label class="form-label" for="inputWarning2">Пожалуйста, оставьте короткий комментарий, почему вы хотите включить чат игроку \''+ name +'\'.</label><input type="text" class="form-control" id="inputWarning2" name="ureason"><p class="msg-err" id="ureason.msg"></p></div>', 'blue', '', true);
+		$('dialog-control').setHTML('<input type="button" onclick="if (UnGag(\''+id+'\', \''+key+'\', \''+page+'\', \''+addslashes(name.replace(/\'/g,'\\\''))+'\', \'0\')) document.getElementById(\'uban\').disabled = true;" name="uban" class="btn btn-accent" id="uban" value="Вкл. чат" />');
 	} else if(popup==0) {
 		if(page != "")
 			var pagelink = page;
@@ -1931,8 +2147,8 @@ function UnGag(id, key, page, name, popup)
 function UnMute(id, key, page, name, popup)
 {
 	if(popup==1) {
-		ShowBox('Причина включения микрофона', '<div class="form-group has-warning has-feedback"><label class="control-label f-14" for="inputWarning2">Пожалуйста, оставьте короткий комментарий, почему вы хотите включить микрофон игроку \''+ name +'\'.</label><div class="fg-line"><input type="text" class="form-control" id="inputWarning2" name="ureason"></div><span class="zmdi zmdi-alert-triangle form-control-feedback"></span><p class="help-block" id="ureason.msg"></p></div>', 'blue', '', true);
-		$('dialog-control').setHTML('<input type="button" onclick="if (UnMute(\''+id+'\', \''+key+'\', \''+page+'\', \''+addslashes(name.replace(/\'/g,'\\\''))+'\', \'0\')) document.getElementById(\'uban\').disabled = true;" name="uban" class="btn btn-lg btn-primary waves-effect" id="uban" value="Вкл. микро" />');
+		ShowBox('Причина включения микрофона', '<div class="form-field"><label class="form-label" for="inputWarning2">Пожалуйста, оставьте короткий комментарий, почему вы хотите включить микрофон игроку \''+ name +'\'.</label><input type="text" class="form-control" id="inputWarning2" name="ureason"><p class="msg-err" id="ureason.msg"></p></div>', 'blue', '', true);
+		$('dialog-control').setHTML('<input type="button" onclick="if (UnMute(\''+id+'\', \''+key+'\', \''+page+'\', \''+addslashes(name.replace(/\'/g,'\\\''))+'\', \'0\')) document.getElementById(\'uban\').disabled = true;" name="uban" class="btn btn-accent" id="uban" value="Вкл. микро" />');
 	} else if(popup==0) {
 		if(page != "")
 			var pagelink = page;
@@ -2042,4 +2258,233 @@ function ConvertSteamID_3to2(field) {
 		SID = "STEAM_0:" + Ost + ":" + (SID-Ost)/2;
 		f.value = SID;
 	}
+}
+
+function sbPlayerPayload(p) {
+	if (!p)
+		return null;
+	if (p.name == null && p.Name == null && p[2] != null)
+		p = {
+			sid: p[0],
+			pid: p[1],
+			name: p[2],
+			frags: p[3],
+			time: p[4],
+			manage: p[5],
+			banUrl: p[6],
+			muteUrl: p[7]
+		};
+	return {
+		sid: p.sid,
+		pid: p.pid,
+		name: p.name != null ? p.name : (p.Name || ""),
+		frags: p.frags != null ? p.frags : p.Frags,
+		time: p.time != null ? p.time : (p.Time || ""),
+		manage: p.manage === true || p.manage === 1 || p.manage === "1" || p.manage === "true",
+		banUrl: p.banUrl || "",
+		muteUrl: p.muteUrl || ""
+	};
+}
+
+function sbClosePlayerSheet() {
+	var sheet = document.getElementById("sb-player-sheet");
+	if (!sheet)
+		return;
+	sheet.hidden = true;
+	sheet.setAttribute("aria-hidden", "true");
+	document.body.classList.remove("sb-player-sheet-open");
+}
+
+function sbEnsurePlayerSheet() {
+	var sheet = document.getElementById("sb-player-sheet");
+	if (sheet)
+		return sheet;
+	sheet = document.createElement("div");
+	sheet.id = "sb-player-sheet";
+	sheet.className = "sb-player-sheet";
+	sheet.hidden = true;
+	sheet.setAttribute("role", "dialog");
+	sheet.setAttribute("aria-modal", "true");
+	sheet.setAttribute("aria-hidden", "true");
+	sheet.innerHTML = '<div class="sb-player-sheet-backdrop" data-sb-player-close="1"></div>'
+		+ '<div class="sb-player-sheet-card">'
+		+ '<div class="sb-player-sheet-head">'
+		+ '<h4 class="sb-player-sheet-title"></h4>'
+		+ '<button type="button" class="btn-close btn-close-white sb-player-sheet-x" data-sb-player-close="1" aria-label="Закрыть"></button>'
+		+ '</div>'
+		+ '<div class="sb-player-sheet-list"></div>'
+		+ '</div>';
+	document.body.appendChild(sheet);
+	sheet.addEventListener("click", function (ev) {
+		var t = ev.target;
+		if (t && t.getAttribute && t.getAttribute("data-sb-player-close"))
+			sbClosePlayerSheet();
+	});
+	return sheet;
+}
+
+function sbFillPlayerSheet(p) {
+	var sheet = sbEnsurePlayerSheet();
+	var title = sheet.querySelector(".sb-player-sheet-title");
+	var list = sheet.querySelector(".sb-player-sheet-list");
+	while (title.firstChild)
+		title.removeChild(title.firstChild);
+	title.appendChild(document.createTextNode(p.name || "Игрок"));
+	while (list.firstChild)
+		list.removeChild(list.firstChild);
+
+	function actBtn(label, cls, onClick) {
+		var b = document.createElement("button");
+		b.type = "button";
+		b.className = "player-act" + (cls ? " " + cls : "");
+		b.appendChild(document.createTextNode(label));
+		b.addEventListener("click", function () {
+			sbClosePlayerSheet();
+			if (onClick)
+				onClick();
+		});
+		list.appendChild(b);
+	}
+
+	actBtn("Кикнуть", "player-act--warn", function () { KickPlayerConfirm(p.sid, p.name, 0); });
+	actBtn("Профиль Steam", "", function () { ViewCommunityProfile(p.sid, p.name); });
+	actBtn("Забанить", "", function () {
+		if (p.banUrl && typeof sbGo === "function")
+			sbGo(p.banUrl);
+		else if (p.banUrl)
+			window.location.href = p.banUrl;
+	});
+	actBtn("Заглушить", "", function () {
+		if (p.muteUrl && typeof sbGo === "function")
+			sbGo(p.muteUrl);
+		else if (p.muteUrl)
+			window.location.href = p.muteUrl;
+	});
+	actBtn("Сообщение на сервер", "", function () { OpenMessageBox(p.sid, p.name, 1); });
+	return sheet;
+}
+
+function sbOpenPlayerMenu(ev, el) {
+	if (ev) {
+		if (ev.preventDefault)
+			ev.preventDefault();
+		if (ev.stopPropagation)
+			ev.stopPropagation();
+		if (ev.stopImmediatePropagation)
+			ev.stopImmediatePropagation();
+	}
+	if (!el)
+		return false;
+	var p = null;
+	try {
+		p = JSON.parse(el.getAttribute("data-player") || "null");
+	} catch (err) {
+		p = null;
+	}
+	p = sbPlayerPayload(p);
+	if (!p || !p.manage)
+		return false;
+	var sheet = sbFillPlayerSheet(p);
+	sheet.hidden = false;
+	sheet.removeAttribute("aria-hidden");
+	document.body.classList.add("sb-player-sheet-open");
+	return false;
+}
+
+function sbClearServerPlayers(sid) {
+	var list = document.getElementById("playerlist_" + sid);
+	if (list && list.parentNode) {
+		var empty = list.cloneNode(false);
+		list.parentNode.replaceChild(empty, list);
+	}
+	var old = document.querySelectorAll(".player-act-modal[data-sid=\"" + sid + "\"]");
+	var i;
+	for (i = 0; i < old.length; i++) {
+		if (old[i].parentNode)
+			old[i].parentNode.removeChild(old[i]);
+	}
+}
+
+function sbRevealServerPlayers(sid) {
+	var panel = document.getElementById("serverpanel_" + sid);
+	if (!panel)
+		return;
+	var closed = panel.style.height === "0px" || panel.style.visibility === "hidden";
+	if (closed && (!panel.offsetHeight || panel.style.opacity === "0"))
+		return;
+	panel.style.height = "auto";
+	panel.style.overflow = "visible";
+	panel.style.opacity = "1";
+	panel.style.visibility = "visible";
+}
+
+function sbAddServerPlayerHead(sid) {
+	var e = document.getElementById("playerlist_" + sid);
+	if (!e)
+		return;
+	var tr = e.insertRow(-1);
+	var labels = ["Игрок", "Счёт", "Время"];
+	var i, td, b;
+	for (i = 0; i < labels.length; i++) {
+		td = tr.insertCell(-1);
+		td.className = "servers-player-th";
+		if (i === 0)
+			td.setAttribute("width", "50%");
+		else if (i === 1)
+			td.setAttribute("width", "15%");
+		b = document.createElement("b");
+		b.appendChild(document.createTextNode(labels[i]));
+		td.appendChild(b);
+	}
+}
+
+function sbAddServerPlayer(raw) {
+	var p = sbPlayerPayload(raw);
+	if (!p)
+		return;
+	var e = document.getElementById("playerlist_" + p.sid);
+	if (!e)
+		return;
+	var tr = e.insertRow(-1);
+	tr.id = "player_s" + p.sid + "p" + p.pid;
+	var td = tr.insertCell(-1);
+	td.className = "servers-player-name " + (p.manage ? "p-l-5 " : "p-l-10 ");
+	var nameNode = document.createTextNode(p.name || "");
+	if (p.manage) {
+		var btn = document.createElement("button");
+		btn.type = "button";
+		btn.className = "js-player-menu";
+		btn.setAttribute("data-player", JSON.stringify(p));
+		var ico = document.createElement("i");
+		ico.className = "bi bi-three-dots-vertical";
+		ico.setAttribute("aria-hidden", "true");
+		btn.appendChild(ico);
+		btn.appendChild(nameNode);
+		td.appendChild(btn);
+	} else {
+		td.appendChild(nameNode);
+	}
+	var td2 = tr.insertCell(-1);
+	td2.className = "servers-player-score";
+	td2.appendChild(document.createTextNode(String(p.frags == null ? "" : p.frags)));
+	var td3 = tr.insertCell(-1);
+	td3.className = "servers-player-time";
+	td3.appendChild(document.createTextNode(p.time || ""));
+}
+
+if (!window._sbPlayerMenuBound) {
+	window._sbPlayerMenuBound = true;
+	document.addEventListener("click", function (e) {
+		var t = e.target;
+		if (!t || !t.closest)
+			return;
+		var a = t.closest("a.js-player-menu, button.js-player-menu");
+		if (!a)
+			return;
+		sbOpenPlayerMenu(e, a);
+	}, true);
+	document.addEventListener("keydown", function (e) {
+		if (e.key === "Escape")
+			sbClosePlayerSheet();
+	});
 }

@@ -145,7 +145,7 @@ if(!defined("IN_SB")){echo "Ошибка доступа!";die();}
 <div id="admin-page-content">
 <?php if(!$userbank->HasAccess(ADMIN_OWNER|ADMIN_WEB_SETTINGS))
 {
-	echo '<div id="0" style="display:none;">Доступ запрещен!</div>';
+	echo '<div id="0" class="admin-pane is-on">Доступ запрещен!</div>';
 }
 else
 {
@@ -216,15 +216,18 @@ else
 				$admin_list_en = (isset($_POST['admin_list_t']) && $_POST['admin_list_t'] == "on" ? 1 : 0);
 				$vay4_en = (isset($_POST['vay4_t']) && $_POST['vay4_t'] == "on" ? 1 : 0);
 				
-				$size = sizeof($_POST['bans_customreason']);
+				$customReasons = (isset($_POST['bans_customreason']) && is_array($_POST['bans_customreason']))
+					? $_POST['bans_customreason']
+					: array();
+				$size = sizeof($customReasons);
 				for($i=0;$i<$size;$i++) {
-					if(empty($_POST['bans_customreason'][$i]))
-						unset($_POST['bans_customreason'][$i]);
+					if(empty($customReasons[$i]))
+						unset($customReasons[$i]);
 					else
-						$_POST['bans_customreason'][$i] = htmlspecialchars($_POST['bans_customreason'][$i]);
+						$customReasons[$i] = htmlspecialchars($customReasons[$i]);
 				}
-				if(sizeof($_POST['bans_customreason'])!=0)
-					$cureason = serialize($_POST['bans_customreason']);
+				if(sizeof($customReasons)!=0)
+					$cureason = serialize($customReasons);
 				else
 					$cureason = "";
 
@@ -236,6 +239,7 @@ else
 					? sb_sanitize_admin_html(isset($_POST['dash_intro_text']) ? $_POST['dash_intro_text'] : '')
 					: (isset($_POST['dash_intro_text']) ? $_POST['dash_intro_text'] : '');
 
+				$GLOBALS['db']->StartTrans();
 				$edit = $GLOBALS['db']->Execute("REPLACE INTO ".DB_PREFIX."_settings (`value`, `setting`) VALUES
 												(?, 'template.title'),
 												(?,'template.logo'),
@@ -261,19 +265,33 @@ else
 												(".(int)$vay4_en.", 'page.vay4er')", array($_POST['template_title'], $locked_logo, $_POST['config_dateformat'], $_POST['config_dateformat2'], $dash_intro_safe, $tz_string, $summertime, $cureason));
 				
 				/* SMTP */
-				$GLOBALS['db']->Execute(sprintf("REPLACE INTO `%s_settings` (`value`, `setting`) VALUES
+				$smtpEnabled = (isset($_POST['smtp_enabled']) && $_POST['smtp_enabled'] == "on") ? "1" : "0";
+				$smtpUsername = isset($_POST['smtp_username']) ? $_POST['smtp_username'] : '';
+				$smtpPort = isset($_POST['smtp_port']) ? $_POST['smtp_port'] : '';
+				$smtpHost = isset($_POST['smtp_host']) ? $_POST['smtp_host'] : '';
+				$smtpCharset = isset($_POST['smtp_charset']) ? $_POST['smtp_charset'] : '';
+				$smtpFrom = isset($_POST['smtp_from']) ? $_POST['smtp_from'] : '';
+				$smtpEdit = $GLOBALS['db']->Execute(sprintf("REPLACE INTO `%s_settings` (`value`, `setting`) VALUES
 				('%s', 'smtp.enabled'),
 				(%s, 'smtp.username'),
 				(%s, 'smtp.port'),
 				(%s, 'smtp.host'),
 				(%s, 'smtp.charset'),
-				(%s, 'smtp.from');", DB_PREFIX, (($_POST['smtp_enabled']=="on")?"1":"0"), $GLOBALS['db']->qstr($_POST['smtp_username']), $GLOBALS['db']->qstr($_POST['smtp_port']), $GLOBALS['db']->qstr($_POST['smtp_host']), $GLOBALS['db']->qstr($_POST['smtp_charset']), $GLOBALS['db']->qstr($_POST['smtp_from'])));
+				(%s, 'smtp.from');", DB_PREFIX, $smtpEnabled, $GLOBALS['db']->qstr($smtpUsername), $GLOBALS['db']->qstr($smtpPort), $GLOBALS['db']->qstr($smtpHost), $GLOBALS['db']->qstr($smtpCharset), $GLOBALS['db']->qstr($smtpFrom)));
 				// PASSWORD SMTP
-				if ($_POST['smtp_password'] != "*Скрыт*")
-					$GLOBALS['db']->Execute(sprintf("REPLACE INTO `%s_settings` (`value`, `setting`) VALUES (%s, 'smtp.password');", DB_PREFIX, $GLOBALS['db']->qstr($_POST['smtp_password'])));
+				$passwordEdit = true;
+				$smtpPassword = isset($_POST['smtp_password']) ? $_POST['smtp_password'] : '*Скрыт*';
+				if ($smtpPassword != "*Скрыт*")
+					$passwordEdit = (bool)$GLOBALS['db']->Execute(sprintf("REPLACE INTO `%s_settings` (`value`, `setting`) VALUES (%s, 'smtp.password');", DB_PREFIX, $GLOBALS['db']->qstr($smtpPassword)));
+				$saveOk = (bool)$edit && (bool)$smtpEdit && $passwordEdit;
+				$saveOk = (bool)$GLOBALS['db']->CompleteTrans($saveOk) && $saveOk;
 				
-				?><script>setTimeout("ShowBox('Главные настройки изменены', 'Изменения были успешно применены!', 'green', 'index.php?p=admin&c=settings', false, 2500);", 1200);</script><?php 
-				$log = new CSystemLog("m", "Настройки изменены", $userbank->GetProperty("user") . " изменил главные настройки (mainsettings).");
+				if ($saveOk) {
+					?><script>setTimeout("ShowBox('Главные настройки изменены', 'Изменения были успешно применены!', 'green', 'index.php?p=admin&c=settings', false, 2500);", 1200);</script><?php
+					$log = new CSystemLog("m", "Настройки изменены", $userbank->GetProperty("user") . " изменил главные настройки (mainsettings).");
+				} else {
+					CreateRedBox("Ошибка", "Не удалось полностью сохранить настройки: " . htmlspecialchars($GLOBALS['db']->ErrorMsg(), ENT_QUOTES, 'UTF-8'));
+				}
 			}else{
 				CreateRedBox("Ошибка", $errors); 
 			}
@@ -316,8 +334,12 @@ else
 											(" . (int)$map_autofetch . ", 'feature.map_autofetch'),
 											(" . (int)$totp_enforce_owner . ", 'config.totp.enforce_owner');");
 
-			?><script>setTimeout("ShowBox('Настройки опций изменены', 'Изменения были успешно применены!', 'green', 'index.php?p=admin&c=settings#^3', false, 2500);", 1200);</script><?php
-			$log = new CSystemLog("m", "Настройки изменены", $userbank->GetProperty("user") . " изменил настройки раздела \"Опции\" (features).");
+			if ($edit) {
+				?><script>setTimeout("ShowBox('Настройки опций изменены', 'Изменения были успешно применены!', 'green', 'index.php?p=admin&c=settings#^3', false, 2500);", 1200);</script><?php
+				$log = new CSystemLog("m", "Настройки изменены", $userbank->GetProperty("user") . " изменил настройки раздела \"Опции\" (features).");
+			} else {
+				CreateRedBox("Ошибка", "Не удалось сохранить настройки опций: " . htmlspecialchars($GLOBALS['db']->ErrorMsg(), ENT_QUOTES, 'UTF-8'));
+			}
 		}
 	}
 
@@ -326,7 +348,7 @@ else
 	$theme->assign('sb_csrf', function_exists('sb_csrf_token') ? sb_csrf_token() : '');
 
 	#########[Settings Page]###############
-	echo '<div id="0" style="display:none;">';
+	echo '<div id="0" class="admin-pane is-on">';
 		
 		$wgroups = $GLOBALS['db']->GetAll("SELECT gid, name FROM ".DB_PREFIX."_groups WHERE type != 3");
 		$theme->assign('wgroups', 				$wgroups);
@@ -351,41 +373,41 @@ else
 		$theme->assign('smtp_charset',  $GLOBALS['config']['smtp.charset']);
 		$theme->assign('smtp_from',     $GLOBALS['config']['smtp.from']);
 		
-		$theme->display('page_admin_settings_settings.tpl');	
+		sb_ui_v2_theme_fragment('admin_settings_settings.twig');
 	echo '</div>';
 	#########/[Settings Page]###############
 
 	#########[Features Page]###############
-	echo '<div id="3" style="display:none;">';
+	echo '<div id="3" class="admin-pane">';
 		$theme->assign('old_serverside', ($GLOBALS['config']['feature.old_serverside'] == "1"));
 		// Настройка ещё не сохранялась ни разу -> считаем автозагрузку карт включённой по умолчанию.
 		$theme->assign('map_autofetch', (!isset($GLOBALS['config']['feature.map_autofetch']) || $GLOBALS['config']['feature.map_autofetch'] == "1"));
 		$theme->assign('totp_enforce_owner', (!empty($GLOBALS['config']['config.totp.enforce_owner']) && $GLOBALS['config']['config.totp.enforce_owner'] == "1"));
 		$theme->assign('maxWarnings', $GLOBALS['config']['admin.warns.max']);
 		$theme->assign('warnings_enabled', ($GLOBALS['config']['admin.warns'] == "1"));
-		$theme->display('page_admin_settings_features.tpl');
+		sb_ui_v2_theme_fragment('admin_settings_features.twig');
 	echo '</div>';
 	#########/[Features Page]###############
 	
 	#########[Themes Page]###############
-	echo '<div id="1" style="display:none;">';
+	echo '<div id="1" class="admin-pane">';
 		$theme->assign('config_text_home', 			isset($GLOBALS['config']['config.text_home']) ? $GLOBALS['config']['config.text_home'] : '');
 		$theme->assign('config_text_mon', 			isset($GLOBALS['config']['config.text_mon']) ? $GLOBALS['config']['config.text_mon'] : '');
 		$theme->assign('config_text_acc', 			isset($GLOBALS['config']['config.text_acc']) ? $GLOBALS['config']['config.text_acc'] : '');
 		$theme->assign('config_text_acc2', 			isset($GLOBALS['config']['config.text_acc2']) ? $GLOBALS['config']['config.text_acc2'] : '');
 
-		$theme->display('page_admin_settings_theme.tpl');	
+		sb_ui_v2_theme_fragment('admin_settings_theme.twig');
 	echo '</div>';
 	#########/[Settings Page]###############
 	
 	#########[Logs Page]###############
-	echo '<div id="2" style="display:none;">';
+	echo '<div id="2" class="admin-pane">';
 		if($userbank->HasAccess(ADMIN_OWNER))
 			$theme->assign('clear_logs', "( <a href='javascript:ClearLogs();'>Очистить лог</a> )");
 		$theme->assign('page_numbers', 			$page_numbers);
 		$theme->assign('log_items',				$log_list);
-				
-		$theme->display('page_admin_settings_logs.tpl');	
+		$theme->assign('admin_list', $GLOBALS['db']->GetAll("SELECT * FROM `" . DB_PREFIX . "_admins` ORDER BY user ASC"));
+		sb_ui_v2_theme_fragment('admin_settings_logs.twig');
 	echo '</div>';
 	#########/[Logs Page]###############
 	
@@ -447,7 +469,7 @@ function MoreFields()
 	var t = document.getElementById("custom.reasons");
 	if (!t) return;
 	var div_add = document.createElement("div");
-	div_add.className = "fg-line";
+	div_add.className = "mb-2";
 	var input_add = document.createElement("input");
 	input_add.className = "form-control";
 	input_add.setAttribute("placeholder","Введите данные");

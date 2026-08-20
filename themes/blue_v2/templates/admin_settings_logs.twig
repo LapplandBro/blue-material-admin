@@ -1,0 +1,144 @@
+<div class="form-page admin-form admin-logs">
+  <header class="form-page-head">
+    <p class="form-page-kicker">Настройки</p>
+    <h2 class="form-page-title">Системный лог {{ clear_logs|raw }}</h2>
+    <p class="form-page-lead">Клик по строке — детали события.</p>
+  </header>
+
+  <div class="admin-logs-search mb-3">
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Критерий</th>
+            <th>Ввод</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div class="form-check">
+                <input class="form-check-input" id="admin_" name="search_type" type="radio" value="radiobutton">
+              </div>
+            </td>
+            <td><label for="admin" onclick="$('admin_').checked = true">Администратор</label></td>
+            <td>
+              <select class="form-select" id="admin" onmouseup="$('admin_').checked = true">
+                {% for admin in admin_list %}
+                <option label="{{ admin.user }}" value="{{ admin.aid }}">{{ admin.user }}</option>
+                {% endfor %}
+              </select>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="form-check">
+                <input class="form-check-input" id="message_" name="search_type" type="radio" value="radiobutton">
+              </div>
+            </td>
+            <td><label for="message" onclick="$('message_').checked = true">Текст сообщения</label></td>
+            <td>
+              <input type="text" class="form-control" id="message" value="" onmouseup="$('message_').checked = true" placeholder="Введите текст">
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="form-check">
+                <input class="form-check-input" id="date_" name="search_type" type="radio" value="radiobutton">
+              </div>
+            </td>
+            <td><label for="day" onclick="$('date_').checked = true">Дата</label></td>
+            <td>
+              <div class="row g-2">
+                <div class="col-4">
+                  <input type="text" class="form-control" id="day" value="" onmouseup="$('date_').checked = true" placeholder="День" maxlength="2">
+                </div>
+                <div class="col-4">
+                  <input type="text" class="form-control" id="month" value="" onmouseup="$('date_').checked = true" placeholder="Месяц" maxlength="2">
+                </div>
+                <div class="col-4">
+                  <input type="text" class="form-control" id="year" value="" onmouseup="$('date_').checked = true" placeholder="Год" maxlength="4">
+                </div>
+              </div>
+              <input type="hidden" id="fhour" value="0">
+              <input type="hidden" id="fminute" value="0">
+              <input type="hidden" id="thour" value="23">
+              <input type="hidden" id="tminute" value="59">
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="form-check">
+                <input class="form-check-input" id="type_" name="search_type" type="radio" value="radiobutton">
+              </div>
+            </td>
+            <td><label for="type" onclick="$('type_').checked = true">Тип сообщения</label></td>
+            <td>
+              <select class="form-select" id="type" onmouseup="$('type_').checked = true">
+                <option label="Сообщение" value="m">Сообщение</option>
+                <option label="Предупреждение" value="w">Предупреждение</option>
+                <option label="Ошибка" value="e">Ошибка</option>
+              </select>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="form-actions">
+      <button type="button" class="btn btn-accent" id="searchbtn" onclick="search_log();">Поиск</button>
+    </div>
+  </div>
+
+  {% if page_numbers %}
+  <div class="admin-logs-nav mb-2" id="banlist-nav">
+    {{ page_numbers|raw }}
+  </div>
+  {% endif %}
+
+  <div class="table-responsive">
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th class="text-center">Тип</th>
+          <th>Событие</th>
+          <th>Пользователь</th>
+          <th>Дата</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in log_items %}
+        <tr class="opener banlist-row admin-manage-row">
+          <td class="text-center">{{ log.type_img|raw }}</td>
+          <td>{{ log.title }}</td>
+          <td>{{ log.user }}</td>
+          <td>{{ log.date_str }}</td>
+        </tr>
+        <tr class="banlist-detail-row">
+          <td colspan="4" class="banlist-detail-cell">
+            <div class="opener" style="visibility: hidden; zoom: 1; opacity: 0;">
+              <div class="admin-log-detail">
+                <div class="admin-log-detail-col">
+                  <div class="parsec-muted">Детали</div>
+                  <div>{{ log.message }}</div>
+                </div>
+                <div class="admin-log-detail-col">
+                  <div class="parsec-muted">Функция</div>
+                  <div><code>{{ log.function }}</code></div>
+                  <div class="parsec-muted mt-2">Запрос</div>
+                  <div class="admin-log-query">{{ log.query }}</div>
+                  <div class="parsec-muted mt-2">IP</div>
+                  <div>{{ log.host }}</div>
+                </div>
+              </div>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+<script type="text/javascript">
+  InitAccordion('tr.opener', 'div.opener', 'content');
+</script>

@@ -1,0 +1,95 @@
+<form action="" method="post">
+  <div class="form-page admin-form" id="add-group">
+    <header class="form-page-head">
+      <p class="form-page-kicker">Редактирование</p>
+      <h2 class="form-page-title">Детали админа</h2>
+      <p class="form-page-lead">Логин, SteamID, почта и срок{% if expired_text %} · сейчас: {{ expired_text|raw }}{% endif %}.</p>
+    </header>
+    <div class="form-grid">
+      <div class="form-field form-field--full">
+        <label class="form-label" for="adminname">Логин</label>
+        <input type="text" tabindex="1" class="form-control" id="adminname" name="adminname" placeholder="Логин" value="{{ user }}">
+        <div id="adminname.msg" class="msg-err"></div>
+      </div>
+      <div class="form-field form-field--full">
+        <label class="form-label" for="steam">SteamID</label>
+        <input type="text" tabindex="2" class="form-control" id="steam" name="steam" placeholder="STEAM_0:…" value="{{ authid }}">
+        <div id="steam.msg" class="msg-err"></div>
+      </div>
+      <div class="form-field form-field--full">
+        <label class="form-label" for="email">E-Mail</label>
+        <input type="text" tabindex="3" class="form-control" id="email" name="email" placeholder="Почта" value="{{ email }}">
+        <div id="email.msg" class="msg-err"></div>
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="password">Пароль</label>
+        <input type="password" tabindex="4" class="form-control" id="password" name="password" placeholder="Пусто — не менять">
+        <div id="password.msg" class="msg-err"></div>
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="password2">Повторите пароль</label>
+        <input type="password" tabindex="5" class="form-control" id="password2" name="password2" placeholder="Повтор">
+        <div id="password2.msg" class="msg-err"></div>
+      </div>
+      <div class="form-field form-field--full">
+        <label class="form-label" for="a_useserverpass">Пароль на сервер</label>
+        <label class="form-check">
+          <input class="form-check-input" type="checkbox" id="a_useserverpass" name="a_useserverpass" tabindex="6" onclick="$('a_serverpass').disabled = !$(this).checked;"{% if a_spass %} checked="checked"{% endif %}>
+          <span class="form-check-label">Включить</span>
+        </label>
+        <input type="password" tabindex="7" class="form-control mt-2" id="a_serverpass" name="a_serverpass" placeholder="Не обязательно"{% if not a_spass %} disabled{% endif %}>
+        <div id="a_serverpass.msg" class="msg-err"></div>
+      </div>
+      <div class="form-field form-field--full">
+        <label class="form-label" for="a_foreverperiod">Доступ</label>
+        <p class="form-help">На сколько дней изменить срок. Оставьте пустым, если не желаете менять.</p>
+        <label class="form-check">
+          <input class="form-check-input" type="checkbox" id="a_foreverperiod" name="a_foreverperiod" tabindex="9" onclick="$('period').disabled = $(this).checked; $('permaadmin').value = $(this).checked;">
+          <span class="form-check-label">Навсегда</span>
+        </label>
+        <input type="text" tabindex="8" class="form-control mt-2" id="period" name="period">
+        <div id="period.msg" class="msg-err"></div>
+        <input type="hidden" name="permaadmin" id="permaadmin" value="false">
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="discord">Discord</label>
+        <input type="text" tabindex="9" class="form-control" id="discord" name="discord" placeholder="Не обязательно" value="{{ discord }}">
+        <div id="discord.msg" class="msg-err"></div>
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="vk">VK(ID)</label>
+        <input type="text" tabindex="10" class="form-control" id="vk" name="vk" placeholder="Не обязательно" value="{{ vk }}">
+        <div id="vk.msg" class="msg-err"></div>
+      </div>
+      <div class="form-field form-field--full">
+        <label class="form-label" for="comment">Комментарий</label>
+        <textarea tabindex="10" class="form-control" id="comment" name="comment" rows="3" placeholder="Текст без HTML (необязательно)">{{ comment }}</textarea>
+        <div id="comment.msg" class="msg-err"></div>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-accent" id="editmod">Сохранить изменения</button>
+      <button type="button" class="btn btn-outline-secondary" id="aback" onclick="sbGo('index.php?p=admin&amp;c=admins')">Назад</button>
+    </div>
+  </div>
+</form>
+
+{% if can_reset_totp %}
+<div class="form-page admin-form">
+  <header class="form-page-head">
+    <p class="form-page-kicker">Безопасность</p>
+    <h2 class="form-page-title">Двухфакторная аутентификация</h2>
+    <p class="form-page-lead">{% if totp_enabled_admin %}У админа включена 2FA — при lockout можно сбросить.{% else %}2FA не настроена.{% endif %}</p>
+  </header>
+  {% if totp_admin_msg %}<p class="form-flash form-flash--info">{{ totp_admin_msg }}</p>{% endif %}
+  {% if totp_enabled_admin %}
+  <form method="post" action="" onsubmit="return confirm('Сбросить 2FA для этого администратора?');">
+    {% if sb_csrf %}<input type="hidden" name="sb_csrf" value="{{ sb_csrf }}">{% endif %}
+    <input type="hidden" name="reset_totp" value="1">
+    <div class="form-actions">
+      <button type="submit" class="btn btn-outline-secondary">Сбросить 2FA</button>
+    </div>
+  </form>
+  {% endif %}
+</div>
+{% endif %}

@@ -135,7 +135,7 @@ $theme->assign('theme_css', $theme_css);
 $theme->assign('theme_color_attr', $theme_color_attr);
 $theme->assign('def_ch_chenger',  $def_ch);
 $theme->assign('def_body_chenger',  $def_body);
-$theme->assign('xajax_functions',  $xajax->printJavascript("scripts", "xajax.js"));
+$theme->assign('xajax_functions',  $xajax->printJavascript("scripts", "sb-api.js"));
 $theme->assign('sb_csrf', function_exists('sb_csrf_token') ? sb_csrf_token() : '');
 // Шапка Material Admin | SourceBans — путь логотипа в настройках заблокирован.
 $logo = 'images/icons/logo-material-admin.svg';
@@ -239,14 +239,14 @@ if ($seo_description === '' || $seo_strlen($seo_description) < 50)
 if ($seo_strlen($seo_description) > 155)
 	$seo_description = $seo_substr($seo_description, 0, 152) . '…';
 
-// Canonical: ЧПУ (/banlist, /admin/bans), главная без хвоста.
+// Canonical: query-string URL; главная без хвоста.
 $seo_c = (isset($_GET['c']) ? preg_replace('/[^a-zA-Z0-9_]/', '', (string)$_GET['c']) : '');
 if ($seo_page === 'home')
 	$seo_canonical = $site_base . '/';
 elseif ($seo_page === 'admin' && $seo_c !== '')
-	$seo_canonical = $site_base . '/admin/' . rawurlencode($seo_c);
+	$seo_canonical = $site_base . '/index.php?p=admin&c=' . urlencode($seo_c);
 elseif ($seo_page !== '')
-	$seo_canonical = $site_base . '/' . rawurlencode($seo_page);
+	$seo_canonical = $site_base . '/index.php?p=' . urlencode($seo_page);
 else
 	$seo_canonical = $site_base . '/';
 
@@ -346,9 +346,9 @@ $theme->assign('seo_jsonld', json_encode($seo_jsonld, JSON_UNESCAPED_UNICODE | J
 
 // Cache-busting для собственных CSS темы (иначе правки видны только через 7 дней кэша).
 // Берём максимум mtime по всем нашим CSS — правка ЛЮБОГО файла сбрасывает кэш.
-$css_dir = dirname(__FILE__) . '/../themes/new_box/css/';
+$css_dir = dirname(__FILE__) . '/../themes/blue_v2/css/';
 $css_ver = 0;
-foreach (array('dark-blue-theme.css', 'css_sup.css', 'rules.css') as $css_file) {
+foreach (array('blue.css', 'forms.css', 'dashboard.css') as $css_file) {
 	$mt = @filemtime($css_dir . $css_file);
 	if ($mt !== false && $mt > $css_ver) {
 		$css_ver = $mt;

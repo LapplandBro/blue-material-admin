@@ -1,154 +1,256 @@
 /**
- * Установщик SourceBans — тёмная тема new_box.
- * Базовый Material даёт белые ms-menu / lv-header-alt; dark-blue-theme их не трогает.
+ * Установщик — оболочка Blue V2, без Material / Bootstrap 3.
  */
 
-body {
+html, body {
+  margin: 0;
+  min-height: 100%;
+}
+body.install-v2 {
   background: #07101f;
+  color: #ddeeff;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
-#content .block-header h2 {
-  color: #e8f0ff;
+.install-top {
+  display: flex;
+  align-items: center;
+  height: 52px;
+  padding: 0 1.1rem;
+  background: #0c1528;
+  border-bottom: 1px solid #1a2d50;
 }
+.install-brand {
+  color: #e8f0ff;
+  font-weight: 700;
+  text-decoration: none;
+}
+.install-brand:hover { color: #7cc1ff; }
+
+.install-shell {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  min-height: calc(100vh - 52px - 48px);
+}
+.install-side {
+  background: #0a1225;
+  border-right: 1px solid #152040;
+  padding: 1rem 0.85rem;
+}
+.install-side-head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.85rem;
+  color: #9ec0e8;
+  font-weight: 650;
+}
+.install-side-head img {
+  border-radius: 50%;
+  object-fit: cover;
+}
+.install-nav,
+.main-menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.install-nav li,
+.main-menu li {
+  margin: 0.2rem 0;
+}
+.install-nav a,
+.main-menu a {
+  display: block;
+  padding: 0.4rem 0.55rem;
+  color: #7ea8d4;
+  text-decoration: none;
+  border-radius: 6px;
+}
+.install-nav a:hover,
+.main-menu a:hover { background: #122848; color: #e8f0ff; }
+
+#content {
+  padding: 1.1rem 1.25rem 2rem;
+}
+#content .block-header h2,
+#content_title {
+  margin: 0 0 1rem;
+  color: #e8f0ff;
+  font-size: 1.25rem;
+}
+
+.install-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.7rem 1.1rem;
+  background: #0c1528;
+  border-top: 1px solid #1a2d50;
+  color: #5a80a8;
+  font-size: 0.85rem;
+}
+.install-foot a { color: #7ea8d4; }
 
 #messages-main {
+  display: grid;
+  grid-template-columns: 240px 1fr;
   overflow: hidden;
   border: 1px solid #152040;
+  border-radius: 10px;
   min-height: 520px;
+  background: #0c1528;
 }
-
 #messages-main .ms-menu {
-  background: #0a1225 !important;
-  border-right: 1px solid #152040 !important;
+  background: #0a1225;
+  border-right: 1px solid #152040;
   padding-bottom: 24px;
 }
-
 #messages-main .ms-block {
-  padding: 18px 20px 8px !important;
+  padding: 18px 20px 8px;
   border-bottom: 1px solid #152040;
   margin-bottom: 4px;
 }
-
 #messages-main .ms-block b,
 #messages-main .ms-block .c-black,
 #messages-main .c-black {
-  color: #e8f0ff !important;
+  color: #e8f0ff;
 }
-
 #messages-main .ms-menu .lv-item {
+  display: flex;
+  gap: 0.7rem;
+  padding: 0.65rem 0.9rem;
   border-bottom: 1px solid #12203a;
 }
-
 #messages-main .ms-menu .lv-item.active {
-  background: #122848 !important;
+  background: #122848;
 }
-
 #messages-main .ms-menu .lv-item:not(.active):hover {
-  background: #101c34 !important;
+  background: #101c34;
 }
-
 #messages-main .ms-menu .lv-title,
 #messages-main .ms-menu .lv-title del {
-  color: #ddeeff !important;
+  color: #ddeeff;
 }
-
 #messages-main .ms-menu .lv-small,
 #messages-main .ms-menu .lv-small del {
-  color: #5a80a8 !important;
+  color: #5a80a8;
+  font-size: 0.8rem;
 }
-
-#messages-main .ms-menu .lv-avatar {
+#messages-main .ms-menu .lv-avatar,
+.lv-avatar {
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
   color: #fff;
-  font-weight: 600;
+  font-weight: 700;
   line-height: 36px;
   text-align: center;
+  background: #16314a;
 }
+.bgm-red { background: #c62828 !important; }
+.bgm-orange { background: #ef6c00 !important; }
+.c-green { color: #81c784 !important; }
+.c-blue { color: #4da3ff !important; }
+.c-red { color: #ff8a80 !important; }
+.pull-left { float: none; }
 
 .lv-header-alt {
-  background: #0a1225 !important;
+  background: #0a1225;
   border-bottom: 1px solid #152040;
-  padding: 12px 18px !important;
+  padding: 12px 18px;
 }
-
 .lv-header-alt .lvh-label,
 .lv-header-alt .lvh-label span,
 .lv-header-alt .c-black {
-  color: #9ec0e8 !important;
+  color: #9ec0e8;
   font-weight: 600;
 }
-
 #messages-main .lv-body {
   color: #c8d8f0;
-  background: transparent !important;
-  min-height: 0 !important;
+  padding: 0.9rem 1rem;
 }
-
-#messages-main .lv-body a {
-  color: #4da3ff;
-}
-
-#messages-main .lv-body a:hover {
-  color: #7ec0ff;
-}
+#messages-main .lv-body a { color: #4da3ff; }
+#messages-main .lv-body a:hover { color: #7ec0ff; }
+.p-15 { padding: 0.9rem 1rem !important; }
+.p-10 { padding: 0.6rem 0.75rem !important; }
+.m-10 { margin: 0.6rem 0 !important; }
+.m-b-0 { margin-bottom: 0 !important; }
+.card { background: transparent; border: 0; }
 
 #messages-main .form-group {
   margin-bottom: 12px;
   overflow: hidden;
 }
-
-#messages-main .form-group .row {
-  margin-left: 0;
-  margin-right: 0;
-}
-
 #messages-main .control-label {
   padding-top: 8px;
+  color: #9ec0e8;
 }
-
 #messages-main .form-control,
 #messages-main textarea.form-control,
 #messages-main #license {
-  background-color: #111c30 !important;
-  border: 1px solid #1a2d50 !important;
-  color: #ddeeff !important;
-  box-shadow: none !important;
+  background-color: #111c30;
+  border: 1px solid #1a2d50;
+  color: #ddeeff;
+  box-shadow: none;
 }
-
 #messages-main .form-control:focus,
 #messages-main textarea.form-control:focus {
-  border-color: #1e90ff !important;
-}
-
-#messages-main .fg-line:after {
-  background: #1e90ff;
-}
-
-#messages-main table {
+  border-color: #1e90ff;
+  background-color: #111c30;
   color: #ddeeff;
 }
-
+#messages-main table { color: #ddeeff; }
 #messages-main table td,
-#messages-main table th {
-  border-color: #152040 !important;
-}
-
+#messages-main table th { border-color: #152040; }
 #messages-main pre,
 #messages-main code {
-  background: #111c30 !important;
-  color: #ddeeff !important;
-  border-color: #1a2d50 !important;
+  background: #111c30;
+  color: #ddeeff;
+  border-color: #1a2d50;
 }
-
 #messages-main .btn-primary {
   background: #1e90ff;
   border-color: #1e90ff;
 }
-
-#footer {
-  color: #5a80a8;
+.col-sm-12 { width: 100%; }
+.col-sm-6 { width: 50%; float: left; }
+.col-sm-3, .col-sm-9 { display: block; }
+@media (min-width: 768px) {
+  #messages-main .form-group.col-sm-12 {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 8px 12px;
+    align-items: center;
+  }
 }
 
-#footer a,
-#footer .footer_link {
-  color: #7ea8d4;
+.checkbox label {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  cursor: pointer;
+  color: #ddeeff;
+}
+.checkbox input[type="checkbox"] {
+  width: 1.05rem;
+  height: 1.05rem;
+  accent-color: #1e90ff;
+}
+
+.sweet-alert {
+  background-color: #0c1528 !important;
+  color: #ddeeff !important;
+}
+.sweet-alert h2 { color: #e8f0ff !important; }
+.sweet-alert p { color: #c8d8f0 !important; }
+.sweet-overlay { background: rgba(0, 0, 0, 0.65); }
+
+@media (max-width: 900px) {
+  .install-shell,
+  #messages-main { grid-template-columns: 1fr; }
+  .install-side { border-right: 0; border-bottom: 1px solid #152040; }
+  #messages-main .ms-menu { border-right: 0; border-bottom: 1px solid #152040; }
+  .col-sm-6 { width: 100%; float: none; }
 }

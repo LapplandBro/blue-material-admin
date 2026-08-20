@@ -95,16 +95,19 @@ if (isset($_SERVER['REQUEST_METHOD']) && strtoupper((string)$_SERVER['REQUEST_ME
 if ($totp_setup_secret === '' && !empty($_SESSION['sb_totp_acct_secret']) && !sb_totp_is_enabled($aid))
 	$totp_setup_secret = $_SESSION['sb_totp_acct_secret'];
 		
-$groupsTabMenu = new CTabsMenu();
-$groupsTabMenu->addMenuItem("Информация", 0);
 $allow_change_infos = $GLOBALS['config']['config.changeadmininfos'];
-if($allow_change_infos)
-	$groupsTabMenu->addMenuItem("Связь", 4);
-$groupsTabMenu->addMenuItem("Сменить пароль", 1);
-$groupsTabMenu->addMenuItem("Серверный пароль", 2);
-$groupsTabMenu->addMenuItem("Сменить E-mail", 3);
-$groupsTabMenu->addMenuItem("2FA", 5);
-$groupsTabMenu->outputMenu();
+$v2 = function_exists('sb_ui_v2_enabled') && sb_ui_v2_enabled();
+if (!$v2) {
+	$groupsTabMenu = new CTabsMenu();
+	$groupsTabMenu->addMenuItem("Информация", 0);
+	if($allow_change_infos)
+		$groupsTabMenu->addMenuItem("Связь", 4);
+	$groupsTabMenu->addMenuItem("Сменить пароль", 1);
+	$groupsTabMenu->addMenuItem("Серверный пароль", 2);
+	$groupsTabMenu->addMenuItem("Сменить E-mail", 3);
+	$groupsTabMenu->addMenuItem("2FA", 5);
+	$groupsTabMenu->outputMenu();
+}
 
 $res = $GLOBALS['db']->Execute("SELECT `srv_password`, `email` FROM `".DB_PREFIX."_admins` WHERE `aid` = '".$userbank->GetAid()."'");
 $srvpwset = (!empty($res->fields['srv_password'])?true:false);
@@ -117,6 +120,82 @@ if($user_time == '' || $user_time == '0') {
 	$user_time = "ещё ".$days_left." дн. · до ".date('d.m.Y H:i', $user_time);
 } else {
 	$user_time = "Истекла";
+}
+
+if (!function_exists('sb_account_punish_item')) {
+	function sb_account_punish_item($row, $listPage)
+	{
+		$item = array();
+		$name = isset($row['name']) ? stripslashes((string)$row['name']) : '';
+		$item['name'] = $name;
+		$item['short_name'] = function_exists('trunc') ? trunc($name, 28, false) : $name;
+		$item['authid'] = isset($row['authid']) ? (string)$row['authid'] : '';
+		$created = isset($row['created']) ? (int)$row['created'] : 0;
+		$df = (isset($GLOBALS['config']['config.dateformat_ver2']) && $GLOBALS['config']['config.dateformat_ver2'] !== '')
+			? $GLOBALS['config']['config.dateformat_ver2']
+			: 'd.m.Y H:i';
+		$item['created'] = function_exists('SBDate') ? SBDate($df, $created) : date('d.m.Y H:i', $created);
+		$length = isset($row['length']) ? (int)$row['length'] : 0;
+		$ends = isset($row['ends']) ? (int)$row['ends'] : 0;
+		$remove = isset($row['RemoveType']) ? (string)$row['RemoveType'] : '';
+		$expired = ($remove === 'D' || $remove === 'U' || $remove === 'E' || ($length > 0 && $ends > 0 && $ends < time()));
+		$item['unbanned'] = $expired;
+		$item['perm'] = ($length === 0 && !$expired);
+		if ($length === 0)
+			$item['length'] = 'Навсегда';
+		elseif ($length < 0)
+			$item['length'] = 'Сессия';
+		elseif (function_exists('SecondsToString')) {
+			$ltemp = explode(',', SecondsToString($length));
+			$item['length'] = isset($ltemp[0]) ? $ltemp[0] : (string)$length;
+		} else
+			$item['length'] = (string)$length;
+		$reason = isset($row['reason']) ? stripslashes((string)$row['reason']) : '';
+		$item['reason'] = function_exists('trunc') ? trunc($reason, 72, false) : $reason;
+		$adv = $item['authid'];
+		$advType = 'steamid';
+		if ($adv === '' && $listPage === 'banlist' && !empty($row['ip'])) {
+			$adv = (string)$row['ip'];
+			$advType = 'ip';
+		}
+		$item['search_link'] = 'index.php?p=' . $listPage . '&advSearch=' . rawurlencode($adv) . '&advType=' . $advType;
+		if ($listPage === 'commslist' && function_exists('sb_comms_type_icon_html'))
+			$item['type_html'] = sb_comms_type_icon_html(isset($row['type']) ? $row['type'] : 1, 18);
+		else
+			$item['type_html'] = '';
+		return $item;
+	}
+}
+
+$my_bans = array();
+$my_comms = array();
+$my_bans_total = 0;
+$my_bans_active = 0;
+$my_comms_total = 0;
+$my_comms_active = 0;
+$my_bans_url = 'index.php?p=banlist&advSearch=' . (int)$aid . '&advType=admin';
+$my_comms_url = 'index.php?p=commslist&advSearch=' . (int)$aid . '&advType=admin';
+if (isset($GLOBALS['db']) && is_object($GLOBALS['db'])) {
+	$banCounts = $GLOBALS['db']->GetRow("SELECT COUNT(*) AS total, SUM(CASE WHEN RemoveType IS NULL AND (`length` = 0 OR `ends` > UNIX_TIMESTAMP()) THEN 1 ELSE 0 END) AS active FROM `".DB_PREFIX."_bans` WHERE aid = ".(int)$aid);
+	if (is_array($banCounts)) {
+		$my_bans_total = isset($banCounts['total']) ? (int)$banCounts['total'] : (isset($banCounts[0]) ? (int)$banCounts[0] : 0);
+		$my_bans_active = isset($banCounts['active']) ? (int)$banCounts['active'] : (isset($banCounts[1]) ? (int)$banCounts[1] : 0);
+	}
+	$commCounts = $GLOBALS['db']->GetRow("SELECT COUNT(*) AS total, SUM(CASE WHEN RemoveType IS NULL AND (`length` = 0 OR `ends` > UNIX_TIMESTAMP()) THEN 1 ELSE 0 END) AS active FROM `".DB_PREFIX."_comms` WHERE aid = ".(int)$aid);
+	if (is_array($commCounts)) {
+		$my_comms_total = isset($commCounts['total']) ? (int)$commCounts['total'] : (isset($commCounts[0]) ? (int)$commCounts[0] : 0);
+		$my_comms_active = isset($commCounts['active']) ? (int)$commCounts['active'] : (isset($commCounts[1]) ? (int)$commCounts[1] : 0);
+	}
+	$banRows = $GLOBALS['db']->GetAll("SELECT bid, name, authid, ip, type, created, length, ends, reason, RemoveType FROM `".DB_PREFIX."_bans` WHERE aid = ".(int)$aid." ORDER BY created DESC LIMIT 12");
+	if (is_array($banRows)) {
+		foreach ($banRows as $banRow)
+			$my_bans[] = sb_account_punish_item($banRow, 'banlist');
+	}
+	$commRows = $GLOBALS['db']->GetAll("SELECT bid, name, authid, type, created, length, ends, reason, RemoveType FROM `".DB_PREFIX."_comms` WHERE aid = ".(int)$aid." ORDER BY created DESC LIMIT 12");
+	if (is_array($commRows)) {
+		foreach ($commRows as $commRow)
+			$my_comms[] = sb_account_punish_item($commRow, 'commslist');
+	}
 }
 
 $theme->assign('allow_change_inf',		$allow_change_infos);
@@ -138,6 +217,45 @@ $theme->assign('totp_recovery_once',	$totp_recovery_once);
 $theme->assign('totp_setup_secret',		$totp_setup_secret);
 $theme->assign('totp_otpauth',			$totp_setup_secret !== '' ? sb_totp_otpauth_uri($totp_setup_secret, $userbank->GetProperty("user"), sb_totp_issuer()) : '');
 $theme->assign('sb_csrf',				function_exists('sb_csrf_token') ? sb_csrf_token() : '');
+
+if ($v2) {
+	$extra_js = '<script>if(typeof ProcessAdminTabs==="function"){ProcessAdminTabs();}</script>';
+	if ($totp_msg !== '' || $totp_setup_secret !== '' || $totp_recovery_once) {
+		$extra_js .= '<script>if(typeof SwapPane==="function"){SwapPane(5);}else if(window.location){window.location.hash="^5";}</script>';
+	}
+	sb_ui_v2_render('account.twig', array(
+		'title' => 'Аккаунт — Blue Admin',
+		'allow_change_inf' => $allow_change_infos,
+		'srvpwset' => $srvpwset,
+		'email' => $res->fields['email'],
+		'vk' => $userbank->GetProperty("vk", $userbank->GetAid()),
+		'discord' => $userbank->GetProperty("discord", $userbank->GetAid()),
+		'user_aid' => $userbank->GetAid(),
+		'user_name' => $userbank->GetProperty("user"),
+		'user_steam' => $userbank->GetProperty("authid"),
+		'expired_time' => $user_time,
+		'web_permissions' => BitToString($userbank->GetProperty("extraflags"), 0, false),
+		'server_permissions' => SmFlagsToSb($userbank->GetProperty("srv_flags"), false),
+		'min_pass_len' => MIN_PASS_LENGTH,
+		'totp_enabled' => sb_totp_is_enabled($aid),
+		'totp_msg' => $totp_msg,
+		'totp_msg_type' => $totp_msg_type,
+		'totp_recovery_once' => $totp_recovery_once,
+		'totp_setup_secret' => $totp_setup_secret,
+		'totp_otpauth' => $totp_setup_secret !== '' ? sb_totp_otpauth_uri($totp_setup_secret, $userbank->GetProperty("user"), sb_totp_issuer()) : '',
+		'sb_csrf' => function_exists('sb_csrf_token') ? sb_csrf_token() : '',
+		'my_bans' => $my_bans,
+		'my_comms' => $my_comms,
+		'my_bans_total' => $my_bans_total,
+		'my_bans_active' => $my_bans_active,
+		'my_comms_total' => $my_comms_total,
+		'my_comms_active' => $my_comms_active,
+		'my_bans_url' => $my_bans_url,
+		'my_comms_url' => $my_comms_url,
+		'extra_js' => $extra_js,
+	));
+	return;
+}
 
 $theme->left_delimiter = "-{";
 $theme->right_delimiter = "}-";

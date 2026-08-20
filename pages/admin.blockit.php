@@ -29,17 +29,17 @@ include_once '../init.php';
 
 if(!$userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_BAN))
 {
-	echo "No Access";
+	echo "Нет доступа";
 	die();
 }
-require_once(INCLUDES_PATH . '/xajax.inc.php');
+require_once(INCLUDES_PATH . '/SbAjax.php');
 require_once(INCLUDES_PATH . '/system-functions.php');
-$xajax = new xajax();
-//$xajax->debugOn();
-$xajax->setRequestURI("./admin.blockit.php");
-$xajax->registerFunction("BlockPlayer");
-$xajax->registerFunction("LoadServers2");
-$xajax->processRequests();
+$sbAjax = new SbAjax();
+$sbAjax->setRequestURI("./admin.blockit.php");
+$sbAjax->registerFunction("BlockPlayer");
+$sbAjax->registerFunction("LoadServers2");
+$sbAjax->processRequests();
+$xajax = $sbAjax;
 $username = $userbank->GetProperty("user");
 
 function LoadServers2($check, $type, $length) {
@@ -206,18 +206,16 @@ while(!$servers->EOF) {
 	$num++;
 	$servers->MoveNext();
 }
-$theme->assign('total', $num);
-$theme->assign('servers', $serverlinks);
-$theme->assign('xajax_functions',  $xajax->printJavascript("../scripts", "xajax.js"));
-$theme->assign('sb_csrf', function_exists('sb_csrf_token') ? sb_csrf_token() : '');
 // SECURITY FIX: в шаблон уходит только валидный SteamID (вставляется в JS-строку).
 $checkParam = isset($_GET["check"]) ? sb_sanitize_steamid_for_rcon($_GET["check"]) : false;
-$theme->assign('check', $checkParam === false ? '' : htmlspecialchars($checkParam));// steamid
-$theme->assign('type', isset($_GET['type']) ? (int) $_GET['type'] : 0);
-$theme->assign('length', isset($_GET['length']) ? (int) $_GET['length'] : 0);
+$blockitVars = array(
+	'total' => $num,
+	'servers' => $serverlinks,
+	'xajax_functions' => $sbAjax->printJavascript("../scripts", "sb-api.js"),
+	'sb_csrf' => function_exists('sb_csrf_token') ? sb_csrf_token() : '',
+	'check' => $checkParam === false ? '' : htmlspecialchars($checkParam),
+	'type' => isset($_GET['type']) ? (int) $_GET['type'] : 0,
+	'length' => isset($_GET['length']) ? (int) $_GET['length'] : 0,
+);
 
-$theme->left_delimiter = "-{";
-$theme->right_delimiter = "}-";
-$theme->display('page_blockit.tpl');
-$theme->left_delimiter = "{";
-$theme->right_delimiter = "}";
+echo sb_ui_v2_fragment('blockit.twig', $blockitVars);

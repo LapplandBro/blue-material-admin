@@ -5,7 +5,7 @@ global $userbank, $theme;
 	echo '<div id="admin-page-content">';
 	if(!$userbank->HasAccess(ADMIN_OWNER))
 	{
-		echo '<div id="0" style="display:none;">Доступ запрещен!</div>';
+		echo '<div id="0" class="admin-pane is-on">Доступ запрещен!</div>';
 	} else {
 
 		$sb_csrf_tok = function_exists('sb_csrf_token') ? sb_csrf_token() : '';
@@ -31,7 +31,7 @@ global $userbank, $theme;
 			}
 		}
 		#########[list]###############
-		echo '<div id="0" style="display:none;">';
+		echo '<div id="0" class="admin-pane is-on">';
 			
 			
 			
@@ -55,12 +55,12 @@ global $userbank, $theme;
 			$theme->assign('voucher_api_url', ($apiBase !== '' ? $apiBase . '/' : '') . 'api/voucher_create.php');
 			$theme->assign('voucher_api_enabled', (function_exists('sb_voucher_api_enabled') && sb_voucher_api_enabled()) ? '1' : '0');
 			$theme->assign('sb_csrf', $sb_csrf_tok);
-			$theme->display('page_admin_pay_list.tpl');	
+			sb_ui_v2_theme_fragment('admin_pay_list.twig');
 		echo '</div>';
 		#########/[list]###############
 		
 		#########[add]###############
-		echo '<div id="1" style="display:none;">';
+		echo '<div id="1" class="admin-pane">';
 			
 			//
 			$servers = $GLOBALS['db']->GetAll("SELECT * FROM `" . DB_PREFIX . "_servers`");
@@ -85,12 +85,8 @@ global $userbank, $theme;
 			// Add Page
 			$server_admin_group_list = 	$GLOBALS['db']->GetAll("SELECT * FROM `" . DB_PREFIX . "_srvgroups`");
 			$server_group_list = 		$GLOBALS['db']->GetAll("SELECT * FROM `" . DB_PREFIX . "_groups` WHERE type != 3");
-
-			echo '<div id="1" style="display:none;">';
-				$theme->assign('server_admin_group_list', $server_admin_group_list);
-				$theme->assign('server_group_list', $server_group_list);
-				$theme->display('page_admin_admins_add.tpl');
-			echo '</div>';
+			$theme->assign('server_admin_group_list', $server_admin_group_list);
+			$theme->assign('server_group_list', $server_group_list);
 
 
 			
@@ -145,7 +141,7 @@ global $userbank, $theme;
 				: '';
 			$theme->assign('card_key_default', $gen_key);
 			$theme->assign('sb_csrf', $sb_csrf_tok);
-			$theme->display('page_admin_pay_add.tpl');	
+			sb_ui_v2_theme_fragment('admin_pay_add.twig');
 		echo '</div>';
 		#########/[add]###############
 	}

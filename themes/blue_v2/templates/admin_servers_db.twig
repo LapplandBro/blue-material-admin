@@ -1,0 +1,16 @@
+<div class="form-page admin-form">
+  <header class="form-page-head">
+    <p class="form-page-kicker">Админка</p>
+    <h2 class="form-page-title">Конфиг БД</h2>
+    <p class="form-page-lead">Вставить в databases.cfg на игровом сервере</p>
+  </header>
+  <p class="form-note">Путь: <code>/[mod]/addons/sourcemod/configs/databases.cfg</code></p>
+  <div class="form-grid">
+    <div class="form-field form-field--full">
+      <textarea class="form-control" rows="23" readonly>{{ conf }}</textarea>
+    </div>
+  </div>
+  <div class="form-actions">
+    <button type="button" class="btn btn-outline-secondary" id="aconf" onclick="sbGo('index.php?p=admin&amp;c=servers')">Назад</button>
+  </div>
+</div>

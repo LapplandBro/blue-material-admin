@@ -49,7 +49,7 @@ INSERT INTO `{prefix}_settings` (`setting`, `value`) VALUES
 ('config.enablekickit', '1'),
 ('config.dateformat', 'd.m.Y в H:i'),
 ('config.dateformat_ver2', 'd.m.Y'),
-('config.theme', 'new_box'),
+('config.theme', 'blue_v2'),
 ('config.defaultpage', '0'),
 ('config.timezone', '3'),
 ('config.summertime', '0'),
@@ -110,8 +110,8 @@ UPDATE `{prefix}_admins` SET `aid` = '0' WHERE `authid` = 'STEAM_ID_SERVER';
 INSERT INTO `{prefix}_menu` (`id`, `text`, `description`, `url`, `system`, `enabled`, `newtab`, `priority`) VALUES
 (1, '<i class=''zmdi zmdi-home zmdi-hc-fw''></i> Главная', 'Главная страница. Список серверов, последних банов и блоков.', 'index.php?p=home', 1, 1, 0, 1000),
 (2, '<i class=''zmdi zmdi-input-composite zmdi-hc-fw''></i> Серверы', 'Список всех серверов и их текущий статус.', 'index.php?p=servers', 1, 1, 0, 999),
-(3, '<i class=''zmdi zmdi-lock-outline zmdi-hc-fw''></i> Список банов', 'Список всех когда-либо выданных банов.', 'index.php?p=banlist', 1, 1, 0, 998),
-(4, '<i class=''zmdi zmdi-mic-off zmdi-hc-fw''></i> Список мутов/гагов', 'Список всех когда-либо выданных мутов и гагов.', 'index.php?p=commslist', 1, 1, 0, 997),
-(5, '<i class=''zmdi zmdi-plus-circle-o-duplicate zmdi-hc-fw''></i> Пожаловаться на игрока', 'Здесь вы можете оставить жалобу на игрока.', 'index.php?p=submit', 1, 0, 0, 996),
-(6, '<i class=''zmdi zmdi-comment-edit zmdi-hc-fw''></i> Апелляция бана', 'Вы можете подать апелляцию бана, предоставив доказательства невиновности.', 'index.php?p=protest', 1, 0, 0, 995),
-(7, '<i class=''zmdi zmdi-accounts zmdi-hc-fw''></i> Админлист', 'Список администраторов на доступных серверах.', 'index.php?p=adminlist', 1, 0, 0, 994);
+(3, '<i class=''zmdi zmdi-lock-outline zmdi-hc-fw''></i> Баны', 'Список всех когда-либо выданных банов.', 'index.php?p=banlist', 1, 1, 0, 998),
+(4, '<i class=''zmdi zmdi-mic-off zmdi-hc-fw''></i> Муты / гаги', 'Список всех когда-либо выданных мутов и гагов.', 'index.php?p=commslist', 1, 1, 0, 997),
+(5, '<i class=''zmdi zmdi-plus-circle-o-duplicate zmdi-hc-fw''></i> Жалоба', 'Здесь вы можете оставить жалобу на игрока.', 'index.php?p=submit', 1, 0, 0, 996),
+(6, '<i class=''zmdi zmdi-comment-edit zmdi-hc-fw''></i> Апелляция', 'Вы можете подать апелляцию бана, предоставив доказательства невиновности.', 'index.php?p=protest', 1, 0, 0, 995),
+(7, '<i class=''zmdi zmdi-accounts zmdi-hc-fw''></i> Админы', 'Список администраторов на доступных серверах.', 'index.php?p=adminlist', 1, 0, 0, 994);

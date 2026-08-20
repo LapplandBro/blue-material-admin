@@ -137,20 +137,28 @@ if ($steam_input !== '' && $authid === '') {
 
 if ($authid !== '' && $error_msg === '') {
 	$family = RecidivismResolveFamily($authid);
-	$fpId = (string)$family['fingerprint_id'];
+	if (!is_array($family))
+		$family = array();
+	$fpId = isset($family['fingerprint_id']) ? (string)$family['fingerprint_id'] : '';
+	$famBannedDur = isset($family['banned_duration']) ? (int)$family['banned_duration'] : 0;
+	$famBannedTs = isset($family['banned_timestamp']) ? (int)$family['banned_timestamp'] : 0;
 	$fp_meta = array(
 		'fingerprint' => $fpId,
 		'fingerprint_fmt' => ParsecPanelFormatFingerprint($fpId),
-		'is_banned' => (int)$family['is_banned'],
-		'banned_duration' => (int)$family['banned_duration'],
-		'banned_duration_fmt' => ParsecPanelFormatDuration($family['banned_duration']),
-		'banned_timestamp' => (int)$family['banned_timestamp'],
-		'banned_at_fmt' => !empty($family['banned_timestamp'])
-			? date('d.m.Y H:i', (int)$family['banned_timestamp'])
+		'is_banned' => !empty($family['is_banned']) ? 1 : 0,
+		'banned_duration' => $famBannedDur,
+		'banned_duration_fmt' => ParsecPanelFormatDuration($famBannedDur),
+		'banned_timestamp' => $famBannedTs,
+		'banned_at_fmt' => $famBannedTs
+			? date('d.m.Y H:i', $famBannedTs)
 			: '—'
 	);
 	$linked = RecidivismBuildLinkedCards($authid);
+	if (!is_array($linked))
+		$linked = array();
 	foreach ($linked as &$la) {
+		if (empty($la['authid']))
+			continue;
 		$la['banlist_url'] = sb_url('banlist', array('searchText' => $la['authid']));
 		$la['parsec_url'] = sb_url('admin', array('c' => 'parsec', 'steam' => $la['authid']));
 		if (empty($la['view_url']))
@@ -189,9 +197,11 @@ if ($authid !== '' && $error_msg === '') {
 	);
 	if (is_array($srows)) {
 		foreach ($srows as $r) {
+			if (!isset($r['track']))
+				continue;
 			$tr = strtolower($r['track']);
 			if (isset($scores[$tr]))
-				$scores[$tr] = round((float)$r['score'], 1);
+				$scores[$tr] = round(isset($r['score']) ? (float)$r['score'] : 0, 1);
 		}
 	}
 	$self_card = array(
@@ -202,7 +212,7 @@ if ($authid !== '' && $error_msg === '') {
 		'points_gag' => $scores['gag'],
 		'points_mute' => $scores['mute'],
 		'points_display' => sprintf('B%s G%s M%s', $scores['ban'], $scores['gag'], $scores['mute']),
-		'family_size' => isset($family['all']) ? count($family['all']) : 1,
+		'family_size' => (isset($family['all']) && is_array($family['all'])) ? count($family['all']) : 1,
 		'recid_url' => sb_url('admin', array('c' => 'recidivism', 'steam' => $authid)),
 		'banlist_url' => sb_url('banlist', array('searchText' => $authid))
 	);
@@ -212,15 +222,18 @@ if ($authid !== '' && $error_msg === '') {
 	if (!$row) {
 		$error_msg = 'Такой отпечаток ПК в базе не найден.';
 	} else {
+		$rowFp = isset($row['fingerprint']) ? $row['fingerprint'] : '';
+		$rowDur = isset($row['banned_duration']) ? (int)$row['banned_duration'] : 0;
+		$rowTs = isset($row['banned_timestamp']) ? (int)$row['banned_timestamp'] : 0;
 		$fp_meta = array(
-			'fingerprint' => $row['fingerprint'],
-			'fingerprint_fmt' => ParsecPanelFormatFingerprint($row['fingerprint']),
+			'fingerprint' => $rowFp,
+			'fingerprint_fmt' => ParsecPanelFormatFingerprint($rowFp),
 			'is_banned' => !empty($row['is_banned']) ? 1 : 0,
-			'banned_duration' => (int)$row['banned_duration'],
-			'banned_duration_fmt' => ParsecPanelFormatDuration($row['banned_duration']),
-			'banned_timestamp' => (int)$row['banned_timestamp'],
-			'banned_at_fmt' => !empty($row['banned_timestamp'])
-				? date('d.m.Y H:i', (int)$row['banned_timestamp'])
+			'banned_duration' => $rowDur,
+			'banned_duration_fmt' => ParsecPanelFormatDuration($rowDur),
+			'banned_timestamp' => $rowTs,
+			'banned_at_fmt' => $rowTs
+				? date('d.m.Y H:i', $rowTs)
 				: '—'
 		);
 		$firstSteam = '';
@@ -243,6 +256,12 @@ $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
 $banned_list = $tables_ok
 	? ParsecPanelListBannedFingerprints($page, 25)
 	: array('rows' => array(), 'total' => 0);
+if (!is_array($banned_list))
+	$banned_list = array('rows' => array(), 'total' => 0);
+if (!isset($banned_list['rows']) || !is_array($banned_list['rows']))
+	$banned_list['rows'] = array();
+if (!isset($banned_list['total']))
+	$banned_list['total'] = 0;
 $banned_pages = $banned_list['total'] > 0
 	? (int)ceil($banned_list['total'] / 25)
 	: 1;
@@ -255,34 +274,44 @@ for ($i = 1; $i <= $banned_pages; $i++) {
 	);
 }
 
-$theme->assign('permission_ok', true);
-$theme->assign('tables_ok', $tables_ok);
-$theme->assign('flash_ok', $flash_ok);
-$theme->assign('flash_err', $flash_err);
-$theme->assign('error_msg', $error_msg);
-$theme->assign('steam_input', $steam_input);
-$theme->assign('authid', $authid);
-$theme->assign('family', $family);
-$theme->assign('fp_meta', $fp_meta);
-$theme->assign('linked_accounts', $linked);
-$theme->assign('self_card', $self_card);
-$theme->assign('api_player', $api_player);
-$theme->assign('banned_rows', $banned_list['rows']);
-$theme->assign('banned_total', $banned_list['total']);
-$theme->assign('banned_page', $page);
-$theme->assign('banned_pages', $banned_pages);
-$theme->assign('page_links', $page_links);
-$theme->assign('can_write_eligible', $can_write_eligible);
-$theme->assign('session_unlocked', $session_unlocked);
-$theme->assign('write_mode', $write_mode);
-$theme->assign('can_write', $can_write);
-$theme->assign('csrf', $csrf);
-$theme->assign('admin_steam', ParsecPanelAdminSteam());
 $pwCfg = defined('PARSEC_PANEL_WRITE_PASSWORD') ? (string)PARSEC_PANEL_WRITE_PASSWORD : '';
-$theme->assign('password_configured', ($pwCfg !== '' && $pwCfg !== 'change-me-parsec-panel'));
 $form_action = $authid !== ''
 	? sb_url('admin', array('c' => 'parsec', 'steam' => $authid))
 	: sb_url('admin', array('c' => 'parsec'));
-$theme->assign('form_action', $form_action);
+$parsecVars = array(
+	'permission_ok' => true,
+	'tables_ok' => $tables_ok,
+	'flash_ok' => $flash_ok,
+	'flash_err' => $flash_err,
+	'error_msg' => $error_msg,
+	'steam_input' => $steam_input,
+	'authid' => $authid,
+	'family' => $family,
+	'fp_meta' => $fp_meta,
+	'linked_accounts' => $linked,
+	'self_card' => $self_card,
+	'api_player' => $api_player,
+	'banned_rows' => $banned_list['rows'],
+	'banned_total' => $banned_list['total'],
+	'banned_page' => $page,
+	'banned_pages' => $banned_pages,
+	'page_links' => $page_links,
+	'can_write_eligible' => $can_write_eligible,
+	'session_unlocked' => $session_unlocked,
+	'write_mode' => $write_mode,
+	'can_write' => $can_write,
+	'csrf' => $csrf,
+	'admin_steam' => function_exists('ParsecPanelAdminSteam') ? ParsecPanelAdminSteam() : '',
+	'password_configured' => ($pwCfg !== '' && $pwCfg !== 'change-me-parsec-panel'),
+	'form_action' => $form_action,
+);
+if (isset($theme) && is_object($theme) && method_exists($theme, 'assign')) {
+	foreach ($parsecVars as $k => $v)
+		$theme->assign($k, $v);
+}
 
-$theme->display('page_admin_parsec.tpl');
+echo '<div id="admin-page-content">';
+echo '<div id="0" class="admin-pane is-on">';
+sb_admin_echo_twig_fragment('admin_parsec.twig', $parsecVars);
+echo '</div>';
+echo '</div>';

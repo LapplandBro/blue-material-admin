@@ -1,0 +1,33 @@
+<div class="panel">
+  <header class="form-page-head">
+    <p class="form-page-kicker">Админка</p>
+    <h2 class="form-page-title">Репозиторий МОДов</h2>
+    <p class="form-page-lead">Список всех МОДов, доступных в репозитории SourceBans</p>
+  </header>
+  <div class="table-responsive">
+    <table class="table table-v2">
+      <thead>
+        <tr>
+          <th class="text-center" style="width:5%;">Иконка</th>
+          <th>Имя</th>
+          <th class="text-end">Статус</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for mod in modlist|default([]) %}
+        <tr id="{{ mod.folder }}">
+          <td class="text-center"><img src="{{ mirror }}{{ mirror_iconsdir }}{{ mod.icon }}" alt=""></td>
+          <td>{{ mod.name }}</td>
+          <td class="text-end">
+            {% if mod.installed %}
+            <strong>Установлен</strong>
+            {% else %}
+            <a href="#" onclick="xajax_InstallMOD('{{ mod.folder|e('js') }}'); return false;"><strong>Установить</strong></a>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>

@@ -1,0 +1,45 @@
+{% if not permission_add %}
+<div class="form-page">
+  <p class="form-flash form-flash--err">Доступ запрещен!</p>
+</div>
+{% else %}
+<div class="form-page admin-form">
+  <header class="form-page-head">
+    <p class="form-page-kicker">Админка</p>
+    <h2 class="form-page-title">Новый мод</h2>
+    <p class="form-page-lead">Имя, папка игры и иконка</p>
+  </header>
+  <div class="form-grid">
+    <div class="form-field form-field--full">
+      <label class="form-label" for="name">{% include 'partials/help_icon.twig' with { title: 'Имя мода', message: 'Введите имя для МОДа.' } %} Имя мода</label>
+      <input type="text" class="form-control" id="name" name="name" tabindex="1" placeholder="Counter-Strike: Source">
+      <p id="name.msg" class="msg-err"></p>
+    </div>
+    <div class="form-field form-field--full">
+      <label class="form-label" for="folder">{% include 'partials/help_icon.twig' with { title: 'Имя папки', message: 'Введите имя папки МОДа. Например, для Counter-Strike: Source папка будет cstrike' } %} Имя папки</label>
+      <input type="text" class="form-control" id="folder" name="folder" tabindex="1" placeholder="cstrike">
+      <p id="folder.msg" class="msg-err"></p>
+    </div>
+    <div class="form-field">
+      <label class="form-label" for="steam_universe">{% include 'partials/help_icon.twig' with { title: 'Универсальный номер Steam', message: '(STEAM_X:Y:Z) Некоторые игры отображают steamid отличающийся от других. Введите первую цифру в SteamID (X) в зависимости от вашего мода. (По умолчанию: 0).' } %} Steam universe</label>
+      <input type="text" class="form-control" id="steam_universe" name="steam_universe" tabindex="1" placeholder="0">
+    </div>
+    <div class="form-field">
+      <label class="form-label" for="enabled">{% include 'partials/help_icon.twig' with { title: 'Активация МОДа', message: 'Выберите, чтобы включить этот МОД' } %} Активация</label>
+      <div class="form-check">
+        <input type="checkbox" class="form-check-input" name="enabled" id="enabled" value="on">
+        <label class="form-check-label" for="enabled">Включить мод</label>
+      </div>
+    </div>
+    <div class="form-field form-field--full">
+      <label class="form-label" for="upload">{% include 'partials/help_icon.twig' with { title: 'Upload Icon', message: 'Кликните тут, чтобы загрузить иконку МОДа.' } %} Загрузить иконку</label>
+      <button type="button" class="btn btn-outline-secondary" id="upload" onclick="childWindow=open('pages/admin.uploadicon.php','upload','resizable=yes,scrollbars=yes,width=520,height=420');">Загрузить иконку МОДа</button>
+      <p id="icon.msg" class="form-note"></p>
+      <input type="hidden" id="icon_hid" name="icon_hid">
+    </div>
+  </div>
+  <div class="form-actions">
+    <button type="button" class="btn btn-accent" id="amod" onclick="ProcessMod();">Добавить мод</button>
+  </div>
+</div>
+{% endif %}

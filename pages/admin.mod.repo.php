@@ -5,7 +5,7 @@
  * Licensed under the GNU General Public License v3.0 or later.
  * See LICENSE and NOTICE in the project root.
  *
- * UI theme under themes/new_box has separate provenance — see NOTICE.
+ * UI shell: themes/blue_v2 (Twig + Bootstrap 5). See NOTICE.
  ***************************************************************************/
 if(!defined("IN_SB")){echo "Ошибка доступа!";die();}
 
@@ -46,17 +46,27 @@ if (json_last_error() != JSON_ERROR_NONE) {
 }
 
 /* Prepare data to displaying */
-$games = $manifest['games'];
+$games = (isset($manifest['games']) && is_array($manifest['games'])) ? $manifest['games'] : array();
 foreach ($games as &$game) {
-    $game['installed'] = ((int) ($GLOBALS['db']->GetOne(sprintf("SELECT COUNT(*) FROM `%s_mods` WHERE `modfolder` = %s", DB_PREFIX, $GLOBALS['db']->qstr($game['folder'])))) == 1);
+	if (!is_array($game))
+		continue;
+	$folder = isset($game['folder']) ? $game['folder'] : '';
+	$game['installed'] = ((int) ($GLOBALS['db']->GetOne(sprintf("SELECT COUNT(*) FROM `%s_mods` WHERE `modfolder` = %s", DB_PREFIX, $GLOBALS['db']->qstr($folder)))) == 1);
 }
+unset($game);
 
 /* Display */
 $tabs = new CTabsMenu();
 $tabs->addMenuItem("Назад",0,"","index.php?p=admin&c=mods", true);
 $tabs->outputMenu();
 
-$theme->assign('mirror_iconsdir',   $manifest['manifest']['icons_dir']);
-$theme->assign('mirror',            $manifest['manifest']['mirror']);
-$theme->assign('modlist',           $games);
-$theme->display('page_admin_mods_repo.tpl');
+$manifestMeta = (isset($manifest['manifest']) && is_array($manifest['manifest'])) ? $manifest['manifest'] : array();
+$theme->assign('mirror_iconsdir', isset($manifestMeta['icons_dir']) ? $manifestMeta['icons_dir'] : '');
+$theme->assign('mirror', isset($manifestMeta['mirror']) ? $manifestMeta['mirror'] : '');
+$theme->assign('modlist', $games);
+echo '<div id="admin-page-content">';
+echo '<div id="0" class="admin-pane is-on">';
+$_f = sb_ui_v2_theme_fragment('admin_mods_repo.twig');
+if (is_string($_f) && $_f !== '') echo $_f;
+echo '</div>';
+echo '</div>';

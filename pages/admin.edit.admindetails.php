@@ -432,29 +432,30 @@ else
 	// ADM TIME //
 }
 
+if (!isset($a_expired_text))
+	$a_expired_text = '';
+if (!isset($a_comment))
+	$a_comment = isset($_POST['comment']) ? $_POST['comment'] : '';
+if (!isset($a_vk))
+	$a_vk = isset($_POST['vk']) ? $_POST['vk'] : '';
+if (!isset($a_discord))
+	$a_discord = isset($_POST['discord']) ? $_POST['discord'] : '';
+
 $theme->assign('change_pass', ($userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_ADMINS|ADMIN_DELETE_ADMINS) || $_GET['id'] == $userbank->GetAid()));
 $theme->assign('user', $a_name);
 $theme->assign('authid', $a_steam);
 $theme->assign('email', $a_email);
-// ADM TIME //
 $theme->assign('expired_text', $a_expired_text);
-// ADM TIME //
-// ADM comment //
 $theme->assign('comment', $a_comment);
-// ADM comment //
-// ADM vk //
 $theme->assign('vk', $a_vk);
-// ADM vk //
-// ADM discord //
 $theme->assign('discord', $a_discord);
-// ADM discord //
 $theme->assign('a_spass', $a_serverpass);
 $theme->assign('totp_enabled_admin', function_exists('sb_totp_is_enabled') && sb_totp_is_enabled((int)$_GET['id']));
 $theme->assign('totp_admin_msg', $totp_admin_msg);
 $theme->assign('can_reset_totp', $userbank->HasAccess(ADMIN_OWNER) || ($userbank->HasAccess(ADMIN_EDIT_ADMINS) && function_exists('sb_can_manage_admin') && sb_can_manage_admin((int)$_GET['id'])));
 $theme->assign('sb_csrf', function_exists('sb_csrf_token') ? sb_csrf_token() : '');
 
-$theme->display('page_admin_edit_admins_details.tpl');
+sb_ui_v2_theme_fragment('admin_edit_admins_details.twig');
 ?>
 <script type="text/javascript">window.addEvent('domready', function(){
 <?php echo $errorScript; ?>

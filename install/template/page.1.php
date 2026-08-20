@@ -74,18 +74,15 @@
 				<form action="index.php?p=submit" method="POST" enctype="multipart/form-data">
 					<div id="submit-main">
 						<textarea class="form-control" id="license" cols="105" rows="15" name="license">
-Blue Material Admin — форк SourceBans++.
+Blue V2 — форк SourceBans++.
 
 КОД ПАНЕЛИ (PHP, логика) — GNU General Public License v3 (файл LICENSE).
 Вы можете распространять и изменять код на условиях GPLv3 (или более поздней
 версии по вашему выбору). ПО без гарантий — см. полный текст GPL.
 
-UI-ОБОЛОЧКА themes/new_box (кроме vendors/) — наследник Material Admin /
-IceMan-адаптаций. Это НЕ «чистый GPL/MIT». Пока тема не заменена
-(docs/THEME_MIGRATION.md), не заявляйте весь дистрибутив как чисто
-коммерческий GPL-продукт. Подробности — файл NOTICE.
-
-Vendors (Bootstrap 3 и др.) — свои лицензии, чаще MIT.
+UI-ОБОЛОЧКА themes/blue_v2 — Twig + Bootstrap 5, оболочка этой сборки
+(GPLv3 вместе с кодом панели). Vendors (Bootstrap 5, иконки, SweetAlert,
+Twig, TinyMCE) — свои лицензии, чаще MIT / BSD. Подробности — NOTICE.
 
 Кратко по GPLv3 (не заменяет LICENSE):
  • можно запускать, изучать, менять и распространять код;
@@ -101,8 +98,8 @@ Upstream: SourceBans++ (GPLv3) — https://github.com/sbpp/sourcebans-pp
 					<div class="col-sm-6">
 						<div class="checkbox m-b-15">
 							<label for="accept">
-								<input type="checkbox" name="accept" id="accept" hidden="hidden" />
-								<i class="input-helper"></i> Я прочёл и принимаю условия
+								<input type="checkbox" name="accept" id="accept" />
+								Я прочёл и принимаю условия
 							</label>
 						</div>
 					</div>

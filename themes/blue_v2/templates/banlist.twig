@@ -1,0 +1,491 @@
+{% extends 'layout.twig' %}
+{% block extra_head %}
+<link href="{{ asset_base }}themes/blue_v2/css/banlist.css" rel="stylesheet">
+{% endblock %}
+{% block topbar_title %}
+<h1 class="h5 mb-0">{% if comment %}{{ commenttype }} комментарий{% else %}Список банов{% endif %}</h1>
+{% endblock %}
+{% block content %}
+{% if comment %}
+<div class="panel banlist-panel banlist-comment-page">
+  <header class="banlist-chrome">
+    <div class="banlist-chrome-title">
+      <p class="banlist-kicker">Комментарии</p>
+      <div class="banlist-chrome-heading">
+        <h1 class="banlist-title">{{ commenttype }} комментарий</h1>
+      </div>
+    </div>
+  </header>
+  <div class="banlist-comment-body">
+    {% if othercomments %}
+    <ul class="banlist-thread">
+      {% for com in othercomments %}
+      <li class="banlist-thread-item">
+        <div class="banlist-thread-meta">
+          <strong>{{ com.comname }}</strong>
+          <span class="banlist-muted">
+            {{ com.added }}
+            {% if com.editname %} · изменено {{ com.edittime }} — {{ com.editname }}{% endif %}
+          </span>
+        </div>
+        <div class="banlist-thread-text">{{ com.commenttxt|raw }}</div>
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    <div class="banlist-composer">
+      <label class="banlist-composer-label" for="commenttext">Ваш комментарий</label>
+      <textarea class="form-control" rows="5" placeholder="Ваш комментарий..." id="commenttext" name="commenttext">{{ commenttext }}</textarea>
+      <div id="commenttext.msg" class="msg-err"></div>
+      <input type="hidden" name="bid" id="bid" value="{{ comment }}">
+      <input type="hidden" name="ctype" id="ctype" value="{{ ctype }}">
+      {% if cid != '' %}
+      <input type="hidden" name="cid" id="cid" value="{{ cid }}">
+      {% else %}
+      <input type="hidden" name="cid" id="cid" value="-1">
+      {% endif %}
+      <input type="hidden" name="page" id="page" value="{{ page }}">
+      <div class="banlist-composer-actions">
+        <button type="button" class="btn btn-accent btn-sm" id="acom" onclick="ProcessComment();">{{ commenttype }} комментарий</button>
+        <button type="button" class="btn btn-outline-secondary btn-sm" id="aback" onclick="sbGo('index.php?p=banlist')">Назад</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="panel banlist-panel">
+  <header class="banlist-chrome">
+    <div class="banlist-chrome-title">
+      <p class="banlist-kicker">Модерация</p>
+      <div class="banlist-chrome-heading">
+        <h1 class="banlist-title">Список банов</h1>
+        <span class="banlist-count">{{ total_bans }}</span>
+      </div>
+    </div>
+    <div class="banlist-chrome-tools">
+      <form class="banlist-search" method="get" action="index.php">
+        <input type="hidden" name="p" value="banlist">
+        <label class="visually-hidden" for="header_search_bans">Поиск банов</label>
+        <input class="form-control" type="search" id="header_search_bans" name="searchText" value="{{ search_text }}" placeholder="SteamID, ник, IP…">
+        <button class="banlist-search-go" type="submit">Найти</button>
+      </form>
+      <div class="banlist-pagesel">{{ ban_nav_p|raw }}</div>
+      <div class="banlist-nav" id="banlist-nav">{{ ban_nav|raw }}</div>
+    </div>
+  </header>
+  {% if can_add_ban or hidetext %}
+  <div class="banlist-toolbar">
+    {% if can_add_ban %}
+    <a class="btn btn-sm btn-accent" href="{{ add_ban_url }}">Добавить бан</a>
+    {% endif %}
+    {% if hideinactive_url %}
+    <a class="btn btn-sm btn-outline-secondary" href="{{ hideinactive_url }}">{{ hidetext }} баны</a>
+    {% endif %}
+  </div>
+  {% endif %}
+  {% if hidetext_darf == '0' %}
+  <div class="banlist-note" id="bans_hidden">Показаны только активные баны.</div>
+  {% endif %}
+  <div class="alert banlist-tick" role="alert" id="tickswitchlink"></div>
+  <span id="tickswitchlink_1" class="banlist-tick-alt"></span>
+
+  <div class="table-responsive">
+    <table class="table table-v2 banlist-table">
+      <thead>
+        <tr>
+          {% if view_bans %}
+          <th class="banlist-th-check" title="Выбрать все" name="tickswitch" id="tickswitch" onclick="TickSelectAll()"></th>
+          {% endif %}
+          <th class="banlist-th-mod">Игра</th>
+          <th class="banlist-th-date">Дата</th>
+          <th>Игрок</th>
+          {% if view_recidivism %}
+          <th class="banlist-th-recid">Нарушения</th>
+          {% endif %}
+          {% if not hideadminname %}
+          <th class="banlist-th-admin">Админ</th>
+          {% endif %}
+          <th class="banlist-th-length">Срок</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ban in ban_list %}
+        <tr class="opener banlist-row banlist-row-{{ ban.status_kind }}"{% if ban.server_id != 0 %} onclick="xajax_ServerHostPlayers({{ ban.server_id }}, {{ ban.ban_id }});"{% endif %}>
+          {% if view_bans %}
+          <td class="banlist-td-check" onclick="event.cancelBubble = true;">
+            <input type="checkbox" class="form-check-input" name="chkb_{{ loop.index0 }}" id="chkb_{{ loop.index0 }}" value="{{ ban.ban_id }}">
+          </td>
+          {% endif %}
+          <td class="banlist-td-mod">{{ ban.mod_icon|raw }}</td>
+          <td class="banlist-td-date"><span class="banlist-date">{{ ban.ban_date_info }}</span></td>
+          <td>
+            <div class="banlist-player">
+              {% if not nocountryshow %}<span class="banlist-flag">{{ ban.country_icon|raw }}</span>{% endif %}
+              <div class="banlist-player-text">
+                {% if ban.player is empty %}
+                  <span class="player banlist-muted">имя не указано</span>
+                {% else %}
+                  <strong class="player">{{ ban.player }}</strong>
+                {% endif %}
+                <span class="steam">
+                  {% if ban.steamid is empty %}
+                    <span class="banlist-muted">STEAM не указан</span>
+                  {% elseif ban.steam_profile %}
+                    <a href="{{ ban.steam_profile }}" target="_blank" rel="noopener noreferrer" title="Профиль Steam" onclick="event.cancelBubble=true;">{{ ban.steamid }}</a>
+                  {% else %}
+                    {{ ban.steamid }}
+                  {% endif %}
+                  {% if ban.demo_available %}<span class="banlist-meta" title="Есть демо">демо</span>{% endif %}
+                  {% if view_comments and ban.commentdata and ban.commentdata != 'Нет' %}
+                    <span class="banlist-meta" title="Комментарии">{{ ban.commentdata|length }} комм.</span>
+                  {% endif %}
+                  {% if view_bans and ban.view_edit and not ban.unbanned and ban.edit_url %}
+                    <a class="list-row-edit" href="{{ ban.edit_url }}" onclick="event.cancelBubble=true;">Изменить</a>
+                  {% endif %}
+                </span>
+              </div>
+            </div>
+          </td>
+          {% if view_recidivism %}
+          <td class="banlist-td-recid" onclick="event.cancelBubble=true;">
+            {% if ban.recid_url %}
+              <a class="banlist-recid-chip" href="{{ ban.recid_url }}" title="Карточка рецидива">{{ ban.recid_display }}</a>
+            {% elseif ban.recid_display %}
+              <span class="banlist-recid-chip is-mute">{{ ban.recid_display }}</span>
+            {% else %}
+              <span class="banlist-muted">—</span>
+            {% endif %}
+          </td>
+          {% endif %}
+          {% if not hideadminname %}
+          <td class="banlist-td-admin">
+            {% if ban.admin %}
+              <span class="banlist-admin">{{ ban.admin }}</span>
+            {% else %}
+              <span class="banlist-muted">админ снят</span>
+            {% endif %}
+          </td>
+          {% endif %}
+          <td class="banlist-td-length">
+            {% if ban.status_kind == 'expired' %}
+              <span class="badge badge-muted">Истёк</span>
+            {% elseif ban.status_kind == 'deleted' %}
+              <span class="badge badge-muted">Удалён</span>
+            {% elseif ban.status_kind == 'unbanned' %}
+              <span class="badge badge-ok">Разбанен</span>
+            {% elseif ban.status_kind == 'perm' %}
+              <span class="badge badge-perm">Навсегда</span>
+            {% else %}
+              <span class="badge badge-temp">{{ ban.banlength }}</span>
+            {% endif %}
+          </td>
+        </tr>
+        <tr class="banlist-detail-row">
+          <td colspan="{{ ban_colspan }}">
+            <div class="opener">
+              <div class="banlist-detail">
+                <div class="banlist-facts">
+                  <div class="banlist-fact">
+                    <span class="banlist-fact-label">Игрок</span>
+                    <span class="banlist-fact-value">
+                      {% if ban.player is empty %}
+                        <span class="banlist-muted">имя не указано</span>
+                      {% else %}
+                        {{ ban.player }}
+                      {% endif %}
+                      {% if ban.steam_profile %}
+                        · <a href="{{ ban.steam_profile }}" target="_blank" rel="noopener noreferrer">Профиль Steam</a>
+                      {% endif %}
+                    </span>
+                  </div>
+                  <div class="banlist-fact">
+                    <span class="banlist-fact-label">Steam ID</span>
+                    <span class="banlist-fact-value steam">
+                      {% if ban.steamid is empty %}
+                        <span class="banlist-muted">не указан</span>
+                      {% elseif ban.steam_profile %}
+                        <a href="{{ ban.steam_profile }}" target="_blank" rel="noopener noreferrer" title="Открыть профиль Steam">{{ ban.steamid }}</a>
+                      {% else %}
+                        {{ ban.steamid }}
+                      {% endif %}
+                    </span>
+                  </div>
+                  <div class="banlist-fact">
+                    <span class="banlist-fact-label">Steam3 ID</span>
+                    <span class="banlist-fact-value steam">
+                      {% if ban.steamid is empty %}
+                        <span class="banlist-muted">не указан</span>
+                      {% elseif ban.steam_profile %}
+                        <a href="{{ ban.steam_profile }}" target="_blank" rel="noopener noreferrer" title="Открыть профиль Steam">{{ ban.steamid3 }}</a>
+                      {% else %}
+                        {{ ban.steamid3 }}
+                      {% endif %}
+                    </span>
+                  </div>
+                  {% if ban.type == 0 %}
+                  <div class="banlist-fact">
+                    <span class="banlist-fact-label">Steam Community</span>
+                    <span class="banlist-fact-value steam">
+                      {% if ban.steam_profile %}
+                        <a href="{{ ban.steam_profile }}" target="_blank" rel="noopener noreferrer" title="Открыть профиль Steam">{{ ban.communityid }}</a>
+                        {% if ban.steam_vanity %}
+                          · <a href="{{ ban.steam_profile }}" target="_blank" rel="noopener noreferrer">/id/{{ ban.steam_vanity }}</a>
+                        {% endif %}
+                      {% else %}
+                        {{ ban.communityid }}
+                      {% endif %}
+                    </span>
+                  </div>
+                  {% endif %}
+                  {% if not hideplayerips and ban.ip != 'none' %}
+                  <div class="banlist-fact">
+                    <span class="banlist-fact-label">IP адрес</span>
+                    <span class="banlist-fact-value steam">{{ ban.ip|raw }}</span>
+                  </div>
+                  {% endif %}
+                  <div class="banlist-fact">
+                    <span class="banlist-fact-label">Был выдан</span>
+                    <span class="banlist-fact-value">{{ ban.ban_date }}</span>
+                  </div>
+                  <div class="banlist-fact">
+                    <span class="banlist-fact-label">Длительность</span>
+                    <span class="banlist-fact-value">
+                      {% if ban.ub_reason %}<del>{{ ban.banlength }}</del> {{ ban.ub_reason }}{% else %}{{ ban.banlength }}{% endif %}
+                    </span>
+                  </div>
+                  {% if ban.unbanned %}
+                  <div class="banlist-fact">
+                    <span class="banlist-fact-label">Причина разбана</span>
+                    <span class="banlist-fact-value">
+                      {% if ban.ureason == '' %}
+                        <span class="banlist-muted">не указана</span>
+                      {% else %}
+                        {{ ban.ureason }}
+                      {% endif %}
+                    </span>
+                  </div>
+                  <div class="banlist-fact">
+                    <span class="banlist-fact-label">Разбанен админом</span>
+                    <span class="banlist-fact-value">
+                      {% if ban.removedby %}
+                        {{ ban.removedby }}
+                      {% else %}
+                        <span class="banlist-muted">админ удалён</span>
+                      {% endif %}
+                    </span>
+                  </div>
+                  {% endif %}
+                  <div class="banlist-fact">
+                    <span class="banlist-fact-label">Будет снят</span>
+                    <span class="banlist-fact-value">
+                      {% if ban.expires == 'never' %}
+                        <span class="banlist-muted">Никогда</span>
+                      {% else %}
+                        {{ ban.expires }}
+                      {% endif %}
+                    </span>
+                  </div>
+                  <div class="banlist-fact">
+                    <span class="banlist-fact-label">Причина бана</span>
+                    <span class="banlist-fact-value">{{ ban.reason }}</span>
+                  </div>
+                  <div class="banlist-fact">
+                    <span class="banlist-fact-label">Сервер</span>
+                    <span class="banlist-fact-value" id="ban_server_{{ ban.ban_id }}">
+                      {% if ban.server_id == 0 %}
+                        Веб-бан
+                      {% else %}
+                        <span class="banlist-muted">загрузка…</span>
+                      {% endif %}
+                    </span>
+                  </div>
+                  <div class="banlist-fact">
+                    <span class="banlist-fact-label">Предыдущие баны</span>
+                    <span class="banlist-fact-value">{{ ban.prevoff_link|raw }}</span>
+                  </div>
+                  {% if view_recidivism %}
+                  <div class="banlist-fact">
+                    <span class="banlist-fact-label">Нарушения</span>
+                    <span class="banlist-fact-value">
+                      {% if ban.recid_display %}{{ ban.recid_display }}{% else %}—{% endif %}
+                      {% if ban.recidivism_link %} · {{ ban.recidivism_link|raw }}{% endif %}
+                    </span>
+                  </div>
+                  {% endif %}
+                  <div class="banlist-fact">
+                    <span class="banlist-fact-label">Блокировок ({{ ban.blockcount }})</span>
+                    <span class="banlist-fact-value">
+                      {% if ban.banlog == '' %}
+                        <span class="banlist-muted">никогда</span>
+                      {% elseif ban.blockcount >= 5 %}
+                        <a data-toggle="modal" data-bs-toggle="modal" href="#block_spoiler_{{ ban.ban_id }}_ply">Показать все {{ ban.blockcount }} блокировок</a>
+                        <div class="modal fade banlist-modal" id="block_spoiler_{{ ban.ban_id }}_ply" tabindex="-1" aria-hidden="true">
+                          <div class="modal-dialog modal-lg modal-dialog-centered">
+                            <div class="modal-content">
+                              <div class="modal-header">
+                                <h4 class="modal-title h5">
+                                  Список блокировок:
+                                  {% if ban.player is empty %}
+                                    <span class="banlist-muted">скрыто</span>
+                                  {% else %}
+                                    {{ ban.player }}
+                                  {% endif %}
+                                </h4>
+                                <button type="button" class="btn-close btn-close-white" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                              </div>
+                              <div class="modal-body">{{ ban.banlog|raw }}</div>
+                              <div class="modal-footer">
+                                <button type="button" class="btn btn-sm btn-outline-secondary" data-dismiss="modal" data-bs-dismiss="modal">Закрыть</button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      {% else %}
+                        {{ ban.banlog|raw }}
+                      {% endif %}
+                    </span>
+                  </div>
+                </div>
+                <aside class="banlist-aside">
+                  <nav class="banlist-actions">
+                    {% if view_bans %}
+                      {% if ban.unbanned and ban.reban_link %}{{ ban.reban_link|raw }}{% endif %}
+                      {{ ban.blockcomm_link|raw }}
+                      {% if ban.recidivism_link %}{{ ban.recidivism_link|raw }}{% endif %}
+                      {% if ban.demo_available %}{{ ban.demo_link|raw }}{% endif %}
+                      <a href="{{ ban.addcomment_link }}">Комментарий</a>
+                      {% if ban.type == 0 %}
+                        {% if groupban %}{{ ban.groups_link|raw }}{% endif %}
+                        {% if friendsban %}{{ ban.friend_ban_link|raw }}{% endif %}
+                      {% endif %}
+                      {% if ban.view_edit and not ban.unbanned %}{{ ban.edit_link|raw }}{% endif %}
+                      {% if not ban.unbanned and ban.view_unban %}{{ ban.unban_link|raw }}{% endif %}
+                      {% if ban.view_delete %}{{ ban.delete_link|raw }}{% endif %}
+                    {% else %}
+                      {{ ban.demo_link|raw }}
+                    {% endif %}
+                  </nav>
+                  {% if not hideadminname %}
+                  <div class="banlist-aside-block">
+                    <p class="banlist-aside-kicker">Блокировку выдал</p>
+                    {% if ban.admin %}
+                      <div class="banlist-aside-name">{{ ban.admin }}</div>
+                    {% else %}
+                      <div class="banlist-aside-name">Админ удалён</div>
+                    {% endif %}
+                    {% if ban.admin != 'CONSOLE' and ban.admin and admininfos %}
+                    <ul class="banlist-aside-list">
+                      <li>
+                        {% if ban.admin_authid %}
+                          {% if ban.admin_authid_link %}
+                            <a href="https://steamcommunity.com/profiles/{{ ban.admin_authid_link }}" target="_blank" rel="noopener noreferrer" title="Профиль Steam админа">{{ ban.admin_authid }}</a>
+                          {% else %}
+                            {{ ban.admin_authid }}
+                          {% endif %}
+                        {% else %}
+                          нет данных
+                        {% endif %}
+                      </li>
+                      <li>
+                        {% if ban.admin_vk %}
+                          <a href="https://vk.com/{{ ban.admin_vk }}" target="_blank" rel="noopener">ВКонтакте</a>
+                        {% else %}
+                          нет данных
+                        {% endif %}
+                      </li>
+                      <li>
+                        {% if ban.admin_discord %}{{ ban.admin_discord }}{% else %}нет данных{% endif %}
+                      </li>
+                      <li>
+                        {% if ban.admin_comm %}
+                          {{ ban.admin_comm|nl2br }}
+                        {% else %}
+                          Обычный рядовой, контролирует порядок на серверах.
+                        {% endif %}
+                      </li>
+                    </ul>
+                    {% endif %}
+                  </div>
+                  {% endif %}
+                  {% if view_comments %}
+                  <div class="banlist-aside-block">
+                    <p class="banlist-aside-kicker">Комментарии</p>
+                    {% if ban.commentdata and ban.commentdata != 'Нет' %}
+                      {% for commenta in ban.commentdata %}
+                      <div class="banlist-comment">
+                        <div class="banlist-comment-head">
+                          <span class="banlist-comment-who">
+                            {% if commenta.comname %}
+                              {{ commenta.comname }}
+                            {% else %}
+                              <span class="banlist-muted">админ удалён</span>
+                            {% endif %}
+                          </span>
+                          {% if commenta.edittime != 'none' %}
+                            <span class="banlist-comment-when">ред. {% if commenta.editname != 'none' %}{{ commenta.editname }}{% else %}админ удалён{% endif %} · {{ commenta.edittime }}</span>
+                          {% endif %}
+                        </div>
+                        {% if commenta.editcomlink != 'none' or commenta.delcomlink != 'none' %}
+                        <div class="banlist-comment-ops">
+                          {% if commenta.editcomlink != 'none' %}{{ commenta.editcomlink|raw }}{% endif %}
+                          {% if commenta.delcomlink != 'none' %}{{ commenta.delcomlink|raw }}{% endif %}
+                        </div>
+                        {% endif %}
+                        <div class="banlist-comment-text">{{ commenta.commenttxt|raw }}</div>
+                      </div>
+                      {% endfor %}
+                    {% else %}
+                      <div class="banlist-muted">Комментарии отсутствуют</div>
+                    {% endif %}
+                    <a class="banlist-add" href="{{ ban.addcomment_link }}">Добавить комментарий…</a>
+                  </div>
+                  {% endif %}
+                </aside>
+              </div>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td class="banlist-empty" colspan="{{ ban_colspan }}">Банов нет.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if general_unban or can_delete or can_export %}
+  <div class="banlist-foot">
+    {% if general_unban or can_delete %}
+    <select class="form-select banlist-bulk" name="bulk_action" id="bulk_action" onchange="BulkEdit(this,'{{ admin_postkey }}');">
+      <option value="-1">Выберите</option>
+      {% if general_unban %}<option value="U">Разбан</option>{% endif %}
+      {% if can_delete %}<option value="D">Удалить</option>{% endif %}
+    </select>
+    {% endif %}
+    {% if can_export %}
+    <div class="banlist-export">
+      Скачать перманентные
+      (<a href="./exportbans.php?type=steam" title="Экспорт перманентных SteamID банов">SteamID</a>
+      /
+      <a href="./exportbans.php?type=ip" title="Экспорт перманентных IP банов">IP</a>)
+      баны.
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}
+{% block extra_js %}
+{% if not comment %}
+<script type="text/javascript">
+window.addEvent('domready', function(){
+  InitAccordion('tr.opener', 'div.opener', 'content');
+  {% if view_bans %}
+  if ($('tickswitch')) $('tickswitch').value = 0;
+  {% endif %}
+});
+</script>
+{% endif %}
+{% endblock %}

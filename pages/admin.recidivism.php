@@ -101,7 +101,7 @@ $tblIncidents = $pfx . '_recid_incidents';
 $tblConfig = $pfx . '_recid_config';
 
 $tablesOk = true;
-foreach (array($tblScores, $tblEvents, $tblIncidents) as $t) {
+foreach (array($tblScores, $tblEvents, $tblIncidents, $tblConfig) as $t) {
 	$chk = @$GLOBALS['db']->GetOne("SHOW TABLES LIKE " . $GLOBALS['db']->qstr($t));
 	if (!$chk) {
 		$tablesOk = false;
@@ -125,8 +125,10 @@ if ($tablesOk) {
 	);
 	if (is_array($cfgThr)) {
 		foreach ($cfgThr as $cr) {
+			if (!isset($cr['cfg_key']))
+				continue;
 			$k = $cr['cfg_key'];
-			$v = (float)$cr['cfg_value'];
+			$v = isset($cr['cfg_value']) ? (float)$cr['cfg_value'] : 0;
 			if ($k === 'threshold_ban' && $v > 0) $thrBan = $v;
 			elseif ($k === 'threshold_gag' && $v > 0) $thrGag = $v;
 			elseif ($k === 'threshold_mute' && $v > 0) $thrMute = $v;
@@ -188,11 +190,13 @@ if (!$tablesOk) {
 		if (is_array($scoreRows) && count($scoreRows) > 0) {
 			$missingRow = false;
 			foreach ($scoreRows as $sr) {
+				if (!isset($sr['track']))
+					continue;
 				$tr = strtolower($sr['track']);
 				if (isset($points[$tr])) {
-					$points[$tr] = round((float)$sr['score'], 2);
+					$points[$tr] = round(isset($sr['score']) ? (float)$sr['score'] : 0, 2);
 					$escalated[$tr] = !empty($sr['escalated']) ? 1 : 0;
-					$updatedAt = max($updatedAt, (int)$sr['updated_at']);
+					$updatedAt = max($updatedAt, isset($sr['updated_at']) ? (int)$sr['updated_at'] : 0);
 				}
 			}
 		}
@@ -217,11 +221,17 @@ if (!$tablesOk) {
 		$linkedCards = function_exists('RecidivismBuildLinkedCards')
 			? RecidivismBuildLinkedCards($authid)
 			: array();
+		if (!is_array($linkedCards))
+			$linkedCards = array();
 		$familyInfo = function_exists('RecidivismResolveFamily')
 			? RecidivismResolveFamily($authid)
 			: array('all' => array($authid), 'fingerprint_id' => '', 'is_banned' => 0);
+		if (!is_array($familyInfo))
+			$familyInfo = array('all' => array($authid), 'fingerprint_id' => '', 'is_banned' => 0);
 
 		foreach ($linkedCards as &$la) {
+			if (empty($la['authid']))
+				continue;
 			$la['parsec_url'] = sb_url('admin', array('c' => 'parsec', 'steam' => $la['authid']));
 			$la['banlist_url'] = sb_url('banlist', array('searchText' => $la['authid']));
 			if (empty($la['view_url']))
@@ -238,7 +248,7 @@ if (!$tablesOk) {
 
 		// Family-max scores (не сумма)
 		$famMax = array('ban' => $points['ban'], 'gag' => $points['gag'], 'mute' => $points['mute']);
-		if (!empty($familyInfo['all']) && count($familyInfo['all']) > 1) {
+		if (!empty($familyInfo['all']) && is_array($familyInfo['all']) && count($familyInfo['all']) > 1) {
 			$ph = implode(',', array_fill(0, count($familyInfo['all']), '?'));
 			$famRows = @$GLOBALS['db']->GetAll(
 				"SELECT `track`, MAX(`score`) AS mx FROM `" . $tblScores . "`
@@ -247,9 +257,11 @@ if (!$tablesOk) {
 			);
 			if (is_array($famRows)) {
 				foreach ($famRows as $fr) {
+					if (!isset($fr['track']))
+						continue;
 					$tr = strtolower($fr['track']);
 					if (isset($famMax[$tr]))
-						$famMax[$tr] = round((float)$fr['mx'], 2);
+						$famMax[$tr] = round(isset($fr['mx']) ? (float)$fr['mx'] : 0, 2);
 				}
 			}
 		}
@@ -268,7 +280,7 @@ if (!$tablesOk) {
 			'family_max_ban' => $famMax['ban'],
 			'family_max_gag' => $famMax['gag'],
 			'family_max_mute' => $famMax['mute'],
-			'family_size' => count($familyInfo['all']),
+			'family_size' => (isset($familyInfo['all']) && is_array($familyInfo['all'])) ? count($familyInfo['all']) : 1,
 			'fingerprint_id' => $fpId,
 			'fingerprint_fmt' => function_exists('ParsecPanelFormatFingerprint')
 				? ParsecPanelFormatFingerprint($fpId)
@@ -372,6 +384,8 @@ if (!$tablesOk) {
 	if (!is_array($recentPlayers))
 		$recentPlayers = array();
 	foreach ($recentPlayers as &$rp) {
+		if (empty($rp['authid']))
+			continue;
 		$nm = $GLOBALS['db']->GetOne(
 			"SELECT `name` FROM `" . $tblIncidents . "` WHERE `authid` = ? AND `name` <> '' ORDER BY `opened_at` DESC LIMIT 1",
 			array($rp['authid'])
@@ -379,9 +393,9 @@ if (!$tablesOk) {
 		$rp['name'] = $nm ? $nm : '';
 		$rp['updated_fmt'] = !empty($rp['updated_at']) ? date('d.m.Y H:i', (int)$rp['updated_at']) : '—';
 		$rp['view_url'] = sb_url('admin', array('c' => 'recidivism', 'steam' => $rp['authid']));
-		$rp['points_ban'] = round((float)$rp['points_ban'], 2);
-		$rp['points_gag'] = round((float)$rp['points_gag'], 2);
-		$rp['points_mute'] = round((float)$rp['points_mute'], 2);
+		$rp['points_ban'] = round(isset($rp['points_ban']) ? (float)$rp['points_ban'] : 0, 2);
+		$rp['points_gag'] = round(isset($rp['points_gag']) ? (float)$rp['points_gag'] : 0, 2);
+		$rp['points_mute'] = round(isset($rp['points_mute']) ? (float)$rp['points_mute'] : 0, 2);
 		$rp['points_total'] = isset($rp['points_total'])
 			? round((float)$rp['points_total'], 2)
 			: round($rp['points_ban'] + $rp['points_gag'] + $rp['points_mute'], 2);
@@ -394,19 +408,29 @@ if (!$tablesOk) {
 if (!isset($linkedCards))
 	$linkedCards = array();
 
-$theme->assign('tables_ok', $tablesOk);
-$theme->assign('error_msg', $errorMsg);
-$theme->assign('steam_input', $steamInput);
-$theme->assign('authid', $authid);
-$theme->assign('player', $player);
-$theme->assign('events', $events);
-$theme->assign('event_count', $eventCount);
-$theme->assign('recent_players', $recentPlayers);
-$theme->assign('linked_accounts', $linkedCards);
-$theme->assign('window_days', $windowDays);
-$theme->assign('thr_ban', $thrBan);
-$theme->assign('thr_gag', $thrGag);
-$theme->assign('thr_mute', $thrMute);
-$theme->assign('permission_ok', true);
+$recidVars = array(
+	'permission_ok' => true,
+	'tables_ok' => $tablesOk,
+	'error_msg' => $errorMsg,
+	'steam_input' => $steamInput,
+	'authid' => $authid,
+	'player' => $player,
+	'events' => is_array($events) ? $events : array(),
+	'event_count' => $eventCount,
+	'recent_players' => is_array($recentPlayers) ? $recentPlayers : array(),
+	'linked_accounts' => is_array($linkedCards) ? $linkedCards : array(),
+	'window_days' => $windowDays,
+	'thr_ban' => $thrBan,
+	'thr_gag' => $thrGag,
+	'thr_mute' => $thrMute,
+);
+if (isset($theme) && is_object($theme) && method_exists($theme, 'assign')) {
+	foreach ($recidVars as $k => $v)
+		$theme->assign($k, $v);
+}
 
-$theme->display('page_admin_recidivism.tpl');
+echo '<div id="admin-page-content">';
+echo '<div id="0" class="admin-pane is-on">';
+sb_admin_echo_twig_fragment('admin_recidivism.twig', $recidVars);
+echo '</div>';
+echo '</div>';

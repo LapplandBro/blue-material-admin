@@ -1,0 +1,213 @@
+{% if not permission_listgroups %}
+<div class="form-page">
+  <p class="form-flash form-flash--err">Нет доступа к списку групп.</p>
+</div>
+{% else %}
+<div class="admin-manage">
+  <header class="admin-manage-head">
+    <div>
+      <p class="form-page-kicker">Админка</p>
+      <h2 class="admin-manage-title">Группы</h2>
+      <p class="form-page-lead">Клик по строке — права и состав.</p>
+    </div>
+  </header>
+
+  <section class="admin-manage-section">
+    <h3 class="admin-manage-section-title">Веб-группы · {{ web_group_count }}</h3>
+    <div class="table-responsive">
+      <table class="admin-manage-table">
+        <thead>
+          <tr>
+            <th>Группа</th>
+            <th class="text-center">Админов</th>
+            <th class="text-end">Действия</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for group in web_group_list %}
+          <tr id="gid_{{ group.gid }}" class="opener admin-manage-row">
+            <td><span class="admin-manage-name">{{ group.name }}</span></td>
+            <td class="text-center">{{ web_admins[loop.index0] }}</td>
+            <td class="text-end">
+              <span class="admin-actions">
+              {% if permission_editgroup %}
+              <a class="admin-action" href="index.php?p=admin&amp;c=groups&amp;o=edit&amp;type=web&amp;id={{ group.gid }}">Изменить</a>
+              {% endif %}
+              {% if permission_deletegroup %}
+              <a class="admin-action admin-action--danger" href="#" onclick="RemoveGroup({{ group.gid }}, '{{ group.name|e('js') }}', 'web'); return false;">Удалить</a>
+              {% endif %}
+              </span>
+            </td>
+          </tr>
+          <tr class="admin-detail-row">
+            <td colspan="3">
+              <div class="opener">
+                <div class="admin-detail admin-detail--group">
+                  <div class="admin-facts">
+                    <div class="admin-fact">
+                      <span class="admin-fact-label">Права</span>
+                      <span class="admin-fact-value admin-fact-flags">{{ group.permissions|raw }}</span>
+                    </div>
+                    <div class="admin-fact">
+                      <span class="admin-fact-label">Кто в группе</span>
+                      <span class="admin-fact-value">
+                        {% if web_admins_list[loop.index0] %}
+                          {% for web_admin in web_admins_list[loop.index0] %}
+                            {% if permission_editadmin %}
+                            <a href="index.php?p=admin&amp;c=admins&amp;o=editgroup&amp;id={{ web_admin.aid }}">{{ web_admin.user }}</a>{% if not loop.last %}, {% endif %}
+                            {% else %}
+                            {{ web_admin.user }}{% if not loop.last %}, {% endif %}
+                            {% endif %}
+                          {% endfor %}
+                        {% else %}
+                          <span class="admin-muted">Никого</span>
+                        {% endif %}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="admin-manage-section">
+    <h3 class="admin-manage-section-title">Серверные группы админов · {{ server_admin_group_count }}</h3>
+    <div class="table-responsive">
+      <table class="admin-manage-table">
+        <thead>
+          <tr>
+            <th>Группа</th>
+            <th class="text-center">Админов</th>
+            <th class="text-end">Действия</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for group in server_group_list %}
+          <tr id="gid_{{ group.id }}" class="opener admin-manage-row">
+            <td><span class="admin-manage-name">{{ group.name }}</span></td>
+            <td class="text-center">{{ server_admins[loop.index0] }}</td>
+            <td class="text-end">
+              <span class="admin-actions">
+              {% if permission_editgroup %}
+              <a class="admin-action" href="index.php?p=admin&amp;c=groups&amp;o=edit&amp;type=srv&amp;id={{ group.id }}">Изменить</a>
+              {% endif %}
+              {% if permission_deletegroup %}
+              <a class="admin-action admin-action--danger" href="#" onclick="RemoveGroup({{ group.id }}, '{{ group.name|e('js') }}', 'srv'); return false;">Удалить</a>
+              {% endif %}
+              </span>
+            </td>
+          </tr>
+          <tr class="admin-detail-row">
+            <td colspan="3">
+              <div class="opener">
+                <div class="admin-detail admin-detail--group">
+                  <div class="admin-facts">
+                    <div class="admin-fact">
+                      <span class="admin-fact-label">Права</span>
+                      <span class="admin-fact-value admin-fact-flags">{{ group.permissions|raw }}</span>
+                    </div>
+                    <div class="admin-fact">
+                      <span class="admin-fact-label">Кто в группе</span>
+                      <span class="admin-fact-value">
+                        {% if server_admins_list[loop.index0] %}
+                          {% for server_admin in server_admins_list[loop.index0] %}
+                            {% if permission_editadmin %}
+                            <a href="index.php?p=admin&amp;c=admins&amp;o=editgroup&amp;id={{ server_admin.aid }}">{{ server_admin.user }}</a>{% if not loop.last %}, {% endif %}
+                            {% else %}
+                            {{ server_admin.user }}{% if not loop.last %}, {% endif %}
+                            {% endif %}
+                          {% endfor %}
+                        {% else %}
+                          <span class="admin-muted">Никого</span>
+                        {% endif %}
+                      </span>
+                    </div>
+                    <div class="admin-fact">
+                      <span class="admin-fact-label">Переопределения</span>
+                      <span class="admin-fact-value">
+                        {% if server_overrides_list[loop.index0] %}
+                          {% for override in server_overrides_list[loop.index0] %}
+                            {% if override.access == "allow" %}разрешён{% else %}запрещён{% endif %}
+                            {% if override.type == "command" %}команда{% else %}группа команд{% endif %}
+                            <strong>{{ override.name }}</strong>{% if not loop.last %}; {% endif %}
+                          {% endfor %}
+                        {% else %}
+                          <span class="admin-muted">Нет</span>
+                        {% endif %}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="admin-manage-section">
+    <h3 class="admin-manage-section-title">Группы серверов · {{ server_group_count }}</h3>
+    <div class="table-responsive">
+      <table class="admin-manage-table">
+        <thead>
+          <tr>
+            <th>Группа</th>
+            <th class="text-center">Серверов</th>
+            <th class="text-end">Действия</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for group in server_list %}
+          <tr id="gid_{{ group.gid }}" class="opener admin-manage-row">
+            <td><span class="admin-manage-name">{{ group.name }}</span></td>
+            <td class="text-center">{% if group.servers %}{{ group.servers|length }}{% else %}0{% endif %}</td>
+            <td class="text-end">
+              <span class="admin-actions">
+              {% if permission_editgroup %}
+              <a class="admin-action" href="index.php?p=admin&amp;c=groups&amp;o=edit&amp;type=server&amp;id={{ group.gid }}">Изменить</a>
+              {% endif %}
+              {% if permission_deletegroup %}
+              <a class="admin-action admin-action--danger" href="#" onclick="RemoveGroup({{ group.gid }}, '{{ group.name|e('js') }}', 'server'); return false;">Удалить</a>
+              {% endif %}
+              </span>
+            </td>
+          </tr>
+          <tr class="admin-detail-row">
+            <td colspan="3">
+              <div class="opener">
+                <div class="admin-detail admin-detail--group">
+                  <div class="admin-facts">
+                    <div class="admin-fact">
+                      <span class="admin-fact-label">Серверы в группе</span>
+                      <span class="admin-fact-value">
+                        {% if group.servers %}
+                          {% for server in group.servers %}
+                          <span id="servername_{{ server.server_id }}">Загрузка…</span>
+                          <script type="text/javascript">xajax_ServerHostProperty({{ server.server_id }}, "servername_{{ server.server_id }}", "innerHTML", 100);</script>
+                          {% if not loop.last %}, {% endif %}
+                          {% endfor %}
+                        {% else %}
+                          <span class="admin-muted">Пусто</span>
+                        {% endif %}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+<script type="text/javascript">InitAccordion('tr.opener', 'div.opener', 'content');</script>
+{% endif %}

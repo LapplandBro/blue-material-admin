@@ -1,0 +1,10 @@
+themes/blue_v2 — original UI shell (Twig + Bootstrap 5)
+=======================================================
+
+Not derived from Material Admin layout (no app.min.*, ma-*, fg-line).
+
+- Bootstrap 5.3 — MIT (CDN jsDelivr in preview; vendor later)
+- Twig 1.44 (includes/twig) or Twig 3 (composer) — BSD-3-Clause
+- blue.css / templates — this fork, GPLv3 with the application
+
+Do not copy legacy Material Admin layout into this folder.

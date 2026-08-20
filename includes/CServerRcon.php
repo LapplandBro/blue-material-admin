@@ -5,7 +5,7 @@
  * Licensed under the GNU General Public License v3.0 or later.
  * See LICENSE and NOTICE in the project root.
  *
- * UI theme under themes/new_box has separate provenance — see NOTICE.
+ * UI shell: themes/blue_v2 (Twig + Bootstrap 5). See NOTICE.
  ***************************************************************************/
 class CServerRcon
 {

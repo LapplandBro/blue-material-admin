@@ -30,7 +30,9 @@
  
  $admin_list = $GLOBALS['db']->GetAll("SELECT * FROM `" . DB_PREFIX . "_admins` ORDER BY user ASC");
  $theme->assign('admin_list', $admin_list);
- 
+
+ if (function_exists('sb_ui_v2_enabled') && sb_ui_v2_enabled())
+	return;
  $theme->display('box_admin_log_search.tpl');
  
 ?>

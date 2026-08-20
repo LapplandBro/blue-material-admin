@@ -81,20 +81,20 @@ foreach ($junk as $rel) {
 }
 
 // --- theme assets ---
-$theme = dirname(ROOT) . '/themes/new_box';
+$theme = dirname(ROOT) . '/themes/blue_v2';
 $rootSite = dirname(ROOT);
 if (is_dir($theme))
-	dry_ok('themes/new_box exists');
+	dry_ok('themes/blue_v2 exists');
 else
-	dry_fail('themes/new_box missing');
+	dry_fail('themes/blue_v2 missing');
 
 $assets = array(
-	'css/app.min.1.css', 'css/dark-blue-theme.css',
-	'vendors/bower_components/jquery/dist/jquery.min.js',
-	'vendors/bower_components/bootstrap/dist/js/bootstrap.min.js',
-	'vendors/bower_components/bootstrap-sweetalert/lib/sweet-alert.min.js',
-	'vendors/bower_components/Waves/dist/waves.min.js',
-	'vendors/bower_components/material-design-iconic-font/dist/css/material-design-iconic-font.min.css',
+	'css/blue.css',
+	'theme.conf.php',
+	'vendor/bootstrap/bootstrap.min.css',
+	'vendor/bootstrap-icons/bootstrap-icons.min.css',
+	'vendor/sweetalert/sweet-alert.css',
+	'vendor/sweetalert/sweet-alert.min.js',
 );
 foreach ($assets as $a) {
 	if (is_file($theme . '/' . $a))
@@ -103,19 +103,14 @@ foreach ($assets as $a) {
 		dry_fail("asset missing $a");
 }
 
-// Демо-мусор Material / мёртвые редакторы — не должны возвращаться в дистрибутив.
+// Material shell и мёртвые редакторы — не должны возвращаться в дистрибутив.
 $themeJunk = array(
 	'includes/tinymce',
 	'includes/pChart',
-	'themes/new_box/vendors/summernote/dist----',
-	'themes/new_box/vendors/bower_components/flot',
-	'themes/new_box/vendors/bower_components/fullcalendar',
-	'themes/new_box/vendors/bower_components/simpleWeather',
-	'themes/new_box/vendors/bower_components/mediaelement',
-	'themes/new_box/vendors/bower_components/chosen',
-	'themes/new_box/vendors/sparklines',
-	'themes/new_box/js/demo.js',
-	'themes/new_box/js/charts.js',
+	'includes/smarty',
+	'includes/theme_framework.php',
+	'themes_c',
+	'themes/new_box',
 );
 foreach ($themeJunk as $rel) {
 	$path = $rootSite . '/' . $rel;

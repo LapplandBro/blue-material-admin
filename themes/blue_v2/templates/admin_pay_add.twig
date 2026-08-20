@@ -1,0 +1,88 @@
+<form action="" method="post">
+  <input type="hidden" name="pay_card_admin" value="pay_card_add">
+  {% if sb_csrf %}<input type="hidden" name="sb_csrf" value="{{ sb_csrf }}">{% endif %}
+  <input type="hidden" id="card_gr_web" name="card_gr_web">
+  <input type="hidden" id="card_gr_srv" name="card_gr_srv">
+  <input type="hidden" id="srv_check_int" name="srv_check_int">
+  <div class="form-page admin-form">
+    <header class="form-page-head">
+      <p class="form-page-kicker">Админка</p>
+      <h2 class="form-page-title">Новый ваучер</h2>
+      <p class="form-page-lead">Ключ для гостя · создаёт админа при активации на сайте.</p>
+    </header>
+    <div class="form-flash form-flash--info">
+      <p class="form-flash-title">Краткая памятка</p>
+      <ul>
+        <li><b>Ключ</b> — 32 hex-символа (16 случайных байт). Жмите «Сгенерировать», не выдумывайте вручную.</li>
+        <li><b>Срок админки</b> — целое число <b>дней</b> (например <code>30</code>). <code>0</code> = навсегда.</li>
+        <li><b>Группа (сервер)</b> — права в игре (SourceMod). «Без группы» — только веб или как настроите дальше.</li>
+        <li><b>Группа (веб)</b> — права в этой панели. Не выдавайте «Главный админ» случайным людям.</li>
+        <li><b>Сервер</b> — на каких серверах будут права. «Без сервера» / ничего не отмечено — гость сам выберет при активации.</li>
+      </ul>
+      <p class="mb-0">Активирует ключ <b>только гость</b> (не залогиненный): меню «Активировать ваучер» или <code>index.php?p=pay</code>. Автовыдача из магазина — API <code>api/voucher_create.php</code> (токен в <code>config.php</code>, справка на вкладке списка).</p>
+    </div>
+    <div class="form-grid">
+      <div class="form-field form-field--full">
+        <label class="form-label" for="card_key">{% include 'partials/help_icon.twig' with { title: 'Ключ', message: '32 hex-символа (0-9, a-f), 128 bit энтропии. Нажмите «Сгенерировать».' } %} Ключ</label>
+        <div class="input-group">
+          <input type="text" tabindex="1" class="form-control" id="card_key" name="card_key" placeholder="a1b2-c3d4-e5f6-7890-abcd-ef01-2345-6789" value="{{ card_key_default }}" maxlength="39" spellcheck="false" autocomplete="off">
+          <button type="button" class="btn btn-outline-secondary" onclick="var el=document.getElementById('card_key'); if(el) el.value=sbVoucherGenerateHex(16);">Сгенерировать</button>
+        </div>
+      </div>
+      <div class="form-field form-field--full">
+        <label class="form-label" for="card_exp">{% include 'partials/help_icon.twig' with { title: 'Срок (дни)', message: 'Число дней действия админки с момента активации. Примеры: 7, 30, 90. Ноль (0) — навсегда, без срока.' } %} Срок админки (дни)</label>
+        <input type="text" tabindex="1" class="form-control" id="card_exp" name="card_exp" placeholder="Например: 30  или  0 = навсегда">
+      </div>
+      <div class="form-field form-field--full">
+        <label class="form-label">{% include 'partials/help_icon.twig' with { title: 'Серверная группа', message: 'Группа прав в игре (флаги SourceMod). Будет выдана тому, кто активирует ключ.' } %} Группа (сервер)</label>
+        <div class="form-checkboxes">
+          {% for server_wg in server_admin_group_list %}
+          <div class="form-check">
+            <input class="form-check-input" type="radio" value="{{ server_wg.name }}" id="dd_{{ server_wg.id }}_dd" name="inlineRadioOptions_srv" onchange="var el=$id('card_gr_srv'); if(el) el.value=this.value;">
+            <label class="form-check-label" for="dd_{{ server_wg.id }}_dd">{{ server_wg.name }}</label>
+          </div>
+          {% endfor %}
+          <div class="form-check">
+            <input class="form-check-input" type="radio" value="" id="no_group_web" name="inlineRadioOptions_srv" onchange="var el=$id('card_gr_srv'); if(el) el.value=this.value;">
+            <label class="form-check-label" for="no_group_web"><span class="parsec-text-danger">Без группы</span></label>
+          </div>
+        </div>
+      </div>
+      <div class="form-field form-field--full">
+        <label class="form-label">{% include 'partials/help_icon.twig' with { title: 'Веб-группа', message: 'Права в этой панели (баны, настройки и т.д.). Будет выдана при активации ключа гостем.' } %} Группа (веб)</label>
+        <div class="form-checkboxes">
+          {% for server_g in server_group_list %}
+          <div class="form-check">
+            <input class="form-check-input" type="radio" value="{{ server_g.name }}" id="dp_{{ server_g.gid }}_pd" name="inlineRadioOptions_web" onchange="var el=$id('card_gr_web'); if(el) el.value=this.value;">
+            <label class="form-check-label" for="dp_{{ server_g.gid }}_pd">{{ server_g.name }}</label>
+          </div>
+          {% endfor %}
+          <div class="form-check">
+            <input class="form-check-input" type="radio" value="0" id="no_group_srv" name="inlineRadioOptions_web" onchange="var el=$id('card_gr_web'); if(el) el.value=this.value;">
+            <label class="form-check-label" for="no_group_srv"><span class="parsec-text-danger">Без группы</span></label>
+          </div>
+        </div>
+      </div>
+      <div class="form-field form-field--full">
+        <label class="form-label">{% include 'partials/help_icon.twig' with { title: 'Серверы', message: 'Отметьте серверы, где будут права. Если ничего не выбрать (или только «Без сервера») — гость сам выберет серверы при активации.' } %} Серверы</label>
+        <div class="form-checkboxes">
+          {% for server in server_list %}
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="servers[]" id="s_{{ server.sid }}_s" value="s{{ server.sid }}" onchange="Check_cal();">
+            <label class="form-check-label" for="s_{{ server.sid }}_s"><span id="sa{{ server.sid }}"><i>Получение имени сервера... {{ server.ip }}:{{ server.port }}</i></span></label>
+          </div>
+          {% endfor %}
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="servers[]" id="s_no_srv" value="-1" onchange="Check_cal();">
+            <label class="form-check-label" for="s_no_srv"><span class="parsec-text-danger">Без сервера</span></label>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-accent" id="pay_key_send">Добавить</button>
+      <button type="button" class="btn btn-outline-secondary" id="aback" onclick="sbGo('index.php?p=admin&amp;c=pay_card')">Назад</button>
+    </div>
+  </div>
+</form>
+{{ server_script|raw }}

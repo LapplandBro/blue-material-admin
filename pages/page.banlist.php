@@ -165,6 +165,8 @@ else if(isset($_GET['a']) && $_GET['a'] == "delete")
 		$block = $GLOBALS['db']->Execute("DELETE FROM `".DB_PREFIX."_banlog` WHERE bid = ?",array($bid));
 		$res = $GLOBALS['db']->Execute("DELETE FROM `".DB_PREFIX."_bans` WHERE `bid` = ?",
 									array( $bid ));
+		if ($res && !empty($steam['authid']))
+			RecidivismRevokeOnUnpunish($steam['authid'], 'ban', 'bans', $bid, 'web_delete');
 		if(empty($steam['RemoveType']))
 		{
 			foreach($blocked as $tempban)
@@ -429,8 +431,12 @@ if (!$res)
 $view_comments = false;
 $bans = array();
 function CommunityID($steamid_id){
-	$parts = explode(':', str_replace('STEAM_', '' ,$steamid_id)); 
-	return bcadd(bcadd('76561197960265728', $parts['1']), bcmul($parts['2'], '2')); 
+	if (function_exists('GetCommunityIDFromSteamID2'))
+		return GetCommunityIDFromSteamID2($steamid_id);
+	$parts = explode(':', str_replace('STEAM_', '' , (string)$steamid_id));
+	if (!isset($parts[1], $parts[2]) || !function_exists('bcadd'))
+		return '';
+	return bcadd(bcadd('76561197960265728', (string)$parts[1]), bcmul((string)$parts[2], '2'));
 }
 while (!$res->EOF)
 {
@@ -470,8 +476,9 @@ while (!$res->EOF)
 	$data['steamid'] = $res->fields['authid'];
 	$data['communityid'] = $res->fields['community_id'];
 	$steam2id = $data['steamid'];
-	$steam3parts = explode(':', $steam2id);
-	$data['steamid3'] = '[U:1:' . ($steam3parts[2] * 2 + $steam3parts[1]) . ']';
+	$data['steamid3'] = function_exists('sb_steamid2_to_steamid3')
+		? sb_steamid2_to_steamid3($steam2id)
+		: '';
 	// Ссылка на профиль Steam (STEAM_ / Steam3 / Community — один URL на communityid)
 	$data['steam_profile'] = '';
 	if ((int)$data['type'] === 0 && !empty($data['communityid']) && preg_match('/^7656\d{13}$/', (string)$data['communityid']))
@@ -557,6 +564,7 @@ while (!$res->EOF)
 	$data['groups_link'] = CreateLinkR('Показать группы',"index.php?p=admin&c=bans&fid=".$data['communityid']."#^4");
 	$data['friend_ban_link'] = CreateLinkR('Забанить друзей', '#', '', '_self', false, "BanFriendsProcess('".$data['communityid']."','".StripQuotes($data['player'])."');return false;");
 	$data['edit_link'] = CreateLinkR('Редактировать',"index.php?p=admin&c=bans&o=edit".$pagelink."&id=".$res->fields['ban_id']."&key=".$_SESSION['banlist_postkey']);
+	$data['edit_url'] = "index.php?p=admin&c=bans&o=edit".$pagelink."&id=".$res->fields['ban_id']."&key=".$_SESSION['banlist_postkey'];
 
 	$data['unban_link'] = CreateLinkR('Разбанить',"#","", "_self", false, "UnbanBan('".$res->fields['ban_id']."', '".$_SESSION['banlist_postkey']."', '".$pagelink."', '".StripQuotes($data['player'])."', 1, false);return false;");
 	$data['delete_link'] = CreateLinkR('Удалить',"#","", "_self", false, "RemoveBan('".$res->fields['ban_id']."', '".$_SESSION['banlist_postkey']."', '".$pagelink."', '".StripQuotes($data['player'])."', 0, false);return false;");
@@ -768,6 +776,10 @@ if($pages > 1) {
 	}
 	$ban_nav_p .= '</select></span>&nbsp;';
 }
+if (function_exists('sb_ui_v2_enabled') && sb_ui_v2_enabled() && function_exists('sb_ui_v2_page_select')) {
+	$ban_nav_p = sb_ui_v2_page_select($page, $pages, 'B');
+	$ban_nav = sb_ui_v2_page_arrows('banlist', $page, $BansEnd, $BanCount, $advSearchString);
+}
 
 //COMMENT STUFF
 //----------------------------------------
@@ -859,4 +871,52 @@ $theme->assign('view_recidivism', $view_recidivism);
 $ban_colspan = 4 + ($view_bans ? 1 : 0) + ($view_recidivism ? 1 : 0) + (!$hideadminname ? 1 : 0);
 $theme->assign('ban_colspan', $ban_colspan);
 $theme->assign('can_export',($userbank->HasAccess(ADMIN_OWNER) || (isset($GLOBALS['config']['config.exportpublic']) && $GLOBALS['config']['config.exportpublic'] == "1")));
+
+if (function_exists('sb_ui_v2_enabled') && sb_ui_v2_enabled()) {
+	if (is_array($bans)) {
+		foreach ($bans as $bi => $brow) {
+			if (isset($brow['player']))
+				$bans[$bi]['player'] = stripslashes($brow['player']);
+		}
+	}
+	sb_ui_v2_render('banlist.twig', array(
+		'title' => 'Список банов',
+		'search_text' => isset($_GET['searchText']) ? (string)$_GET['searchText'] : '',
+		'commenttype' => isset($_GET['cid']) ? 'Редактировать' : 'Добавить',
+		'page' => isset($_GET['page']) ? $page : -1,
+		'othercomments' => isset($ocomments) ? $ocomments : array(),
+		'commenttext' => isset($ctext) ? $ctext : '',
+		'ctype' => isset($_GET['ctype']) ? $_GET['ctype'] : '',
+		'cid' => isset($_GET['cid']) ? $_GET['cid'] : '',
+		'view_comments' => $view_comments,
+		'comment' => (isset($_GET['comment']) && $view_comments) ? $_GET['comment'] : false,
+		'searchlink' => $searchlink,
+		'hidetext' => $hidetext,
+		'hidetext_darf' => $hidetext_darf,
+		'total_bans' => $BanCount,
+		'active_bans' => $BanCount,
+		'ban_nav' => $ban_nav,
+		'ban_nav_p' => $ban_nav_p,
+		'ban_list' => $bans,
+		'admin_nick' => $userbank->GetProperty('user'),
+		'nocountryshow' => ($GLOBALS['config']['banlist.nocountryfetch'] == '1' && !$userbank->is_logged_in()),
+		'admin_postkey' => $_SESSION['banlist_postkey'],
+		'admininfos' => $GLOBALS['config']['config.enableadmininfos'],
+		'hideplayerips' => (isset($GLOBALS['config']['banlist.hideplayerips']) && $GLOBALS['config']['banlist.hideplayerips'] == '1' && !$userbank->is_admin()),
+		'hideadminname' => $hideadminname,
+		'groupban' => ($GLOBALS['config']['config.enablegroupbanning'] == 1 && $userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_BAN)),
+		'friendsban' => ($GLOBALS['config']['config.enablefriendsbanning'] == 1 && $userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_BAN)),
+		'general_unban' => $userbank->HasAccess(ADMIN_OWNER|ADMIN_UNBAN|ADMIN_UNBAN_OWN_BANS|ADMIN_UNBAN_GROUP_BANS),
+		'can_delete' => $userbank->HasAccess(ADMIN_DELETE_BAN),
+		'view_bans' => $view_bans,
+		'view_recidivism' => $view_recidivism,
+		'ban_colspan' => $ban_colspan,
+		'can_export' => ($userbank->HasAccess(ADMIN_OWNER) || (isset($GLOBALS['config']['config.exportpublic']) && $GLOBALS['config']['config.exportpublic'] == '1')),
+		'can_add_ban' => $userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_BAN),
+		'add_ban_url' => 'index.php?p=admin&c=bans',
+		'hideinactive_url' => 'index.php?p=banlist&hideinactive=' . (isset($_SESSION['hideinactive']) ? 'false' : 'true') . $searchlink,
+	));
+	return;
+}
+
 $theme->display('page_bans.tpl');

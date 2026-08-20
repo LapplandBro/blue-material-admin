@@ -1,0 +1,59 @@
+{% if not permission_addban %}
+<div class="form-page">
+  <p class="form-flash form-flash--err">Доступ запрещен!</p>
+</div>
+{% elseif not groupbanning_enabled %}
+<div class="form-page">
+  <p class="form-flash form-flash--err">Функция отключена!</p>
+</div>
+{% else %}
+<div class="form-page admin-form" id="group.details">
+  {% if not list_steam_groups %}
+  <header class="form-page-head">
+    <p class="form-page-kicker">Админка</p>
+    <h2 class="form-page-title">Добавить бан группы</h2>
+    <p class="form-page-lead">Ссылка на группу сообщества Steam. Например <code>http://steamcommunity.com/groups/interwavestudios</code></p>
+  </header>
+  <div class="form-grid" id="group.details">
+    <div class="form-field form-field--full">
+      <label class="form-label" for="groupurl">Ссылка на группу</label>
+      <input type="text" tabindex="1" class="form-control" id="groupurl" name="groupurl" placeholder="Введите данные">
+      <div id="groupurl.msg" class="msg-err"></div>
+    </div>
+    <div class="form-field form-field--full">
+      <label class="form-label" for="groupreason">Причина бана группы</label>
+      <textarea name="groupreason" id="groupreason" class="form-control" placeholder="Будьте максимально информативны"></textarea>
+      <div id="groupreason.msg" class="msg-err"></div>
+    </div>
+  </div>
+  <div class="form-actions">
+    <button type="button" class="btn btn-accent" id="agban" onclick="ProcessGroupBan();">Забанить группу</button>
+    <button type="button" class="btn btn-outline-secondary" id="aback" onclick="sbAdminBack(0, 'index.php?p=admin&amp;c=bans')">Назад</button>
+  </div>
+  {% else %}
+  <header class="form-page-head">
+    <p class="form-page-kicker">Админка</p>
+    <h2 class="form-page-title">Группы игрока {{ player_name }}</h2>
+    <p class="form-page-lead">Выберите группу сообщества Steam, которую желаете забанить.</p>
+  </header>
+  <div class="form-flash form-flash--ok" role="alert" id="steamGroupStatus" name="steamGroupStatus" style="display:none;"></div>
+  <div class="form-grid" id="group.details">
+    <div class="form-field form-field--full" id="steamGroups" name="steamGroups">
+      <label class="form-label">Группы <mark style="cursor:pointer;" id="tickswitch" name="tickswitch" onclick="TickSelectAll();"> (пометить) </mark></label>
+      <div id="steamGroupsText" name="steamGroupsText"> Загрузка групп...</div>
+      <table id="steamGroupsTable" name="steamGroupsTable" border="0" width="500px"></table>
+    </div>
+    <div class="form-field form-field--full">
+      <label class="form-label" for="groupreason">Причина бана группы</label>
+      <textarea name="groupreason" id="groupreason" class="form-control" placeholder="Будьте максимально информативны"></textarea>
+      <div id="groupreason.msg" class="msg-err"></div>
+    </div>
+  </div>
+  <script type="text/javascript">$('tickswitch').value = 0;xajax_GetGroups('{{ list_steam_groups }}');</script>
+  <div class="form-actions">
+    <button type="button" class="btn btn-accent" id="gban" onclick="CheckGroupBan();">Забанить группу</button>
+    <button type="button" class="btn btn-outline-secondary" id="aback" onclick="sbAdminBack(0, 'index.php?p=admin&amp;c=bans')">Назад</button>
+  </div>
+  {% endif %}
+</div>
+{% endif %}

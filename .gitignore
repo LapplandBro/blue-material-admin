@@ -1,12 +1,10 @@
+# Composer (optional Twig 3 for themes/blue_v2)
+/vendor/
+
 # Secrets / generated
 config.php
 data/db.php
 remove_setup.php
-
-# Smarty compile cache
-themes_c/*
-!themes_c/.gitkeep
-!themes_c/.htaccess
 
 # Runtime uploads
 demos/*

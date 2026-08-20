@@ -1,0 +1,50 @@
+{% if not permission_listmods %}
+<div class="form-page">
+  <p class="form-flash form-flash--err">Нет доступа к списку модов.</p>
+</div>
+{% else %}
+<div class="panel">
+  <header class="form-page-head">
+    <p class="form-page-kicker">Админка</p>
+    <h2 class="form-page-title">Моды</h2>
+    <p class="form-page-lead">{{ mod_count }} шт. · игры, привязанные к серверам</p>
+  </header>
+  <div class="table-responsive">
+    <table class="table table-v2">
+      <thead>
+        <tr>
+          <th>Название</th>
+          <th style="width:22%;">Папка</th>
+          <th class="text-center" style="width:8%;">Иконка</th>
+          <th class="text-center" style="width:12%;">Steam universe</th>
+          {% if permission_editmods or permission_deletemods %}
+          <th class="text-end" style="width:22%;">Действия</th>
+          {% endif %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for mod in mod_list|default([]) %}
+        <tr id="mid_{{ mod.mid }}" class="banlist-row">
+          <td>{{ mod.name }}</td>
+          <td><code>{{ mod.modfolder }}</code></td>
+          <td class="text-center">{{ mod.icon_html|raw }}</td>
+          <td class="text-center">{{ mod.steam_universe }}</td>
+          {% if permission_editmods or permission_deletemods %}
+          <td class="text-end">
+            <span class="admin-actions">
+              {% if permission_editmods %}
+              <a class="btn btn-sm btn-outline-secondary" href="index.php?p=admin&amp;c=mods&amp;o=edit&amp;id={{ mod.mid }}">Изменить</a>
+              {% endif %}
+              {% if permission_deletemods %}
+              <a class="btn btn-sm btn-outline-danger" href="#" onclick="RemoveMod('{{ mod.name|e('js') }}', '{{ mod.mid }}'); return false;">Удалить</a>
+              {% endif %}
+            </span>
+          </td>
+          {% endif %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}

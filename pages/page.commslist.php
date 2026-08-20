@@ -196,6 +196,12 @@ else if(isset($_GET['a']) && $_GET['a'] == "delete")
 	}
 
 	$res = $GLOBALS['db']->Execute("DELETE FROM `".DB_PREFIX."_comms` WHERE `bid` = ?",	array( $bid ));
+	if ($res && !empty($steam['authid'])) {
+		if ((int)$steam['type'] === 1 || (int)$steam['type'] === 3)
+			RecidivismRevokeOnUnpunish($steam['authid'], 'mute', 'comms', $bid, 'web_delete');
+		if ((int)$steam['type'] === 2 || (int)$steam['type'] === 3)
+			RecidivismRevokeOnUnpunish($steam['authid'], 'gag', 'comms', $bid, 'web_delete');
+	}
 
 	if(empty($steam['RemoveType']) && ($length == 0 || $end > $now) && !empty($unmuteTypes))
 	{
@@ -439,7 +445,7 @@ $BanCount = $res_count->fields[0];
 if ($BansEnd > $BanCount) $BansEnd = $BanCount;
 if (!$res)
 {
-	echo "No Blocks Found.";
+	echo "Блокировки не найдены.";
 	PageDie();
 }
 
@@ -448,6 +454,7 @@ $bans = array();
 while (!$res->EOF)
 {
 	$data = array();
+	$data['unbanned'] = false;
 
 	$data['ban_id'] = $res->fields['ban_id'];
 	$data['type'] = $res->fields['type'];
@@ -487,8 +494,9 @@ while (!$res->EOF)
 	$data['steamid'] = $res->fields['authid'];
 	$data['communityid'] = $res->fields['community_id'];
 	$steam2id = $data['steamid'];
-	$steam3parts = explode(':', $steam2id);
-	$data['steamid3'] = '[U:1:' . ($steam3parts[2] * 2 + $steam3parts[1]) . ']';
+	$data['steamid3'] = function_exists('sb_steamid2_to_steamid3')
+		? sb_steamid2_to_steamid3($steam2id)
+		: '';
 	$data['steam_profile'] = '';
 	if (!empty($data['communityid']) && preg_match('/^7656\d{13}$/', (string)$data['communityid']))
 		$data['steam_profile'] = 'https://steamcommunity.com/profiles/' . $data['communityid'];
@@ -539,6 +547,7 @@ while (!$res->EOF)
 	}
 	else if($data['ban_length'] == 'Навсегда')
 	{
+		$data['unbanned'] = false;
 		$data['class'] = "listtable_1_permanent";
 	}
 	else
@@ -570,6 +579,7 @@ while (!$res->EOF)
 
 
 	$data['edit_link'] = CreateLinkR('Редактировать',"index.php?p=admin&c=comms&o=edit".$pagelink."&id=".$res->fields['ban_id']."&key=".$_SESSION['banlist_postkey']);
+	$data['edit_url'] = "index.php?p=admin&c=comms&o=edit".$pagelink."&id=".$res->fields['ban_id']."&key=".$_SESSION['banlist_postkey'];
 	if(function_exists('RecidivismCanView') && RecidivismCanView() && !empty($data['steamid']))
 		$data['recidivism_link'] = CreateLinkR('История нарушений',"index.php?p=admin&c=recidivism&steam=".urlencode($data['steamid']));
 	else
@@ -778,6 +788,10 @@ if($pages > 1) {
 	}
 	$ban_nav_p .= '</select></span>&nbsp;';
 }
+if (function_exists('sb_ui_v2_enabled') && sb_ui_v2_enabled() && function_exists('sb_ui_v2_page_select')) {
+	$ban_nav_p = sb_ui_v2_page_select($page, $pages, 'C');
+	$ban_nav = sb_ui_v2_page_arrows('commslist', $page, $BansEnd, $BanCount, $advSearchString);
+}
 
 //COMMENT STUFF
 //----------------------------------------
@@ -856,7 +870,54 @@ $theme->assign('can_delete', $userbank->HasAccess(ADMIN_DELETE_BAN));
 $theme->assign('view_bans', ($userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_ALL_BANS|ADMIN_EDIT_OWN_BANS|ADMIN_EDIT_GROUP_BANS|ADMIN_UNBAN|ADMIN_UNBAN_OWN_BANS|ADMIN_UNBAN_GROUP_BANS|ADMIN_DELETE_BAN)));
 $theme->assign('can_add_comms', $userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_BAN));
 $theme->assign('view_recidivism', $view_recidivism);
+if (!isset($bstatus))
+	$bstatus = '';
+$theme->assign('bstatus', $bstatus);
+$theme->assign('bstatus_aid', (isset($_GET['advType']) && $_GET['advType'] === 'admin' && isset($_GET['advSearch'])) ? $_GET['advSearch'] : '');
 // Игра + дата + игрок + срок (+ рецидив / админ)
 $ban_colspan = 4 + ($view_recidivism ? 1 : 0) + (!$hideadminname ? 1 : 0);
 $theme->assign('ban_colspan', $ban_colspan);
+if (function_exists('sb_ui_v2_enabled') && sb_ui_v2_enabled()) {
+	if (is_array($bans)) {
+		foreach ($bans as $bi => $brow) {
+			if (isset($brow['player']))
+				$bans[$bi]['player'] = stripslashes($brow['player']);
+		}
+	}
+	$hide_next = isset($_SESSION['hideinactive']) ? 'false' : 'true';
+	sb_ui_v2_render('commslist.twig', array(
+		'title' => 'Муты и гаги',
+		'search_text' => isset($_GET['searchText']) ? (string)$_GET['searchText'] : '',
+		'searchlink' => $searchlink,
+		'hidetext' => $hidetext,
+		'hideinactive_on' => isset($_SESSION['hideinactive']),
+		'hideinactive_url' => 'index.php?p=commslist&hideinactive=' . $hide_next . $searchlink,
+		'total_bans' => $BanCount,
+		'active_bans' => $BanCount,
+		'ban_nav' => $ban_nav,
+		'ban_nav_p' => $ban_nav_p,
+		'ban_list' => $bans,
+		'admin_nick' => $userbank->GetProperty('user'),
+		'admin_postkey' => $_SESSION['banlist_postkey'],
+		'hideadminname' => $hideadminname,
+		'general_unban' => $userbank->HasAccess(ADMIN_OWNER|ADMIN_UNBAN|ADMIN_UNBAN_OWN_BANS|ADMIN_UNBAN_GROUP_BANS),
+		'can_delete' => $userbank->HasAccess(ADMIN_DELETE_BAN),
+		'view_bans' => ($userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_ALL_BANS|ADMIN_EDIT_OWN_BANS|ADMIN_EDIT_GROUP_BANS|ADMIN_UNBAN|ADMIN_UNBAN_OWN_BANS|ADMIN_UNBAN_GROUP_BANS|ADMIN_DELETE_BAN)),
+		'can_add_comms' => $userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_BAN),
+		'add_comms_url' => 'index.php?p=admin&c=comms',
+		'view_recidivism' => $view_recidivism,
+		'ban_colspan' => $ban_colspan,
+		'view_comments' => $view_comments,
+		'comment' => (isset($_GET['comment']) && $view_comments) ? $_GET['comment'] : false,
+		'commenttype' => isset($_GET['cid']) ? 'Редактировать' : 'Добавить',
+		'page' => isset($_GET['page']) ? $page : -1,
+		'othercomments' => isset($ocomments) ? $ocomments : array(),
+		'commenttext' => isset($ctext) ? $ctext : '',
+		'ctype' => isset($_GET['ctype']) ? $_GET['ctype'] : 'C',
+		'cid' => isset($_GET['cid']) ? $_GET['cid'] : '',
+		'bstatus' => isset($bstatus) ? $bstatus : '',
+		'bstatus_aid' => (isset($_GET['advType']) && $_GET['advType'] === 'admin' && isset($_GET['advSearch'])) ? $_GET['advSearch'] : '',
+	));
+	return;
+}
 $theme->display('page_comms.tpl');

@@ -31,7 +31,7 @@
 - Ваучеры: HEX-ключи, активация только гостем, API для магазина/бота  
 - Встроенный установщик с проверкой требований  
 
-**Важно:** сменить «вёрстку / тему / фон» из настроек панели **нельзя** — опции удалены специально. Иначе ловятся серьёзные ошибки (проверено). Тема одна: Blue Admin (`themes/new_box`).
+**Важно:** сменить «вёрстку / тему / фон» из настроек панели **нельзя** — опции удалены специально. Иначе ловятся серьёзные ошибки (проверено). Тема одна: Blue V2 (`themes/blue_v2`).
 
 ---
 
@@ -194,17 +194,16 @@ ZIP с ветки `main`: https://github.com/LapplandBro/blue-material-admin
 
 ### 4. Что заливать поверх
 
-С заменой: `includes/`, `pages/`, `scripts/`, `themes/new_box/`, `images/icons/`, `errors/`, корневые `*.php` **кроме** `config.php`.  
+С заменой: `includes/`, `pages/`, `scripts/`, `themes/blue_v2/`, `images/icons/`, `errors/`, корневые `*.php` **кроме** `config.php`.  
 `.htaccess` — только если не правил сам.
 
 **Caddy → Apache (VPS):** включи `AllowOverride All` (или RewriteRule ЧПУ в vhost). Не делай rewrite ЧПУ в Caddy — будет петля с PHP 301. См. [`docs/CADDY.md`](docs/CADDY.md) и [`deploy/Caddyfile.example`](deploy/Caddyfile.example).
 
 ### 5. После заливки
 
-1. Очисти файлы в `themes_c/` (папку оставь)  
-2. Ctrl+F5 в браузере  
-3. Проверь главную / банлист / админку  
-4. Белый экран / 500 → лог PHP и не затёр ли `config.php`
+1. Ctrl+F5 в браузере  
+2. Проверь главную / банлист / админку  
+3. Белый экран / 500 → лог PHP и не затёр ли `config.php`
 
 Обычное обновление файлов **не требует** SQL. Миграции — только если явно написано в релизе.
 
@@ -217,10 +216,10 @@ ZIP с ветки `main`: https://github.com/LapplandBro/blue-material-admin
 ## Стек
 
 - PHP + MySQL (ADOdb)  
-- Тема Blue Admin / Material shell (`themes/new_box`) — **легаси, под замену**  
+- Тема Blue V2 (`themes/blue_v2`, Twig + Bootstrap 5.3)  
 - SourceBans++ 2.0.x  
 
-План выпила темы / Smarty 2 / Bootstrap 3: [`docs/THEME_MIGRATION.md`](docs/THEME_MIGRATION.md).
+История выпила Material / Smarty 2 / Bootstrap 3: [`docs/THEME_MIGRATION.md`](docs/THEME_MIGRATION.md).
 
 ## Лицензия
 
@@ -229,14 +228,11 @@ ZIP с ветки `main`: https://github.com/LapplandBro/blue-material-admin
 | Слой | Лицензия |
 |------|----------|
 | Код панели (PHP, форк SourceBans++) | **GNU GPLv3** (`LICENSE`) |
-| UI-каркас `themes/new_box` (кроме `vendors/`) | **Наследник Material Admin / IceMan-адаптаций** — не заявлять как чистый GPL/MIT; см. `NOTICE` |
-| Vendors (Bootstrap 3, jQuery, …) | Обычно **MIT** / свои SPDX в пакетах |
-| ADOdb, Smarty 2, SourceQuery | BSD/LGPL — как у upstream |
+| UI-оболочка `themes/blue_v2` (кроме `vendor/`) | **GPLv3** вместе с панелью; см. `NOTICE` |
+| Vendors (Bootstrap 5, иконки, SweetAlert, …) | Обычно **MIT** / свои SPDX в пакетах |
+| ADOdb, Twig, SourceQuery | BSD/LGPL — как у upstream |
 
-**Важно:** смена цветов и логотипа не обнуляет происхождение UI-shell.  
-Пока жив Material-каркас — **не упаковывай панель как «чисто GPL коммерческий продукт»** без замены темы. Донат/оплата на своём сайте ≠ «продаём GPL+спорную тему одним zip».
-
-Цель: заменить shell ([`THEME_MIGRATION.md`](docs/THEME_MIGRATION.md)) и оставить честный GPLv3 + обычные OSS-зависимости.
+Донат/оплата на своём сайте ≠ «продаём чужой UI одним zip». Слои лицензий — [`NOTICE`](NOTICE).
 
 ## Credits
 

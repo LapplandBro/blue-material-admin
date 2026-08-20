@@ -1,0 +1,66 @@
+<div id="0" class="admin-pane is-on">
+<form action="index.php?p=admin&amp;c=menu&amp;o=edit&amp;id={{ menu_id }}" method="post">
+  <div class="form-page admin-form">
+    <input type="hidden" name="sb_csrf" value="{{ sb_csrf }}">
+    <input type="hidden" name="Link" value="edit">
+    <header class="form-page-head">
+      <p class="form-page-kicker">Админка</p>
+      <h2 class="form-page-title">Пункт меню</h2>
+      <p class="form-page-lead">Изменение ссылки в боковой панели. Иконку выбери кликом — в базе хранится класс (в т.ч. исторический zmdi), на экране он мапится в Bootstrap Icons.</p>
+    </header>
+    <p class="form-flash form-flash--info">«Авто» подставит иконку по URL и названию.{% if system %}<br><br>Ссылка <i>системная</i>: URL и удаление недоступны.{% endif %}</p>
+    <div class="form-grid" id="group.details">
+      <div class="form-field form-field--full">
+        <label class="form-label">{% include 'partials/help_icon.twig' with { title: 'Иконка', message: 'Клик по иконке выбирает её для пункта меню.' } %} Иконка</label>
+        {{ menu_icon_picker|raw }}
+      </div>
+      <div class="form-field form-field--full">
+        <label class="form-label" for="menu_group">{% include 'partials/help_icon.twig' with { title: 'Раздел', message: 'В какой блок бокового меню попадет ссылка.' } %} Раздел</label>
+        {{ menu_group_picker|raw }}
+      </div>
+      <div class="form-field form-field--full">
+        <label class="form-label" for="names_link">{% include 'partials/help_icon.twig' with { title: 'Заголовок', message: 'Введите заголовок названия ссылки. Грубо говоря «Имя» ссылки.' } %} Заголовок</label>
+        <input type="text" tabindex="1" class="form-control" id="names_link" name="names_link" value="{{ text }}" placeholder="Введите данные">
+        <div id="names_link.msg" class="msg-err"></div>
+      </div>
+      <div class="form-field form-field--full">
+        <label class="form-label" for="des_link">{% include 'partials/help_icon.twig' with { title: 'Описание', message: 'Описание ссылки, которое появляется при наведении курсора.' } %} Описание</label>
+        <input type="text" tabindex="1" class="form-control" id="des_link" name="des_link" value="{{ des }}" placeholder="Введите данные">
+        <div id="des_link.msg" class="msg-err"></div>
+      </div>
+      {% if system %}
+      <input type="hidden" name="url_link" value="{{ url }}">
+      {% else %}
+      <div class="form-field form-field--full">
+        <label class="form-label" for="url_link">{% include 'partials/help_icon.twig' with { title: 'Линк', message: 'Адрес, на который перейдёт пользователь после нажатия на пункт меню.' } %} URL</label>
+        <input type="text" tabindex="1" class="form-control" id="url_link" name="url_link" value="{{ url }}" placeholder="Введите данные">
+        <div id="url_link.msg" class="msg-err"></div>
+      </div>
+      {% endif %}
+      <div class="form-field">
+        <label class="form-label" for="priora_link">{% include 'partials/help_icon.twig' with { title: 'Приоритет', message: 'Позволяет вставить ссылку в определённое место меню.' } %} Приоритет</label>
+        <input type="text" tabindex="1" class="form-control" id="priora_link" name="priora_link" value="{{ prior }}" placeholder="Введите данные">
+        <div id="priora_link.msg" class="msg-err"></div>
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="on_link">{% include 'partials/help_icon.twig' with { title: 'Статус', message: 'Показывать пункт в боковом меню SourceBans.' } %} Статус</label>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="on_link" id="on_link" value="on">
+          <label class="form-check-label" for="on_link">Показывать в меню</label>
+        </div>
+      </div>
+      <div class="form-field form-field--full">
+        <label class="form-label" for="onNewTab">{% include 'partials/help_icon.twig' with { title: 'Открывать в новой вкладке', message: 'При щелчке пункт откроется в новой вкладке браузера.' } %} Новая вкладка</label>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="onNewTab" id="onNewTab" value="on">
+          <label class="form-check-label" for="onNewTab">Открывать в новой вкладке</label>
+        </div>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-accent">Сохранить</button>
+      <button type="button" class="btn btn-outline-secondary" id="back" onclick="sbGo('index.php?p=admin&amp;c=menu')">Назад</button>
+    </div>
+  </div>
+</form>
+</div>

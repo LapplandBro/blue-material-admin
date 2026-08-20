@@ -44,7 +44,7 @@ if($GLOBALS['config']['config.modgroup'] != "0"){
 }
 
 
-if ($_GET['key'] != $_SESSION['banlist_postkey'])
+if (!isset($_GET['key'], $_SESSION['banlist_postkey']) || $_GET['key'] !== $_SESSION['banlist_postkey'])
 {
 	echo '<script>ShowBox("Ошибка", "Возможная попытка взлома (Несоответствие URL-ключа)!", "red", "index.php?p=admin&c=bans");</script>';
 	PageDie();
@@ -66,7 +66,16 @@ $res = $GLOBALS['db']->GetRow("
     				LEFT JOIN ".DB_PREFIX."_mods AS mo ON mo.mid = se.modid
     				WHERE bid = ?", array((int)$_GET['id'], (int)$_GET['id']));
 
-if (!$userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_ALL_BANS)&&(!$userbank->HasAccess(ADMIN_EDIT_OWN_BANS) && $res[8]!=$userbank->GetAid())&&(!$userbank->HasAccess(ADMIN_EDIT_GROUP_BANS) && $res->fields['gid']!=$userbank->GetProperty('gid')))
+if (empty($res) || !isset($res['bid']))
+{
+	echo '<script>ShowBox("Ошибка", "Бан не найден!", "red", "index.php?p=admin&c=bans");</script>';
+	PageDie();
+}
+
+$canEditBan = $userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_ALL_BANS)
+	|| ($userbank->HasAccess(ADMIN_EDIT_OWN_BANS) && (int)$res['aid'] === (int)$userbank->GetAid())
+	|| ($userbank->HasAccess(ADMIN_EDIT_GROUP_BANS) && (int)$res['gid'] === (int)$userbank->GetProperty('gid'));
+if (!$canEditBan)
 {
 	echo '<script>ShowBox("Ошибка", "Вы не имеете доступ к этому!", "red", "index.php?p=admin&c=bans");</script>';
 	PageDie();
@@ -301,11 +310,17 @@ $theme->assign('ban_ip', $res['ip']);
 $theme->assign('ban_demo', (!empty($res['dname'])?"<b>".$res['dname']."</b>":""));
 $theme->assign('customreason', ((isset($GLOBALS['config']['bans.customreasons'])&&$GLOBALS['config']['bans.customreasons']!="")?unserialize($GLOBALS['config']['bans.customreasons']):false));
 
-$theme->left_delimiter = "-{";
-$theme->right_delimiter = "}-";
-$theme->display('page_admin_edit_ban.tpl');
-$theme->left_delimiter = "{";
-$theme->right_delimiter = "}";
+if (function_exists('sb_ui_v2_fragment')) {
+	echo sb_ui_v2_fragment('admin_bans_edit.twig', array(
+		'demo_link_val' => $res['origname'],
+		'ban_name' => $res['name'],
+		'ban_reason' => $res['reason'],
+		'ban_authid' => trim($res['authid']),
+		'ban_ip' => $res['ip'],
+		'ban_demo' => (!empty($res['dname']) ? '<b>'.$res['dname'].'</b>' : ''),
+		'customreason' => ((isset($GLOBALS['config']['bans.customreasons']) && $GLOBALS['config']['bans.customreasons'] != "") ? unserialize($GLOBALS['config']['bans.customreasons']) : false),
+	));
+}
 ?>
 <script type="text/javascript">window.addEvent('domready', function(){
 <?php echo $errorScript; ?>

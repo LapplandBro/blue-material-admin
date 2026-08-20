@@ -56,6 +56,25 @@ $theme->assign('steam_allowed', ($at != 1));
 $theme->assign('login_allowed', ($at != 2));
 // === Authorization by type -  END  ===
 
+if (function_exists('sb_ui_v2_enabled') && sb_ui_v2_enabled()) {
+	$flash = '';
+	if (isset($_GET['m']) && $_GET['m'] == 'no_access')
+		$flash = 'У вас нет доступа к этой странице. Войдите в аккаунт.';
+	elseif (isset($_GET['m']) && $_GET['m'] == 'overreach')
+		$flash = 'Права администратора отозваны за превышение полномочий.';
+	sb_ui_v2_render('login.twig', array(
+		'title' => 'Вход — Blue Admin',
+		'redir_js' => 'DoLogin('.json_encode($login_redir).');',
+		'steam_allowed' => ($at != 1),
+		'login_allowed' => ($at != 2),
+		'flash' => $flash,
+		'preview_url' => 'index.php?p=banlist',
+		'lost_url' => 'index.php?p=lostpassword',
+		'steam_url' => 'steam_auth.php?login',
+	));
+	return;
+}
+
 $theme->left_delimiter = "-{";
 $theme->right_delimiter = "}-";
 $theme->display('page_login.tpl');

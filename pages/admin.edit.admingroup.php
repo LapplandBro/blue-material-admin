@@ -151,4 +151,4 @@ $theme->assign('web_lst',  $wgroups);
 $theme->assign('server_admin_group_id',  $server_admin_group);
 $theme->assign('sb_csrf', function_exists('sb_csrf_token') ? sb_csrf_token() : '');
 
-$theme->display('page_admin_edit_admins_group.tpl');
+sb_ui_v2_theme_fragment('admin_edit_admins_group.twig');

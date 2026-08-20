@@ -169,11 +169,13 @@ if (isset($_POST['upload']))
 	}
 }
 
-$theme->assign("title", "Загрузить изображение карты");
-$theme->assign("message", $message);
-$theme->assign("input_name", "mapimg_file[]");
-$theme->assign("form_name", "mapimgup");
-$theme->assign("formats", $extText);
-$theme->assign("sb_csrf", function_exists('sb_csrf_token') ? sb_csrf_token() : '');
+$uploadVars = array(
+	"title" => "Загрузить изображение карты",
+	"message" => $message,
+	"input_name" => "mapimg_file[]",
+	"form_name" => "mapimgup",
+	"formats" => $extText,
+	"sb_csrf" => function_exists('sb_csrf_token') ? sb_csrf_token() : '',
+);
 
-$theme->display('page_uploadfile.tpl');
+echo sb_ui_v2_fragment('uploadfile.twig', $uploadVars);

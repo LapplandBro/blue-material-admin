@@ -37,14 +37,22 @@ $srv_admins = $GLOBALS['db']->GetAll("SELECT authid, user
 			   								WHERE server_id = " . (int)$_GET['id'] . ")									
 										)															
 										GROUP BY aid, authid, srv_password, srv_group, srv_flags, user ");
+if (!is_array($srv_admins))
+	$srv_admins = array();
 $i = 0;
+$admins = array();
+$admsteam = array();
 foreach($srv_admins as $admin) {
+	if (!is_array($admin) || !isset($admin['authid']))
+		continue;
 	$admsteam[] = $admin['authid'];
 }
 if(sizeof($admsteam)>0 && $serverdata = checkMultiplePlayers((int)$_GET['id'], $admsteam))
 	$noproblem = true;
 foreach($srv_admins as $admin) {
-	$admins[$i]['user'] = $admin['user'];
+	if (!is_array($admin))
+		continue;
+	$admins[$i]['user'] = isset($admin['user']) ? $admin['user'] : '';
 	$admins[$i]['authid'] = $admin['authid'];
 	if(isset($noproblem) && isset($serverdata[$admin['authid']])) {
 	$admins[$i]['ingame'] = true;
@@ -56,16 +64,13 @@ foreach($srv_admins as $admin) {
 		$admins[$i]['ingame'] = false;
 	$i++;
 }
-										
+
 $theme->assign('admin_count', count($srv_admins));
 $theme->assign('admin_list', $admins);
-?>
 
-
-<div id="admin-page-content">
-<div id="0" style="display:none;">
-
-<?php $theme->display('page_admin_servers_adminlist.tpl'); ?>
-
-</div>
-</div>
+echo '<div id="admin-page-content">';
+echo '<div id="0" class="admin-pane is-on">';
+$_f = sb_ui_v2_theme_fragment('admin_servers_adminlist.twig');
+if (is_string($_f) && $_f !== '') echo $_f;
+echo '</div>';
+echo '</div>';

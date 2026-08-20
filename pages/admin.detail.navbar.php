@@ -101,4 +101,6 @@ foreach($var AS $v)
 	
 $theme->assign('tabs', $tabs);
 
+if (function_exists('sb_ui_v2_enabled') && sb_ui_v2_enabled())
+	return;
 $theme->display('item_admin_tabs.tpl');

@@ -428,8 +428,8 @@ $web_cfg_preview = sb_install_build_config($cfgVars);
 							<div class="col-sm-9 p-t-10">
 								<div class="checkbox m-b-15">
 									<label for="hosting_newtab">
-										<input type="checkbox" name="hosting_newtab" id="hosting_newtab" hidden="hidden" checked="checked" />
-										<i class="input-helper"></i> Да
+										<input type="checkbox" name="hosting_newtab" id="hosting_newtab" checked="checked" />
+										Да
 									</label>
 								</div>
 							</div>

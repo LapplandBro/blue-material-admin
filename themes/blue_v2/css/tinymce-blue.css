@@ -1,0 +1,10 @@
+.tox-tinymce {
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-sm) !important;
+}
+.tox .tox-edit-area__iframe {
+  background: var(--bg-input) !important;
+}
+.admin-embed-body .html-editor {
+  min-height: 12rem;
+}

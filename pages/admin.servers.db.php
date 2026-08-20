@@ -85,10 +85,10 @@ if(strtolower(DB_HOST) == "localhost")
 }
 
 $theme->assign('conf', $srv_cfg);
-?>
-<div id="admin-page-content">
-	<div id="0">
-	<?php $theme->display('page_admin_servers_db.tpl'); ?>
-	</div>
-</div>
-<?php }
+echo '<div id="admin-page-content">';
+echo '<div id="0" class="admin-pane is-on">';
+$_f = sb_ui_v2_theme_fragment('admin_servers_db.twig');
+if (is_string($_f) && $_f !== '') echo $_f;
+echo '</div>';
+echo '</div>';
+}

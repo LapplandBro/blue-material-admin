@@ -1,0 +1,44 @@
+{% if not permission_rcon %}
+<div class="form-page">
+  <p class="form-flash form-flash--err">Нет доступа к RCON.</p>
+</div>
+{% else %}
+<div class="form-page admin-form rcon-panel">
+  <header class="form-page-head">
+    <p class="form-page-kicker">Админка</p>
+    <h2 class="form-page-title">RCON</h2>
+    <p class="form-page-lead">Команда + Enter · <code>clr</code> — очистить</p>
+  </header>
+  <div class="rcon-terminal" id="rcon">
+    <div class="rcon-log" id="rcon_con">
+      <div class="rcon-line rcon-line--sys">RCON-консоль готова. Введи команду ниже.</div>
+    </div>
+    <div class="rcon-input-bar">
+      <span class="rcon-prompt" aria-hidden="true">›</span>
+      <textarea id="cmd" rows="1" placeholder="status, sm plugins list…"></textarea>
+      <button type="button" class="btn btn-accent" onclick="SendRcon();" id="rcon_btn" title="Отправить">Отправить</button>
+    </div>
+  </div>
+</div>
+<script>
+$E('html').onkeydown = function(event){
+	var event = new Event(event);
+	if (event.key == 'enter') SendRcon();
+};
+
+function SendRcon()
+{
+	xajax_SendRcon('{{ id }}', $('cmd').value, true);
+	$('cmd').value = 'Выполняю…';
+	$('cmd').disabled = 'true';
+	$('rcon_btn').disabled = 'true';
+}
+
+var scroll = {
+	toBottom: function () {
+		var el = document.getElementById('rcon_con');
+		if (el) el.scrollTop = el.scrollHeight;
+	}
+};
+</script>
+{% endif %}

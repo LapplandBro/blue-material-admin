@@ -1,0 +1,93 @@
+{% if not permissions_submissions %}
+<div class="form-page">
+  <p class="form-flash form-flash--err">Нет доступа к заявкам.</p>
+</div>
+{% else %}
+<div class="panel">
+  <header class="form-page-head">
+    <p class="form-page-kicker">Админка</p>
+    <h2 class="form-page-title">Заявки на бан</h2>
+    <p class="form-page-lead">{{ submission_count }} · клик по строке — детали</p>
+    <ul class="actions" id="banlist-nav">{{ submission_nav|raw }}</ul>
+  </header>
+  <div class="table-responsive">
+    <table class="table table-v2">
+      <thead>
+        <tr>
+          <th>Ник</th>
+          <th>SteamID / IP</th>
+          <th class="text-end">Действия</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for sub in submission_list %}
+        <tr id="sid_{{ sub.subid }}" class="opener3 banlist-row"{% if sub.hostname == "" %} onclick="xajax_ServerHostPlayers('{{ sub.server }}', 'id', 'sub{{ sub.subid }}');"{% endif %}>
+          <td>{{ sub.name|raw }}</td>
+          <td>{% if sub.SteamId != "" %}{{ sub.SteamId }}{% else %}{{ sub.sip }}{% endif %}</td>
+          <td class="text-end">
+            <a class="btn btn-sm btn-outline-secondary" href="#" onclick="xajax_SetupBan({{ sub.subid }});return false;">Забанить</a>
+            {% if permissions_editsub %}
+            <a class="btn btn-sm btn-outline-danger" href="#" onclick='RemoveSubmission({{ sub.subid }}, {{ sub.name_js|raw }}, "1"); return false;'>Удалить</a>
+            {% endif %}
+            <a class="btn btn-sm btn-outline-secondary" href="index.php?p=admin&amp;c=bans&amp;o=email&amp;type=s&amp;id={{ sub.subid }}">Контакты</a>
+          </td>
+        </tr>
+        <tr id="sid_{{ sub.subid }}a" class="banlist-detail-row">
+          <td colspan="3">
+            <div class="opener3 admin-ticket">
+              <div class="admin-detail-head">
+                <div class="admin-detail-title">Детали заявки</div>
+                <div class="admin-detail-actions">
+                  <span>{{ sub.demo|raw }}</span>
+                  <span>{{ sub.subaddcomment|raw }}</span>
+                </div>
+              </div>
+              <div class="admin-facts admin-facts--ticket">
+                <div class="admin-fact">
+                  <span class="admin-fact-label">Игрок</span>
+                  <span class="admin-fact-value">{{ sub.name|raw }}</span>
+                </div>
+                <div class="admin-fact">
+                  <span class="admin-fact-label">Добавлено</span>
+                  <span class="admin-fact-value">{{ sub.submitted }}</span>
+                </div>
+                <div class="admin-fact">
+                  <span class="admin-fact-label">SteamID</span>
+                  <span class="admin-fact-value">{% if sub.SteamId == "" %}<span class="admin-muted">не указан</span>{% else %}{{ sub.SteamId }}{% endif %}</span>
+                </div>
+                <div class="admin-fact">
+                  <span class="admin-fact-label">IP</span>
+                  <span class="admin-fact-value">{% if sub.sip == "" %}<span class="admin-muted">не указан</span>{% else %}{{ sub.sip }}{% endif %}</span>
+                </div>
+                <div class="admin-fact admin-fact--span">
+                  <span class="admin-fact-label">Причина</span>
+                  <span class="admin-fact-value">{{ sub.reason|raw }}</span>
+                </div>
+                <div class="admin-fact">
+                  <span class="admin-fact-label">Сервер</span>
+                  <span class="admin-fact-value" id="sub{{ sub.subid }}">{% if sub.hostname == "" %}<span class="admin-muted">Загрузка имени…</span>{% else %}{{ sub.hostname|raw }}{% endif %}</span>
+                </div>
+                <div class="admin-fact">
+                  <span class="admin-fact-label">Мод</span>
+                  <span class="admin-fact-value">{{ sub.mod }}</span>
+                </div>
+                <div class="admin-fact">
+                  <span class="admin-fact-label">Заявитель</span>
+                  <span class="admin-fact-value">{% if sub.subname == "" %}<span class="admin-muted">не указан</span>{% else %}{{ sub.subname }}{% endif %}</span>
+                </div>
+                <div class="admin-fact">
+                  <span class="admin-fact-label">IP заявителя</span>
+                  <span class="admin-fact-value">{{ sub.ip }}</span>
+                </div>
+                {% include 'partials/admin_ticket_comments.twig' with { comments: sub.commentdata } %}
+              </div>
+            </div>
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+<script>InitAccordion('tr.opener3', 'div.opener3', 'mainwrapper');</script>
+{% endif %}

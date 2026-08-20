@@ -1,0 +1,90 @@
+{% extends 'layout.twig' %}
+{% block extra_head %}
+<link href="{{ asset_base }}themes/blue_v2/css/forms.css" rel="stylesheet">
+{% endblock %}
+{% block topbar_title %}
+<h1 class="h5 mb-0">Апелляция бана</h1>
+{% endblock %}
+{% block content %}
+<div class="panel form-page form-page--wide" id="add-group">
+  <header class="form-page-head">
+    <p class="form-page-kicker">Апелляция</p>
+    <h1 class="form-page-title">Апелляция бана</h1>
+    {% if not page_blocked %}
+    <p class="form-page-lead">Администрация будет уведомлена. Обычно срок рассмотрения около 24 часов, но для каждой заявки он индивидуален.</p>
+    <p class="form-page-lead">Заявки с угрозами или мольбами о разбане удаляют. Уважайте труд администрации.</p>
+    {% endif %}
+  </header>
+
+  {% if flash_html %}
+  <div class="form-flash {% if flash_type == 'success' %}form-flash--ok{% else %}form-flash--err{% endif %}" role="alert" id="{% if flash_type == 'success' %}msg-green-dbg{% else %}msg-red-debug{% endif %}">
+    <div class="form-flash-title">{{ flash_title }}</div>
+    <div class="form-flash-body">{{ flash_html|raw }}</div>
+  </div>
+  {% endif %}
+
+  {% if not page_blocked %}
+  <form action="{{ form_action }}" method="post">
+    <input type="hidden" name="subprotest" value="1">
+    {% if sb_csrf %}<input type="hidden" name="sb_csrf" value="{{ sb_csrf }}" />{% endif %}
+    <div class="form-grid">
+      <div class="form-field" id="webgroup">
+        <label class="form-label" for="Type">Детали заявки</label>
+        <select onChange="changeType(this[this.selectedIndex].value);" id="Type" name="Type" class="form-select">
+          <optgroup label="Тип">
+            <option value="0"{% if type_selected == 0 %} selected{% endif %}>Steam ID</option>
+            <option value="1"{% if type_selected == 1 %} selected{% endif %}>IP Адрес</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="form-field" id="steam.row"{% if type_selected == 1 %} style="display: none;"{% endif %}>
+        <label class="form-label" for="SteamID">Ваш SteamID <span class="mandatory">*</span></label>
+        <input type="text" size="40" class="form-control" maxlength="64" value="{{ steam_id }}" id="SteamID" name="SteamID" placeholder="Введите данные (обязательное поле)">
+      </div>
+      <div class="form-field" id="ip.row"{% if type_selected != 1 %} style="display: none;"{% endif %}>
+        <label class="form-label" for="IP">Ваш IP <span class="mandatory">*</span></label>
+        <input type="text" size="40" class="form-control" maxlength="64" value="{{ ip }}" id="IP" name="IP" placeholder="Введите данные (обязательное поле)">
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="PlayerName">Ник <span class="mandatory">*</span></label>
+        <input type="text" size="40" class="form-control" maxlength="70" value="{{ player_name }}" id="PlayerName" name="PlayerName" placeholder="Введите данные (обязательное поле)">
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="EmailAddr">Ваш Email <span class="mandatory">*</span></label>
+        <input type="text" size="40" class="form-control" maxlength="70" value="{{ player_email }}" id="EmailAddr" name="EmailAddr" placeholder="Введите данные (обязательное поле)">
+      </div>
+      <div class="form-field form-field--full">
+        <label class="form-label" for="BanReason">Причина <span class="mandatory">*</span></label>
+        <textarea id="BanReason" name="BanReason" cols="30" rows="5" class="form-control" placeholder="От информативности/убедительности зависит Ваш разбан (обязательное поле)">{{ reason }}</textarea>
+      </div>
+      <div class="form-field form-field--captcha">
+        <label class="form-label" for="kapcha">Проверочный код <span class="mandatory">*</span></label>
+        <div class="form-captcha">
+          <img id="protest_captcha_img" src="includes/captcha/captcha.php?t={{ captcha_t }}" width="170" height="56" alt="Капча" />
+          <button type="button" class="btn btn-outline-secondary form-captcha-refresh" title="Обновить код" onclick="var i=document.getElementById('protest_captcha_img'); if(i) i.src='includes/captcha/captcha.php?t='+Date.now();">Обновить</button>
+          <input type="text" class="form-control" id="kapcha" name="kapcha" placeholder="Символы с картинки" required maxlength="8" autocomplete="off" />
+        </div>
+      </div>
+    </div>
+    <p class="form-note">Перед тем как продолжить, проверьте <a href="{{ banlist_url }}">банлист</a> на наличие Вашего бана. Если бан выдан ложно — напишите протест.</p>
+    <p class="form-legend"><span class="mandatory">*</span> = обязательные поля</p>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-accent" id="alogin" name="alogin" value="Отправить">Отправить</button>
+    </div>
+  </form>
+  {% endif %}
+</div>
+{% endblock %}
+{% block extra_js %}
+{% if not page_blocked %}
+<script type="text/javascript">
+function changeType(szListValue)
+{
+	$('steam.row').style.display = (szListValue == "0" ? "" : "none");
+	$('ip.row').style.display    = (szListValue == "1" ? "" : "none");
+}
+$('Type').options[{{ type_selected }}].selected = true;
+changeType({{ type_selected }});
+</script>
+{% endif %}
+{% endblock %}

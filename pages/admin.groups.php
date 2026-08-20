@@ -30,42 +30,65 @@ global $userbank, $theme;
 
 echo '<div id="admin-page-content">';
 
+$web_group_count = array();
+$web_group_admins = array();
+$server_admin_group_count = array();
+$server_admin_group_admins = array();
+$server_admin_group_overrides = array();
+$server_group_count = array();
+
 // web groups
 $web_group_list = $GLOBALS['db']->GetAll("SELECT * FROM `" . DB_PREFIX . "_groups` WHERE type != '3'");
+if (!is_array($web_group_list))
+	$web_group_list = array();
 for($i=0;$i<count($web_group_list);$i++)
 {
-	$web_group_list[$i]['permissions'] = BitToString($web_group_list[$i]['flags'], $web_group_list[$i]['type']);
+	if (!is_array($web_group_list[$i]))
+		continue;
+	$web_group_list[$i]['permissions'] = BitToString(isset($web_group_list[$i]['flags']) ? $web_group_list[$i]['flags'] : 0, isset($web_group_list[$i]['type']) ? $web_group_list[$i]['type'] : 0);
 	$query = $GLOBALS['db']->GetRow("SELECT COUNT(gid) AS cnt FROM `" . DB_PREFIX . "_admins` WHERE gid = '" . $web_group_list[$i]['gid'] . "'");
-	$web_group_count[$i] = $query['cnt'];
-	$web_group_admins[$i] = $GLOBALS['db']->GetAll("SELECT aid, user, authid FROM `" . DB_PREFIX . "_admins` WHERE gid = '" . $web_group_list[$i]['gid'] . "'");
+	$web_group_count[$i] = (is_array($query) && isset($query['cnt'])) ? $query['cnt'] : 0;
+	$webAdmins = $GLOBALS['db']->GetAll("SELECT aid, user, authid FROM `" . DB_PREFIX . "_admins` WHERE gid = '" . $web_group_list[$i]['gid'] . "'");
+	$web_group_admins[$i] = is_array($webAdmins) ? $webAdmins : array();
 }
 
 // Server admin groups
 $server_admin_group_list = $GLOBALS['db']->GetAll("SELECT * FROM `" . DB_PREFIX . "_srvgroups`") ;
+if (!is_array($server_admin_group_list))
+	$server_admin_group_list = array();
 for($i=0;$i<count($server_admin_group_list);$i++)
 {
-	$server_admin_group_list[$i]['permissions'] = SmFlagsToSb($server_admin_group_list[$i]['flags']);
+	if (!is_array($server_admin_group_list[$i]))
+		continue;
+	$server_admin_group_list[$i]['permissions'] = SmFlagsToSb(isset($server_admin_group_list[$i]['flags']) ? $server_admin_group_list[$i]['flags'] : '');
 	$srvGroup = $GLOBALS['db']->qstr($server_admin_group_list[$i]['name']);
 	$query = $GLOBALS['db']->GetRow("SELECT COUNT(aid) AS cnt FROM `" . DB_PREFIX . "_admins` WHERE srv_group = $srvGroup;");
-	$server_admin_group_count[$i] = $query['cnt'];
-	$server_admin_group_admins[$i] = $GLOBALS['db']->GetAll("SELECT aid, user, authid FROM `" . DB_PREFIX . "_admins` WHERE srv_group = $srvGroup;");
-	$server_admin_group_overrides[$i] = $GLOBALS['db']->GetAll("SELECT type, name, access FROM `" . DB_PREFIX . "_srvgroups_overrides` WHERE group_id = ?", array($server_admin_group_list[$i]['id']));
+	$server_admin_group_count[$i] = (is_array($query) && isset($query['cnt'])) ? $query['cnt'] : 0;
+	$srvAdmins = $GLOBALS['db']->GetAll("SELECT aid, user, authid FROM `" . DB_PREFIX . "_admins` WHERE srv_group = $srvGroup;");
+	$server_admin_group_admins[$i] = is_array($srvAdmins) ? $srvAdmins : array();
+	$srvOverrides = $GLOBALS['db']->GetAll("SELECT type, name, access FROM `" . DB_PREFIX . "_srvgroups_overrides` WHERE group_id = ?", array($server_admin_group_list[$i]['id']));
+	$server_admin_group_overrides[$i] = is_array($srvOverrides) ? $srvOverrides : array();
 }
 
 
 // server groups
 $server_group_list = $GLOBALS['db']->GetAll("SELECT * FROM `" . DB_PREFIX . "_groups` WHERE type = '3'") ;
+if (!is_array($server_group_list))
+	$server_group_list = array();
 for($i=0;$i<count($server_group_list);$i++)
 {
+	if (!is_array($server_group_list[$i]))
+		continue;
 	$query = $GLOBALS['db']->GetRow("SELECT COUNT(server_id) AS cnt FROM `" . DB_PREFIX . "_servers_groups` WHERE `group_id` = ".  $server_group_list[$i]['gid'] ) ;
-	$server_group_count[$i] = $query['cnt'];
-	$server_group_list[$i]['servers'] = $GLOBALS['db']->GetAll("SELECT server_id FROM `" . DB_PREFIX . "_servers_groups` WHERE group_id = " . $server_group_list[$i]['gid']);
+	$server_group_count[$i] = (is_array($query) && isset($query['cnt'])) ? $query['cnt'] : 0;
+	$serversIn = $GLOBALS['db']->GetAll("SELECT server_id FROM `" . DB_PREFIX . "_servers_groups` WHERE group_id = " . $server_group_list[$i]['gid']);
+	$server_group_list[$i]['servers'] = is_array($serversIn) ? $serversIn : array();
 }
 
 
 
 // List Group
-echo '<div id="0" style="display:none;">';
+echo '<div id="0" class="admin-pane is-on">';
 
 	$theme->assign('permission_listgroups', 	$userbank->HasAccess(ADMIN_OWNER|ADMIN_LIST_GROUPS));
 	$theme->assign('permission_editgroup',		$userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_GROUPS));
@@ -82,18 +105,16 @@ echo '<div id="0" style="display:none;">';
 	$theme->assign('server_group_list', 		$server_admin_group_list);
 	$theme->assign('server_group_count',		count($server_group_list));
 	$theme->assign('server_list', 				$server_group_list);
-	$theme->display('page_admin_groups_list.tpl');
+	sb_ui_v2_theme_fragment('admin_groups_list.twig');
 
 echo '</div>';
 
 
 
 // Add Groups
-echo '<div id="1" style="display:none;">';
+echo '<div id="1" class="admin-pane">';
 	$theme->assign('permission_addgroup', 		$userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_GROUP));
-	$theme->display('page_admin_groups_add.tpl');
+	sb_ui_v2_theme_fragment('admin_groups_add.twig');
 echo '</div>';
-
+echo '</div>';
 ?>
-
-</div>

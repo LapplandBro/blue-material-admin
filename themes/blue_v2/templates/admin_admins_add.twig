@@ -1,0 +1,138 @@
+{% if not permission_addadmin %}
+<div class="form-page">
+  <p class="form-flash form-flash--err">Доступ запрещён.</p>
+</div>
+{% else %}
+<div class="form-page admin-form" id="add-group">
+  <header class="form-page-head">
+    <p class="form-page-kicker">Админка</p>
+    <h2 class="form-page-title">Новый админ</h2>
+    <p class="form-page-lead">Логин, SteamID, группы и срок.</p>
+  </header>
+  <div class="form-grid">
+    <div class="form-field form-field--full">
+      <label class="form-label" for="adminname">Логин</label>
+      <input type="text" tabindex="1" class="form-control" id="adminname" name="adminname" placeholder="Логин">
+      <div id="name.msg" class="msg-err"></div>
+    </div>
+    <div class="form-field form-field--full">
+      <label class="form-label" for="steam">SteamID</label>
+      <input type="text" tabindex="2" class="form-control" id="steam" name="steam" placeholder="STEAM_0:…">
+      <div id="steam.msg" class="msg-err"></div>
+    </div>
+    <div class="form-field form-field--full">
+      <label class="form-label" for="email">E-Mail</label>
+      <input type="text" tabindex="3" class="form-control" id="email" name="email" placeholder="Почта">
+      <div id="email.msg" class="msg-err"></div>
+    </div>
+    <div class="form-field">
+      <label class="form-label" for="password">Пароль</label>
+      <input type="password" tabindex="4" class="form-control" id="password" name="password" placeholder="Пароль">
+      <div id="password.msg" class="msg-err"></div>
+    </div>
+    <div class="form-field">
+      <label class="form-label" for="password2">Повторите пароль</label>
+      <input type="password" tabindex="5" class="form-control" id="password2" name="password2" placeholder="Повтор">
+      <div id="password.msg" class="msg-err"></div>
+    </div>
+    <div class="form-field form-field--full">
+      <label class="form-label" for="a_useserverpass">Пароль на сервер</label>
+      <label class="form-check">
+        <input class="form-check-input" type="checkbox" id="a_useserverpass" name="a_useserverpass" tabindex="6" onclick="$('a_serverpass').disabled = !$(this).checked;">
+        <span class="form-check-label">Включить</span>
+      </label>
+      <input type="password" tabindex="7" class="form-control mt-2" id="a_serverpass" name="a_serverpass" placeholder="Не обязательно" disabled>
+      <div id="a_serverpass.msg" class="msg-err"></div>
+    </div>
+    <div class="form-field form-field--full">
+      <label class="form-label" for="a_foreverperiod">Доступ</label>
+      <p class="form-help">На сколько дней выдавать права. «Навсегда» отключает поле срока.</p>
+      <label class="form-check">
+        <input class="form-check-input" type="checkbox" id="a_foreverperiod" name="a_foreverperiod" tabindex="9" onclick="$('a_period').disabled = $(this).checked;">
+        <span class="form-check-label">Навсегда</span>
+      </label>
+      <input type="text" tabindex="8" class="form-control mt-2" id="a_period" name="a_period" value="30">
+      <div id="a_period.msg" class="msg-err"></div>
+    </div>
+    <div class="form-field">
+      <label class="form-label" for="discord">Discord</label>
+      <input type="text" tabindex="9" class="form-control" id="discord" name="discord" placeholder="Не обязательно">
+      <div id="discord.msg" class="msg-err"></div>
+    </div>
+    <div class="form-field">
+      <label class="form-label" for="vk">VK(ID)</label>
+      <input type="text" tabindex="10" class="form-control" id="vk" name="vk" placeholder="Не обязательно">
+      <div id="vk.msg" class="msg-err"></div>
+    </div>
+    <div class="form-field form-field--full">
+      <label class="form-label" for="comment">Комментарий</label>
+      <textarea tabindex="10" class="form-control" id="comment" name="comment" rows="3" placeholder="Не обязательно. HTML не нужен."></textarea>
+      <div id="comment.msg" class="msg-err"></div>
+    </div>
+  </div>
+
+  <h3 class="admin-form-section">Доступ к серверу(ам)</h3>
+  <p class="form-page-lead">Сервер или группа серверов, которые он будет администрировать.</p>
+  <div class="form-checkboxes" id="group.details">
+    {% for group in group_list|default([]) %}
+    <label class="form-check" for="g_{{ group.gid }}_g">
+      <input class="form-check-input" type="checkbox" name="group[]" id="g_{{ group.gid }}_g" value="g{{ group.gid }}">
+      <span class="form-check-label">{{ group.name }} <i>(Группа сервера)</i></span>
+    </label>
+    {% endfor %}
+    {% for server in server_list|default([]) %}
+    <label class="form-check" for="s_{{ server.sid }}_s">
+      <input class="form-check-input" type="checkbox" name="servers[]" id="s_{{ server.sid }}_s" value="s{{ server.sid }}">
+      <span class="form-check-label" id="sa{{ server.sid }}"><i>Получение имени сервера… {{ server.ip }}:{{ server.port }}</i></span>
+    </label>
+    {% endfor %}
+  </div>
+
+  <h3 class="admin-form-section">Разрешения админа</h3>
+  <p class="form-page-lead">Выборочные права, новая группа или готовая группа.</p>
+  <div class="form-grid" id="group.details">
+    <div class="form-field form-field--full" id="admingroup">
+      <label class="form-label" for="serverg">Серверная группа</label>
+      <select class="form-select" tabindex="11" onchange="update_server()" name="serverg" id="serverg">
+        <optgroup label="Основное">
+          <option value="-2">Выберите серверную группу</option>
+          <option value="-3">Нет разрешений</option>
+          <option value="c">Выборочные права</option>
+          <option value="n">Новая группа</option>
+        </optgroup>
+        <optgroup label="Группы">
+          {% for server_wg in server_admin_group_list|default([]) %}
+          <option value="{{ server_wg.id }}">{{ server_wg.name }}</option>
+          {% endfor %}
+        </optgroup>
+      </select>
+      <div id="server.msg" class="msg-err"></div>
+    </div>
+    <div class="form-field form-field--full" id="serverperm" style="display: none;"></div>
+    <div class="form-field form-field--full" id="webgroup">
+      <label class="form-label" for="webg">Веб-группа</label>
+      <select tabindex="9" onchange="update_web()" name="webg" id="webg" class="form-select">
+        <optgroup label="Основное">
+          <option value="-2">Выберите веб-группу</option>
+          <option value="-3">Нет разрешений</option>
+          <option value="c">Выборочные права</option>
+          <option value="n">Новая группа</option>
+        </optgroup>
+        <optgroup label="Группы">
+          {% for server_g in server_group_list|default([]) %}
+          <option value="{{ server_g.gid }}">{{ server_g.name }}</option>
+          {% endfor %}
+        </optgroup>
+      </select>
+      <div id="web.msg" class="msg-err"></div>
+    </div>
+    <div class="form-field form-field--full" id="webperm" style="display: none;"></div>
+  </div>
+
+  <div class="form-actions">
+    <button type="button" class="btn btn-accent" id="aadmin" onclick="ConvertSteamID_3to2('steam');ProcessAddAdmin();">Добавить админа</button>
+    <button type="button" class="btn btn-outline-secondary" id="aback" onclick="sbAdminBack(0, 'index.php?p=admin&amp;c=admins')">Назад</button>
+  </div>
+  {{ server_script|raw }}
+</div>
+{% endif %}

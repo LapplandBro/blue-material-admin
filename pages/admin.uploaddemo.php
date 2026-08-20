@@ -64,11 +64,13 @@ if(isset($_POST['upload']))
 	}
 }
 
-$theme->assign("title", "Загрузить демо");
-$theme->assign("message", $message);
-$theme->assign("input_name", "demo_file");
-$theme->assign("form_name", "demup");
-$theme->assign("formats", "DEM, ZIP, RAR, 7Z, BZ2 или GZ");
-$theme->assign("sb_csrf", function_exists('sb_csrf_token') ? sb_csrf_token() : '');
+$uploadVars = array(
+	"title" => "Загрузить демо",
+	"message" => $message,
+	"input_name" => "demo_file",
+	"form_name" => "demup",
+	"formats" => "DEM, ZIP, RAR, 7Z, BZ2 или GZ",
+	"sb_csrf" => function_exists('sb_csrf_token') ? sb_csrf_token() : '',
+);
 
-$theme->display('page_uploadfile.tpl');
+echo sb_ui_v2_fragment('uploadfile.twig', $uploadVars);

@@ -1,0 +1,100 @@
+{% extends 'layout.twig' %}
+{% block extra_head %}
+<link href="{{ asset_base }}themes/blue_v2/css/auth.css" rel="stylesheet">
+{% if login2fa_mode == 'enroll' %}
+<script src="{{ asset_base }}scripts/qrcode.min.js"></script>
+{% endif %}
+{% endblock %}
+{% block body %}
+<div class="login-screen">
+  <div class="panel login-card{% if login2fa_mode == 'enroll' or login2fa_mode == 'recovery' %} auth-card-wide{% endif %}">
+    <a class="brand login-brand" href="index.php?p=home">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 32 32" width="28" height="28" focusable="false">
+          <path class="brand-mark-shield" d="M16 2.2l11 5v9.1c0 7.1-4.8 12.3-11 13.9C9.8 28.6 5 23.4 5 16.3v-9.1l11-5z"/>
+          <path class="brand-mark-core" d="M16 8.1l6.1 2.6v5.1c0 4-2.6 7-6.1 8.1-3.5-1.1-6.1-4.1-6.1-8.1v-5.1L16 8.1z"/>
+          <path class="brand-mark-flame" d="M16 13.1c1.5 1.3 2.4 2.5 2.4 3.9a2.4 2.4 0 1 1-4.8 0c0-1.4.9-2.6 2.4-3.9z"/>
+        </svg>
+      </span>
+      <span class="brand-text">BLUE <span>ADMIN</span></span>
+    </a>
+    <p class="login-kicker">Панель администратора</p>
+    {% if login2fa_mode == 'enroll' %}
+      <h1 class="login-title">Настройка 2FA</h1>
+      <p class="login-lead">Для владельца панели обязательна двухфакторная аутентификация (TOTP).</p>
+    {% elseif login2fa_mode == 'recovery' %}
+      <h1 class="login-title">2FA включена</h1>
+      <p class="login-lead">Сохраните recovery-коды — они показываются один раз.</p>
+    {% else %}
+      <h1 class="login-title">Подтверждение входа</h1>
+      <p class="login-lead">Введите код из приложения-аутентификатора для {{ totp_user }}.</p>
+    {% endif %}
+
+    {% if error %}
+    <div class="alert alert-danger" role="alert">{{ error }}</div>
+    {% endif %}
+
+    {% if login2fa_mode == 'recovery' %}
+      <div class="alert alert-warning" role="alert">
+        <p class="auth-note">Запишите эти коды в надёжное место. Каждый код можно использовать один раз, если нет доступа к приложению.</p>
+        <ul class="recovery-codes">
+        {% for c in recovery_codes %}
+          <li>{{ c }}</li>
+        {% endfor %}
+        </ul>
+      </div>
+      <div class="login-actions">
+        <a class="btn btn-accent" href="{{ account_url }}">Продолжить</a>
+      </div>
+    {% elseif login2fa_mode == 'enroll' %}
+      <div class="totp-setup">
+        <p class="login-lead">1. Отсканируйте QR в Google Authenticator / Aegis / 1Password.</p>
+        <div id="totp-qr" class="totp-qr" data-otpauth="{{ totp_otpauth }}"></div>
+        <p class="login-lead">Если камеры нет — введите секрет вручную:</p>
+        <p class="totp-secret-wrap"><code id="totp-secret-text" class="totp-secret">{{ totp_secret }}</code></p>
+        <p class="login-lead"><a href="{{ totp_otpauth }}">Открыть otpauth:// на этом устройстве</a></p>
+      </div>
+      <form method="post" action="{{ form_action }}">
+        {% if sb_csrf %}<input type="hidden" name="sb_csrf" value="{{ sb_csrf }}" />{% endif %}
+        <input type="hidden" name="totp_enroll" value="1" />
+        <div class="field">
+          <label class="form-label" for="code">2. Код подтверждения</label>
+          <input type="text" class="form-control" id="code" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="6 цифр" required>
+          <div class="auth-help">Код из приложения, пока QR ещё на экране.</div>
+        </div>
+        <div class="login-actions">
+          <button type="submit" class="btn btn-accent">Включить 2FA и войти</button>
+        </div>
+      </form>
+    {% else %}
+      <form method="post" action="{{ form_action }}">
+        {% if sb_csrf %}<input type="hidden" name="sb_csrf" value="{{ sb_csrf }}" />{% endif %}
+        <input type="hidden" name="totp_challenge" value="1" />
+        <div class="field">
+          <label class="form-label" for="code">Код 2FA</label>
+          <input type="text" class="form-control" id="code" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="16" placeholder="6 цифр или recovery-код" required autofocus>
+          <div class="auth-help">Либо одноразовый recovery-код, если приложения нет под рукой.</div>
+        </div>
+        <div class="login-actions">
+          <button type="submit" class="btn btn-accent">Подтвердить</button>
+          <a class="btn btn-outline-secondary" href="{{ login_url }}">Отмена</a>
+        </div>
+      </form>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+{% if login2fa_mode == 'enroll' %}
+<script>
+(function () {
+  var box = document.getElementById('totp-qr');
+  if (!box || typeof QRCode === 'undefined') return;
+  var uri = box.getAttribute('data-otpauth') || '';
+  if (!uri) return;
+  box.innerHTML = '';
+  new QRCode(box, { text: uri, width: 192, height: 192, correctLevel: QRCode.CorrectLevel.M });
+})();
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,20 @@
+<div id="admin-page-content">
+  <div class="form-page admin-form" id="add-group">
+    <header class="form-page-head">
+      <p class="form-page-kicker">Редактирование</p>
+      <h2 class="form-page-title">Привилегии</h2>
+      <p class="form-page-lead">{{ admin_perm_name }} · свои флаги вне групп.</p>
+    </header>
+    <input type="hidden" id="admin_id" value="{{ admin_perm_id }}">
+    <div class="admin-perms-block">
+      {{ web_perms_html|raw }}
+    </div>
+    <div class="admin-perms-block">
+      {{ server_perms_html|raw }}
+    </div>
+    <div class="form-actions">
+      <button type="button" onclick="ProcessEditAdminPermissions();" class="btn btn-accent" id="editadmingroup">Сохранить</button>
+      <button type="button" onclick="sbGo('index.php?p=admin&amp;c=admins')" class="btn btn-outline-secondary" id="back">Назад</button>
+    </div>
+  </div>
+</div>

@@ -87,6 +87,8 @@ function GetLocation()
  */
 function BuildPageHeader()
 {
+	if (function_exists('sb_ui_v2_enabled') && sb_ui_v2_enabled())
+		return;
 	include TEMPLATES_PATH . "/header.php";
 }
 
@@ -97,6 +99,8 @@ function BuildPageHeader()
  */
 function BuildSubMenu()
 {
+	if (function_exists('sb_ui_v2_enabled') && sb_ui_v2_enabled())
+		return;
 	global $theme;
 	$theme->left_delimiter = '<!--{';
 	$theme->right_delimiter = '}-->';
@@ -118,6 +122,9 @@ function BuildContHeader()
 		RedirectJS('index.php?p=login');
 		PageDie();
 	}
+
+	if (function_exists('sb_ui_v2_enabled') && sb_ui_v2_enabled())
+		return;
 
 	if(!isset($_GET['s']) && isset($GLOBALS['pagetitle']))
 	{
@@ -342,6 +349,63 @@ function sb_menu_extract_icon($text)
 	return '';
 }
 
+/**
+ * Короткая подпись пункта в сайдбаре. Свои названия из админки не трогает.
+ */
+function sb_menu_nav_label($url, $title)
+{
+	$title = trim((string)$title);
+	$page = '';
+	if (preg_match('/(?:^|[?&])p=([a-z0-9_]+)/i', (string)$url, $m))
+		$page = strtolower($m[1]);
+
+	$short = array(
+		'home' => 'Главная',
+		'servers' => 'Серверы',
+		'banlist' => 'Баны',
+		'commslist' => 'Муты / гаги',
+		'submit' => 'Жалоба',
+		'protest' => 'Апелляция',
+		'adminlist' => 'Админы',
+		'pay' => 'Ваучер',
+	);
+	$defaults = array(
+		'home' => array('Главная'),
+		'servers' => array('Серверы'),
+		'banlist' => array('Список банов', 'Баны'),
+		'commslist' => array('Список мутов/гагов', 'Муты / гаги', 'Муты'),
+		'submit' => array('Пожаловаться на игрока', 'Жалоба'),
+		'protest' => array('Апелляция бана', 'Апелляция'),
+		'adminlist' => array('Админлист', 'Админы'),
+		'pay' => array('Активировать ваучер', 'Ваучер'),
+		'admin' => array('Админ-панель', 'Админка'),
+	);
+
+	$isAdminHub = ($page === 'admin' && !preg_match('/(?:[?&])c=/i', (string)$url));
+	if ($isAdminHub) {
+		if ($title === '' || in_array($title, $defaults['admin'], true))
+			return 'Админка';
+		return $title;
+	}
+	if ($page !== '' && isset($short[$page])) {
+		if ($title === '' || (isset($defaults[$page]) && in_array($title, $defaults[$page], true)))
+			return $short[$page];
+	}
+
+	$byTitle = array(
+		'Список банов' => 'Баны',
+		'Список мутов/гагов' => 'Муты / гаги',
+		'Пожаловаться на игрока' => 'Жалоба',
+		'Апелляция бана' => 'Апелляция',
+		'Админлист' => 'Админы',
+		'Активировать ваучер' => 'Ваучер',
+		'Админ-панель' => 'Админка',
+	);
+	if (isset($byTitle[$title]))
+		return $byTitle[$title];
+	return $title;
+}
+
 /** Убирает HTML-иконку из заголовка, оставляя чистый текст. */
 function sb_menu_strip_icon($text)
 {
@@ -398,16 +462,296 @@ function sb_menu_icon_picker_html($selected = '')
 			. ' data-icon="' . htmlspecialchars($class, ENT_QUOTES, 'UTF-8') . '"'
 			. ' title="' . htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . '">';
 		if ($class === '')
-			$html .= '<span class="menu-icon-pick__auto">A</span>';
-		else
-			$html .= '<i class="' . htmlspecialchars($class, ENT_QUOTES, 'UTF-8') . '"></i>';
+			$html .= '<span class="menu-icon-pick__auto">Авто</span>';
+		else {
+			$bi = function_exists('sb_menu_zmdi_to_bi') ? sb_menu_zmdi_to_bi($class) : '';
+			if ($bi === 'sb-bi-vk')
+				$html .= '<i class="sb-bi-vk" aria-hidden="true"></i>';
+			elseif ($bi !== '')
+				$html .= '<i class="bi ' . htmlspecialchars($bi, ENT_QUOTES, 'UTF-8') . '" aria-hidden="true"></i>';
+			else
+				$html .= '<i class="' . htmlspecialchars($class, ENT_QUOTES, 'UTF-8') . '" aria-hidden="true"></i>';
+		}
 		$html .= '<span class="menu-icon-pick__label">' . htmlspecialchars($label, ENT_QUOTES, 'UTF-8') . '</span>';
 		$html .= '</button>';
 	}
 
 	$html .= '</div></div>';
-	$html .= '<script>(function(){var r=document.querySelector("[data-menu-icon-picker]");if(!r)return;var h=r.querySelector("#menu_icon");r.addEventListener("click",function(e){var b=e.target.closest(".menu-icon-pick");if(!b||!r.contains(b))return;e.preventDefault();var v=b.getAttribute("data-icon")||"";h.value=v;var all=r.querySelectorAll(".menu-icon-pick");for(var i=0;i<all.length;i++)all[i].classList.remove("is-selected");b.classList.add("is-selected");});})();</script>';
+	$html .= '<script>(function(){var roots=document.querySelectorAll("[data-menu-icon-picker]");for(var n=0;n<roots.length;n++){(function(r){if(r.getAttribute("data-bound"))return;r.setAttribute("data-bound","1");var h=r.querySelector("input[name=menu_icon]");r.addEventListener("click",function(e){var b=e.target.closest(".menu-icon-pick");if(!b||!r.contains(b))return;e.preventDefault();if(h)h.value=b.getAttribute("data-icon")||"";var all=r.querySelectorAll(".menu-icon-pick");for(var i=0;i<all.length;i++)all[i].classList.remove("is-selected");b.classList.add("is-selected");});})(roots[n]);}})();</script>';
 	return $html;
+}
+
+/**
+ * zmdi / sb-menu-ico (как в БД) → класс Bootstrap Icons для Blue V2.
+ */
+function sb_menu_zmdi_to_bi($class)
+{
+	static $map = null;
+	if ($map === null) {
+		$map = array(
+			'zmdi zmdi-home' => 'bi-house-door',
+			'zmdi zmdi-dns' => 'bi-hdd-stack',
+			'zmdi zmdi-block-alt' => 'bi-shield-x',
+			'zmdi zmdi-mic-off' => 'bi-mic-mute',
+			'zmdi zmdi-accounts' => 'bi-people',
+			'zmdi zmdi-shield-security' => 'bi-gear',
+			'zmdi zmdi-flag' => 'bi-flag',
+			'zmdi zmdi-balance' => 'bi-megaphone',
+			'zmdi zmdi-card' => 'bi-credit-card',
+			'zmdi zmdi-shopping-cart' => 'bi-cart',
+			'zmdi zmdi-shopping-cart-plus' => 'bi-ticket-perforated',
+			'zmdi zmdi-steam' => 'bi-steam',
+			'zmdi zmdi-vk' => 'sb-bi-vk',
+			'sb-menu-ico sb-menu-ico-youtube' => 'bi-youtube',
+			'sb-menu-ico sb-menu-ico-telegram' => 'bi-telegram',
+			'zmdi zmdi-comments' => 'bi-discord',
+			'zmdi zmdi-facebook' => 'bi-facebook',
+			'zmdi zmdi-twitter' => 'bi-twitter-x',
+			'zmdi zmdi-instagram' => 'bi-instagram',
+			'zmdi zmdi-globe' => 'bi-globe',
+			'zmdi zmdi-open-in-new' => 'bi-box-arrow-up-right',
+			'zmdi zmdi-link' => 'bi-link-45deg',
+			'zmdi zmdi-chart' => 'bi-bar-chart-line',
+			'zmdi zmdi-swap' => 'bi-arrow-left-right',
+			'zmdi zmdi-code-setting' => 'bi-braces',
+			'zmdi zmdi-settings' => 'bi-sliders',
+			'zmdi zmdi-info' => 'bi-info-circle',
+			'zmdi zmdi-help' => 'bi-question-circle',
+			'zmdi zmdi-alert-circle' => 'bi-exclamation-triangle',
+			'zmdi zmdi-notifications' => 'bi-bell',
+			'zmdi zmdi-email' => 'bi-envelope',
+			'zmdi zmdi-phone' => 'bi-telephone',
+			'zmdi zmdi-account' => 'bi-person',
+			'zmdi zmdi-accounts-list' => 'bi-person-lines-fill',
+			'zmdi zmdi-assignment' => 'bi-file-text',
+			'zmdi zmdi-file-text' => 'bi-file-earmark-text',
+			'zmdi zmdi-calendar' => 'bi-calendar3',
+			'zmdi zmdi-time' => 'bi-clock',
+			'zmdi zmdi-search' => 'bi-search',
+			'zmdi zmdi-download' => 'bi-download',
+			'zmdi zmdi-upload' => 'bi-upload',
+			'zmdi zmdi-cloud' => 'bi-cloud',
+			'zmdi zmdi-wifi' => 'bi-wifi',
+			'zmdi zmdi-gamepad' => 'bi-controller',
+			'zmdi zmdi-portable-wifi' => 'bi-broadcast',
+			'zmdi zmdi-headset' => 'bi-headset',
+			'zmdi zmdi-volume-up' => 'bi-volume-up',
+			'zmdi zmdi-equalizer' => 'bi-sliders2',
+			'zmdi zmdi-mic' => 'bi-mic',
+			'zmdi zmdi-playlist-audio' => 'bi-music-note-list',
+			'zmdi zmdi-comment-text' => 'bi-chat-left-text',
+			'zmdi zmdi-star' => 'bi-star',
+			'zmdi zmdi-favorite' => 'bi-heart',
+			'zmdi zmdi-fire' => 'bi-fire',
+			'zmdi zmdi-flash' => 'bi-lightning',
+			'zmdi zmdi-money' => 'bi-cash-stack',
+			'zmdi zmdi-balance-wallet' => 'bi-wallet2',
+			'zmdi zmdi-gift' => 'bi-gift',
+			'zmdi zmdi-ticket-star' => 'bi-ticket-perforated',
+			'zmdi zmdi-chevron-right' => 'bi-chevron-right',
+		);
+	}
+	$class = trim(preg_replace('/\s+/', ' ', (string)$class));
+	if ($class === '')
+		return '';
+	if (isset($map[$class]))
+		return $map[$class];
+	foreach ($map as $from => $to) {
+		$tail = preg_replace('/^(?:zmdi|sb-menu-ico)\s+/', '', $from);
+		if ($tail !== '' && (strpos($class, $tail) !== false || $class === $tail))
+			return $to;
+	}
+	return 'bi-link-45deg';
+}
+
+function sb_menu_icon_bi($stored, $url, $title)
+{
+	$src = trim((string)$stored);
+	if ($src === '')
+		$src = sb_menu_icon($url, $title);
+	$bi = sb_menu_zmdi_to_bi($src);
+	return ($bi !== '') ? $bi : 'bi-link-45deg';
+}
+
+function sb_menu_item_is_active($url)
+{
+	$p = isset($_GET['p']) ? (string)$_GET['p'] : '';
+	$c = isset($_GET['c']) ? (string)$_GET['c'] : '';
+	if ($p === '' || $p === 'default')
+		$p = 'home';
+	$u = html_entity_decode((string)$url, ENT_QUOTES, 'UTF-8');
+	$path = $u;
+	$qs = array();
+	$qpos = strpos($u, '?');
+	if ($qpos !== false) {
+		$path = substr($u, 0, $qpos);
+		$query = substr($u, $qpos + 1);
+		if ($query !== '')
+			parse_str($query, $qs);
+	}
+	$path = trim($path, '/');
+	if ($path === '.' || $path === './')
+		$path = '';
+	if (!empty($qs['p']) && (string)$qs['p'] === $p) {
+		if (!empty($qs['c']))
+			return ($c !== '' && (string)$qs['c'] === $c);
+		if ($p === 'admin')
+			return true;
+		return ($c === '');
+	}
+	if ($p === 'admin' && $c !== '' && preg_match('#^admin/([a-zA-Z0-9_]+)$#', $path, $pm))
+		return ($pm[1] === $c);
+	if ($c === '' && $path === $p)
+		return true;
+	if ($c === '' && $p === 'home' && ($path === '' || $path === 'home'))
+		return true;
+	return false;
+}
+
+/**
+ * Включённые пункты _menu + служебные (ваучер, админ-хаб), разложенные по разделам.
+ *
+ * @return array site|tools|community|admin => list of rows
+ */
+function sb_menu_collect_groups()
+{
+	global $userbank;
+	sb_menu_ensure_group_column();
+	$groups = array(
+		'site' => array(),
+		'tools' => array(),
+		'community' => array(),
+		'admin' => array(),
+	);
+	if (empty($GLOBALS['db']))
+		return $groups;
+
+	$items = $GLOBALS['db']->GetAll(sprintf("SELECT * FROM `%s_menu` WHERE `enabled` = 1 ORDER BY `priority` DESC", DB_PREFIX));
+	if (!is_array($items))
+		$items = array();
+	foreach ($items as $item) {
+		if (!is_array($item))
+			continue;
+		$g = sb_menu_resolve_group($item);
+		if (!isset($groups[$g]))
+			$g = 'site';
+		$groups[$g][] = $item;
+	}
+
+	if (defined('SB_HOSTING_PAY_URL') && SB_HOSTING_PAY_URL !== '') {
+		$pay_label = (defined('SB_HOSTING_PAY_LABEL') && SB_HOSTING_PAY_LABEL !== '')
+			? SB_HOSTING_PAY_LABEL
+			: 'Оплатить хостинг';
+		$pay_newtab = (!defined('SB_HOSTING_PAY_NEWTAB') || SB_HOSTING_PAY_NEWTAB === '1' || SB_HOSTING_PAY_NEWTAB === 1 || SB_HOSTING_PAY_NEWTAB === true)
+			? '1' : '0';
+		$groups['site'][] = array(
+			'text' => $pay_label,
+			'url' => SB_HOSTING_PAY_URL,
+			'description' => $pay_label,
+			'newtab' => $pay_newtab,
+		);
+	}
+
+	if (isset($userbank) && is_object($userbank)
+		&& isset($GLOBALS['config']['page.vay4er']) && (string)$GLOBALS['config']['page.vay4er'] === '1'
+		&& !$userbank->is_logged_in()) {
+		$has_voucher = false;
+		foreach ($groups as $glist) {
+			foreach ($glist as $it) {
+				if (!empty($it['url']) && (preg_match('/(?:\?|&)p=pay\b/', $it['url']) || preg_match('#(?:^|/)pay(?:\?|$)#', $it['url']))) {
+					$has_voucher = true;
+					break 2;
+				}
+			}
+		}
+		if (!$has_voucher) {
+			$groups['site'][] = array(
+				'text' => 'Активировать ваучер',
+				'url' => function_exists('sb_url') ? sb_url('pay') : 'index.php?p=pay',
+				'description' => 'Активация ваучера',
+				'newtab' => '0',
+			);
+		}
+	}
+
+	if (isset($userbank) && is_object($userbank) && $userbank->is_admin()) {
+		$has_admin_hub = false;
+		foreach ($groups['admin'] as $aitem) {
+			$au = isset($aitem['url']) ? $aitem['url'] : '';
+			if ((preg_match('/(?:\?|&)p=admin\b/', $au) && !preg_match('/(?:\?|&)c=/', $au))
+				|| preg_match('#(?:^|/)admin/?$#', $au)) {
+				$has_admin_hub = true;
+				break;
+			}
+		}
+		if (!$has_admin_hub) {
+			$groups['admin'][] = array(
+				'text' => 'Админ-панель',
+				'url' => function_exists('sb_url') ? sb_url('admin') : 'index.php?p=admin',
+				'description' => 'Управление серверами, админами и настройками',
+				'newtab' => '0',
+			);
+		}
+	}
+
+	if (isset($userbank) && is_object($userbank) && $userbank->is_logged_in()) {
+		foreach ($groups as $gk => $glist) {
+			$filtered = array();
+			foreach ($glist as $it) {
+				$u = isset($it['url']) ? (string)$it['url'] : '';
+				if (preg_match('/(?:\?|&)p=submit\b/', $u) || preg_match('#(?:^|/)submit(?:\?|$)#', $u))
+					continue;
+				if (preg_match('/(?:\?|&)p=protest\b/', $u) || preg_match('#(?:^|/)protest(?:\?|$)#', $u))
+					continue;
+				$filtered[] = $it;
+			}
+			$groups[$gk] = $filtered;
+		}
+	}
+	return $groups;
+}
+
+/** Пункты бокового меню Blue V2. */
+function sb_ui_v2_nav_groups()
+{
+	global $userbank;
+	$labels = array(
+		'site' => 'Сайт',
+		'tools' => 'Инструменты',
+		'community' => 'Сообщество',
+		'admin' => 'Админка',
+	);
+	$out = array();
+	$groups = sb_menu_collect_groups();
+	foreach ($groups as $gkey => $list) {
+		if (empty($list) || !isset($labels[$gkey]))
+			continue;
+		$items = array();
+		foreach ($list as $item) {
+			if (!is_array($item))
+				continue;
+			$url = isset($item['url']) ? (string)$item['url'] : '';
+			$title = sb_menu_strip_icon(isset($item['text']) ? $item['text'] : '');
+			$label = sb_menu_nav_label($url, $title);
+			$stored = sb_menu_extract_icon(isset($item['text']) ? $item['text'] : '');
+			$bi = sb_menu_icon_bi($stored, $url, $title);
+			$desc = isset($item['description']) ? (string)$item['description'] : '';
+			if ($desc === '' && $label !== $title)
+				$desc = $title;
+			$items[] = array(
+				'href' => $url,
+				'title' => $label,
+				'desc' => $desc,
+				'icon' => $bi,
+				'newtab' => (isset($item['newtab']) && (string)$item['newtab'] === '1'),
+				'active' => sb_menu_item_is_active($url),
+			);
+		}
+		if (!empty($items))
+			$out[] = array('key' => $gkey, 'label' => $labels[$gkey], 'items' => $items);
+	}
+
+	return $out;
 }
 
 /**
@@ -567,120 +911,17 @@ function AddTab($title, $url, $desc, $newtab=false, $active=false)
  */
 function BuildPageTabs()
 {
+	if (function_exists('sb_ui_v2_enabled') && sb_ui_v2_enabled())
+		return;
 	global $userbank;
 
-	sb_menu_ensure_group_column();
-
-	$items = $GLOBALS['db']->GetAll(sprintf("SELECT * FROM `%s_menu` WHERE `enabled` = 1 ORDER BY `priority` DESC", DB_PREFIX));
-	$groups = array(
-		'site' => array(),
-		'tools' => array(),
-		'community' => array(),
-		'admin' => array(),
-	);
+	$groups = sb_menu_collect_groups();
 	$group_labels = array(
 		'site' => 'Сайт',
 		'tools' => 'Инструменты',
 		'community' => 'Сообщество',
 		'admin' => 'Админка',
 	);
-
-	foreach ($items as $item)
-	{
-		$g = sb_menu_resolve_group($item);
-		if (!isset($groups[$g]))
-			$g = 'site';
-		$groups[$g][] = $item;
-	}
-
-	// Пункт «Оплатить хостинг» из config.php (SB_HOSTING_PAY_*)
-	if (defined('SB_HOSTING_PAY_URL') && SB_HOSTING_PAY_URL !== '')
-	{
-		$pay_label = (defined('SB_HOSTING_PAY_LABEL') && SB_HOSTING_PAY_LABEL !== '')
-			? SB_HOSTING_PAY_LABEL
-			: 'Оплатить хостинг';
-		$pay_newtab = (!defined('SB_HOSTING_PAY_NEWTAB') || SB_HOSTING_PAY_NEWTAB === '1' || SB_HOSTING_PAY_NEWTAB === 1 || SB_HOSTING_PAY_NEWTAB === true)
-			? '1'
-			: '0';
-		$pay_item = array(
-			'text' => $pay_label,
-			'url' => SB_HOSTING_PAY_URL,
-			'description' => $pay_label,
-			'newtab' => $pay_newtab,
-		);
-		$groups['site'][] = $pay_item;
-	}
-
-	// Ваучеры: пункт активации только гостям (создаёт новый аккаунт; залогиненным не нужен).
-	if (isset($GLOBALS['config']['page.vay4er']) && (string)$GLOBALS['config']['page.vay4er'] === '1'
-		&& (!$userbank->is_logged_in()))
-	{
-		$has_voucher = false;
-		foreach ($groups as $glist)
-		{
-			foreach ($glist as $it)
-			{
-				if (!empty($it['url']) && (preg_match('/(?:\?|&)p=pay\b/', $it['url']) || preg_match('#(?:^|/)pay(?:\?|$)#', $it['url'])))
-				{
-					$has_voucher = true;
-					break 2;
-				}
-			}
-		}
-		if (!$has_voucher)
-		{
-			$groups['site'][] = array(
-				'text' => 'Активировать ваучер',
-				'url' => function_exists('sb_url') ? sb_url('pay') : 'index.php?p=pay',
-				'description' => 'Активация ваучера для получения админки (только для гостей)',
-				'newtab' => '0',
-			);
-		}
-	}
-
-	if ($userbank->is_admin())
-	{
-		$has_admin_hub = false;
-		foreach ($groups['admin'] as $aitem)
-		{
-			$au = $aitem['url'];
-			if ((preg_match('/(?:\?|&)p=admin\b/', $au) && !preg_match('/(?:\?|&)c=/', $au))
-				|| preg_match('#(?:^|/)admin/?$#', $au))
-			{
-				$has_admin_hub = true;
-				break;
-			}
-		}
-		if (!$has_admin_hub)
-		{
-			$groups['admin'][] = array(
-				'text' => 'Админ-панель',
-				'url' => function_exists('sb_url') ? sb_url('admin') : 'index.php?p=admin',
-				'description' => 'Управление серверами, админами и настройками',
-				'newtab' => '0',
-			);
-		}
-	}
-
-	// Жалоба / апелляция — для игроков. Залогиненным админам в меню не показываем
-	// (бан/разбан и очереди заявок — в админ-панели).
-	if ($userbank->is_logged_in())
-	{
-		foreach ($groups as $gk => $glist)
-		{
-			$filtered = array();
-			foreach ($glist as $it)
-			{
-				$u = isset($it['url']) ? (string)$it['url'] : '';
-				if (preg_match('/(?:\?|&)p=submit\b/', $u) || preg_match('#(?:^|/)submit(?:\?|$)#', $u))
-					continue;
-				if (preg_match('/(?:\?|&)p=protest\b/', $u) || preg_match('#(?:^|/)protest(?:\?|$)#', $u))
-					continue;
-				$filtered[] = $it;
-			}
-			$groups[$gk] = $filtered;
-		}
-	}
 
 	foreach ($groups as $gkey => $list)
 	{
@@ -689,11 +930,11 @@ function BuildPageTabs()
 		echo '<li class="main-menu-label" aria-hidden="true"><span>'.$group_labels[$gkey].'</span></li>';
 		$GLOBALS['sb_menu_current_group'] = $gkey;
 		foreach ($list as $item)
-			AddTab($item['text'], function_exists('sb_legacy_to_pretty_url') ? sb_legacy_to_pretty_url($item['url']) : $item['url'], $item['description'], ($item['newtab']=="1"));
+			AddTab($item['text'], $item['url'], $item['description'], (isset($item['newtab']) && $item['newtab']=="1"));
 	}
 	unset($GLOBALS['sb_menu_current_group']);
 
-	include INCLUDES_PATH . "/CTabsMenu.php";
+	require_once INCLUDES_PATH . "/CTabsMenu.php";
 
 	// BUILD THE SUB-MENU's FOR ADMIN PAGES (top-right #nav)
 	$submenu = new CTabsMenu();
@@ -2026,7 +2267,6 @@ function FetchIp($ip)
 
 function PageDie()
 {
-	include TEMPLATES_PATH.'/footer.php';
 	die();
 }
 
@@ -2041,8 +2281,7 @@ function sb_pretty_pages()
 }
 
 /**
- * ЧПУ-ссылка: sb_url('banlist'), sb_url('admin', array('c'=>'bans')), sb_url('banlist', array('page'=>2)).
- * Старые index.php?p=… тоже работают (редирект/rewrite).
+ * Query-string ссылка: sb_url('banlist'), sb_url('admin', array('c'=>'bans')), sb_url('banlist', array('page'=>2)).
  */
 function sb_url($p, $extra = array())
 {
@@ -2056,50 +2295,13 @@ function sb_url($p, $extra = array())
 	}
 	unset($extra['p']);
 
-	$pages = sb_pretty_pages();
-	if ($p === 'admin' && $c !== '') {
-		$path = 'admin/' . $c;
-	} elseif ($p !== '' && in_array($p, $pages, true)) {
-		$path = ($p === 'home') ? './' : $p;
-	} else {
-		$q = $extra;
-		if ($p !== '')
-			$q = array_merge(array('p' => $p), $q);
-		if ($c !== '')
-			$q['c'] = $c;
-		$qs = http_build_query($q);
-		return 'index.php' . ($qs !== '' ? ('?' . $qs) : '');
-	}
-
-	// /banlist/2 вместо banlist?page=2 (остальные GET остаются в query)
-	if (($p === 'banlist' || $p === 'commslist') && isset($extra['page'])) {
-		$pageNum = (int)$extra['page'];
-		unset($extra['page']);
-		if ($pageNum > 1)
-			$path .= '/' . $pageNum;
-	}
-
-	// /admin/recidivism/STEAM_0-0-123 вместо ?steam=STEAM_0%3A0%3A123
-	if ($p === 'admin' && ($c === 'recidivism' || $c === 'parsec') && isset($extra['steam'])) {
-		$sid = trim((string)$extra['steam']);
-		if (function_exists('ma_recidivism_normalize_authid')) {
-			$norm = ma_recidivism_normalize_authid($sid);
-			if ($norm !== '')
-				$sid = $norm;
-		} elseif (function_exists('ma_parsec_normalize_authid')) {
-			$norm = ma_parsec_normalize_authid($sid);
-			if ($norm !== '')
-				$sid = $norm;
-		}
-		$token = sb_steam_path_token($sid);
-		if ($token !== '') {
-			$path .= '/' . $token;
-			unset($extra['steam']);
-		}
-	}
-
-	$qs = http_build_query($extra);
-	return $path . ($qs !== '' ? ('?' . $qs) : '');
+	$q = $extra;
+	if ($p !== '')
+		$q = array_merge(array('p' => $p), $q);
+	if ($c !== '')
+		$q['c'] = $c;
+	$qs = http_build_query($q);
+	return 'index.php' . ($qs !== '' ? ('?' . $qs) : '');
 }
 
 /** STEAM_0:1:123 → STEAM_0-1-123 (для path; «:» в URL на Windows/Apache — боль). */
@@ -2131,62 +2333,23 @@ function sb_apply_steam_path_param()
 		$_GET['steam'] = $from;
 }
 
-/** /admin/parsec?steam=STEAM_0:0:N → /admin/parsec/STEAM_0-0-N */
+/** Канонический редирект admin steam отключён: не генерируем ЧПУ. */
 function sb_canonical_admin_steam_redirect($section)
 {
-	if ($section !== 'recidivism' && $section !== 'parsec')
-		return;
-	if (empty($_GET['steam']))
-		return;
-	sb_apply_steam_path_param();
-	$steam = trim((string)$_GET['steam']);
-	if (function_exists('ma_recidivism_normalize_authid')) {
-		$norm = ma_recidivism_normalize_authid($steam);
-		if ($norm !== '')
-			$steam = $norm;
-	} elseif (function_exists('ma_parsec_normalize_authid')) {
-		$norm = ma_parsec_normalize_authid($steam);
-		if ($norm !== '')
-			$steam = $norm;
-	}
-	$token = sb_steam_path_token($steam);
-	if ($token === '')
-		return;
-	$uriPath = parse_url(isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '', PHP_URL_PATH);
-	if (is_string($uriPath) && preg_match('#/admin/' . preg_quote($section, '#') . '/' . preg_quote($token, '#') . '/?$#i', $uriPath))
-		return;
-	$q = $_GET;
-	unset($q['p'], $q['c']);
-	$q['steam'] = $steam;
-	sb_redirect(sb_url('admin', array_merge(array('c' => $section), $q)), 301);
+	return;
 }
 
 /**
- * Если открыли /banlist?page=2 — 301 на /banlist/2 (и то же для commslist).
- * Вызывать в начале page.banlist / page.commslist.
+ * Канонический редирект страниц списка отключён: не генерируем ЧПУ.
  */
 function sb_canonical_list_page_redirect($listPage)
 {
-	if ($listPage !== 'banlist' && $listPage !== 'commslist')
-		return;
-	if (empty($_GET['page']) || (int)$_GET['page'] < 2)
-		return;
-	// Уже красивый путь /banlist/2 — в QUERY_STRING page из rewrite, в URI есть /N
-	$uriPath = parse_url(isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '', PHP_URL_PATH);
-	if (is_string($uriPath) && preg_match('#/' . preg_quote($listPage, '#') . '/[0-9]+/?$#', $uriPath))
-		return;
-	// Только если page реально в query string (не только из path rewrite без ?page= в URI)
-	$qs = isset($_SERVER['QUERY_STRING']) ? (string)$_SERVER['QUERY_STRING'] : '';
-	if ($qs === '' || !preg_match('/(?:^|&)page=/i', $qs))
-		return;
-	$q = $_GET;
-	unset($q['p']);
-	sb_redirect(sb_url($listPage, $q), 301);
+	return;
 }
 
 /**
- * ЧПУ из хвоста query (?a=1&b=2 или &page=2).
- * sb_url_query('banlist', '&page=2&searchText=x') → banlist?page=2&searchText=x
+ * Query-string URL из хвоста query (?a=1&b=2 или &page=2).
+ * sb_url_query('banlist', '&page=2&searchText=x') → index.php?p=banlist&page=2&searchText=x
  */
 function sb_url_query($p, $query = '', $extra = array())
 {
@@ -2204,11 +2367,13 @@ function sb_url_query($p, $query = '', $extra = array())
 
 /**
  * Абсолютный URL для Location: (браузер НЕ учитывает <base href>).
- * admin/bans → http://site/admin/bans или /admin/bans
+ * index.php?p=admin&c=bans → http://site/index.php?p=admin&c=bans или /index.php?p=admin&c=bans
  */
 function sb_abs_url($url)
 {
 	$url = (string)$url;
+	if (function_exists('sb_ui_v2_admin_href'))
+		$url = sb_ui_v2_admin_href($url);
 	if ($url === '' || $url[0] === '/' || preg_match('#^[a-z][a-z0-9+.-]*:#i', $url))
 		return $url === '' ? '/' : $url;
 	$base = defined('SB_WP_URL') ? rtrim((string)SB_WP_URL, '/') : '';
@@ -2218,7 +2383,7 @@ function sb_abs_url($url)
 	return '/' . $rel;
 }
 
-/** 303-редирект на ЧПУ (PRG), с очисткой буферов. */
+/** 303-редирект (PRG), с очисткой буферов. */
 function sb_redirect($url, $code = 303)
 {
 	while (ob_get_level() > 0)
@@ -2227,56 +2392,16 @@ function sb_redirect($url, $code = 303)
 	exit;
 }
 
-/** Превратить index.php?p=banlist&c=… / ?p=… в /banlist или /admin/c. */
+/** Оставить URL без преобразования в ЧПУ. */
 function sb_legacy_to_pretty_url($url)
 {
-	$url = (string)$url;
-	if ($url === '' || $url[0] === '#' || preg_match('#^(https?:)?//#i', $url) || stripos($url, 'javascript:') === 0)
-		return $url;
-	$hadAmp = (strpos($url, '&amp;') !== false);
-	$u = html_entity_decode($url, ENT_QUOTES, 'UTF-8');
-	$frag = '';
-	$hashPos = strpos($u, '#');
-	if ($hashPos !== false) {
-		$frag = substr($u, $hashPos);
-		$u = substr($u, 0, $hashPos);
-	}
-	$query = '';
-	if (preg_match('#^(?:\.\./)*(?:\./)?index\.php\?(.*)$#i', $u, $m))
-		$query = $m[1];
-	elseif (preg_match('#^\?(.*)$#', $u, $m) && preg_match('/(?:^|&)p=/i', $m[1]))
-		$query = $m[1];
-	else
-		return $url;
-	parse_str($query, $q);
-	if (empty($q['p']))
-		return $url;
-	$p = $q['p'];
-	unset($q['p']);
-	$pretty = sb_url($p, $q) . $frag;
-	if ($hadAmp)
-		$pretty = str_replace('&', '&amp;', $pretty);
-	return $pretty;
+	return $url;
 }
 
-/** Smarty outputfilter: href/js с index.php?p=… → ЧПУ. */
+/** Smarty outputfilter отключён: вывод остаётся без преобразования в ЧПУ. */
 function sb_smarty_pretty_urls($tpl_output, &$smarty)
 {
-	if (!is_string($tpl_output) || $tpl_output === '' || strpos($tpl_output, 'index.php?') === false)
-		return $tpl_output;
-	// Query: обычные символы + «&» + HTML-entity «&amp;».
-	// Нельзя брать [^"']+ — после htmlspecialchars JS-кавытка становится &#039;
-	// и жадный матч съедает хвост sbGo('…&#039;).
-	// Нельзя и просто […&…]+ без &amp; — матч обрывается на «;» внутри &amp;,
-	// и href «index.php?p=admin&amp;c=admins…» превращается в «admin?amp=;c=…».
-	return preg_replace_callback(
-		// &amp; — HTML; голый & только перед ключом query (не &#039; из htmlspecialchars).
-		'#(?:\.\./)*(?:\./)?index\.php\?(?:[a-zA-Z0-9_.=+%.-]+|&amp;|&(?=[a-zA-Z0-9_]))+#i',
-		function ($m) {
-			return sb_legacy_to_pretty_url($m[0]);
-		},
-		$tpl_output
-	);
+	return $tpl_output;
 }
 
 /** Отдать статическую errors/404.html с HTTP 404 и завершить скрипт. */
@@ -2541,7 +2666,7 @@ function sb_web_group_has_owner($gid)
  * Tripwire: отозвать права (expired=1), мгновенно выкинуть из сессии.
  * Сообщение: «Превышение полномочий».
  *
- * @param object|null $objResponse xajaxResponse или null (обычный HTTP)
+ * @param object|null $objResponse SbJsonResponse или null (обычный HTTP)
  * @param string $log_detail причина для системного лога
  * @return bool true если наказание применено
  */
@@ -2922,6 +3047,26 @@ function GetMapImage($map)
 		return "images/maps/nomap.jpg";
 }
 */
+function sb_upload_popup_css()
+{
+	$css_file = defined('SB_THEMES') ? (SB_THEMES . 'blue_v2/css/uploadfile.css') : '';
+	if ($css_file !== '' && is_readable($css_file))
+		return (string)@file_get_contents($css_file);
+	return ':root{--up-bg:#060b16;--up-card:#0a1225;--up-border:#1a2a45;--up-text:#e8f0ff;--up-muted:#7ea8d4;--up-accent:#2f7fd6;--up-accent-hover:#3d92ef;--up-radius:12px}'
+		. '*,*::before,*::after{box-sizing:border-box}'
+		. 'html,body{margin:0;padding:0;min-height:100%}'
+		. 'body.upload-page{background:radial-gradient(ellipse at top left,rgba(47,127,214,.18),transparent 55%),linear-gradient(160deg,#080f1f 0%,#060b16 100%);color:var(--up-text);font-family:"Rubik","Segoe UI",system-ui,-apple-system,sans-serif;font-size:14px;line-height:1.45;display:flex;align-items:center;justify-content:center;padding:18px;min-height:100vh}'
+		. '.upload-card{width:100%;max-width:440px;background:var(--up-card);border:1px solid var(--up-border);border-radius:var(--up-radius);box-shadow:0 12px 40px rgba(0,0,0,.45);padding:22px 22px 20px}'
+		. '.upload-card__head{display:flex;align-items:center;gap:12px;margin-bottom:16px}'
+		. '.upload-card__mark{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:9px;background:linear-gradient(145deg,#2f7fd6,#1a4f8c);color:#fff;font-weight:700;font-size:16px;flex:0 0 36px}'
+		. '.upload-card__titles{min-width:0}'
+		. '.upload-card__title{margin:0;font-size:18px;font-weight:600;letter-spacing:.01em;color:var(--up-text)}'
+		. '.upload-card__hint{margin:3px 0 0;font-size:12px;color:var(--up-muted)}'
+		. '.upload-denied{text-align:center}'
+		. '.upload-denied .upload-card__title{color:#ffcdd2}'
+		. '.upload-denied p{margin:8px 0 0;color:var(--up-muted);font-size:13px}';
+}
+
 /**
  * HTML-страница отказа в доступе для popup-загрузчиков (demo/icon/map).
  */
@@ -2929,19 +3074,14 @@ function sb_upload_access_denied($title = 'Нет доступа')
 {
 	$title = htmlspecialchars((string)$title, ENT_QUOTES, 'UTF-8');
 	header('Content-Type: text/html; charset=UTF-8');
-	$css = '';
-	$css_file = defined('SB_THEMES') ? (SB_THEMES . 'new_box/css/uploadfile.css') : '';
-	if ($css_file !== '' && is_readable($css_file))
-		$css = (string)@file_get_contents($css_file);
 	echo '<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8">'
 		. '<meta name="viewport" content="width=device-width, initial-scale=1">'
-		. '<title>' . $title . ' · Material Admin</title>'
-		. '<link rel="stylesheet" href="/themes/new_box/css/uploadfile.css?v=20260727b">'
-		. ($css !== '' ? '<style>' . $css . '</style>' : '')
+		. '<title>' . $title . ' · Blue Admin</title>'
+		. '<style>' . sb_upload_popup_css() . '</style>'
 		. '</head><body class="upload-page">'
 		. '<main class="upload-card upload-denied" role="main">'
 		. '<header class="upload-card__head">'
-		. '<span class="upload-card__mark" aria-hidden="true">M</span>'
+		. '<span class="upload-card__mark" aria-hidden="true">B</span>'
 		. '<div class="upload-card__titles">'
 		. '<h1 class="upload-card__title">' . $title . '</h1>'
 		. '<p>Войдите как администратор с нужными правами и откройте загрузку из панели.</p>'
@@ -3290,6 +3430,8 @@ function FriendIDToSteamID($friendid)
 {
 	$friendid = $GLOBALS['db']->qstr($friendid);
 	$steamid = $GLOBALS['db']->GetRow("SELECT CONCAT(\"STEAM_0:\", (CAST(".$friendid." AS UNSIGNED) - CAST('76561197960265728' AS UNSIGNED)) % 2, \":\", CAST(((CAST(".$friendid." AS UNSIGNED) - CAST('76561197960265728' AS UNSIGNED)) - ((CAST(".$friendid." AS UNSIGNED) - CAST('76561197960265728' AS UNSIGNED)) % 2)) / 2 AS UNSIGNED)) AS steam_id;");
+	if (!is_array($steamid) || empty($steamid['steam_id']))
+		return '';
 	return $steamid['steam_id'];
 }
 
@@ -3301,16 +3443,25 @@ function FriendIDToSteamID($friendid)
 */
 function GetFriendIDFromCommunityID($comid)
 {
-	$raw = @file_get_contents("http://steamcommunity.com/id/".$comid."/?xml=1");
+	$comid = preg_replace('/[^a-zA-Z0-9_-]/', '', (string)$comid);
+	if ($comid === '')
+		return false;
+	$raw = @file_get_contents("https://steamcommunity.com/id/".$comid."/?xml=1");
+	if (!is_string($raw) || $raw === '')
+		return false;
 	preg_match("/<privacyState>([^\]]*)<\/privacyState>/", $raw, $status);
-	if(($status && $status[1] != "public") || strstr($raw, "</profile>")) {
+	if(($status && isset($status[1]) && $status[1] != "public") || strstr($raw, "</profile>")) {
 		$raw = str_replace("&", "", $raw);
 		$raw = strip_31_ascii($raw);
 		$raw = function_exists('mb_convert_encoding') ? mb_convert_encoding($raw, 'UTF-8', 'ISO-8859-1') : $raw;
-		$xml = simplexml_load_string($raw);
+		$xml = @simplexml_load_string($raw);
+		if ($xml === false)
+			return false;
 		$result = $xml->xpath('/profile/steamID64');
+		if (!is_array($result) || !isset($result[0]))
+			return false;
 		$friendid = (string)$result[0];
-		return $friendid;
+		return $friendid !== '' ? $friendid : false;
 	}
 	return false;
 }
@@ -3386,8 +3537,26 @@ function strip_31_ascii($string)
 }
 
 function GetCommunityIDFromSteamID2($sid) {
-    $parts = explode(':', str_replace('STEAM_', '' ,$sid)); 
-    return bcadd(bcadd('76561197960265728', $parts[1]), bcmul($parts[2], '2'));
+    $sid = trim((string)$sid);
+    if ($sid === '')
+        return '';
+    if (preg_match('/^7656\d{13}$/', $sid))
+        return $sid;
+    $parts = explode(':', str_replace('STEAM_', '' ,$sid));
+    if (!isset($parts[1], $parts[2]) || !is_numeric($parts[1]) || !is_numeric($parts[2]))
+        return '';
+    if (!function_exists('bcadd'))
+        return '';
+    return bcadd(bcadd('76561197960265728', (string)$parts[1]), bcmul((string)$parts[2], '2'));
+}
+
+/** STEAM_X:Y:Z → [U:1:accountid], иначе пустая строка. */
+function sb_steamid2_to_steamid3($sid)
+{
+	$parts = explode(':', (string)$sid);
+	if (!isset($parts[1], $parts[2]) || !is_numeric($parts[1]) || !is_numeric($parts[2]))
+		return '';
+	return '[U:1:' . ((int)$parts[2] * 2 + (int)$parts[1]) . ']';
 }
 
 /** Нормализация Steam64 (community id). */
@@ -3544,19 +3713,22 @@ function GetUserAvatar($sid = -1) {
     global $userbank;
     
     static $avatarCache = null;
-    if (!$avatarCache) {
-        $query = $GLOBALS['db']->Execute(sprintf("SELECT * FROM `%s_avatars`", DB_PREFIX));
-        $avatarCache = [];
+    if ($avatarCache === null) {
+        $query = @$GLOBALS['db']->Execute(sprintf("SELECT * FROM `%s_avatars`", DB_PREFIX));
+        $avatarCache = array();
 
-        while (!$query->EOF) {
-            $avatarCache[$query->fields['authid']] = $query->fields['url'];
-            $query->MoveNext();
+        if (is_object($query)) {
+            while (!$query->EOF) {
+                if (isset($query->fields['authid']))
+                    $avatarCache[$query->fields['authid']] = isset($query->fields['url']) ? $query->fields['url'] : '';
+                $query->MoveNext();
+            }
         }
     }
     
     $communityid = false;
     $res = false;
-    $AvatarFile = sprintf("themes/new_box/img/profile-pics/%d.jpg", rand(1,9));
+    $AvatarFile = 'images/default-avatar.jpg';
     $sid = ($sid==-1)?($userbank->is_logged_in()?$userbank->getProperty("authid"):0):$sid;
     
     if ($sid) $communityid = GetCommunityIDFromSteamID2($sid);
@@ -3636,10 +3808,8 @@ function FatalRefresh($url = 0) {
 	if ($url === 0 || $url === '' || $url === null)
 		$url = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '/';
 	$url = (string)$url;
-	// Location НЕ учитывает <base href>: с /admin/menu относительный index.php
-	// уезжает в /admin/index.php → 404. Канонизируем в ЧПУ и абсолютный URL.
-	if (function_exists('sb_legacy_to_pretty_url'))
-		$url = sb_legacy_to_pretty_url($url);
+	if (function_exists('sb_ui_v2_admin_href'))
+		$url = sb_ui_v2_admin_href($url);
 	if (function_exists('sb_abs_url'))
 		$url = sb_abs_url($url);
 	while (ob_get_level() > 0)
@@ -4710,12 +4880,13 @@ function ParsecPanelClearFingerprintBan($fingerprint)
 		 WHERE `fingerprint` = ?",
 		array($fingerprint)
 	);
-	if ($ok) {
+	$changed = $ok && (int)$GLOBALS['db']->Affected_Rows() === 1;
+	if ($changed) {
 		$admin = ParsecPanelAdminSteam();
 		new CSystemLog('m', 'PARSEC panel: clear is_banned',
 			'fingerprint=' . $fingerprint . ' by ' . $admin);
 	}
-	return (bool)$ok;
+	return $changed;
 }
 
 /**
@@ -4735,10 +4906,11 @@ function ParsecPanelMarkFingerprintBanned($fingerprint)
 		 WHERE `fingerprint` = ?",
 		array($now, $fingerprint)
 	);
-	if ($ok) {
+	$changed = $ok && (int)$GLOBALS['db']->Affected_Rows() === 1;
+	if ($changed) {
 		$admin = ParsecPanelAdminSteam();
 		new CSystemLog('m', 'PARSEC panel: mark is_banned',
 			'fingerprint=' . $fingerprint . ' by ' . $admin);
 	}
-	return (bool)$ok;
+	return $changed;
 }

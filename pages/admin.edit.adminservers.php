@@ -133,6 +133,9 @@ if(isset($_POST['editadminserver']))
 
 $server_list = 	$GLOBALS['db']->GetAll("SELECT * FROM `" . DB_PREFIX . "_servers`");
 $group_list = 	$GLOBALS['db']->GetAll("SELECT * FROM `" . DB_PREFIX . "_groups` WHERE type = '3'");
+if (!is_array($server_list)) $server_list = array();
+if (!is_array($group_list)) $group_list = array();
+if (!is_array($servers)) $servers = array();
 $rowcount = 	(count($server_list)+count($group_list));
 
 $theme->assign('row_count', $rowcount);
@@ -141,4 +144,4 @@ $theme->assign('server_list', $server_list);
 $theme->assign('assigned_servers', $servers);
 $theme->assign('sb_csrf', function_exists('sb_csrf_token') ? sb_csrf_token() : '');
 
-$theme->display('page_admin_edit_admins_servers.tpl');
+sb_ui_v2_theme_fragment('admin_edit_admins_servers.twig');

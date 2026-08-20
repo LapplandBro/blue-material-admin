@@ -1,0 +1,381 @@
+{% extends 'layout.twig' %}
+{% block extra_head %}
+<link href="{{ asset_base }}themes/blue_v2/css/commslist.css" rel="stylesheet">
+{% endblock %}
+{% block topbar_title %}
+<h1 class="h5 mb-0">Муты и гаги</h1>
+{% endblock %}
+{% block content %}
+{% if comment %}
+<div class="panel commslist-panel commslist-comment-page">
+  <header class="commslist-chrome">
+    <div class="commslist-chrome-title">
+      <p class="commslist-kicker">Комментарии</p>
+      <div class="commslist-chrome-heading">
+        <h1 class="commslist-title">{{ commenttype }} комментарий</h1>
+      </div>
+    </div>
+  </header>
+  <div class="commslist-comment-body">
+    {% if othercomments %}
+    <ul class="commslist-thread">
+      {% for com in othercomments %}
+      <li class="commslist-thread-item">
+        <div class="commslist-thread-meta">
+          <strong>{{ com.comname }}</strong>
+          <span class="commslist-muted">{{ com.added }}{% if com.editname != '' %} · изменено {{ com.edittime }} — {{ com.editname }}{% endif %}</span>
+        </div>
+        <div class="commslist-thread-text">{{ com.commenttxt|raw }}</div>
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    <div class="commslist-composer">
+      <label class="commslist-composer-label" for="commenttext">Ваш комментарий</label>
+      <textarea class="form-control" rows="5" placeholder="Ваш комментарий…" id="commenttext" name="commenttext">{{ commenttext }}</textarea>
+      <div id="commenttext.msg" class="msg-err badentry"></div>
+      <input type="hidden" name="bid" id="bid" value="{{ comment }}">
+      <input type="hidden" name="ctype" id="ctype" value="{{ ctype }}">
+      {% if cid != '' %}
+      <input type="hidden" name="cid" id="cid" value="{{ cid }}">
+      {% else %}
+      <input type="hidden" name="cid" id="cid" value="-1">
+      {% endif %}
+      <input type="hidden" name="page" id="page" value="{{ page }}">
+      <div class="commslist-composer-actions">
+        <button type="button" class="btn btn-accent btn-sm" id="acom" onclick="ProcessComment();">{{ commenttype }} комментарий</button>
+        <button type="button" class="btn btn-outline-secondary btn-sm" id="aback" onclick="sbGo('index.php?p=commslist')">Назад</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="panel commslist-panel">
+  <header class="commslist-chrome">
+    <div class="commslist-chrome-title">
+      <p class="commslist-kicker">Модерация</p>
+      <div class="commslist-chrome-heading">
+        <h1 class="commslist-title">Муты и гаги</h1>
+        <span class="commslist-count">{{ total_bans }}</span>
+      </div>
+    </div>
+    <div class="commslist-chrome-tools">
+      <form class="commslist-search" method="get" action="index.php">
+        <input type="hidden" name="p" value="commslist">
+        <label class="visually-hidden" for="header_search_comms">Поиск мутов</label>
+        <input class="form-control" type="search" id="header_search_comms" name="searchText" value="{{ search_text }}" placeholder="SteamID, ник…">
+        <button class="commslist-search-go" type="submit">Найти</button>
+      </form>
+      <div class="commslist-pagesel">{{ ban_nav_p|raw }}</div>
+      <div class="commslist-nav" id="banlist-nav">{{ ban_nav|raw }}</div>
+    </div>
+  </header>
+  {% if can_add_comms or hidetext %}
+  <div class="commslist-toolbar">
+    {% if can_add_comms %}
+    <a class="btn btn-sm btn-accent" href="{{ add_comms_url }}">Добавить мут / гаг</a>
+    {% endif %}
+    <a class="btn btn-sm btn-outline-secondary" href="{{ hideinactive_url }}">{{ hidetext }} неактивные</a>
+  </div>
+  {% endif %}
+  {% if bstatus_aid %}
+  <nav class="commslist-status">
+    <a href="index.php?p=commslist&amp;advSearch={{ bstatus_aid }}&amp;advType=admin" class="commslist-status-btn{% if not bstatus %} is-on{% endif %}">Все</a>
+    <a href="index.php?p=commslist&amp;advSearch={{ bstatus_aid }}&amp;advType=admin&amp;bstatus=active" class="commslist-status-btn{% if bstatus == 'active' %} is-on{% endif %}">Активные</a>
+    <a href="index.php?p=commslist&amp;advSearch={{ bstatus_aid }}&amp;advType=admin&amp;bstatus=expired" class="commslist-status-btn{% if bstatus == 'expired' %} is-on{% endif %}">Истёкшие</a>
+    <a href="index.php?p=commslist&amp;advSearch={{ bstatus_aid }}&amp;advType=admin&amp;bstatus=removed" class="commslist-status-btn{% if bstatus == 'removed' %} is-on{% endif %}">Снятые</a>
+  </nav>
+  {% endif %}
+  <div class="table-responsive">
+    <table class="table table-v2 commslist-table">
+      <thead>
+        <tr>
+          <th class="commslist-th-mod">Игра</th>
+          <th class="commslist-th-date">Дата</th>
+          <th>Игрок</th>
+          {% if view_recidivism %}
+          <th class="commslist-th-recid">Нарушения</th>
+          {% endif %}
+          {% if not hideadminname %}
+          <th class="commslist-th-admin">Админ</th>
+          {% endif %}
+          <th class="commslist-th-length">Срок</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ban in ban_list %}
+        <tr class="opener commslist-row commslist-row-{{ ban.status_kind }}"{% if ban.server_id != 0 %} onclick="xajax_ServerHostPlayers({{ ban.server_id }}, {{ ban.ban_id }});"{% endif %}>
+          <td class="commslist-td-mod commslist-mod">{{ ban.mod_icon|raw }}</td>
+          <td class="commslist-td-date"><span class="commslist-date">{{ ban.ban_date_info }}</span></td>
+          <td>
+            <div class="commslist-player">
+              <span class="commslist-flag" title="Тип блокировки">{{ ban.type_icon_p|raw }}</span>
+              <div class="commslist-player-text">
+                {% if ban.player is empty %}
+                  <span class="player commslist-muted">имя не указано</span>
+                {% else %}
+                  <strong class="player">{{ ban.player }}</strong>
+                {% endif %}
+                <span class="steam">
+                  {% if ban.steamid is empty %}
+                    <span class="commslist-muted">STEAM не указан</span>
+                  {% elseif ban.steam_profile %}
+                    <a href="{{ ban.steam_profile }}" target="_blank" rel="noopener noreferrer" title="Профиль Steam" onclick="event.cancelBubble=true;">{{ ban.steamid }}</a>
+                  {% else %}
+                    {{ ban.steamid }}
+                  {% endif %}
+                  {% if view_comments and ban.commentdata != 'Нет' and ban.commentdata|length > 0 %}
+                    <span class="commslist-meta" title="Комментарии">{{ ban.commentdata|length }} комм.</span>
+                  {% endif %}
+                  {% if ban.counts %}<span class="commslist-meta" title="Другие блокировки">{{ ban.counts|raw }}</span>{% endif %}
+                  {% if view_bans and ban.view_edit and not ban.unbanned and ban.edit_url %}
+                    <a class="list-row-edit" href="{{ ban.edit_url }}" onclick="event.cancelBubble=true;">Изменить</a>
+                  {% endif %}
+                </span>
+              </div>
+            </div>
+          </td>
+          {% if view_recidivism %}
+          <td class="commslist-td-recid" onclick="event.cancelBubble=true;">
+            {% if ban.recid_url %}
+              <a class="commslist-recid" href="{{ ban.recid_url }}" title="История нарушений">{{ ban.recid_display }}</a>
+            {% elseif ban.recid_display %}
+              <span class="commslist-recid is-empty">{{ ban.recid_display }}</span>
+            {% else %}
+              <span class="commslist-muted">—</span>
+            {% endif %}
+          </td>
+          {% endif %}
+          {% if not hideadminname %}
+          <td class="commslist-td-admin">
+            {% if ban.admin %}
+              <span class="commslist-admin">{{ ban.admin }}</span>
+            {% else %}
+              <span class="commslist-muted">админ снят</span>
+            {% endif %}
+          </td>
+          {% endif %}
+          <td class="commslist-td-length">
+            {% if ban.status_kind == 'expired' %}
+              <span class="badge badge-muted">Истёк</span>
+            {% elseif ban.status_kind == 'deleted' %}
+              <span class="badge badge-muted">Удалён</span>
+            {% elseif ban.status_kind == 'unbanned' %}
+              <span class="badge badge-ok">Снят</span>
+            {% elseif ban.status_kind == 'perm' %}
+              <span class="badge badge-perm">Навсегда</span>
+            {% elseif ban.status_kind == 'session' %}
+              <span class="badge badge-temp">Сессия</span>
+            {% else %}
+              <span class="badge badge-temp">{{ ban.banlength }}</span>
+            {% endif %}
+          </td>
+        </tr>
+        <tr class="commslist-detail">
+          <td colspan="{{ ban_colspan }}">
+            <div class="opener">
+              <div class="commslist-detail-grid">
+                <div class="commslist-facts">
+                  <div class="commslist-fact">
+                    <span class="commslist-fact-label">Игрок</span>
+                    <span class="commslist-fact-value">
+                      {% if ban.player is empty %}
+                        <span class="commslist-muted">имя не указано</span>
+                      {% else %}
+                        {{ ban.player }}
+                      {% endif %}
+                    </span>
+                  </div>
+                  <div class="commslist-fact">
+                    <span class="commslist-fact-label">Steam ID</span>
+                    <span class="commslist-fact-value steam">
+                      {% if ban.steamid is empty %}
+                        <span class="commslist-muted">не указан</span>
+                      {% elseif ban.steam_profile %}
+                        <a href="{{ ban.steam_profile }}" target="_blank" rel="noopener noreferrer">{{ ban.steamid }}</a>
+                      {% else %}
+                        {{ ban.steamid }}
+                      {% endif %}
+                    </span>
+                  </div>
+                  <div class="commslist-fact">
+                    <span class="commslist-fact-label">Steam3 ID</span>
+                    <span class="commslist-fact-value steam">
+                      {% if ban.steamid is empty %}
+                        <span class="commslist-muted">не указан</span>
+                      {% elseif ban.steam_profile %}
+                        <a href="{{ ban.steam_profile }}" target="_blank" rel="noopener noreferrer">{{ ban.steamid3 }}</a>
+                      {% else %}
+                        {{ ban.steamid3 }}
+                      {% endif %}
+                    </span>
+                  </div>
+                  {% if ban.type == 0 or ban.type == 1 or ban.type == 2 or ban.type == 3 %}
+                  {% if ban.communityid %}
+                  <div class="commslist-fact">
+                    <span class="commslist-fact-label">Steam Community</span>
+                    <span class="commslist-fact-value steam">
+                      {% if ban.steam_profile %}
+                        <a href="{{ ban.steam_profile }}" target="_blank" rel="noopener noreferrer">{{ ban.communityid }}</a>
+                        {% if ban.steam_vanity %}
+                          · <a href="{{ ban.steam_profile }}" target="_blank" rel="noopener noreferrer">/id/{{ ban.steam_vanity }}</a>
+                        {% endif %}
+                      {% else %}
+                        {{ ban.communityid }}
+                      {% endif %}
+                    </span>
+                  </div>
+                  {% endif %}
+                  {% endif %}
+                  <div class="commslist-fact">
+                    <span class="commslist-fact-label">Выдан</span>
+                    <span class="commslist-fact-value">{{ ban.ban_date }}</span>
+                  </div>
+                  <div class="commslist-fact">
+                    <span class="commslist-fact-label">Срок</span>
+                    <span class="commslist-fact-value">{% if ban.ub_reason %}<del>{{ ban.banlength }}</del> · {{ ban.ub_reason }}{% else %}{{ ban.banlength }}{% endif %}</span>
+                  </div>
+                  {% if ban.unbanned %}
+                  <div class="commslist-fact">
+                    <span class="commslist-fact-label">Причина снятия</span>
+                    <span class="commslist-fact-value">
+                      {% if ban.ureason == '' %}
+                        <span class="commslist-muted">не указана</span>
+                      {% else %}
+                        {{ ban.ureason }}
+                      {% endif %}
+                    </span>
+                  </div>
+                  <div class="commslist-fact">
+                    <span class="commslist-fact-label">Снял</span>
+                    <span class="commslist-fact-value">
+                      {% if ban.removedby %}
+                        {{ ban.removedby }}
+                      {% else %}
+                        <span class="commslist-muted">админ снят</span>
+                      {% endif %}
+                    </span>
+                  </div>
+                  {% endif %}
+                  <div class="commslist-fact">
+                    <span class="commslist-fact-label">Истекает</span>
+                    <span class="commslist-fact-value">
+                      {% if ban.expires == 'never' or ban.expires == 'Никогда' %}
+                        <span class="commslist-muted">никогда</span>
+                      {% else %}
+                        {{ ban.expires }}
+                      {% endif %}
+                    </span>
+                  </div>
+                  <div class="commslist-fact">
+                    <span class="commslist-fact-label">Причина</span>
+                    <span class="commslist-fact-value">{{ ban.reason }}</span>
+                  </div>
+                  {% if not hideadminname %}
+                  <div class="commslist-fact">
+                    <span class="commslist-fact-label">Админ</span>
+                    <span class="commslist-fact-value">
+                      {% if ban.admin %}
+                        {{ ban.admin }}
+                      {% else %}
+                        <span class="commslist-muted">админ снят</span>
+                      {% endif %}
+                    </span>
+                  </div>
+                  {% endif %}
+                  <div class="commslist-fact">
+                    <span class="commslist-fact-label">Сервер</span>
+                    <span class="commslist-fact-value" id="ban_server_{{ ban.ban_id }}">
+                      {% if ban.server_id == 0 %}
+                        С сайта
+                      {% else %}
+                        Загрузка…
+                      {% endif %}
+                    </span>
+                  </div>
+                  <div class="commslist-fact">
+                    <span class="commslist-fact-label">Ранее</span>
+                    <span class="commslist-fact-value">{{ ban.prevoff_link|raw }}</span>
+                  </div>
+                  {% if view_recidivism %}
+                  <div class="commslist-fact">
+                    <span class="commslist-fact-label">Нарушения</span>
+                    <span class="commslist-fact-value">
+                      {% if ban.recid_display %}{{ ban.recid_display }}{% else %}—{% endif %}
+                      {% if ban.recidivism_link %}
+                        · {{ ban.recidivism_link|raw }}
+                      {% endif %}
+                    </span>
+                  </div>
+                  {% endif %}
+                </div>
+                <aside class="commslist-aside">
+                  {% if view_bans %}
+                  <nav class="commslist-actions">
+                    {% if ban.unbanned and ban.reban_link %}{{ ban.reban_link|raw }}{% endif %}
+                    {% if ban.recidivism_link %}{{ ban.recidivism_link|raw }}{% endif %}
+                    {% if ban.view_edit and not ban.unbanned %}{{ ban.edit_link|raw }}{% endif %}
+                    {% if not ban.unbanned and ban.view_unban %}{{ ban.unban_link|raw }}{% endif %}
+                    {% if ban.view_delete %}{{ ban.delete_link|raw }}{% endif %}
+                  </nav>
+                  {% endif %}
+                  <div class="commslist-aside-block">
+                    <p class="commslist-aside-kicker">Комментарии</p>
+                    {% if view_comments %}
+                      {% if ban.commentdata != 'Нет' %}
+                        {% for commenta in ban.commentdata %}
+                        <div class="commslist-comment">
+                          <div class="commslist-comment-head">
+                            <span>
+                              <span class="who">{% if commenta.comname %}{{ commenta.comname }}{% else %}<span class="commslist-muted">админ удалён</span>{% endif %}</span>
+                              {% if commenta.edittime %}
+                              <span class="when"> · изменено {{ commenta.edittime }}{% if commenta.editname %} — {{ commenta.editname }}{% endif %}</span>
+                              {% endif %}
+                            </span>
+                            {% if commenta.editcomlink != '' %}
+                            <span class="commslist-comment-ops">
+                              {{ commenta.editcomlink|raw }}
+                              {% if commenta.delcomlink %}{{ commenta.delcomlink|raw }}{% endif %}
+                            </span>
+                            {% endif %}
+                          </div>
+                          <p class="commslist-comment-text">{{ commenta.commenttxt|raw }}</p>
+                        </div>
+                        {% endfor %}
+                      {% else %}
+                        <p class="commslist-muted">Комментариев нет.</p>
+                      {% endif %}
+                    {% else %}
+                      <p class="commslist-muted">Комментарии видят только авторизованные админы.</p>
+                    {% endif %}
+                    {% if view_comments %}
+                      <a class="commslist-add" href="{{ ban.addcomment_link }}">Добавить комментарий…</a>
+                    {% else %}
+                      <div class="commslist-add">Нет доступа</div>
+                    {% endif %}
+                  </div>
+                </aside>
+              </div>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td class="commslist-empty" colspan="{{ ban_colspan }}">Блокировок нет.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+{% block extra_js %}
+{% if not comment %}
+<script>
+window.addEvent('domready', function () {
+  InitAccordion('tr.opener', 'div.opener', 'content');
+});
+</script>
+{% endif %}
+{% endblock %}

@@ -4,7 +4,7 @@
 // *************************************************************************
 
 if(!defined("IN_SB")){echo "Ошибка доступа!";die();}
-global $userbank;
+global $userbank, $theme;
 
 if(!isset($_GET['id']))
 {
@@ -36,30 +36,13 @@ $web_root = $userbank->HasAccess(ADMIN_OWNER, $_GET['id']);
 $steam = trim($userbank->GetProperty("authid", $_GET['id']));
 $web_flags = intval($userbank->GetProperty("extraflags", $_GET['id']));
 $name = $userbank->GetProperty("user", $_GET['id']);
+
+$theme->assign('admin_perm_name', $name);
+$theme->assign('admin_perm_id', (int)$_GET['id']);
+$theme->assign('web_perms_html', str_replace("{title}", "Веб-права", file_get_contents(TEMPLATES_PATH . "/groups.web.perm.php")));
+$theme->assign('server_perms_html', str_replace("{title}", "Серверные права", file_get_contents(TEMPLATES_PATH . "/groups.server.perm.php")));
+sb_ui_v2_theme_fragment('admin_edit_admins_perms.twig');
 ?>
-<div id="admin-page-content">
-<div class="card banlist-panel admin-form" id="add-group">
-	<div class="card-header">
-		<h2>Привилегии
-			<small><?php echo htmlspecialchars($name); ?> · свои флаги вне групп</small>
-		</h2>
-	</div>
-	<input type="hidden" id="admin_id" value="<?php echo $_GET['id']?>" />
-
-	<div class="card-body card-padding">
-		<?php echo str_replace("{title}", "Веб-права", file_get_contents(TEMPLATES_PATH . "/groups.web.perm.php")) ;?>
-	</div>
-	<div class="card-body card-padding p-t-0">
-		<?php echo str_replace("{title}", "Серверные права", file_get_contents(TEMPLATES_PATH . "/groups.server.perm.php")) ;?>
-	</div>
-
-	<div class="card-body card-padding text-center admin-manage-footer">
-		<button type="button" onclick="ProcessEditAdminPermissions();" class="btn bgm-blue btn-icon-text waves-effect" id="editadmingroup"><i class="zmdi zmdi-check-all"></i> Сохранить</button>
-		&nbsp;
-		<button type="button" onclick="sbGo('admin/admins')" class="btn bgm-bluegray btn-icon-text waves-effect" id="back"><i class="zmdi zmdi-undo"></i> Назад</button>
-	</div>
-</div>
-
 <script>
 <?php if(!$userbank->HasAccess(ADMIN_OWNER)) { ?>
 	if($("wrootcheckbox")) {
@@ -134,4 +117,3 @@ $('s22').checked = <?php echo strstr(get_non_inherited_admin($admin['authid']), 
 
 $('immunity').value = <?php echo $admin['immunity'] ? $admin['immunity'] : "0"?>;
 </script>
-</div>

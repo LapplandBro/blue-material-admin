@@ -33,22 +33,23 @@ if (function_exists('sb_session_start')) {
 // *************************************************************************
 
 
-require_once('xajax.inc.php');
+require_once('SbAjax.php');
 include_once('system-functions.php');
 include_once('user-functions.php');
-$xajax = new xajax();
-//$xajax->debugOn();
-$xajax->setRequestURI(XAJAX_REQUEST_URI);
+$sbAjax = new SbAjax();
+$sbAjax->setRequestURI(defined('SB_AJAX_URI') ? SB_AJAX_URI : './index.php');
+$xajax = $sbAjax;
 global $userbank;
 
 $methods = array('admin' => array('AddMod', 'RemoveMod', 'AddGroup', 'RemoveGroup', 'RemoveAdmin', 'RemoveSubmission', 'RemoveServer', 'UpdateGroupPermissions', 'UpdateAdminPermissions', 'AddAdmin', 'SetupEditServer', 'AddServerGroupName', 'AddServer', 'AddBan', 'RehashAdmins', 'EditGroup', 'RemoveProtest', 'SendRcon', 'EditAdminPerms', 'AddComment', 'EditComment', 'RemoveComment', 'PrepareReban', 'Maintenance', 'KickPlayer', 'GroupBan', 'BanMemberOfGroup', 'GetGroups', 'BanFriends', 'SendMessage', 'ViewCommunityProfile', 'SetupBan', 'CheckPassword', 'ChangePassword', 'CheckSrvPassword', 'ChangeSrvPassword', 'ChangeEmail', 'SendMail', 'AddBlock', 'PrepareReblock', 'PrepareBlockFromBan', 'removeExpiredAdmins', 'AddSupport', 'ChangeAdminsInfos', 'InstallMOD', 'PastePlayerData', 'AddWarning', 'RemoveWarning'), 'default' => array('Plogin', 'ServerHostPlayers', 'ServerHostProperty', 'ServerHostPlayers_list', 'ServerPlayers', 'LostPassword', 'RefreshServer', 'AddAdmin_pay', 'RehashAdmins_pay'));
 
-if(isset($_COOKIE['aid'], $_COOKIE['password']) && $userbank->CheckLogin($_COOKIE['password'], $_COOKIE['aid']))
+if ($userbank->is_logged_in()
+	|| (isset($_COOKIE['aid'], $_COOKIE['password']) && $userbank->CheckLogin($_COOKIE['password'], $_COOKIE['aid'])))
     foreach ($methods['admin'] as $method)
-        $xajax->registerFunction($method);
+        $sbAjax->registerFunction($method);
 
 foreach ($methods['default'] as $method)
-    $xajax->registerFunction($method);
+    $sbAjax->registerFunction($method);
 
 global $userbank;
 $username = $userbank->GetProperty("user");
@@ -2035,153 +2036,36 @@ function ServerHostPlayers($sid, $type="servers", $obId="", $tplsid="", $open=""
 				} else {
 					$objResponse->addScript("$('sinfo_$sid').setStyle('display', 'block');");
 					$objResponse->addScript("$('noplayer_$sid').setStyle('display', 'none');");
+					$playercount = 0;
 					if(!defined('IN_HOME')) {
 						$players = $sinfo->GetPlayers();
 						if ($players !== false) {
-							// remove childnodes
-							$objResponse->addScript('var toempty = document.getElementById("playerlist_'.$sid.'");
-							var empty = toempty.cloneNode(false);
-							toempty.parentNode.replaceChild(empty,toempty);');
-							//draw table headlines
-							$objResponse->addScript('var e = document.getElementById("playerlist_'.$sid.'");
-							var tr = e.insertRow("-1");
-								// Name Top TD
-								var td = tr.insertCell("-1");
-									td.setAttribute("width","50%");
-									td.className = "servers-player-th";
-										var b = document.createElement("b");
-										var txt = document.createTextNode("Игрок");
-										b.appendChild(txt);
-									td.appendChild(b);
-								// Score Top TD
-								var td = tr.insertCell("-1");
-									td.setAttribute("width","15%");
-									td.className = "servers-player-th";
-										var b = document.createElement("b");
-										var txt = document.createTextNode("Счёт");
-										b.appendChild(txt);
-									td.appendChild(b);
-								// Time Top TD
-								var td = tr.insertCell("-1");
-									td.className = "servers-player-th";
-										var b = document.createElement("b");
-										var txt = document.createTextNode("Время");
-										b.appendChild(txt);
-									td.appendChild(b);');
-							// add players
-							$playercount = 0;
-							
-							$needAddPlayerManaging = (($userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_BAN) && $GLOBALS['db']->GetOne(sprintf("SELECT COUNT(*) FROM `%s_admins_servers_groups` WHERE `admin_id` = %d AND `server_id` = %d", DB_PREFIX, $userbank->GetAid(), (int)$sid)) == 1) || $userbank->HasAccess(ADMIN_OWNER));
-							
-							if($needAddPlayerManaging) {
-								$dl = "a";
-								$dl2 = 'var i_i = document.createElement("i");
-										i_i.className = "zmdi zmdi-label c-lightblue p-r-10 p-l-5";
-										i_i.style = "font-size: 17px;";
-										//img.style.width = "20px";
-										//img.style.height = "20px";
-										a.appendChild(i_i);
-										td.appendChild(a);
-										';
-								$dl_fix = 'p-l-5 ';
-							}else{
-								$dl = "span";
-								$dl2 = "";
-								$dl_fix = 'p-l-10 ';
+							$needAddPlayerManaging = false;
+							if ($userbank->is_logged_in() && function_exists('sb_admin_has_server_access') && sb_admin_has_server_access((int)$sid)) {
+								$needAddPlayerManaging = $userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_BAN)
+									|| $userbank->HasAccess(SM_RCON . SM_ROOT);
 							}
+							// Ник с сервера — в JSON (addScriptCall), не в eval-строке с innerHTML:
+							// кавычки в нике больше не ломают меню кик/бан.
+							$objResponse->addScriptCall('sbClearServerPlayers', (int)$sid);
+							$objResponse->addScriptCall('sbAddServerPlayerHead', (int)$sid);
 							$id = 0;
-							foreach($players as $player) {
+							foreach ($players as $player) {
 								if (empty($player['Name'])) continue;
 								$id++;
-								// Player names come from the game server and are attacker-controllable,
-								// and can legitimately contain quotes/apostrophes. The name is embedded
-								// below in several different contexts, each of which needs its OWN kind
-								// of escaping:
-								//  1) plain HTML text (modal title)                 -> htmlspecialchars()
-								//  2) a JS string literal inside a *plain* JS statement (document.
-								//     createTextNode) that is executed directly, not through the HTML
-								//     parser                                        -> plain JS escaping
-								//  3) a JS string argument inside onclick="...('NAME')" that is assigned
-								//     via innerHTML. This is the tricky one: the browser's HTML parser
-								//     decodes entities in attribute values (e.g. &#039; -> ') BEFORE the
-								//     onclick JS source is compiled, so HTML-escaping a quote does NOT
-								//     protect the JS string - it comes back as a literal quote and breaks
-								//     out, corrupting the name. It must instead be JS-escaped (\' and \\,
-								//     which pass through HTML-decoding unchanged since backslash isn't an
-								//     HTML entity), then HTML-escaped for the remaining unsafe characters.
-								//  4) a query-string value (?pName=...)             -> urlencode()
-								// A previous "fix" stripped quote characters from the name outright to
-								// dodge all of this, but that silently corrupted the name used to match
-								// against the RCON "status" output: any player whose real nickname
-								// contains a quote/apostrophe could never be found by Kick/Ban/Mute from
-								// the player list ("Игрок покинул сервер!" even though he's clearly on).
-								$safePlayerName = htmlspecialchars($player['Name'], ENT_QUOTES);
-								$jsPlayerName = str_replace(array('\\', '"'), array('\\\\', '\\"'), $player['Name']);
-								$onclickPlayerName = htmlspecialchars(str_replace(array('\\', "'"), array('\\\\', "\\'"), $player['Name']), ENT_COMPAT);
-								$urlPlayerName = urlencode($player['Name']);
-								$objResponse->addScript('var e = document.getElementById("playerlist_'.$sid.'");
-														var tr = e.insertRow("-1");
-														tr.id = "player_s'.$sid.'p'.$id.'";
-															// Name TD
-															var td = tr.insertCell("-1");
-																td.className = "servers-player-name '.$dl_fix.'";
-																	var txt = document.createTextNode("'.$jsPlayerName.'");
-																	var a = document.createElement("'.$dl.'");
-																	a.href = "#player_s' . $sid . 'p' . $id . '_t";
-																	var att = document.createAttribute("data-toggle");
-																	att.value = "modal"; 
-																	a.setAttributeNode(att);
-																	'.$dl2.'
-																td.appendChild(txt);
-															// Score TD
-															var td = tr.insertCell("-1");
-																td.className = "servers-player-score";
-																var txt = document.createTextNode("'.$player["Frags"].'");
-																td.appendChild(txt);
-															// Time TD
-															var td = tr.insertCell("-1");
-																td.className = "servers-player-time";
-																var txt = document.createTextNode("'.SecondsToString($player['Time']).'");
-																td.appendChild(txt);
-															');
-								if($needAddPlayerManaging) {
-									$objResponse->addScript('
-										var div = document.createElement("div");
-										div.className = "modal fade";
-										div.id = "player_s' . $sid . 'p' . $id . '_t";
-										var att = document.createAttribute("tabindex");
-										var att1 = document.createAttribute("role");
-										var att2 = document.createAttribute("aria-hidden");
-										att.value = "-1"; 
-										att1.value = "dialog"; 
-										att2.value = "true"; 
-										div.setAttributeNode(att);   
-										div.setAttributeNode(att1);   
-										div.setAttributeNode(att2);   
-										div.innerHTML = "\
-											<div class=\'modal-dialog modal-sm\'>\
-												<div class=\'modal-content\'>\
-													<div class=\'modal-header\'>\
-														<h4 class=\'modal-title\'>'.$safePlayerName.'</h4>\
-													</div>\
-													<div class=\'modal-body\'>\
-													<p class=\"m-b-10\"><button class=\"btn btn-link btn-block\" data-dismiss=\"modal\" onclick=\"KickPlayerConfirm('.$sid.', \''.$onclickPlayerName.'\', 0);\">Кикнуть</button></p>\
-													<p class=\"m-b-10\"><button class=\"btn btn-link btn-block\" href=\"#\" data-dismiss=\'modal\' onclick=\"ViewCommunityProfile('.$sid.', \''.$onclickPlayerName.'\');\">Профиль</button></p>\
-													<p class=\"m-b-10\"><a href=\"index.php?p=admin&c=bans&action=pasteBan&sid='.$sid.'&pName='.$urlPlayerName.'\"><button class=\"btn btn-link btn-block\">Бан</button></a></p>\
-													<p class=\"m-b-10\"><a href=\"index.php?p=admin&c=comms&action=pasteBan&sid='.$sid.'&pName='.$urlPlayerName.'\"><button class=\"btn btn-link btn-block\">Заглушить</button></a></p>\
-													<p class=\"m-b-10\"><button class=\"btn btn-link btn-block\" href=\"#\" data-dismiss=\'modal\' onclick=\"OpenMessageBox('.$sid.', \''.$onclickPlayerName.'\', 1);\">Отправить сообщение</button></p>\
-													</div>\
-													<!--<div class=\'modal-footer\'>\
-														<button type=\'button\' class=\'btn btn-link\' data-dismiss=\'modal\'>Отмена</button>\
-													</div>-->\
-												</div>\
-											</div>\
-										";
-
-										document.body.appendChild(div);');
-								}
+								$objResponse->addScriptCall('sbAddServerPlayer', array(
+									'sid' => (int)$sid,
+									'pid' => (int)$id,
+									'name' => (string)$player['Name'],
+									'frags' => (string)$player['Frags'],
+									'time' => SecondsToString($player['Time']),
+									'manage' => $needAddPlayerManaging ? 1 : 0,
+									'banUrl' => 'index.php?p=admin&c=bans&action=pasteBan&sid='.$sid.'&pName='.urlencode($player['Name']),
+									'muteUrl' => 'index.php?p=admin&c=comms&action=pasteBan&sid='.$sid.'&pName='.urlencode($player['Name']),
+								));
 								$playercount++;
 							}
+							$objResponse->addScriptCall('sbRevealServerPlayers', (int)$sid);
 						}
 					}
 					if($playercount>15)
@@ -2361,7 +2245,7 @@ function KickPlayer($sid, $name)
 	
 	//$objResponse->addScript("$('dialog-control').setStyle('display', 'block');");
 		
-	if(!$userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_BAN))
+	if(!$userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_BAN) && !$userbank->HasAccess(SM_RCON . SM_ROOT))
 	{
 		$objResponse->redirect("index.php?p=login&m=no_access", 0);
 		$log = new CSystemLog("w", "Ошибка доступа", $username . " пытался кикнуть ".htmlspecialchars($name).", не имея на это прав.");
@@ -4073,14 +3957,19 @@ function loadGroupPage($grpname, $page) {
 }
 
 function getBannedSteamIds() {
-	// Только SteamID-баны (type=0), LIKE фильтрует IP-баны с пустым authid.
-	// CAST AS CHAR нужен чтобы PHP получал строки, а не int64 — иначе in_array() ломается на больших числах.
 	$bans = $GLOBALS['db']->GetAll(
 		"SELECT CAST(CAST(MID(authid,9,1) AS UNSIGNED) + CAST('76561197960265728' AS UNSIGNED) + CAST(MID(authid,11,10) AS UNSIGNED) * 2 AS CHAR) AS community_id " .
 		"FROM " . DB_PREFIX . "_bans " .
 		"WHERE RemoveType IS NULL AND type = 0 AND authid LIKE 'STEAM\\_%'"
 	);
-	return array_column($bans, 'community_id');
+	if (!is_array($bans))
+		return array();
+	$ids = array();
+	foreach ($bans as $ban) {
+		if (isset($ban['community_id']) && $ban['community_id'] !== '' && $ban['community_id'] !== null)
+			$ids[] = (string)$ban['community_id'];
+	}
+	return $ids;
 }
 
 function processMember($member, &$state) {
@@ -4267,7 +4156,77 @@ function hasProblematicChars($string) {
     if (!mb_check_encoding($string, 'UTF-8')) {
         return true;
     }
-    return false;
+	return false;
+}
+
+function GetGroups($friendid)
+{
+	$objResponse = new SbJsonResponse();
+	if (empty($GLOBALS['config']['config.enablegroupbanning']) || !is_numeric($friendid))
+		return $objResponse;
+	global $userbank, $username;
+	if (!$userbank->HasAccess(ADMIN_OWNER | ADMIN_ADD_BAN)) {
+		$objResponse->redirect("index.php?p=login&m=no_access", 0);
+		new CSystemLog("w", "Ошибка доступа", $username . " пытался получить список групп '" . $friendid . "', не имея прав.");
+		return $objResponse;
+	}
+
+	$friendid = preg_replace('/\D+/', '', (string)$friendid);
+	if (strlen($friendid) < 16) {
+		$objResponse->addAssign("steamGroupsText", "innerHTML", "Некорректный Steam Community ID");
+		return $objResponse;
+	}
+
+	$url = "https://steamcommunity.com/profiles/" . $friendid . "/?xml=1";
+	$raw = @file_get_contents($url);
+	if (!is_string($raw) || $raw === '') {
+		$objResponse->addScript("ShowBox('Ошибка', 'Не удалось загрузить профиль Steam.', 'red', '', true);");
+		$objResponse->addAssign("steamGroupsText", "innerHTML", "<i>Нет групп…</i>");
+		return $objResponse;
+	}
+
+	if (strpos($raw, "<groups>") === false) {
+		$objResponse->addScript("ShowBox('Ошибка', 'Не удалось получить группы. Профиль скрыт или игрок не состоит в группах.<br><a href=\"https://steamcommunity.com/profiles/" . $friendid . "/\" target=\"_blank\" rel=\"noopener\">Профиль</a>', 'red', 'index.php?p=banlist', true);");
+		$objResponse->addAssign("steamGroupsText", "innerHTML", "<i>Нет групп…</i>");
+		return $objResponse;
+	}
+
+	$raw = str_replace("&", "", $raw);
+	$raw = strip_31_ascii($raw);
+	$xml = @simplexml_load_string($raw);
+	if ($xml === false) {
+		$objResponse->addAssign("steamGroupsText", "innerHTML", "<i>Нет групп…</i>");
+		return $objResponse;
+	}
+	$nodes = $xml->xpath('/profile/groups/group');
+	if (!is_array($nodes) || empty($nodes)) {
+		$objResponse->addAssign("steamGroupsText", "innerHTML", "<i>Нет групп…</i>");
+		return $objResponse;
+	}
+
+	$i = 0;
+	foreach ($nodes as $node) {
+		$groupURL = isset($node->groupURL) ? (string)$node->groupURL : '';
+		$groupName = isset($node->groupName) ? (string)$node->groupName : $groupURL;
+		$memberCount = isset($node->memberCount) ? (string)$node->memberCount : '0';
+		if ($groupURL === '')
+			continue;
+		$objResponse->addScript(
+			'var e=document.getElementById("steamGroupsTable");'
+			. 'if(e){var tr=e.insertRow(-1);var td=tr.insertCell(-1);td.style.padding="0px";td.style.width="3px";'
+			. 'var input=document.createElement("input");input.type="checkbox";input.id="chkb_' . $i . '";input.value=' . sb_ajax_json_encode($groupURL) . ';'
+			. 'td.appendChild(input);td=tr.insertCell(-1);var a=document.createElement("a");a.href="https://steamcommunity.com/groups/"+encodeURIComponent(' . sb_ajax_json_encode($groupURL) . ');a.target="_blank";a.rel="noopener";'
+			. 'a.appendChild(document.createTextNode(' . sb_ajax_json_encode($groupName) . '));td.appendChild(a);'
+			. 'td.appendChild(document.createTextNode(" ("));'
+			. 'var span=document.createElement("span");span.id="membcnt_' . $i . '";span.appendChild(document.createTextNode(' . sb_ajax_json_encode($memberCount) . '));td.appendChild(span);'
+			. 'td.appendChild(document.createTextNode(" уч.)");}'
+		);
+		$i++;
+	}
+
+	$objResponse->addScript("var t=document.getElementById('steamGroupsText');if(t)t.style.display='none';");
+	$objResponse->addScript("var g=document.getElementById('steamGroups');if(g)g.style.display='block';");
+	return $objResponse;
 }
 
 function BanFriends($friendid, $name)

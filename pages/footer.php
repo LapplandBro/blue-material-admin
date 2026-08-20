@@ -48,7 +48,7 @@ $theme->assign('gendata_time',      round($totaltime, 2));
 $theme->assign('splash_screen',     ($GLOBALS['config']['theme.splashscreen'] == "1"));
 
 // Cache-busting для собственных JS/CSS темы (браузеры кэшируют их на 7 дней).
-$asset_ver = @filemtime(dirname(__FILE__) . '/../themes/new_box/js/functions.js');
+$asset_ver = @filemtime(dirname(__FILE__) . '/../themes/blue_v2/css/blue.css');
 if ($asset_ver === false) {
 	$asset_ver = defined('SB_VERSION') ? SB_VERSION : '1';
 }

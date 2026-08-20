@@ -1,0 +1,89 @@
+{% extends 'layout.twig' %}
+{% block extra_head %}
+<link href="{{ asset_base }}themes/blue_v2/css/servers.css?v={{ css_ver }}" rel="stylesheet">
+{% endblock %}
+{% block topbar_title %}
+<h1>Серверы</h1>
+{% endblock %}
+{% block content %}
+<div id="dialog-placement" class="servers-dialog-sink"></div>
+<div class="panel servers-panel">
+  <header class="servers-head">
+    <p class="servers-kicker">Статус</p>
+    <h1 class="servers-title">Серверы</h1>
+    <p class="servers-sub">{{ server_list|length }} шт. · нажми строку, чтобы открыть игроков и карту</p>
+  </header>
+  {% if access_bans %}
+  <div class="hint servers-hint">
+    У админа рядом с ником есть метка — открой меню: кик, бан, мут, сообщение.
+  </div>
+  {% endif %}
+  <div class="servers-scroll">
+    <table class="servers-table">
+      <thead>
+        <tr>
+          <th class="servers-col-ico">Игра</th>
+          <th class="servers-col-ico">ОС</th>
+          <th class="servers-col-ico">VAC</th>
+          <th>Сервер</th>
+          <th class="servers-col-players">Игроки</th>
+          <th class="servers-col-map">Карта</th>
+          <th class="servers-col-chevron"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if server_list %}
+          {% for server in server_list %}
+            <tr id="opener_{{ server.sid }}" class="opener servers-row">
+              <td class="servers-td-mod">{{ server.icon_html|raw }}</td>
+              <td class="servers-td-ico" id="os_{{ server.sid }}"></td>
+              <td class="servers-td-ico" id="vac_{{ server.sid }}"></td>
+              <td class="servers-td-host" id="host_{{ server.sid }}"><span class="servers-muted">Загрузка…</span></td>
+              <td class="servers-td-players" id="players_{{ server.sid }}"><span class="servers-muted">—</span></td>
+              <td class="servers-td-map" id="map_{{ server.sid }}"><span class="servers-muted">—</span></td>
+              <td class="servers-td-chevron">
+                <svg class="servers-chevron" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path fill="currentColor" d="M2.2 4.2L6 8l3.8-3.8-.9-.9L6 6.2 3.1 3.3z"/></svg>
+              </td>
+            </tr>
+            <tr class="servers-detail-row">
+              <td colspan="7">
+                <div id="serverpanel_{{ server.sid }}" class="opener servers-detail" style="visibility: hidden; zoom: 1; opacity: 0; height: 0px;">
+                  <div id="serverwindow_{{ server.sid }}" class="servers-window">
+                    <div class="servers-detail-grid">
+                      <div class="servers-players-col">
+                        <div id="sinfo_{{ server.sid }}">
+                          <table class="servers-players-table" width="100%" border="0" id="playerlist_{{ server.sid }}"></table>
+                        </div>
+                        <div id="noplayer_{{ server.sid }}" class="servers-empty">
+                          <p class="servers-empty-text">Сейчас на сервере никого нет.</p>
+                        </div>
+                      </div>
+                      <aside class="servers-aside">
+                        <div class="servers-map-frame">
+                          <img id="mapimg_{{ server.sid }}" src="images/maps/nomap.jpg" alt="Карта" loading="lazy" onerror="if(this.getAttribute('data-nomap'))return;this.setAttribute('data-nomap','1');this.src='images/maps/nomap.jpg';">
+                        </div>
+                        <div class="servers-addr">
+                          <span class="servers-addr-label">Адрес</span>
+                          <code>{{ server.ip }}:{{ server.port }}</code>
+                        </div>
+                        <div class="servers-actions">
+                          <button type="button" class="btn btn-accent" onclick="document.location = 'steam://connect/{{ server.ip }}:{{ server.port }}'">Подключиться</button>
+                          <button type="button" class="btn btn-outline-secondary" onclick="ShowBox('Обновление','Обновляем статус сервера…', 'blue', '', true, 1000);xajax_RefreshServer({{ server.sid }});">Обновить</button>
+                        </div>
+                      </aside>
+                    </div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td colspan="7" class="servers-empty-table">Нет включённых серверов.</td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
