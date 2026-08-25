@@ -1230,12 +1230,26 @@ div.opener5 {
   align-items: center;
   justify-content: center;
   padding: 1.25rem;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.22s ease, visibility 0.22s ease;
 }
 .sb-player-sheet[hidden] { display: none !important; }
+.sb-player-sheet.is-open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
 .sb-player-sheet-backdrop {
   position: absolute;
   inset: 0;
   background: rgba(4, 8, 20, 0.62);
+  opacity: 0;
+  transition: opacity 0.22s ease;
+}
+.sb-player-sheet.is-open .sb-player-sheet-backdrop {
+  opacity: 1;
 }
 .sb-player-sheet-card {
   position: relative;
@@ -1247,6 +1261,13 @@ div.opener5 {
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-elevated);
   overflow: hidden;
+  opacity: 0;
+  transform: translateY(0.7rem) scale(0.97);
+  transition: opacity 0.24s ease, transform 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.sb-player-sheet.is-open .sb-player-sheet-card {
+  opacity: 1;
+  transform: translateY(0) scale(1);
 }
 .sb-player-sheet-head {
   display: flex;

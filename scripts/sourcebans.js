@@ -2370,9 +2370,17 @@ function sbClosePlayerSheet() {
 	var sheet = document.getElementById("sb-player-sheet");
 	if (!sheet)
 		return;
-	sheet.hidden = true;
+	if (sheet._sbCloseTimer) {
+		clearTimeout(sheet._sbCloseTimer);
+		sheet._sbCloseTimer = null;
+	}
+	sheet.classList.remove("is-open");
 	sheet.setAttribute("aria-hidden", "true");
 	document.body.classList.remove("sb-player-sheet-open");
+	sheet._sbCloseTimer = setTimeout(function () {
+		sheet.hidden = true;
+		sheet._sbCloseTimer = null;
+	}, 240);
 }
 
 function sbEnsurePlayerSheet() {
@@ -2400,6 +2408,13 @@ function sbEnsurePlayerSheet() {
 		if (t && t.getAttribute && t.getAttribute("data-sb-player-close"))
 			sbClosePlayerSheet();
 	});
+	if (!window._sbPlayerSheetEsc) {
+		window._sbPlayerSheetEsc = true;
+		document.addEventListener("keydown", function (ev) {
+			if (ev.key === "Escape" || ev.keyCode === 27)
+				sbClosePlayerSheet();
+		});
+	}
 	return sheet;
 }
 
