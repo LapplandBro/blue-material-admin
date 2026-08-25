@@ -67,7 +67,12 @@ while (!$res->EOF)
 		$info['evOnClick'] = "if(typeof sbGo==='function'){sbGo('servers?s=".(int)$info['sid']."');}else{window.location=sbLoc('servers','s=".(int)$info['sid']."');}";	
 	
 	// 4th param is the server's own sid (used to be the loop index $i - see comment above).
-	$GLOBALS['server_qry'] .= "xajax_ServerHostPlayers({$info['sid']}, 'servers', '', '".$info['sid']."', '".$number."', '".defined('IN_HOME')."', 70);";
+	// Не палим все xajax сразу: на shared-хостинге FCGI слоты кончаются → «Сеть: запрос не удался».
+	if (!isset($GLOBALS['server_qry_delay']))
+		$GLOBALS['server_qry_delay'] = 0;
+	$delayMs = (int)$GLOBALS['server_qry_delay'];
+	$GLOBALS['server_qry'] .= "setTimeout(function(){xajax_ServerHostPlayers({$info['sid']}, 'servers', '', '".$info['sid']."', '".$number."', '".defined('IN_HOME')."', 70);},".$delayMs.");";
+	$GLOBALS['server_qry_delay'] = $delayMs + 400;
 	array_push($servers,$info);
 	$i++;
 	$res->MoveNext();

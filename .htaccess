@@ -66,11 +66,12 @@ ErrorDocument 504 /errors/504.html
 	# ЧПУ: /banlist → index.php?p=banlist, /admin/bans → index.php?p=admin&c=bans
 	# Если панель в подпапке — раскомментируй: RewriteBase /подпапка/
 
-	# SEO: /index.php и /index.html → / (301). Не ./ — аудиторы ждут корень.
+	# SEO: /index.php → https://host/ (не http — иначе аудиторы и mixed redirect).
+	# QUERY_STRING пустой: index.php?p=… не трогаем.
 	RewriteCond %{THE_REQUEST} \s/+index\.php[\s?] [NC]
 	RewriteCond %{QUERY_STRING} ^$
-	RewriteRule ^index\.php$ / [R=301,L]
-	RewriteRule ^index\.html?$ / [R=301,L]
+	RewriteRule ^index\.php$ https://%{HTTP_HOST}/ [R=301,L]
+	RewriteRule ^index\.html?$ https://%{HTTP_HOST}/ [R=301,L]
 
 	RewriteCond %{REQUEST_FILENAME} -f [OR]
 	RewriteCond %{REQUEST_FILENAME} -d

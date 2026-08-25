@@ -1992,7 +1992,7 @@ function ServerHostPlayers($sid, $type="servers", $obId="", $tplsid="", $open=""
 	global $userbank;
 	// Soft rate-limit по IP: опрос игровых серверов (A2S) дёшево дёргать через xajax в цикле,
 	// не давая при этом реально мешать обычному использованию (авто-обновление списка серверов).
-	if (function_exists('sb_rate_limit_hit') && sb_rate_limit_hit('server_host_players', 60, 60))
+	if (function_exists('sb_rate_limit_hit') && sb_rate_limit_hit('server_host_players', 24, 60))
 		return $objResponse;
 	require INCLUDES_PATH.'/CServerControl.php';
 	
