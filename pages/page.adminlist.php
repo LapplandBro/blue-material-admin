@@ -155,13 +155,11 @@ unset($mod);
 
 if (function_exists('sb_ui_v2_enabled') && sb_ui_v2_enabled()) {
 	$qry = '';
-	$delayMs = 0;
 	foreach ($servers as $server) {
 		if (empty($server['admincount']))
 			continue;
 		$sid = (int)$server['sid'];
-		$qry .= "setTimeout(function(){xajax_ServerHostPlayers(" . $sid . ", 'servers', '', '0', '-1', '', 70);},".$delayMs.");";
-		$delayMs += 400;
+		$qry .= "xajax_ServerHostPlayers(" . $sid . ", 'servers', '', '0', '-1', '', 70);";
 	}
 	$extra_js = "<script>\n"
 		. "window.addEvent('domready', function(){ " . $qry . " });\n"

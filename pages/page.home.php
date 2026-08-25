@@ -62,10 +62,7 @@ while (!$res->EOF)
 	$info['name'] = htmlspecialchars(addslashes($info['name']), ENT_QUOTES, 'UTF-8');
 	$info['popup'] = "ShowBox('Заблокированный игрок: " . $info['name'] . "', '" . $info['name'] . " пытался зайти<br />' + (document.getElementById('".$info['server']."') ? document.getElementById('".$info['server']."').title : '') + '<br />" . $info['date'] . "<br /><div align=\"middle\"><a href=\"" . $info['search_link'] . "\">Открыть бан в списке</a></div>', 'red', '', true);";
 		
-	if (!isset($GLOBALS['server_qry_delay']))
-		$GLOBALS['server_qry_delay'] = 0;
-	$GLOBALS['server_qry'] .= "setTimeout(function(){xajax_ServerHostProperty(".$res->fields['sid'].", 'block_".$res->fields['sid']."_$blcount', 'title', 100);},".(int)$GLOBALS['server_qry_delay'].");";
-	$GLOBALS['server_qry_delay'] += 200;
+    $GLOBALS['server_qry'] .= "xajax_ServerHostProperty(".$res->fields['sid'].", 'block_".$res->fields['sid']."_$blcount', 'title', 100);";
         
     array_push($stopped,$info);
 	$res->MoveNext();
