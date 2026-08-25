@@ -168,9 +168,34 @@
   padding-top: 0.55rem;
 }
 .form-page input[type="file"].form-control {
-  padding: 0.38rem 0.55rem;
-  font-size: 0.85rem;
-  line-height: 1.4;
+  padding: 0;
+  min-height: 2.45rem;
+  line-height: 1.2;
+  overflow: hidden;
+  color: var(--muted);
+}
+.form-page input[type="file"].form-control::file-selector-button,
+.form-page input[type="file"].form-control::-webkit-file-upload-button {
+  box-sizing: border-box;
+  height: 2.45rem;
+  margin: 0;
+  margin-inline-end: 0.75rem;
+  padding: 0 0.95rem;
+  border: 0;
+  border-right: 1px solid var(--border);
+  border-radius: 0;
+  background: rgba(30, 144, 255, 0.14);
+  color: var(--text-heading);
+  font-size: 0.82rem;
+  font-weight: 650;
+  line-height: 2.45rem;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.form-page input[type="file"].form-control:hover::file-selector-button,
+.form-page input[type="file"].form-control:hover::-webkit-file-upload-button {
+  background: rgba(30, 144, 255, 0.22);
+  color: #fff;
 }
 
 .form-input-mask {
