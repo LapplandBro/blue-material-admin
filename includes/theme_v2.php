@@ -47,6 +47,94 @@ function sb_ui_v2_boot()
 	// V2 по умолчанию: cookie / ?ui=legacy больше не переключают оболочку.
 }
 
+/**
+ * Прокинуть SEO/OG в Twig: сначала из $theme (header.php), иначе из SB_OG_* в config.php.
+ */
+function sb_ui_v2_apply_seo_vars(array &$vars)
+{
+	global $theme;
+	$seoKeys = array(
+		'seo_title', 'seo_document_title', 'seo_description', 'seo_canonical', 'seo_image',
+		'seo_site_url', 'seo_noindex', 'seo_jsonld',
+		'og_site_name', 'og_title', 'og_description', 'og_image', 'og_image_alt',
+		'og_image_width', 'og_image_height', 'og_image_type', 'base_href',
+	);
+	if (isset($theme) && is_object($theme)) {
+		$tplVars = null;
+		if (isset($theme->_tpl_vars) && is_array($theme->_tpl_vars))
+			$tplVars = $theme->_tpl_vars;
+		elseif (method_exists($theme, 'getTemplateVars'))
+			$tplVars = $theme->getTemplateVars();
+		elseif (method_exists($theme, 'get_template_vars'))
+			$tplVars = $theme->get_template_vars();
+		if (is_array($tplVars)) {
+			foreach ($seoKeys as $sk) {
+				if ((!array_key_exists($sk, $vars) || $vars[$sk] === '' || $vars[$sk] === null)
+					&& array_key_exists($sk, $tplVars) && $tplVars[$sk] !== '' && $tplVars[$sk] !== null)
+					$vars[$sk] = $tplVars[$sk];
+			}
+		}
+	}
+
+	$siteBase = '';
+	if (!empty($vars['seo_site_url']))
+		$siteBase = rtrim((string)$vars['seo_site_url'], '/');
+	elseif (defined('SB_WP_URL') && SB_WP_URL !== '')
+		$siteBase = rtrim((string)SB_WP_URL, '/');
+	elseif (!empty($vars['asset_base']))
+		$siteBase = rtrim((string)$vars['asset_base'], '/');
+
+	$brand = '';
+	if (!empty($GLOBALS['config']['template.title']))
+		$brand = trim(strip_tags(stripslashes((string)$GLOBALS['config']['template.title'])));
+	if ($brand === '')
+		$brand = 'SourceBans';
+
+	if (empty($vars['og_site_name']))
+		$vars['og_site_name'] = (defined('SB_OG_SITE_NAME') && SB_OG_SITE_NAME !== '') ? (string)SB_OG_SITE_NAME : $brand;
+	if (empty($vars['og_title']))
+		$vars['og_title'] = (defined('SB_OG_TITLE') && SB_OG_TITLE !== '')
+			? (string)SB_OG_TITLE
+			: ($vars['og_site_name'] . ' — игровые серверы');
+	if (empty($vars['og_description']))
+		$vars['og_description'] = (defined('SB_OG_DESCRIPTION') && SB_OG_DESCRIPTION !== '')
+			? (string)SB_OG_DESCRIPTION
+			: ('Онлайн, правила, банлист и админлист — ' . $vars['og_site_name']);
+	if (empty($vars['seo_description']))
+		$vars['seo_description'] = $vars['og_description'];
+	if (empty($vars['seo_document_title']))
+		$vars['seo_document_title'] = $vars['og_title'];
+	if (empty($vars['seo_title']))
+		$vars['seo_title'] = $brand;
+	if (empty($vars['og_image_alt']))
+		$vars['og_image_alt'] = $vars['og_title'];
+	if (empty($vars['og_image_width']))
+		$vars['og_image_width'] = (defined('SB_OG_IMAGE_WIDTH') && (int)SB_OG_IMAGE_WIDTH > 0) ? (int)SB_OG_IMAGE_WIDTH : 1200;
+	if (empty($vars['og_image_height']))
+		$vars['og_image_height'] = (defined('SB_OG_IMAGE_HEIGHT') && (int)SB_OG_IMAGE_HEIGHT > 0) ? (int)SB_OG_IMAGE_HEIGHT : 630;
+	if (empty($vars['og_image_type']))
+		$vars['og_image_type'] = 'image/jpeg';
+
+	if (empty($vars['og_image'])) {
+		$img = (defined('SB_OG_IMAGE') && SB_OG_IMAGE !== '') ? trim((string)SB_OG_IMAGE) : 'images/og-cover.jpg';
+		if (!preg_match('#^https?://#i', $img))
+			$img = ($siteBase !== '' ? $siteBase . '/' : '') . ltrim($img, '/');
+		$vars['og_image'] = $img;
+	} elseif (!preg_match('#^https?://#i', (string)$vars['og_image']) && $siteBase !== '') {
+		$vars['og_image'] = $siteBase . '/' . ltrim((string)$vars['og_image'], '/');
+	}
+
+	if (empty($vars['seo_canonical']))
+		$vars['seo_canonical'] = ($siteBase !== '' ? $siteBase . '/' : '/');
+	if (empty($vars['seo_site_url']))
+		$vars['seo_site_url'] = ($siteBase !== '' ? $siteBase . '/' : '/');
+	if (!array_key_exists('seo_noindex', $vars))
+		$vars['seo_noindex'] = false;
+
+	// Короткий title со страницы («Sibnet-Software.ru») всегда перекрываем SEO/OG.
+	$vars['title'] = $vars['seo_document_title'];
+}
+
 function sb_ui_v2_enabled()
 {
 	return true;
@@ -357,33 +445,9 @@ function sb_ui_v2_render($template, array $vars)
 	}
 	$vars['page_notices'] = sb_ui_v2_page_notices(isset($vars['nav_active']) ? $vars['nav_active'] : '');
 
-	// SEO / Open Graph из pages/header.php (Smarty) — иначе layout.twig остаётся без description/og:*
-	global $theme;
-	$seoKeys = array(
-		'seo_title', 'seo_document_title', 'seo_description', 'seo_canonical', 'seo_image',
-		'seo_site_url', 'seo_noindex', 'seo_jsonld',
-		'og_site_name', 'og_title', 'og_description', 'og_image', 'og_image_alt',
-		'og_image_width', 'og_image_height', 'og_image_type', 'base_href',
-	);
-	if (isset($theme) && is_object($theme)) {
-		$tplVars = null;
-		if (isset($theme->_tpl_vars) && is_array($theme->_tpl_vars))
-			$tplVars = $theme->_tpl_vars;
-		elseif (method_exists($theme, 'getTemplateVars'))
-			$tplVars = $theme->getTemplateVars();
-		elseif (method_exists($theme, 'get_template_vars'))
-			$tplVars = $theme->get_template_vars();
-		if (is_array($tplVars)) {
-			foreach ($seoKeys as $sk) {
-				if (!array_key_exists($sk, $vars) && array_key_exists($sk, $tplVars))
-					$vars[$sk] = $tplVars[$sk];
-			}
-		}
-	}
-	if (!empty($vars['seo_document_title']))
-		$vars['title'] = $vars['seo_document_title'];
-	elseif (!empty($vars['og_title']))
-		$vars['title'] = $vars['og_title'];
+	// SEO / Open Graph: Smarty-мешок + жёсткий fallback из SB_OG_* (config.php).
+	// На проде layout уже новый, а без этих vars Discord/аудиторы видят пустой <head>.
+	sb_ui_v2_apply_seo_vars($vars);
 
 	$flash = '';
 	if (function_exists('sb_ui_flash_script'))
