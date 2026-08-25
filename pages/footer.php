@@ -41,9 +41,9 @@ $theme->assign('THEME_VERSION', theme_version);
 $theme->assign('THEME_LINK', theme_link);
 $theme->assign('SB_VERSION', SB_VERSION);
 
-$theme->assign('show_gendata',      ($GLOBALS['config']['page.footer.allow_show_data'] == "1"));
-$theme->assign('gendata_queries',   $GLOBALS['db']->Queries);
-$theme->assign('gendata_time',      round($totaltime, 2));
+$theme->assign('show_gendata',      false);
+$theme->assign('gendata_queries',   0);
+$theme->assign('gendata_time',      0);
 
 $theme->assign('splash_screen',     ($GLOBALS['config']['theme.splashscreen'] == "1"));
 

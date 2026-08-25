@@ -1407,7 +1407,7 @@ function sb_render_developer_debug_panel($userbank)
 	echo '<div class="card-header"><h2>Режим отладки <small>только владелец · секреты скрыты</small></h2></div>';
 	echo '<div class="card-body card-padding">';
 	echo '<p class="m-b-10">Включены PHP <code>display_errors</code> и принудительная компиляция Smarty. ';
-	echo 'Отключить: настройки → «Режим отладки» или закомментировать <code>define(\'DEVELOPER_MODE\', true);</code> в <code>config.php</code>.</p>';
+	echo 'Отключить: уберите <code>define(\'DEVELOPER_MODE\', true);</code> из <code>config.php</code>.</p>';
 	$dump('Сводка', $meta);
 	$dump('Текущий админ (без паролей)', $safeUser);
 	$dump('POST', sb_debug_scrub($_POST));
@@ -3408,27 +3408,15 @@ function SBDate($format, $timestamp="")
 {
     if(version_compare(PHP_VERSION, "5") != -1)
     {
-        if($GLOBALS['config']['config.summertime'] == "1")
-        {
-            $str = date("r", $timestamp);
-            $date = new DateTime($str);
-            $date->modify("+1 hour");
-            return $date->format($format);
-        }
-        else if(empty($timestamp))
+        if(empty($timestamp))
             return date($format);
     }
     else
     {
-        if($GLOBALS['config']['config.summertime'] == "1") {
-            $summertime = 3600;
-        } else {
-            $summertime = 0;
-        }
         if(empty($timestamp)) {
-            $timestamp = time() + SB_TIMEZONE*3600 + $summertime;
+            $timestamp = time() + SB_TIMEZONE*3600;
         } else {
-            $timestamp = $timestamp + SB_TIMEZONE*3600 + $summertime;
+            $timestamp = $timestamp + SB_TIMEZONE*3600;
         }
     }
 	return date($format, $timestamp);

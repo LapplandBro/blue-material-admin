@@ -204,17 +204,15 @@ else
 					$protest = 0;
 				}
 
-				$debugmode = (isset($_POST['config_debug']) && $_POST['config_debug'] == "on" ? 1 : 0);
-				
-				$summertime = (isset($_POST['config_summertime']) && $_POST['config_summertime'] == "on" ? 1 : 0);
-				
+				$debugmode = 0;
+				$summertime = 0;
 				$hideadmname = (isset($_POST['banlist_hideadmname']) && $_POST['banlist_hideadmname'] == "on" ? 1 : 0);
                 
 				$hideplayerips = (isset($_POST['banlist_hideplayerips']) && $_POST['banlist_hideplayerips'] == "on" ? 1 : 0);
 				
 				$nocountryfetch = (isset($_POST['banlist_nocountryfetch']) && $_POST['banlist_nocountryfetch'] == "on" ? 1 : 0);
 				
-				$gendata = (isset($_POST['footer_gendata']) && $_POST['footer_gendata'] == "on") ? 1 : 0;
+				$gendata = 0;
 				
 				$onlyinvolved = (isset($_POST['protest_emailonlyinvolved']) && $_POST['protest_emailonlyinvolved'] == "on" ? 1 : 0);
 				
@@ -448,8 +446,6 @@ else
 	setChecked('vay4_t', <?php echo $sbCfgInt('page.vay4er'); ?>);
 	setChecked('admin_list_t', <?php echo $sbCfgInt('page.adminlist'); ?>);
 
-	setChecked('config_debug', <?php echo $sbCfgInt('config.debug'); ?>);
-	setChecked('config_summertime', <?php echo $sbCfgInt('config.summertime'); ?>);
 	setChecked('enable_submit', <?php echo $sbCfgInt('config.enablesubmit'); ?>);
 	setChecked('enable_protest', <?php echo $sbCfgInt('config.enableprotest'); ?>);
 	setChecked('enable_kickit', <?php echo $sbCfgInt('config.enablekickit', 1); ?>);
@@ -466,7 +462,6 @@ else
 	setChecked('allow_admininfo', <?php echo $sbCfgInt('config.changeadmininfos', 1); ?>);
 	setChecked('enable_adminrehashing', <?php echo $sbCfgInt('config.enableadminrehashing', 1); ?>);
 	setValue('moder_group_st', <?php echo json_encode((string)$sbCfg('config.modgroup', '0'), JSON_UNESCAPED_UNICODE); ?>);
-	setChecked('footer_gendata', <?php echo $sbCfgInt('page.footer.allow_show_data'); ?>);
 })();
 
 function MoreFields()

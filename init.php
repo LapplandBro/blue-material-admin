@@ -529,10 +529,14 @@ require_once(INCLUDES_PATH . '/sb-totp.php');
 sb_totp_migrate_schema();
 
 $debug = $GLOBALS['db']->Execute("SELECT value FROM `".DB_PREFIX."_settings` WHERE setting = 'config.debug';");
-if($debug->fields['value']=="1") {
-	define("DEVELOPER_MODE", true);
+// Legacy UI toggles removed — force-off leftover DB flags. Manual
+// define('DEVELOPER_MODE', true) in config.php still works for local work.
+foreach (array('config.debug', 'config.summertime', 'page.footer.allow_show_data') as $legacyOff) {
+	$row = $GLOBALS['db']->GetOne("SELECT value FROM `".DB_PREFIX."_settings` WHERE setting = ".$GLOBALS['db']->qstr($legacyOff));
+	if ($row === '1' || $row === 1)
+		@$GLOBALS['db']->Execute("REPLACE INTO `".DB_PREFIX."_settings` (`value`, `setting`) VALUES ('0', ".$GLOBALS['db']->qstr($legacyOff).")");
 }
-// Перепроверяем вывод ошибок теперь, когда DEVELOPER_MODE мог быть включён через настройки в БД.
+unset($debug, $legacyOff, $row);
 ini_set('display_errors', defined('DEVELOPER_MODE') ? 1 : 0);
 
 // ---------------------------------------------------
@@ -647,7 +651,7 @@ if(version_compare(PHP_VERSION, "5") != -1)
     $abbrarray = timezone_abbreviations_list();
     foreach ($abbrarray as $abbr) {
         foreach ($abbr as $city) {
-            if ($city['offset'] == $offset && $city['dst'] == $GLOBALS['config']['config.summertime']) {
+            if ($city['offset'] == $offset && empty($city['dst'])) {
                 date_default_timezone_set($city['timezone_id']);
                 break 2;
             }

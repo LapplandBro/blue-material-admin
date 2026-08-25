@@ -69,17 +69,11 @@
         <p class="form-help settings-note">Логотип шапки зафиксирован (SVG бренда). OG-обложка: файл <code>images/og-cover.jpg</code> (1200×630) или <code>SB_OG_IMAGE</code> в <code>config.php</code>.</p>
       </div>
     </div>
-    <div class="settings-toggles">
-      {% include 'partials/settings_toggle.twig' with { id: 'config_summertime', label: 'Летнее время', help_title: 'Летнее время', help_message: 'Сдвинуть отображаемое время на один час вперёд.' } %}
-      {% include 'partials/settings_toggle.twig' with { id: 'config_debug', label: 'Режим отладки', help_title: 'Режим отладки', help_message: 'Показывает ошибки PHP и компактную debug-панель владельцу (без хэшей паролей). Не оставляйте включённым на проде.' } %}
-      {% include 'partials/settings_toggle.twig' with { id: 'footer_gendata', label: 'Время генерации', help_title: 'Время генерации', help_message: 'Включает отображение времени генерации страницы и кол-во выполненных запросов к БД в «подвале».' } %}
-    </div>
     <div class="form-grid settings-block">
       <div class="form-field form-field--full">
         <label class="form-label" for="maintenance">{% include 'partials/help_icon.twig' with { title: 'Обслуживание системы', message: 'Выберите операцию для обслуживания системы, после чего нажмите «Выполнить».' } %} Обслуживание системы</label>
         <div class="input-group">
           <select class="form-select" name="maintenance" id="maintenance">
-            <option value="themecache">Очистить кеш шаблона</option>
             <option value="avatarcache">Очистить кеш аватарок</option>
             <option value="cleancountrycache">Очистить кеш стран банлиста</option>
             <option value="bansexpired">Удалить истёкшие баны</option>

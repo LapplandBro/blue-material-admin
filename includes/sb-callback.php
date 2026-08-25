@@ -3312,8 +3312,7 @@ function Maintenance($type) {
     
     switch($type) {
         case "themecache": {
-            $theme->clear_compiled_tpl();
-            ShowBox_ajx("Успех", "Кеш шаблона очищен успешно.", "green", $objResponse, "", true);
+            ShowBox_ajx("Недоступно", "Очистка кеша шаблона больше не используется.", "blue", $objResponse, "", true);
             break;
         }
         
