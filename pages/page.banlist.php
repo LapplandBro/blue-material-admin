@@ -244,7 +244,7 @@ if (isset($_GET['searchText']))
 	   FROM ".DB_PREFIX."_bans AS BA
   LEFT JOIN ".DB_PREFIX."_servers AS SE ON SE.sid = BA.sid
   LEFT JOIN ".DB_PREFIX."_mods AS MO on SE.modid = MO.mid
-  LEFT JOIN ".DB_PREFIX."_admins AS AD ON BA.aid = AD.aid
+  LEFT JOIN ".DB_PREFIX."_admins AS AD ON ".(function_exists('sb_admin_join_on_punish') ? sb_admin_join_on_punish('BA', 'AD') : 'BA.aid = AD.aid')."
       WHERE ".$search_ips."BA.authid LIKE ? or BA.name LIKE ? or BA.reason LIKE ?" . $hideinactive."
    ORDER BY BA.created DESC
    LIMIT ?,?",array_merge($search_array, array($search,$search,$search,intval($BansStart),intval($BansPerPage))));
@@ -265,7 +265,7 @@ elseif(!isset($_GET['advSearch']))
 	   FROM ".DB_PREFIX."_bans AS BA
   LEFT JOIN ".DB_PREFIX."_servers AS SE ON SE.sid = BA.sid
   LEFT JOIN ".DB_PREFIX."_mods AS MO on SE.modid = MO.mid
-  LEFT JOIN ".DB_PREFIX."_admins AS AD ON BA.aid = AD.aid
+  LEFT JOIN ".DB_PREFIX."_admins AS AD ON ".(function_exists('sb_admin_join_on_punish') ? sb_admin_join_on_punish('BA', 'AD') : 'BA.aid = AD.aid')."
   ".$hideinactiven."
    ORDER BY created DESC
    LIMIT ?,?",
@@ -358,8 +358,14 @@ if(isset($_GET['advSearch']))
 				$advcrit = array();
 			}
             else {
-                $where = "WHERE BA.aid=?";
-                $advcrit = array($value);
+				if (function_exists('sb_admin_issued_where')) {
+					list($issuedSql, $issuedParams) = sb_admin_issued_where((int)$value, null, 'BA');
+					$where = "WHERE ".$issuedSql;
+					$advcrit = $issuedParams;
+				} else {
+					$where = "WHERE BA.aid=?";
+					$advcrit = array($value);
+				}
             }
 		break;
 		case "where_banned":
@@ -367,8 +373,14 @@ if(isset($_GET['advSearch']))
 			$advcrit = array($value);
 		break;
 		case "nodemo":
-			$where = "WHERE BA.aid = ? AND NOT EXISTS (SELECT DM.demid FROM ".DB_PREFIX."_demos AS DM WHERE DM.demid = BA.bid)";
-			$advcrit = array($value);
+			if (function_exists('sb_admin_issued_where')) {
+				list($issuedSql, $issuedParams) = sb_admin_issued_where((int)$value, null, 'BA');
+				$where = "WHERE ".$issuedSql." AND NOT EXISTS (SELECT DM.demid FROM ".DB_PREFIX."_demos AS DM WHERE DM.demid = BA.bid)";
+				$advcrit = $issuedParams;
+			} else {
+				$where = "WHERE BA.aid = ? AND NOT EXISTS (SELECT DM.demid FROM ".DB_PREFIX."_demos AS DM WHERE DM.demid = BA.bid)";
+				$advcrit = array($value);
+			}
 		break;
 		case "bid":
 			$where = "WHERE BA.bid = ?";
@@ -409,7 +421,7 @@ if(isset($_GET['advSearch']))
 	   FROM ".DB_PREFIX."_bans AS BA
   LEFT JOIN ".DB_PREFIX."_servers AS SE ON SE.sid = BA.sid
   LEFT JOIN ".DB_PREFIX."_mods AS MO on SE.modid = MO.mid
-  LEFT JOIN ".DB_PREFIX."_admins AS AD ON BA.aid = AD.aid
+  LEFT JOIN ".DB_PREFIX."_admins AS AD ON ".(function_exists('sb_admin_join_on_punish') ? sb_admin_join_on_punish('BA', 'AD') : 'BA.aid = AD.aid')."
   ".($type=="comment"&&$userbank->is_admin()?"LEFT JOIN ".DB_PREFIX."_comments AS CO ON BA.bid = CO.bid":"")."
       ".$where.$hideinactive."
    ORDER BY BA.created DESC
@@ -487,13 +499,26 @@ while (!$res->EOF)
 	if(isset($GLOBALS['config']['banlist.hideadminname']) && $GLOBALS['config']['banlist.hideadminname'] == "1" && !$userbank->is_admin())
 		$data['admin'] = false;
 	else{
-		$data['admin'] = stripslashes($res->fields['admin_name']);
-		$data['admin_comm'] = stripslashes($res->fields['admin_comm']);
-		$data['admin_gid'] = stripslashes($res->fields['gid']);
-		$data['admin_vk'] = stripslashes($res->fields['admin_vk']);
-		$data['admin_authid'] = stripslashes($res->fields['admin_authid']);
-		$data['admin_authid_link'] = CommunityID($data['admin_authid']);
-		$data['admin_discord'] = stripslashes($res->fields['admin_discord']);
+		$admDisp = function_exists('sb_punish_admin_display')
+			? sb_punish_admin_display($res->fields, false)
+			: array(
+				'name' => stripslashes((string)$res->fields['admin_name']),
+				'authid' => isset($res->fields['admin_authid']) ? stripslashes((string)$res->fields['admin_authid']) : '',
+				'vk' => isset($res->fields['admin_vk']) ? stripslashes((string)$res->fields['admin_vk']) : '',
+				'discord' => isset($res->fields['admin_discord']) ? stripslashes((string)$res->fields['admin_discord']) : '',
+				'comment' => isset($res->fields['admin_comm']) ? stripslashes((string)$res->fields['admin_comm']) : '',
+				'gid' => isset($res->fields['gid']) ? stripslashes((string)$res->fields['gid']) : '',
+				'authid_link' => '',
+			);
+		$data['admin'] = $admDisp['name'];
+		$data['admin_comm'] = $admDisp['comment'];
+		$data['admin_gid'] = $admDisp['gid'];
+		$data['admin_vk'] = $admDisp['vk'];
+		$data['admin_authid'] = $admDisp['authid'];
+		$data['admin_authid_link'] = $admDisp['authid_link'] !== ''
+			? $admDisp['authid_link']
+			: (function_exists('CommunityID') ? CommunityID($data['admin_authid']) : '');
+		$data['admin_discord'] = $admDisp['discord'];
 	}
 	$data['reason'] = stripslashes($res->fields['ban_reason']);
 	$data['ban_length'] = $res->fields['ban_length'] == 0 ? 'Навсегда' : SecondsToString(intval($res->fields['ban_length']));
@@ -532,10 +557,18 @@ while (!$res->EOF)
 
 		$data['ureason'] = stripslashes($res->fields['unban_reason']);
 
-		$removedby = $GLOBALS['db']->GetRow("SELECT user FROM `".DB_PREFIX."_admins` WHERE aid = '".$res->fields['RemovedBy']."'");
-        $data['removedby'] = "";
-        if(isset($removedby[0]))
-            $data['removedby'] = $removedby[0];
+		if (function_exists('sb_punish_removedby_display')) {
+			$data['removedby'] = sb_punish_removedby_display(
+				$res->fields['RemovedBy'],
+				isset($res->fields['row_type']) ? $res->fields['row_type'] : '',
+				isset($data['ub_reason']) ? $data['ub_reason'] : ''
+			);
+		} else {
+			$removedby = $GLOBALS['db']->GetRow("SELECT user FROM `".DB_PREFIX."_admins` WHERE aid = '".$res->fields['RemovedBy']."'");
+			$data['removedby'] = "";
+			if(isset($removedby[0]))
+				$data['removedby'] = $removedby[0];
+		}
 	}
 // Don't need this stuff.
 // Uncomment below if the modifications above cause issues

@@ -3602,6 +3602,179 @@ function sb_steamid2_to_steamid3($sid)
 	return '[U:1:' . ((int)$parts[2] * 2 + (int)$parts[1]) . ']';
 }
 
+/**
+ * STEAM_0/STEAM_1 варианты одного аккаунта (Material Admin / SourceBans REGEXP '^STEAM_[0-9]:…').
+ * @return string[]
+ */
+function sb_steamid2_universe_variants($steam)
+{
+	$steam = trim((string)$steam);
+	if (!preg_match('/^STEAM_[0-9]:[0-1]:\d+$/i', $steam))
+		return array();
+	$tail = substr($steam, 7);
+	return array_values(array_unique(array(
+		'STEAM_0' . $tail,
+		'STEAM_1' . $tail,
+	)));
+}
+
+/**
+ * WHERE для банов/мутов, выданных админом.
+ * Веб пишет aid; Material Admin часто aid=0, а в adminIp — SteamID админа.
+ *
+ * @param int $aid
+ * @param string|null $authid authid админа; null — подтянуть из БД по aid
+ * @param string $alias алиас таблицы (BA / CO / B) или ''
+ * @return array{0:string,1:array} [sql, params]
+ */
+function sb_admin_issued_where($aid, $authid = null, $alias = '')
+{
+	$aid = (int)$aid;
+	$p = ($alias !== '') ? (preg_replace('/[^A-Za-z0-9_]/', '', (string)$alias) . '.') : '';
+	$sql = $p . 'aid = ?';
+	$params = array($aid);
+	if ($authid === null || $authid === '') {
+		if ($aid > 0 && isset($GLOBALS['db']) && is_object($GLOBALS['db']))
+			$authid = $GLOBALS['db']->GetOne("SELECT authid FROM `".DB_PREFIX."_admins` WHERE aid = ?", array($aid));
+	}
+	$variants = sb_steamid2_universe_variants($authid);
+	if (!empty($variants)) {
+		$sql = '(' . $sql . ' OR ' . $p . 'adminIp IN (' . implode(',', array_fill(0, count($variants), '?')) . '))';
+		foreach ($variants as $v)
+			$params[] = $v;
+	}
+	return array($sql, $params);
+}
+
+/**
+ * JOIN `_admins` к бану/муту: по aid или (aid=0 и adminIp = SteamID — Material Admin).
+ */
+function sb_admin_join_on_punish($punishAlias, $adminAlias = 'AD')
+{
+	$b = preg_replace('/[^A-Za-z0-9_]/', '', (string)$punishAlias);
+	$a = preg_replace('/[^A-Za-z0-9_]/', '', (string)$adminAlias);
+	return '('
+		. '(' . $b . '.aid > 0 AND ' . $b . '.aid = ' . $a . '.aid)'
+		. ' OR ('
+		. $b . '.aid = 0 AND ' . $b . '.adminIp LIKE \'STEAM_%\' AND '
+		. $b . '.adminIp NOT LIKE \'STEAM_ID_%\' AND '
+		. $a . '.authid REGEXP CONCAT(\'^STEAM_[0-9]:\', SUBSTRING(' . $b . '.adminIp, 9), \'$\')'
+		. ')'
+		. ')';
+}
+
+/**
+ * Material Admin: aid=0 + adminIp=STEAM_ID_SERVER → консоль сервера.
+ */
+function sb_is_console_admin_marker($aid, $adminIp)
+{
+	$aid = (int)$aid;
+	$ip = trim((string)$adminIp);
+	if ($aid > 0)
+		return false;
+	if ($ip === '' || strcasecmp($ip, 'STEAM_ID_SERVER') === 0 || strcasecmp($ip, 'CONSOLE') === 0)
+		return true;
+	return false;
+}
+
+/**
+ * Подпись «кто выдал» для банлиста/мутов.
+ * CONSOLE для сервера; имя из JOIN; иначе поиск по SteamID в adminIp; пусто = админ снят.
+ *
+ * @param array $fields aid, admin_name, adminIp (+ опционально admin_*)
+ * @return array{name:string|false, is_console:bool, authid:string, vk:string, discord:string, comment:string, gid:string, authid_link:string}
+ */
+function sb_punish_admin_display(array $fields, $hideNames = false)
+{
+	$out = array(
+		'name' => false,
+		'is_console' => false,
+		'authid' => '',
+		'vk' => '',
+		'discord' => '',
+		'comment' => '',
+		'gid' => '',
+		'authid_link' => '',
+	);
+	if ($hideNames)
+		return $out;
+
+	$name = isset($fields['admin_name']) ? trim(stripslashes((string)$fields['admin_name'])) : '';
+	$aid = isset($fields['aid']) ? (int)$fields['aid'] : 0;
+	$adminIp = isset($fields['adminIp']) ? trim((string)$fields['adminIp']) : '';
+
+	if ($name !== '') {
+		$out['name'] = $name;
+		$out['is_console'] = (strcasecmp($name, 'CONSOLE') === 0);
+		$out['authid'] = isset($fields['admin_authid']) ? stripslashes((string)$fields['admin_authid']) : '';
+		$out['vk'] = isset($fields['admin_vk']) ? stripslashes((string)$fields['admin_vk']) : '';
+		$out['discord'] = isset($fields['admin_discord']) ? stripslashes((string)$fields['admin_discord']) : '';
+		$out['comment'] = isset($fields['admin_comm']) ? stripslashes((string)$fields['admin_comm']) : '';
+		$out['gid'] = isset($fields['gid']) ? stripslashes((string)$fields['gid']) : '';
+		if ($out['authid'] !== '' && function_exists('CommunityID'))
+			$out['authid_link'] = (string)CommunityID($out['authid']);
+		return $out;
+	}
+
+	if (sb_is_console_admin_marker($aid, $adminIp)) {
+		$out['name'] = 'CONSOLE';
+		$out['is_console'] = true;
+		return $out;
+	}
+
+	// aid=0, adminIp = SteamID админа, JOIN не сработал — добираем по authid
+	if ($aid <= 0 && preg_match('/^STEAM_[0-9]:[0-1]:\d+$/i', $adminIp) && isset($GLOBALS['db'])) {
+		$variants = sb_steamid2_universe_variants($adminIp);
+		if (!empty($variants)) {
+			$ph = implode(',', array_fill(0, count($variants), '?'));
+			$row = $GLOBALS['db']->GetRow(
+				"SELECT user, authid, vk, discord, comment, gid FROM `".DB_PREFIX."_admins` WHERE authid IN (".$ph.") LIMIT 1",
+				$variants
+			);
+			if (is_array($row) && !empty($row['user'])) {
+				$out['name'] = stripslashes((string)$row['user']);
+				$out['authid'] = isset($row['authid']) ? (string)$row['authid'] : $adminIp;
+				$out['vk'] = isset($row['vk']) ? stripslashes((string)$row['vk']) : '';
+				$out['discord'] = isset($row['discord']) ? stripslashes((string)$row['discord']) : '';
+				$out['comment'] = isset($row['comment']) ? stripslashes((string)$row['comment']) : '';
+				$out['gid'] = isset($row['gid']) ? (string)$row['gid'] : '';
+				if ($out['authid'] !== '' && function_exists('CommunityID'))
+					$out['authid_link'] = (string)CommunityID($out['authid']);
+				return $out;
+			}
+		}
+		// Steam известен, записи в _admins нет — не врём «админ снят»
+		$out['name'] = $adminIp;
+		$out['authid'] = $adminIp;
+		if (function_exists('CommunityID'))
+			$out['authid_link'] = (string)CommunityID($adminIp);
+		return $out;
+	}
+
+	// aid > 0, но админа уже нет в БД → пустое имя (шаблон: «админ снят»)
+	$out['name'] = '';
+	return $out;
+}
+
+/**
+ * Кто снял бан/мут: CONSOLE при RemovedBy=0, имя админа, пусто если реально удалён.
+ * Для истечения по времени — «система».
+ */
+function sb_punish_removedby_display($removedByAid, $removeType = '', $ubReason = '')
+{
+	$rt = strtoupper(trim((string)$removeType));
+	$ubr = (string)$ubReason;
+	if ($rt === 'E' || $ubr === 'Истек' || $ubr === 'Истёк')
+		return 'система';
+	$aid = (int)$removedByAid;
+	if ($aid <= 0)
+		return 'CONSOLE';
+	if (!isset($GLOBALS['db']))
+		return '';
+	$user = $GLOBALS['db']->GetOne("SELECT user FROM `".DB_PREFIX."_admins` WHERE aid = ?", array($aid));
+	return ($user !== null && $user !== false && $user !== '') ? stripslashes((string)$user) : '';
+}
+
 /** Нормализация Steam64 (community id). */
 function sb_steam_normalize_community_id($id)
 {

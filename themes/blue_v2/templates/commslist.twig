@@ -148,7 +148,9 @@
           {% endif %}
           {% if not hideadminname %}
           <td class="commslist-td-admin">
-            {% if ban.admin %}
+            {% if ban.admin == 'CONSOLE' %}
+              <span class="commslist-admin">CONSOLE</span>
+            {% elseif ban.admin %}
               <span class="commslist-admin">{{ ban.admin }}</span>
             {% else %}
               <span class="commslist-muted">админ снят</span>
@@ -275,7 +277,9 @@
                   <div class="commslist-fact">
                     <span class="commslist-fact-label">Админ</span>
                     <span class="commslist-fact-value">
-                      {% if ban.admin %}
+                      {% if ban.admin == 'CONSOLE' %}
+                        CONSOLE
+                      {% elseif ban.admin %}
                         {{ ban.admin }}
                       {% else %}
                         <span class="commslist-muted">админ снят</span>

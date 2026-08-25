@@ -105,15 +105,25 @@ foreach($admins AS $admin)
 	{
 		$admin['server_group'] = "Группа\индивид. права отсутствуют";
 	}
-	$num = $GLOBALS['db']->GetRow("SELECT count(authid) AS num FROM `" . DB_PREFIX . "_bans` WHERE aid = '".$admin['aid']."'");
+	$admAuth = isset($admin['authid']) ? $admin['authid'] : null;
+	if (function_exists('sb_admin_issued_where')) {
+		list($issuedSql, $issuedParams) = sb_admin_issued_where((int)$admin['aid'], $admAuth);
+		list($issuedSqlB, $issuedParamsB) = sb_admin_issued_where((int)$admin['aid'], $admAuth, 'B');
+	} else {
+		$issuedSql = 'aid = ?';
+		$issuedParams = array((int)$admin['aid']);
+		$issuedSqlB = 'B.aid = ?';
+		$issuedParamsB = array((int)$admin['aid']);
+	}
+	$num = $GLOBALS['db']->GetRow("SELECT count(authid) AS num FROM `" . DB_PREFIX . "_bans` WHERE ".$issuedSql, $issuedParams);
 	$admin['bancount'] = (is_array($num) && isset($num['num'])) ? $num['num'] : 0;
 
-	$nodem = $GLOBALS['db']->GetRow("SELECT count(B.bid) AS num FROM `" . DB_PREFIX . "_bans` AS B WHERE aid = '".$admin['aid']."' AND NOT EXISTS (SELECT D.demid FROM `" . DB_PREFIX . "_demos` AS D WHERE D.demid = B.bid)");
+	$nodem = $GLOBALS['db']->GetRow("SELECT count(B.bid) AS num FROM `" . DB_PREFIX . "_bans` AS B WHERE ".$issuedSqlB." AND NOT EXISTS (SELECT D.demid FROM `" . DB_PREFIX . "_demos` AS D WHERE D.demid = B.bid)", $issuedParamsB);
 	$admin['aid'] = $admin['aid'];
 	$admin['nodemocount'] = (is_array($nodem) && isset($nodem['num'])) ? $nodem['num'] : 0;
 
 	// Кол-во блокировок (чат/микрофон), выданных этим админом - для ссылки "найти" в списке админов.
-	$commsnum = $GLOBALS['db']->GetRow("SELECT count(bid) AS num FROM `" . DB_PREFIX . "_comms` WHERE aid = '".$admin['aid']."'");
+	$commsnum = $GLOBALS['db']->GetRow("SELECT count(bid) AS num FROM `" . DB_PREFIX . "_comms` WHERE ".$issuedSql, $issuedParams);
 	$admin['commscount'] = (is_array($commsnum) && isset($commsnum['num'])) ? $commsnum['num'] : 0;
 
 	$admin['name'] = stripslashes($admin['user']);

@@ -176,25 +176,42 @@ $my_comms_active = 0;
 $my_bans_url = 'index.php?p=banlist&advSearch=' . (int)$aid . '&advType=admin';
 $my_comms_url = 'index.php?p=commslist&advSearch=' . (int)$aid . '&advType=admin';
 if (isset($GLOBALS['db']) && is_object($GLOBALS['db'])) {
-	$banCounts = $GLOBALS['db']->GetRow("SELECT COUNT(*) AS total, SUM(CASE WHEN RemoveType IS NULL AND (`length` = 0 OR `ends` > UNIX_TIMESTAMP()) THEN 1 ELSE 0 END) AS active FROM `".DB_PREFIX."_bans` WHERE aid = ".(int)$aid);
+	// Веб: aid. Игра (Material Admin): часто aid=0, админ в adminIp как SteamID.
+	$myAuth = $userbank->GetProperty('authid', $aid);
+	list($issuedWhere, $issuedParams) = function_exists('sb_admin_issued_where')
+		? sb_admin_issued_where($aid, $myAuth)
+		: array('aid = ?', array((int)$aid));
+	$banCounts = $GLOBALS['db']->GetRow(
+		"SELECT COUNT(*) AS total, SUM(CASE WHEN RemoveType IS NULL AND (`length` = 0 OR `ends` > UNIX_TIMESTAMP()) THEN 1 ELSE 0 END) AS active FROM `".DB_PREFIX."_bans` WHERE ".$issuedWhere,
+		$issuedParams
+	);
 	if (is_array($banCounts)) {
 		$my_bans_total = isset($banCounts['total']) ? (int)$banCounts['total'] : (isset($banCounts[0]) ? (int)$banCounts[0] : 0);
 		$my_bans_active = isset($banCounts['active']) ? (int)$banCounts['active'] : (isset($banCounts[1]) ? (int)$banCounts[1] : 0);
 	}
-	$commCounts = $GLOBALS['db']->GetRow("SELECT COUNT(*) AS total, SUM(CASE WHEN RemoveType IS NULL AND (`length` = 0 OR `ends` > UNIX_TIMESTAMP()) THEN 1 ELSE 0 END) AS active FROM `".DB_PREFIX."_comms` WHERE aid = ".(int)$aid);
+	$commCounts = $GLOBALS['db']->GetRow(
+		"SELECT COUNT(*) AS total, SUM(CASE WHEN RemoveType IS NULL AND (`length` = 0 OR `ends` > UNIX_TIMESTAMP()) THEN 1 ELSE 0 END) AS active FROM `".DB_PREFIX."_comms` WHERE ".$issuedWhere,
+		$issuedParams
+	);
 	if (is_array($commCounts)) {
 		$my_comms_total = isset($commCounts['total']) ? (int)$commCounts['total'] : (isset($commCounts[0]) ? (int)$commCounts[0] : 0);
 		$my_comms_active = isset($commCounts['active']) ? (int)$commCounts['active'] : (isset($commCounts[1]) ? (int)$commCounts[1] : 0);
 	}
-	$banRows = $GLOBALS['db']->GetAll("SELECT bid, name, authid, ip, type, created, length, ends, reason, RemoveType FROM `".DB_PREFIX."_bans` WHERE aid = ".(int)$aid." ORDER BY created DESC LIMIT 12");
+	$banRows = $GLOBALS['db']->GetAll(
+		"SELECT bid, name, authid, ip, type, created, length, ends, reason, RemoveType FROM `".DB_PREFIX."_bans` WHERE ".$issuedWhere." ORDER BY created DESC LIMIT 12",
+		$issuedParams
+	);
 	if (is_array($banRows)) {
 		foreach ($banRows as $banRow)
 			$my_bans[] = sb_account_punish_item($banRow, 'banlist');
 	}
-	$commRows = $GLOBALS['db']->GetAll("SELECT bid, name, authid, type, created, length, ends, reason, RemoveType FROM `".DB_PREFIX."_comms` WHERE aid = ".(int)$aid." ORDER BY created DESC LIMIT 12");
+	$commRows = $GLOBALS['db']->GetAll(
+		"SELECT bid, name, authid, type, created, length, ends, reason, RemoveType FROM `".DB_PREFIX."_comms` WHERE ".$issuedWhere." ORDER BY created DESC LIMIT 12",
+		$issuedParams
+	);
 	if (is_array($commRows)) {
 		foreach ($commRows as $commRow)
-			$my_comms[] = sb_account_punish_item($commRow, 'commslist');
+			$my_comms[] = sb_account_punish_item($commProps, 'commslist');
 	}
 }
 

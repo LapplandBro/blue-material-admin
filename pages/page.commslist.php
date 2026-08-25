@@ -264,7 +264,7 @@ if (isset($_GET['searchText']))
 		FROM ".DB_PREFIX."_comms AS CO FORCE INDEX (created)
 		LEFT JOIN ".DB_PREFIX."_servers AS SE ON SE.sid = CO.sid
 		LEFT JOIN ".DB_PREFIX."_mods AS MO on SE.modid = MO.mid
-		LEFT JOIN ".DB_PREFIX."_admins AS AD ON CO.aid = AD.aid
+		LEFT JOIN ".DB_PREFIX."_admins AS AD ON ".(function_exists('sb_admin_join_on_punish') ? sb_admin_join_on_punish('CO', 'AD') : 'CO.aid = AD.aid')."
       	WHERE CO.authid LIKE ? or CO.name LIKE ? or CO.reason LIKE ?".$hideinactive."
    		ORDER BY CO.created DESC LIMIT ?,?",
    		array($search,$search,$search,intval($BansStart),intval($BansPerPage)));
@@ -286,7 +286,7 @@ elseif(!isset($_GET['advSearch']))
 		FROM ".DB_PREFIX."_comms AS CO FORCE INDEX (created)
 		LEFT JOIN ".DB_PREFIX."_servers AS SE ON SE.sid = CO.sid
 		LEFT JOIN ".DB_PREFIX."_mods AS MO on SE.modid = MO.mid
-		LEFT JOIN ".DB_PREFIX."_admins AS AD ON CO.aid = AD.aid
+		LEFT JOIN ".DB_PREFIX."_admins AS AD ON ".(function_exists('sb_admin_join_on_punish') ? sb_admin_join_on_punish('CO', 'AD') : 'CO.aid = AD.aid')."
 		".$hideinactiven."
 		ORDER BY created DESC
 		LIMIT ?,?",
@@ -366,8 +366,14 @@ if(isset($_GET['advSearch']))
 				$advcrit = array();
 			}
             else {
-                $where = "WHERE CO.aid=?";
-                $advcrit = array($value);
+				if (function_exists('sb_admin_issued_where')) {
+					list($issuedSql, $issuedParams) = sb_admin_issued_where((int)$value, null, 'CO');
+					$where = "WHERE ".$issuedSql;
+					$advcrit = $issuedParams;
+				} else {
+					$where = "WHERE CO.aid=?";
+					$advcrit = array($value);
+				}
 
                 // ФИЧА: доп. фильтр по статусу блокировки для конкретного админа -
                 // "Активные" / "Истёкшие" / "Снятые" (полезно, чтобы увидеть, кто снял ваши блокировки).
@@ -428,7 +434,7 @@ if(isset($_GET['advSearch']))
 			FROM ".DB_PREFIX."_comms AS CO FORCE INDEX (created)
 			LEFT JOIN ".DB_PREFIX."_servers AS SE ON SE.sid = CO.sid
 			LEFT JOIN ".DB_PREFIX."_mods AS MO on SE.modid = MO.mid
-			LEFT JOIN ".DB_PREFIX."_admins AS AD ON CO.aid = AD.aid
+			LEFT JOIN ".DB_PREFIX."_admins AS AD ON ".(function_exists('sb_admin_join_on_punish') ? sb_admin_join_on_punish('CO', 'AD') : 'CO.aid = AD.aid')."
   			".($type=="comment"&&$userbank->is_admin()?"LEFT JOIN ".DB_PREFIX."_comments AS CM ON CO.bid = CM.bid":"")."
       ".$where.$hideinactive."
    ORDER BY CO.created DESC
@@ -503,8 +509,12 @@ while (!$res->EOF)
 
 	if(isset($GLOBALS['config']['banlist.hideadminname']) && $GLOBALS['config']['banlist.hideadminname'] == "1" && !$userbank->is_admin())
 		$data['admin'] = false;
-	else
-		$data['admin'] = stripslashes($res->fields['admin_name']);
+	else {
+		$admDisp = function_exists('sb_punish_admin_display')
+			? sb_punish_admin_display($res->fields, false)
+			: array('name' => stripslashes((string)$res->fields['admin_name']));
+		$data['admin'] = $admDisp['name'];
+	}
 	$data['reason'] = stripslashes($res->fields['ban_reason']);
 
 	if ($res->fields['ban_length'] > 0)
@@ -540,10 +550,18 @@ while (!$res->EOF)
 		
 		$data['ureason'] = stripslashes($res->fields['unban_reason']);
 
-		$removedby = $GLOBALS['db']->GetRow("SELECT user FROM `".DB_PREFIX."_admins` WHERE aid = '".$res->fields['RemovedBy']."'");
-        $data['removedby'] = "";
-        if(isset($removedby[0]))
-            $data['removedby'] = $removedby[0];
+		if (function_exists('sb_punish_removedby_display')) {
+			$data['removedby'] = sb_punish_removedby_display(
+				$res->fields['RemovedBy'],
+				isset($res->fields['row_type']) ? $res->fields['row_type'] : '',
+				isset($data['ub_reason']) ? $data['ub_reason'] : ''
+			);
+		} else {
+			$removedby = $GLOBALS['db']->GetRow("SELECT user FROM `".DB_PREFIX."_admins` WHERE aid = '".$res->fields['RemovedBy']."'");
+			$data['removedby'] = "";
+			if(isset($removedby[0]))
+				$data['removedby'] = $removedby[0];
+		}
 	}
 	else if($data['ban_length'] == 'Навсегда')
 	{

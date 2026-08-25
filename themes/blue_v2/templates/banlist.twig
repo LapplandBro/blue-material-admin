@@ -159,7 +159,9 @@
           {% endif %}
           {% if not hideadminname %}
           <td class="banlist-td-admin">
-            {% if ban.admin %}
+            {% if ban.admin == 'CONSOLE' %}
+              <span class="banlist-admin">CONSOLE</span>
+            {% elseif ban.admin %}
               <span class="banlist-admin">{{ ban.admin }}</span>
             {% else %}
               <span class="banlist-muted">админ снят</span>
@@ -368,7 +370,9 @@
                   {% if not hideadminname %}
                   <div class="banlist-aside-block">
                     <p class="banlist-aside-kicker">Блокировку выдал</p>
-                    {% if ban.admin %}
+                    {% if ban.admin == 'CONSOLE' %}
+                      <div class="banlist-aside-name">CONSOLE</div>
+                    {% elseif ban.admin %}
                       <div class="banlist-aside-name">{{ ban.admin }}</div>
                     {% else %}
                       <div class="banlist-aside-name">Админ удалён</div>
