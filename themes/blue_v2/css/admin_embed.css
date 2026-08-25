@@ -829,27 +829,78 @@
 .admin-row-muted td { opacity: 0.55; }
 
 .admin-ticket {
-  padding: 0.65rem 0.95rem 0.8rem;
+  margin: 0.2rem 0.4rem 0.5rem;
+  padding: 0.9rem 1.05rem 1rem;
   min-width: 0;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-sm);
+  background: rgba(8, 15, 31, 0.42);
+}
+.admin-ticket .admin-detail-head {
+  margin: 0 0 0.85rem;
+  padding: 0 0 0.75rem;
+  border-bottom: 1px solid var(--border-hairline);
+  align-items: center;
+}
+.admin-ticket .admin-detail-title {
+  font-size: 0.95rem;
+  line-height: 1.25;
+}
+.admin-ticket .form-note {
+  margin: 0.2rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: var(--muted);
 }
 .admin-facts--ticket {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  row-gap: 0.35rem;
-  column-gap: 1.15rem;
-  align-items: start;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  column-gap: 1.75rem;
+  row-gap: 0;
+  align-items: stretch;
 }
 .admin-facts--ticket .admin-fact {
-  padding: 0.28rem 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.18rem;
+  margin: 0;
+  padding: 0.48rem 0;
+  border-bottom: 1px solid var(--border-hairline);
+  grid-template-columns: unset;
+}
+.admin-facts--ticket .admin-fact-label {
+  margin: 0;
+  line-height: 1.2;
+}
+.admin-facts--ticket .admin-fact-value {
+  width: 100%;
+  font-size: 0.9rem;
+  line-height: 1.35;
+  color: var(--text-heading);
+}
+.admin-facts--ticket .admin-fact--span {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.85rem;
+  grid-template-columns: unset;
+}
+.admin-facts--ticket .admin-fact--span .admin-fact-value {
+  width: auto;
+  flex: 1 1 12rem;
+  min-width: 0;
 }
 .admin-fact--span,
 .admin-comments {
   grid-column: 1 / -1;
 }
 .admin-comments {
-  margin-top: 0.45rem;
-  padding-top: 0.5rem;
+  margin-top: 0.35rem;
+  padding-top: 0.7rem;
   border-top: 1px solid var(--border-hairline);
+  border-bottom: 0;
 }
 .admin-comments-label {
   margin: 0 0 0.4rem;
@@ -890,19 +941,70 @@
   color: var(--muted);
   font-size: 0.72rem;
 }
-.admin-detail-actions a,
-.admin-detail-actions .btn-link {
-  color: var(--accent);
-  font-size: 0.8rem;
-  text-decoration: none;
-}
 .admin-detail-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.3rem 0.55rem;
+  gap: 0.35rem;
   justify-content: flex-end;
   align-items: center;
   min-width: 0;
+}
+.admin-detail-actions > span {
+  display: contents;
+}
+.admin-detail-actions a,
+.admin-detail-actions .btn-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 1.85rem;
+  padding: 0.2rem 0.6rem;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-sm);
+  background: rgba(12, 21, 40, 0.55);
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 650;
+  line-height: 1.2;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.admin-detail-actions a:hover,
+.admin-detail-actions .btn-link:hover {
+  color: var(--accent-hover);
+  background: var(--accent-soft);
+  border-color: rgba(30, 144, 255, 0.4);
+}
+.admin-detail-actions a[href="#"] {
+  color: var(--muted);
+  cursor: default;
+}
+.admin-detail-actions a[href="#"]:hover {
+  color: var(--muted);
+  background: rgba(12, 21, 40, 0.55);
+  border-color: var(--border-hairline);
+}
+.admin-detail-actions img {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+  opacity: 0.9;
+  flex-shrink: 0;
+}
+.banlist-row > td:last-child {
+  width: 1%;
+  vertical-align: middle;
+}
+.banlist-row .admin-actions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.35rem;
+  width: max-content;
+  max-width: none;
+  margin-left: auto;
 }
 
 .admin-search-toggle {
@@ -1167,8 +1269,18 @@
   .admin-detail { grid-template-columns: 1fr; }
   .admin-fact { grid-template-columns: 1fr; }
   .admin-facts--ticket { grid-template-columns: 1fr; }
-  .admin-facts--ticket .admin-fact {
-    grid-template-columns: 7.2rem minmax(0, 1fr);
+  .admin-facts--ticket .admin-fact,
+  .admin-facts--ticket .admin-fact--span {
+    grid-template-columns: unset;
+  }
+  .admin-ticket {
+    margin: 0.1rem 0.15rem 0.35rem;
+    padding: 0.75rem 0.8rem 0.85rem;
+  }
+  .banlist-row .admin-actions {
+    flex-wrap: wrap;
+    width: auto;
+    max-width: 12.5rem;
   }
   .admin-search-split { grid-template-columns: 1fr; }
   .perms-immunity { grid-template-columns: 1fr; }

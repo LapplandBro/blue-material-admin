@@ -287,7 +287,7 @@ echo '<div id="admin-page-content">';
 				$comment = "None";
 
 			$prot['commentdata'] = $comment;
-			$prot['protaddcomment'] = CreateLinkR('<img src="images/details.png" border="0" alt="" style="vertical-align:middle" /> Добавить комментарий','index.php?p=banlist&comment='.(int)$prot['pid'].'&ctype=P');
+			$prot['protaddcomment'] = CreateLinkR('<img src="images/details.png" alt="" /> Добавить комментарий','index.php?p=banlist&comment='.(int)$prot['pid'].'&ctype=P');
 			//-----------------------------------------
 
             array_push($protest_list, $prot);
@@ -459,7 +459,7 @@ echo '<div id="admin-page-content">';
 				$comment = "None";
 
 			$prot['commentdata'] = $comment;
-			$prot['protaddcomment'] = CreateLinkR('<img src="images/details.png" border="0" alt="" style="vertical-align:middle" /> Добавить комментарий','index.php?p=banlist&comment='.(int)$prot['pid'].'&ctype=P');
+			$prot['protaddcomment'] = CreateLinkR('<img src="images/details.png" alt="" /> Добавить комментарий','index.php?p=banlist&comment='.(int)$prot['pid'].'&ctype=P');
 			//-----------------------------------------
 			if (empty($prot['label_js'])) {
 				$protLabel = !empty($prot['authid']) ? $prot['authid'] : (!empty($prot['ip']) ? $prot['ip'] : ('#'.$prot['pid']));
@@ -564,9 +564,9 @@ echo '<div id="admin-page-content">';
 												WHERE demtype = \"S\" AND demid = " .(int)$sub['subid']);
 
 			    if($dem && !empty($dem['filename']) && @file_exists(SB_DEMOS . "/" . $dem['filename']))
-			    	$sub['demo'] =  "<a href=\"getdemo.php?id=". $sub['subid'] . "&type=S\"><img src=\"images/demo.png\" border=\"0\" style=\"vertical-align:middle\" /> Получить демо</a>";
+			    	$sub['demo'] =  "<a href=\"getdemo.php?id=". $sub['subid'] . "&type=S\"><img src=\"images/demo.png\" alt=\"\" /> Получить демо</a>";
 			    else
-			    	$sub['demo'] = "<a href=\"#\"><img src=\"images/demo.png\" border=\"0\" style=\"vertical-align:middle\" /> Нет демо</a>";
+			    	$sub['demo'] = "<a href=\"#\" aria-disabled=\"true\"><img src=\"images/demo.png\" alt=\"\" /> Нет демо</a>";
 
 			    $sub['submitted'] = SBDate($dateformat, $sub['submitted']);
 
@@ -630,7 +630,7 @@ echo '<div id="admin-page-content">';
 						$comment = "None";
 
 					$sub['commentdata'] = $comment;
-					$sub['subaddcomment'] = CreateLinkR('<img src="images/details.png" border="0" alt="" style="vertical-align:middle" /> Добавить комментарий','index.php?p=banlist&comment='.(int)$sub['subid'].'&ctype=S');
+					$sub['subaddcomment'] = CreateLinkR('<img src="images/details.png" alt="" /> Добавить комментарий','index.php?p=banlist&comment='.(int)$sub['subid'].'&ctype=S');
 				//----------------------------------------
 
 			    array_push($submission_list, $sub);
@@ -712,9 +712,9 @@ echo '<div id="admin-page-content">';
 												WHERE demtype = \"S\" AND demid = " .(int)$sub['subid']);
 
 			    if($dem && !empty($dem['filename']) && @file_exists(SB_DEMOS . "/" . $dem['filename']))
-			    	$sub['demo'] =  "<a href=\"getdemo.php?id=". $sub['subid'] . "&type=S\"><img src=\"images/demo.png\" border=\"0\" style=\"vertical-align:middle\" /> Получить демо</a>";
+			    	$sub['demo'] =  "<a href=\"getdemo.php?id=". $sub['subid'] . "&type=S\"><img src=\"images/demo.png\" alt=\"\" /> Получить демо</a>";
 			    else
-			    	$sub['demo'] = "<a href=\"#\"><img src=\"images/demo.png\" border=\"0\" style=\"vertical-align:middle\" /> Нет демо</a>";
+			    	$sub['demo'] = "<a href=\"#\" aria-disabled=\"true\"><img src=\"images/demo.png\" alt=\"\" /> Нет демо</a>";
 
 			    $sub['submitted'] = SBDate($dateformat, $sub['submitted']);
 
@@ -782,7 +782,7 @@ echo '<div id="admin-page-content">';
 						$comment = "None";
 
 					$sub['commentdata'] = $comment;
-					$sub['subaddcomment'] = CreateLinkR('<img src="images/details.png" border="0" alt="" style="vertical-align:middle" /> Добавить комментарий','index.php?p=banlist&comment='.(int)$sub['subid'].'&ctype=S');
+					$sub['subaddcomment'] = CreateLinkR('<img src="images/details.png" alt="" /> Добавить комментарий','index.php?p=banlist&comment='.(int)$sub['subid'].'&ctype=S');
 				//----------------------------------------
 
 			    array_push($submission_list_archiv, $sub);

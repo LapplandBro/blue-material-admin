@@ -25,16 +25,18 @@
           <td>{{ sub.name|raw }}</td>
           <td>{% if sub.SteamId != "" %}{{ sub.SteamId }}{% else %}{{ sub.sip }}{% endif %}</td>
           <td class="text-end">
-            {% if sub.archiv != "2" and sub.archiv != "3" %}
-            <a class="btn btn-sm btn-outline-secondary" href="#" onclick="event.cancelBubble=true; xajax_SetupBan({{ sub.subid }}); return false;">Забанить</a>
-              {% if permissions_editsub %}
-            <a class="btn btn-sm btn-outline-secondary" href="#" onclick='event.cancelBubble=true; RemoveSubmission({{ sub.subid }}, {{ sub.name_js|raw }}, "2"); return false;'>Восстановить</a>
+            <span class="admin-actions">
+              {% if sub.archiv != "2" and sub.archiv != "3" %}
+              <a class="admin-action" href="#" onclick="event.cancelBubble=true; xajax_SetupBan({{ sub.subid }}); return false;">Забанить</a>
+                {% if permissions_editsub %}
+              <a class="admin-action" href="#" onclick='event.cancelBubble=true; RemoveSubmission({{ sub.subid }}, {{ sub.name_js|raw }}, "2"); return false;'>Восстановить</a>
+                {% endif %}
               {% endif %}
-            {% endif %}
-            {% if permissions_editsub %}
-            <a class="btn btn-sm btn-outline-danger" href="#" onclick='event.cancelBubble=true; RemoveSubmission({{ sub.subid }}, {{ sub.name_js|raw }}, "0"); return false;'>Удалить</a>
-            {% endif %}
-            <a class="btn btn-sm btn-outline-secondary" href="index.php?p=admin&amp;c=bans&amp;o=email&amp;type=s&amp;id={{ sub.subid }}" onclick="event.cancelBubble=true;">Контакты</a>
+              {% if permissions_editsub %}
+              <a class="admin-action admin-action--danger" href="#" onclick='event.cancelBubble=true; RemoveSubmission({{ sub.subid }}, {{ sub.name_js|raw }}, "0"); return false;'>Удалить</a>
+              {% endif %}
+              <a class="admin-action" href="index.php?p=admin&amp;c=bans&amp;o=email&amp;type=s&amp;id={{ sub.subid }}" onclick="event.cancelBubble=true;">Контакты</a>
+            </span>
           </td>
         </tr>
         <tr id="asid_{{ sub.subid }}a" class="banlist-detail-row">
@@ -87,7 +89,7 @@
                   <span class="admin-fact-label">IP заявителя</span>
                   <span class="admin-fact-value">{{ sub.ip }}</span>
                 </div>
-                <div class="admin-fact">
+                <div class="admin-fact admin-fact--span">
                   <span class="admin-fact-label">В архив отправил</span>
                   <span class="admin-fact-value">{% if sub.archivedby %}{{ sub.archivedby }}{% else %}<span class="admin-muted">админ удалён</span>{% endif %}</span>
                 </div>

@@ -25,11 +25,13 @@
           <td>{{ sub.name|raw }}</td>
           <td>{% if sub.SteamId != "" %}{{ sub.SteamId }}{% else %}{{ sub.sip }}{% endif %}</td>
           <td class="text-end">
-            <a class="btn btn-sm btn-outline-secondary" href="#" onclick="event.cancelBubble=true; xajax_SetupBan({{ sub.subid }});return false;">Забанить</a>
-            {% if permissions_editsub %}
-            <a class="btn btn-sm btn-outline-danger" href="#" onclick='event.cancelBubble=true; RemoveSubmission({{ sub.subid }}, {{ sub.name_js|raw }}, "1"); return false;'>Удалить</a>
-            {% endif %}
-            <a class="btn btn-sm btn-outline-secondary" href="index.php?p=admin&amp;c=bans&amp;o=email&amp;type=s&amp;id={{ sub.subid }}" onclick="event.cancelBubble=true;">Контакты</a>
+            <span class="admin-actions">
+              <a class="admin-action" href="#" onclick="event.cancelBubble=true; xajax_SetupBan({{ sub.subid }});return false;">Забанить</a>
+              {% if permissions_editsub %}
+              <a class="admin-action admin-action--danger" href="#" onclick='event.cancelBubble=true; RemoveSubmission({{ sub.subid }}, {{ sub.name_js|raw }}, "1"); return false;'>Удалить</a>
+              {% endif %}
+              <a class="admin-action" href="index.php?p=admin&amp;c=bans&amp;o=email&amp;type=s&amp;id={{ sub.subid }}" onclick="event.cancelBubble=true;">Контакты</a>
+            </span>
           </td>
         </tr>
         <tr id="sid_{{ sub.subid }}a" class="banlist-detail-row">

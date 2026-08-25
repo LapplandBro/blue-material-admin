@@ -25,10 +25,12 @@
           <td class="toggler"><a href="index.php?p=banlist&amp;advSearch={{ protest.authid }}&amp;advType=steamid" title="Показать бан" onclick="event.cancelBubble=true;">{{ protest.name }}</a></td>
           <td>{% if protest.authid != "" %}{{ protest.authid }}{% else %}{{ protest.ip }}{% endif %}</td>
           <td class="text-end">
-            {% if permission_editban %}
-            <a class="btn btn-sm btn-outline-danger" href="#" onclick='RemoveProtest("{{ protest.pid }}", {{ protest.label_js|raw }}, "1"); return false;'>Удалить</a>
-            {% endif %}
-            <a class="btn btn-sm btn-outline-secondary" href="index.php?p=admin&amp;c=bans&amp;o=email&amp;type=p&amp;id={{ protest.pid }}" onclick="event.cancelBubble=true;">Контакты</a>
+            <span class="admin-actions">
+              {% if permission_editban %}
+              <a class="admin-action admin-action--danger" href="#" onclick='event.cancelBubble=true; RemoveProtest("{{ protest.pid }}", {{ protest.label_js|raw }}, "1"); return false;'>Удалить</a>
+              {% endif %}
+              <a class="admin-action" href="index.php?p=admin&amp;c=bans&amp;o=email&amp;type=p&amp;id={{ protest.pid }}" onclick="event.cancelBubble=true;">Контакты</a>
+            </span>
           </td>
         </tr>
         <tr id="pid_{{ protest.pid }}a" class="banlist-detail-row">
