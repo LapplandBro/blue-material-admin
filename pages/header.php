@@ -218,7 +218,13 @@ if ($seo_page_label !== '' && $seo_page !== 'home') {
 	if ($seo_strlen($seo_document_title) > 60)
 		$seo_document_title = $seo_substr($seo_document_title, 0, 57) . '…';
 } else {
-	$seo_document_title = $seo_title;
+	// Главная: короткий template.title (часто < 35) — добиваем OG title или слоганом
+	if (defined('SB_OG_TITLE') && SB_OG_TITLE !== '' && $seo_strlen(SB_OG_TITLE) >= 35)
+		$seo_document_title = SB_OG_TITLE;
+	elseif ($seo_strlen($seo_title) < 35)
+		$seo_document_title = $seo_title . ' — серверы, банлист и админы';
+	else
+		$seo_document_title = $seo_title;
 	if ($seo_strlen($seo_document_title) > 60)
 		$seo_document_title = $seo_substr($seo_document_title, 0, 57) . '…';
 }

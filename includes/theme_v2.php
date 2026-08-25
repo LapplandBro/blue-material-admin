@@ -356,6 +356,35 @@ function sb_ui_v2_render($template, array $vars)
 		}
 	}
 	$vars['page_notices'] = sb_ui_v2_page_notices(isset($vars['nav_active']) ? $vars['nav_active'] : '');
+
+	// SEO / Open Graph из pages/header.php (Smarty) — иначе layout.twig остаётся без description/og:*
+	global $theme;
+	$seoKeys = array(
+		'seo_title', 'seo_document_title', 'seo_description', 'seo_canonical', 'seo_image',
+		'seo_site_url', 'seo_noindex', 'seo_jsonld',
+		'og_site_name', 'og_title', 'og_description', 'og_image', 'og_image_alt',
+		'og_image_width', 'og_image_height', 'og_image_type', 'base_href',
+	);
+	if (isset($theme) && is_object($theme)) {
+		$tplVars = null;
+		if (isset($theme->_tpl_vars) && is_array($theme->_tpl_vars))
+			$tplVars = $theme->_tpl_vars;
+		elseif (method_exists($theme, 'getTemplateVars'))
+			$tplVars = $theme->getTemplateVars();
+		elseif (method_exists($theme, 'get_template_vars'))
+			$tplVars = $theme->get_template_vars();
+		if (is_array($tplVars)) {
+			foreach ($seoKeys as $sk) {
+				if (!array_key_exists($sk, $vars) && array_key_exists($sk, $tplVars))
+					$vars[$sk] = $tplVars[$sk];
+			}
+		}
+	}
+	if (!empty($vars['seo_document_title']))
+		$vars['title'] = $vars['seo_document_title'];
+	elseif (!empty($vars['og_title']))
+		$vars['title'] = $vars['og_title'];
+
 	$flash = '';
 	if (function_exists('sb_ui_flash_script'))
 		$flash .= (string)sb_ui_flash_script();

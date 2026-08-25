@@ -109,22 +109,24 @@ while (!$res->EOF)
 	{
 		if (!empty($res->fields['country']) && $res->fields['country'] != ' ')
 		{
-			$info['country_icon'] = '<img src="images/country/' . strtolower($res->fields['country']) . '.gif" alt="' . $res->fields['country'] . '" class="flag-icon" loading="lazy">';
+			$ccLabel = htmlspecialchars((string)$res->fields['country'], ENT_QUOTES, 'UTF-8');
+			$info['country_icon'] = '<img src="images/country/' . strtolower($res->fields['country']) . '.gif" alt="' . $ccLabel . '" title="' . $ccLabel . '" class="flag-icon" width="16" height="11" loading="lazy">';
 		}
 		elseif (isset($GLOBALS['config']['banlist.nocountryfetch']) && $GLOBALS['config']['banlist.nocountryfetch'] == "0")
 		{
 			$home_ban_country = FetchIp($info['ip']);
 			$GLOBALS['db']->Execute("UPDATE " . DB_PREFIX . "_bans SET country = ? WHERE bid = ?", array($home_ban_country, $res->fields['bid']));
-			$info['country_icon'] = '<img src="images/country/' . strtolower($home_ban_country) . '.gif" alt="' . $home_ban_country . '" class="flag-icon" loading="lazy">';
+			$ccLabel = htmlspecialchars((string)$home_ban_country, ENT_QUOTES, 'UTF-8');
+			$info['country_icon'] = '<img src="images/country/' . strtolower($home_ban_country) . '.gif" alt="' . $ccLabel . '" title="' . $ccLabel . '" class="flag-icon" width="16" height="11" loading="lazy">';
 		}
 		else
 		{
-			$info['country_icon'] = '<img src="images/country/zz.gif" alt="Страна неизвестна" class="flag-icon" loading="lazy">';
+			$info['country_icon'] = '<img src="images/country/zz.gif" alt="Страна неизвестна" title="Страна неизвестна" class="flag-icon" width="16" height="11" loading="lazy">';
 		}
 	}
 	else
 	{
-		$info['country_icon'] = '<img src="images/country/zz.gif" alt="Страна неизвестна" class="flag-icon" loading="lazy">';
+		$info['country_icon'] = '<img src="images/country/zz.gif" alt="Страна неизвестна" title="Страна неизвестна" class="flag-icon" width="16" height="11" loading="lazy">';
 	}
 
 	if($res->fields[15] == 1)

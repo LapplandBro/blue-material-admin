@@ -1,9 +1,45 @@
 <!DOCTYPE html>
-<html lang="ru" data-bs-theme="dark">
+<html lang="ru" data-bs-theme="dark" prefix="og: https://ogp.me/ns#">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{ title|default('Blue Admin') }}</title>
+  <title>{{ title|default(seo_document_title|default('Blue Admin')) }}</title>
+  {% if seo_description is defined and seo_description %}
+  <meta name="description" content="{{ seo_description }}">
+  {% endif %}
+  {% if seo_noindex|default(false) %}
+  <meta name="robots" content="noindex, nofollow">
+  {% else %}
+  <meta name="robots" content="index, follow">
+  {% endif %}
+  {% if seo_canonical is defined and seo_canonical %}
+  <link rel="canonical" href="{{ seo_canonical }}">
+  {% endif %}
+  {% if og_title is defined and og_title %}
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="{{ og_site_name|default(title) }}">
+  <meta property="og:title" content="{{ og_title }}">
+  <meta property="og:description" content="{{ og_description|default(seo_description|default('')) }}">
+  <meta property="og:url" content="{{ seo_canonical|default(seo_site_url|default('')) }}">
+  <meta property="og:locale" content="ru_RU">
+  {% if og_image is defined and og_image %}
+  <meta property="og:image" content="{{ og_image }}">
+  <meta property="og:image:secure_url" content="{{ og_image }}">
+  <meta property="og:image:type" content="{{ og_image_type|default('image/jpeg') }}">
+  <meta property="og:image:width" content="{{ og_image_width|default(1200) }}">
+  <meta property="og:image:height" content="{{ og_image_height|default(630) }}">
+  <meta property="og:image:alt" content="{{ og_image_alt|default(og_title) }}">
+  {% endif %}
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{{ og_title }}">
+  <meta name="twitter:description" content="{{ og_description|default(seo_description|default('')) }}">
+  {% if og_image is defined and og_image %}
+  <meta name="twitter:image" content="{{ og_image }}">
+  {% endif %}
+  {% endif %}
+  {% if seo_jsonld is defined and seo_jsonld %}
+  <script type="application/ld+json">{{ seo_jsonld|raw }}</script>
+  {% endif %}
   {% if asset_base %}<base href="{{ asset_base }}">{% endif %}
   <link rel="icon" href="{{ asset_base }}images/icons/logo-mark.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="{{ asset_base }}images/icons/logo-mark.svg">
@@ -65,7 +101,7 @@
     <div class="profile-menu">
       <a href="{% if logged_in %}index.php?p=account{% else %}{{ login_url }}{% endif %}" title="{% if logged_in %}Профиль{% else %}Авторизация{% endif %}">
         <div class="profile-pic">
-          <img src="{{ avatar|default('images/default-avatar.jpg') }}" alt="{% if logged_in %}{{ username }}{% else %}Гость{% endif %}">
+          <img src="{{ avatar|default('images/default-avatar.jpg') }}" alt="{% if logged_in %}{{ username }}{% else %}Гость{% endif %}" title="{% if logged_in %}{{ username }}{% else %}Гость{% endif %}" width="48" height="48" loading="lazy">
         </div>
         <div class="profile-info">
           {% if logged_in %}

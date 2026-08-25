@@ -460,7 +460,9 @@ while (!$res->EOF)
 	{
 		if(!empty($res->fields['ban_country']) && $res->fields['ban_country'] != ' ')
 		{
-			$data['country'] = '<img src="images/country/' .strtolower($res->fields['ban_country']) . '.gif" alt="' . $res->fields['ban_country'] . '" border="0" align="absmiddle" />';
+			$cc = htmlspecialchars(strtolower((string)$res->fields['ban_country']), ENT_QUOTES, 'UTF-8');
+			$ccLabel = htmlspecialchars((string)$res->fields['ban_country'], ENT_QUOTES, 'UTF-8');
+			$data['country'] = '<img src="images/country/' . $cc . '.gif" alt="' . $ccLabel . '" title="' . $ccLabel . '" width="16" height="11" loading="lazy">';
 	    }
 	    elseif(isset($GLOBALS['config']['banlist.nocountryfetch']) && $GLOBALS['config']['banlist.nocountryfetch'] == "0")
 		{
@@ -468,16 +470,18 @@ while (!$res->EOF)
 			$edit = $GLOBALS['db']->Execute("UPDATE ".DB_PREFIX."_bans SET country = ?
 				                            WHERE bid = ?",array($country,$res->fields['ban_id']));
 
-			$data['country'] = '<img src="images/country/' . strtolower($country) . '.gif" alt="' . $country . '" border="0" align="absmiddle" />';
+			$cc = htmlspecialchars(strtolower((string)$country), ENT_QUOTES, 'UTF-8');
+			$ccLabel = htmlspecialchars((string)$country, ENT_QUOTES, 'UTF-8');
+			$data['country'] = '<img src="images/country/' . $cc . '.gif" alt="' . $ccLabel . '" title="' . $ccLabel . '" width="16" height="11" loading="lazy">';
 		}
 		else
 		{
-			$data['country'] = '<img src="images/country/zz.gif" alt="Страна неизвестна" border="0" align="absmiddle" />';
+			$data['country'] = '<img src="images/country/zz.gif" alt="Страна неизвестна" title="Страна неизвестна" width="16" height="11" loading="lazy">';
 		}
 	}
 	else
 	{
-		$data['country'] = '<img src="images/country/zz.gif" alt="Страна неизвестна" border="0" align="absmiddle" />';
+		$data['country'] = '<img src="images/country/zz.gif" alt="Страна неизвестна" title="Страна неизвестна" width="16" height="11" loading="lazy">';
 	}
 
 	//$data['ban_date'] = SBDate($dateformat,$res->fields['ban_created']);
