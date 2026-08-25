@@ -322,12 +322,12 @@ function sb_write_og_cover_stub($siteRoot)
 		}
 	}
 	if ($font) {
-		imagettftext($im, 48, 0, 320, 280, $white, $font, 'Blue Admin');
-		imagettftext($im, 36, 0, 320, 350, $muted, $font, 'SourceBans');
-		imagettftext($im, 22, 0, 320, 420, $muted, $font, 'Banlist · Servers · Moderation');
+		imagettftext($im, 52, 0, 320, 275, $white, $font, 'Blue Admin');
+		imagettftext($im, 30, 0, 320, 340, $muted, $font, 'Панель управления');
+		imagettftext($im, 22, 0, 320, 410, $muted, $font, 'SourceBans · Banlist · Servers');
 	} else {
-		imagestring($im, 5, 320, 250, 'Blue Admin | SourceBans', $white);
-		imagestring($im, 4, 320, 280, 'Banlist / Servers / Moderation', $muted);
+		imagestring($im, 5, 320, 250, 'Blue Admin', $white);
+		imagestring($im, 4, 320, 280, 'Panel / SourceBans', $muted);
 	}
 
 	$ok = @imagejpeg($im, $path, 88);
