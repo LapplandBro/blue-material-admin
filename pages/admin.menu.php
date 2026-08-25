@@ -79,6 +79,7 @@ if(!$userbank->HasAccess(ADMIN_OWNER)) {
 	}
 
 	sb_menu_ensure_group_column();
+	sb_menu_normalize_system_labels();
 	$list_menus = $GLOBALS['db']->GetAll("SELECT * FROM ".DB_PREFIX."_menu ORDER BY `priority` DESC");
 	if (!is_array($list_menus))
 		$list_menus = array();

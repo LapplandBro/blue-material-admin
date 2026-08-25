@@ -948,6 +948,7 @@ function UpdateGroupPermissions($gid)
 								}');
 	$objResponse->addScript("$('type.msg').setHTML('');");
 	$objResponse->addScript("$('type.msg').setStyle('display', 'none');");
+	$objResponse->addScript("if(typeof BindWebPermissionGroupSync==='function')BindWebPermissionGroupSync();");
 	return $objResponse;
 }
 
@@ -1000,6 +1001,7 @@ function UpdateAdminPermissions($type, $value)
 									$("srootcheckbox").setStyle("display", "none");
 								}');
 	$objResponse->addAssign($id.".msg", "innerHTML", "");
+	$objResponse->addScript("if(typeof BindWebPermissionGroupSync==='function')BindWebPermissionGroupSync();");
 	return $objResponse;
 
 }

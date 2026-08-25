@@ -350,7 +350,8 @@ function sb_menu_extract_icon($text)
 }
 
 /**
- * Короткая подпись пункта в сайдбаре. Свои названия из админки не трогает.
+ * Короткая подпись пункта в сайдбаре. Для стандартных страниц совпадает с data.sql.
+ * Свои названия из админки не трогает.
  */
 function sb_menu_nav_label($url, $title)
 {
@@ -404,6 +405,45 @@ function sb_menu_nav_label($url, $title)
 	if (isset($byTitle[$title]))
 		return $byTitle[$title];
 	return $title;
+}
+
+/**
+ * Приводит устаревшие названия системных пунктов меню к каноническим
+ * (как в сайдбаре / data.sql), чтобы админка меню и левое меню совпадали.
+ */
+function sb_menu_normalize_system_labels()
+{
+	static $done = false;
+	if ($done || empty($GLOBALS['db']))
+		return;
+	$done = true;
+
+	$rows = $GLOBALS['db']->GetAll("SELECT id, text, url FROM `" . DB_PREFIX . "_menu` WHERE system = 1");
+	if (!is_array($rows) || !$rows)
+		return;
+
+	foreach ($rows as $row) {
+		$id = isset($row['id']) ? (int)$row['id'] : 0;
+		if ($id <= 0)
+			continue;
+		$raw = isset($row['text']) ? (string)$row['text'] : '';
+		$url = isset($row['url']) ? (string)$row['url'] : '';
+		$plain = sb_menu_strip_icon($raw);
+		$canonical = sb_menu_nav_label($url, $plain);
+		if ($canonical === '' || $canonical === $plain)
+			continue;
+
+		$icon = sb_menu_extract_icon($raw);
+		if ($icon !== '')
+			$newText = '<i class=\'' . str_replace(array("'", '"'), '', $icon) . '\'></i> ' . $canonical;
+		else
+			$newText = $canonical;
+
+		$GLOBALS['db']->Execute(
+			"UPDATE `" . DB_PREFIX . "_menu` SET `text` = ? WHERE `id` = ?",
+			array($newText, $id)
+		);
+	}
 }
 
 /** Убирает HTML-иконку из заголовка, оставляя чистый текст. */
@@ -617,6 +657,7 @@ function sb_menu_collect_groups()
 {
 	global $userbank;
 	sb_menu_ensure_group_column();
+	sb_menu_normalize_system_labels();
 	$groups = array(
 		'site' => array(),
 		'tools' => array(),

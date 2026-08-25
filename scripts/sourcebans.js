@@ -911,6 +911,60 @@ function UpdateCheckBox(tgl, start, stop)
 			}
 		}
 	}
+	if (typeof SyncWebPermissionGroups === 'function')
+		SyncWebPermissionGroups();
+}
+
+/** Группы веб-флагов: родительская галка ↔ все дочерние. */
+function WebPermGroupDefs()
+{
+	return [
+		{ parent: 3, kids: [4, 5, 6, 7] },
+		{ parent: 8, kids: [9, 10, 11, 12] },
+		{ parent: 13, kids: [14, 16, 17, 18, 19, 20, 32, 33, 34, 38, 39] },
+		{ parent: 21, kids: [22, 23, 24, 25] },
+		{ parent: 35, kids: [36, 37] },
+		{ parent: 27, kids: [28, 29, 30, 31] }
+	];
+}
+
+function SyncWebPermissionGroups()
+{
+	var groups = WebPermGroupDefs();
+	for (var g = 0; g < groups.length; g++) {
+		var parent = document.getElementById('p' + groups[g].parent);
+		if (!parent)
+			continue;
+		var kids = groups[g].kids;
+		var all = true;
+		var found = 0;
+		for (var i = 0; i < kids.length; i++) {
+			var el = document.getElementById('p' + kids[i]);
+			if (!el)
+				continue;
+			found++;
+			if (!el.checked)
+				all = false;
+		}
+		if (found === 0)
+			continue;
+		parent.checked = all;
+		parent.indeterminate = false;
+	}
+}
+
+function BindWebPermissionGroupSync()
+{
+	if (!window._webPermSyncBound) {
+		window._webPermSyncBound = true;
+		document.addEventListener('change', function (e) {
+			var t = e.target;
+			if (!t || !t.id || !/^p\d+$/.test(t.id))
+				return;
+			SyncWebPermissionGroups();
+		}, true);
+	}
+	SyncWebPermissionGroups();
 }
 
 function ProcessGroup()

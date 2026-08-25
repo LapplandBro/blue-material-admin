@@ -90,6 +90,7 @@ $('p28').checked = <?php echo check_flag($web_flags, ADMIN_LIST_MODS) ? "true" :
 $('p29').checked = <?php echo check_flag($web_flags, ADMIN_ADD_MODS) ? "true" : "false"?>;
 $('p30').checked = <?php echo check_flag($web_flags, ADMIN_EDIT_MODS) ? "true" : "false"?>;
 $('p31').checked = <?php echo check_flag($web_flags, ADMIN_DELETE_MODS) ? "true" : "false"?>;
+if (typeof BindWebPermissionGroupSync === 'function') BindWebPermissionGroupSync();
 
 
 $('s14').checked = <?php echo strstr(get_non_inherited_admin($admin['authid']), SM_ROOT) ? "true" : "false"?>;
