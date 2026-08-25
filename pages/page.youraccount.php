@@ -127,9 +127,11 @@ if (!function_exists('sb_account_punish_item')) {
 	{
 		$item = array();
 		$name = isset($row['name']) ? stripslashes((string)$row['name']) : '';
+		$name = html_entity_decode($name, ENT_QUOTES | ENT_HTML5, 'UTF-8');
 		$item['name'] = $name;
-		$item['short_name'] = function_exists('trunc') ? trunc($name, 28, false) : $name;
-		$item['authid'] = isset($row['authid']) ? (string)$row['authid'] : '';
+		// CSS сам режет через ellipsis — здесь только мягкий лимит без битой UTF-8
+		$item['short_name'] = function_exists('trunc') ? trunc($name, 40, false) : $name;
+		$item['authid'] = isset($row['authid']) ? trim((string)$row['authid']) : '';
 		$created = isset($row['created']) ? (int)$row['created'] : 0;
 		$df = (isset($GLOBALS['config']['config.dateformat_ver2']) && $GLOBALS['config']['config.dateformat_ver2'] !== '')
 			? $GLOBALS['config']['config.dateformat_ver2']
@@ -137,8 +139,9 @@ if (!function_exists('sb_account_punish_item')) {
 		$item['created'] = function_exists('SBDate') ? SBDate($df, $created) : date('d.m.Y H:i', $created);
 		$length = isset($row['length']) ? (int)$row['length'] : 0;
 		$ends = isset($row['ends']) ? (int)$row['ends'] : 0;
-		$remove = isset($row['RemoveType']) ? (string)$row['RemoveType'] : '';
-		$expired = ($remove === 'D' || $remove === 'U' || $remove === 'E' || ($length > 0 && $ends > 0 && $ends < time()));
+		$remove = isset($row['RemoveType']) ? trim((string)$row['RemoveType']) : '';
+		// Любой RemoveType = снято (в т.ч. не D/U/E); иначе ловим рассинхрон со счётчиком active
+		$expired = ($remove !== '' || ($length > 0 && $ends > 0 && $ends < time()));
 		$item['unbanned'] = $expired;
 		$item['perm'] = ($length === 0 && !$expired);
 		if ($length === 0)
@@ -151,14 +154,25 @@ if (!function_exists('sb_account_punish_item')) {
 		} else
 			$item['length'] = (string)$length;
 		$reason = isset($row['reason']) ? stripslashes((string)$row['reason']) : '';
-		$item['reason'] = function_exists('trunc') ? trunc($reason, 72, false) : $reason;
+		$reason = html_entity_decode($reason, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+		$item['reason'] = function_exists('trunc') ? trunc($reason, 80, true) : $reason;
+
+		$bid = isset($row['bid']) ? (int)$row['bid'] : 0;
 		$adv = $item['authid'];
 		$advType = 'steamid';
 		if ($adv === '' && $listPage === 'banlist' && !empty($row['ip'])) {
 			$adv = (string)$row['ip'];
 			$advType = 'ip';
 		}
-		$item['search_link'] = 'index.php?p=' . $listPage . '&advSearch=' . rawurlencode($adv) . '&advType=' . $advType;
+		// Пустой SteamID → иначе commslist&advSearch=&advType=steamid (пустая страница)
+		if ($adv === '' && $bid > 0) {
+			$adv = (string)$bid;
+			$advType = 'bid';
+		}
+		if ($adv !== '')
+			$item['search_link'] = 'index.php?p=' . $listPage . '&advSearch=' . rawurlencode($adv) . '&advType=' . $advType;
+		else
+			$item['search_link'] = 'index.php?p=' . $listPage;
 		if ($listPage === 'commslist' && function_exists('sb_comms_type_icon_html'))
 			$item['type_html'] = sb_comms_type_icon_html(isset($row['type']) ? $row['type'] : 1, 18);
 		else
@@ -182,7 +196,7 @@ if (isset($GLOBALS['db']) && is_object($GLOBALS['db'])) {
 		? sb_admin_issued_where($aid, $myAuth)
 		: array('aid = ?', array((int)$aid));
 	$banCounts = $GLOBALS['db']->GetRow(
-		"SELECT COUNT(*) AS total, SUM(CASE WHEN RemoveType IS NULL AND (`length` = 0 OR `ends` > UNIX_TIMESTAMP()) THEN 1 ELSE 0 END) AS active FROM `".DB_PREFIX."_bans` WHERE ".$issuedWhere,
+		"SELECT COUNT(*) AS total, SUM(CASE WHEN (RemoveType IS NULL OR RemoveType = '') AND (`length` = 0 OR `ends` > UNIX_TIMESTAMP()) THEN 1 ELSE 0 END) AS active FROM `".DB_PREFIX."_bans` WHERE ".$issuedWhere,
 		$issuedParams
 	);
 	if (is_array($banCounts)) {
@@ -190,7 +204,7 @@ if (isset($GLOBALS['db']) && is_object($GLOBALS['db'])) {
 		$my_bans_active = isset($banCounts['active']) ? (int)$banCounts['active'] : (isset($banCounts[1]) ? (int)$banCounts[1] : 0);
 	}
 	$commCounts = $GLOBALS['db']->GetRow(
-		"SELECT COUNT(*) AS total, SUM(CASE WHEN RemoveType IS NULL AND (`length` = 0 OR `ends` > UNIX_TIMESTAMP()) THEN 1 ELSE 0 END) AS active FROM `".DB_PREFIX."_comms` WHERE ".$issuedWhere,
+		"SELECT COUNT(*) AS total, SUM(CASE WHEN (RemoveType IS NULL OR RemoveType = '') AND (`length` = 0 OR `ends` > UNIX_TIMESTAMP()) THEN 1 ELSE 0 END) AS active FROM `".DB_PREFIX."_comms` WHERE ".$issuedWhere,
 		$issuedParams
 	);
 	if (is_array($commCounts)) {

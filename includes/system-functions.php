@@ -1467,14 +1467,29 @@ function NextAid()
 
 function trunc($text, $len, $byword=true)
 {
-	if(strlen($text) <= $len)
+	$text = (string)$text;
+	$len = (int)$len;
+	if ($len <= 0)
 		return $text;
-    $text = $text." ";
-    $text = substr($text,0,$len);
-    if($byword)
-    	$text = substr($text,0,strrpos($text,' '));
-    $text = $text."...";
-    return $text;
+	if (function_exists('mb_strlen') && function_exists('mb_substr')) {
+		if (mb_strlen($text, 'UTF-8') <= $len)
+			return $text;
+		$cut = mb_substr($text, 0, $len, 'UTF-8');
+		if ($byword && function_exists('mb_strrpos')) {
+			$space = mb_strrpos($cut, ' ', 0, 'UTF-8');
+			if ($space !== false && $space > (int)floor($len / 3))
+				$cut = mb_substr($cut, 0, $space, 'UTF-8');
+		}
+		return rtrim($cut) . '...';
+	}
+	if (strlen($text) <= $len)
+		return $text;
+	$text = $text." ";
+	$text = substr($text,0,$len);
+	if($byword)
+		$text = substr($text,0,strrpos($text,' '));
+	$text = $text."...";
+	return $text;
 }
 
 function StripQuotes($str)
