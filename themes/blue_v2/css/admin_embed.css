@@ -319,12 +319,15 @@
   flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 0.45rem 0.75rem;
-  margin: 0 0 0.75rem;
+  gap: 0.55rem 0.85rem;
+  margin: 0.15rem 0 0.95rem;
+  padding: 0.15rem 0 0.85rem;
 }
 .admin-embed-body .admin-detail-title {
   font-weight: 700;
   color: var(--text-heading);
+  margin: 0 0 0.35rem;
+  line-height: 1.3;
 }
 .admin-embed-body .rcon-terminal {
   margin-top: 0.35rem;
@@ -829,27 +832,29 @@
 .admin-row-muted td { opacity: 0.55; }
 
 .admin-ticket {
-  margin: 0.2rem 0.4rem 0.5rem;
-  padding: 0.9rem 1.05rem 1rem;
+  margin: 0.35rem 0.45rem 0.55rem;
+  padding: 1.15rem 1.15rem 1.1rem;
   min-width: 0;
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-sm);
   background: rgba(8, 15, 31, 0.42);
 }
 .admin-ticket .admin-detail-head {
-  margin: 0 0 0.85rem;
-  padding: 0 0 0.75rem;
+  margin: 0 0 1rem;
+  padding: 0.1rem 0 0.9rem;
   border-bottom: 1px solid var(--border-hairline);
-  align-items: center;
+  align-items: flex-start;
+  gap: 0.65rem 1rem;
 }
 .admin-ticket .admin-detail-title {
-  font-size: 0.95rem;
-  line-height: 1.25;
+  font-size: 0.98rem;
+  line-height: 1.35;
+  margin: 0 0 0.4rem;
 }
 .admin-ticket .form-note {
-  margin: 0.2rem 0 0;
+  margin: 0.15rem 0 0;
   font-size: 0.78rem;
-  line-height: 1.35;
+  line-height: 1.4;
   color: var(--muted);
 }
 .admin-facts--ticket {
