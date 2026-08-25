@@ -776,6 +776,13 @@
   border-bottom: 1px solid var(--border-hairline);
   align-items: baseline;
 }
+.admin-fact--stack {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.45rem;
+  grid-template-columns: unset;
+}
 .admin-fact-label {
   color: var(--muted);
   font-size: 0.72rem;
@@ -796,6 +803,28 @@
   font-size: 0.82rem;
 }
 .admin-fact-flags .c-blue { color: var(--accent); margin: 0 0 0.25rem; font-size: 0.78rem; }
+.admin-server-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: stretch;
+  min-width: 0;
+}
+.admin-server-chip {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  min-height: 1.85rem;
+  padding: 0.28rem 0.62rem;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-sm);
+  background: rgba(8, 15, 31, 0.55);
+  color: var(--text-heading);
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.25;
+  word-break: break-word;
+}
 .admin-aside { min-width: 0; }
 .admin-aside-avatar {
   display: block;

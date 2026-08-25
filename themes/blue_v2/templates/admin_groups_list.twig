@@ -3,7 +3,7 @@
   <p class="form-flash form-flash--err">Нет доступа к списку групп.</p>
 </div>
 {% else %}
-<div class="admin-manage">
+<div id="groups-list" class="admin-manage">
   <header class="admin-manage-head">
     <div>
       <p class="form-page-kicker">Админка</p>
@@ -184,19 +184,18 @@
               <div class="opener">
                 <div class="admin-detail admin-detail--group">
                   <div class="admin-facts">
-                    <div class="admin-fact">
+                    <div class="admin-fact admin-fact--stack">
                       <span class="admin-fact-label">Серверы в группе</span>
-                      <span class="admin-fact-value">
-                        {% if group.servers %}
-                          {% for server in group.servers %}
-                          <span id="servername_{{ server.server_id }}">Загрузка…</span>
-                          <script type="text/javascript">xajax_ServerHostProperty({{ server.server_id }}, "servername_{{ server.server_id }}", "innerHTML", 100);</script>
-                          {% if not loop.last %}, {% endif %}
-                          {% endfor %}
-                        {% else %}
-                          <span class="admin-muted">Пусто</span>
-                        {% endif %}
-                      </span>
+                      {% if group.servers %}
+                      <div class="admin-server-chips">
+                        {% for server in group.servers %}
+                        <span class="admin-server-chip" id="servername_{{ group.gid }}_{{ server.server_id }}" title="sid {{ server.server_id }}">Загрузка…</span>
+                        <script type="text/javascript">xajax_ServerHostProperty({{ server.server_id }}, "servername_{{ group.gid }}_{{ server.server_id }}", "innerHTML", 48);</script>
+                        {% endfor %}
+                      </div>
+                      {% else %}
+                      <span class="admin-muted">Пусто</span>
+                      {% endif %}
                     </div>
                   </div>
                 </div>
@@ -209,5 +208,5 @@
     </div>
   </section>
 </div>
-<script type="text/javascript">InitAccordion('tr.opener', 'div.opener', 'content');</script>
+<script type="text/javascript">InitAccordion('tr.opener', 'div.opener', 'groups-list');</script>
 {% endif %}
