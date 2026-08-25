@@ -82,22 +82,27 @@ $bans = array();
 while (!$res->EOF)
 {
         $info = array();
-	if ($res->fields['length'] == 0)
-	{
-		$info['perm'] = true;
-		$info['unbanned'] = false;
-	}
-	else
-	{
-		$info['temp'] = true;
-                $info['unbanned'] = false;
-	}
+	$blen = isset($res->fields['length']) ? (int)$res->fields['length'] : (int)$res->fields[6];
+	$bends = isset($res->fields['ends']) ? (int)$res->fields['ends'] : (int)$res->fields[5];
+	$bcreated = isset($res->fields['created']) ? (int)$res->fields['created'] : (int)$res->fields[4];
+	$bremove = isset($res->fields['RemoveType']) ? (string)$res->fields['RemoveType'] : (string)$res->fields[14];
+	$inactive = function_exists('sb_punish_is_inactive')
+		? sb_punish_is_inactive($blen, $bends, $bremove, $bcreated)
+		: ($bremove === 'D' || $bremove === 'U' || $bremove === 'E' || ($blen && $bends < time()));
+	$info['unbanned'] = $inactive;
+	$info['perm'] = ($blen === 0 && !$inactive);
+	$info['temp'] = ($blen !== 0 && !$inactive);
 	$info['name'] = stripslashes($res->fields[3]);
 	//$info['created'] = SBDate($dateformat,$res->fields['created']);
 	$info['created'] = SBDate($GLOBALS['config']['config.dateformat_ver2'],$res->fields['created']);
 	$info['created_info'] = SBDate("Выдано ".$GLOBALS['config']['config.dateformat'],$res->fields['created']);
-	$ltemp = explode(",",$res->fields[6] == 0 ? 'Навсегда' : SecondsToString(intval($res->fields[6])));
-	$info['length'] = $ltemp[0];
+	$info['length'] = function_exists('sb_punish_length_label')
+		? sb_punish_length_label($blen, $inactive, $bremove)
+		: ($blen == 0 ? 'Навсегда' : SecondsToString($blen));
+	if (!function_exists('sb_punish_length_label') && strpos($info['length'], ',') !== false) {
+		$ltemp = explode(',', $info['length']);
+		$info['length'] = $ltemp[0];
+	}
 	$info['icon'] = empty($res->fields[13]) ? 'web.png' : $res->fields[13];
 	$info['icon_html'] = sb_game_icon_html($info['icon'], 'Игра', 20);
 	$info['authid'] = $res->fields[2];
@@ -137,21 +142,16 @@ while (!$res->EOF)
 	}
 	$info['link_url'] = "window.location = '" . $info['search_link'] . "';";
 	$info['short_name'] = trunc($info['name'], 25, false);
-	
-	if($res->fields[14] == 'D' || $res->fields[14] == 'U' || $res->fields[14] == 'E' || ($res->fields[6] && $res->fields[5] < time()))
-	{
-		$info['unbanned'] = true;
-		
-		if($res->fields[14] == 'D')
+
+	if ($inactive) {
+		if ($bremove === 'D')
 			$info['ub_reason'] = 'D';
-		elseif($res->fields[14] == 'U')
+		elseif ($bremove === 'U')
 			$info['ub_reason'] = 'U';
 		else
 			$info['ub_reason'] = 'E';
-	}
-	else
-	{
-		$info['unbanned'] = false;
+	} else {
+		$info['ub_reason'] = '';
 	}
 	
 	array_push($bans,$info);
@@ -171,22 +171,27 @@ $comms = array();
 while (!$res->EOF)
 {
         $info = array();
-	if ($res->fields['length'] == 0)
-	{
-		$info['perm'] = true;
-		$info['unbanned'] = false;
-	}
-	else
-	{
-		$info['temp'] = true;
-                $info['unbanned'] = false;
-	}
+	$clen = isset($res->fields['length']) ? (int)$res->fields['length'] : (int)$res->fields[6];
+	$cends = isset($res->fields['ends']) ? (int)$res->fields['ends'] : (int)$res->fields[5];
+	$ccreated = isset($res->fields['created']) ? (int)$res->fields['created'] : (int)$res->fields[4];
+	$cremove = isset($res->fields['RemoveType']) ? (string)$res->fields['RemoveType'] : (string)$res->fields[14];
+	$inactive = function_exists('sb_punish_is_inactive')
+		? sb_punish_is_inactive($clen, $cends, $cremove, $ccreated)
+		: ($cremove === 'D' || $cremove === 'U' || $cremove === 'E' || ($clen && $cends < time()));
+	$info['unbanned'] = $inactive;
+	$info['perm'] = ($clen === 0 && !$inactive);
+	$info['temp'] = ($clen !== 0 && !$inactive);
 	$info['name'] = stripslashes($res->fields[3]);
 	//$info['created'] = SBDate($dateformat,$res->fields['created']);
 	$info['created'] = SBDate($GLOBALS['config']['config.dateformat_ver2'],$res->fields['created']);
 	$info['created_info'] = SBDate("Выдано ".$GLOBALS['config']['config.dateformat'],$res->fields['created']);
-	$ltemp = explode(",",$res->fields[6] == 0 ? 'Навсегда' : ($res->fields[6] < 0 ? "Сессия" : SecondsToString(intval($res->fields[6]))));
-	$info['length'] = $ltemp[0];
+	$info['length'] = function_exists('sb_punish_length_label')
+		? sb_punish_length_label($clen, $inactive, $cremove)
+		: ($clen == 0 ? 'Навсегда' : ($clen < 0 ? 'Сессия' : SecondsToString($clen)));
+	if (!function_exists('sb_punish_length_label') && strpos($info['length'], ',') !== false) {
+		$ltemp = explode(',', $info['length']);
+		$info['length'] = $ltemp[0];
+	}
 	$info['icon'] = empty($res->fields[13]) ? 'web.png' : $res->fields[13];
 	$info['authid'] = $res->fields['authid'];
 	$info['search_link'] = "index.php?p=commslist&advSearch=" . $info['authid'] . "&advType=steamid&Submit";
@@ -194,23 +199,18 @@ while (!$res->EOF)
 	$info['short_name'] = trunc($info['name'], 25, false);
 	$info['type'] = (int)$res->fields['type'];
 	$info['type_html'] = sb_comms_type_icon_html($info['type'], 20);
-		
-	if($res->fields[14] == 'D' || $res->fields[14] == 'U' || $res->fields[14] == 'E' || ($res->fields[6] && $res->fields[5] < time()))
-	{
-		$info['unbanned'] = true;
-			
-		if($res->fields[14] == 'D')
+
+	if ($inactive) {
+		if ($cremove === 'D')
 			$info['ub_reason'] = 'D';
-		elseif($res->fields[14] == 'U')
+		elseif ($cremove === 'U')
 			$info['ub_reason'] = 'U';
 		else
 			$info['ub_reason'] = 'E';
+	} else {
+		$info['ub_reason'] = '';
 	}
-	else
-	{
-		$info['unbanned'] = false;
-	}
-		
+
 	array_push($comms,$info);
 	$res->MoveNext();
 }

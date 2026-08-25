@@ -344,6 +344,123 @@ else
 				CreateRedBox("Ошибка", "Не удалось сохранить настройки опций: " . htmlspecialchars($GLOBALS['db']->ErrorMsg(), ENT_QUOTES, 'UTF-8'));
 			}
 		}
+
+		if ($_POST['settingsGroup'] == "seo")
+		{
+			$ogSite = isset($_POST['seo_og_site_name']) ? trim((string)$_POST['seo_og_site_name']) : '';
+			$ogTitle = isset($_POST['seo_og_title']) ? trim((string)$_POST['seo_og_title']) : '';
+			$ogDesc = isset($_POST['seo_og_description']) ? trim((string)$_POST['seo_og_description']) : '';
+			$metaDesc = isset($_POST['seo_meta_description']) ? trim((string)$_POST['seo_meta_description']) : '';
+			$ogImage = isset($_POST['seo_og_image']) ? trim((string)$_POST['seo_og_image']) : '';
+			$ogW = isset($_POST['seo_og_image_width']) ? (int)$_POST['seo_og_image_width'] : 0;
+			$ogH = isset($_POST['seo_og_image_height']) ? (int)$_POST['seo_og_image_height'] : 0;
+
+			if ($ogImage !== '' && preg_match('#^https?://#i', $ogImage) === 0) {
+				$ogImage = ltrim(str_replace('\\', '/', $ogImage), '/');
+				if (strpos($ogImage, '..') !== false) {
+					CreateRedBox("Ошибка", "Некорректный путь к обложке.");
+					PageDie();
+				}
+			}
+			if ($ogW < 0)
+				$ogW = 0;
+			if ($ogH < 0)
+				$ogH = 0;
+			if ($ogW > 4096)
+				$ogW = 4096;
+			if ($ogH > 4096)
+				$ogH = 4096;
+
+			$edit = $GLOBALS['db']->Execute(
+				"REPLACE INTO " . DB_PREFIX . "_settings (`value`, `setting`) VALUES
+					(?, 'seo.og_site_name'),
+					(?, 'seo.og_title'),
+					(?, 'seo.og_description'),
+					(?, 'seo.meta_description'),
+					(?, 'seo.og_image'),
+					(?, 'seo.og_image_width'),
+					(?, 'seo.og_image_height')",
+				array(
+					$ogSite,
+					$ogTitle,
+					$ogDesc,
+					$metaDesc,
+					$ogImage,
+					$ogW > 0 ? (string)$ogW : '',
+					$ogH > 0 ? (string)$ogH : '',
+				)
+			);
+
+			if ($edit) {
+				$GLOBALS['config']['seo.og_site_name'] = $ogSite;
+				$GLOBALS['config']['seo.og_title'] = $ogTitle;
+				$GLOBALS['config']['seo.og_description'] = $ogDesc;
+				$GLOBALS['config']['seo.meta_description'] = $metaDesc;
+				$GLOBALS['config']['seo.og_image'] = $ogImage;
+				$GLOBALS['config']['seo.og_image_width'] = $ogW > 0 ? (string)$ogW : '';
+				$GLOBALS['config']['seo.og_image_height'] = $ogH > 0 ? (string)$ogH : '';
+				?><script>setTimeout("ShowBox('SEO сохранено', 'Параметры SEO записаны в базу.', 'green', 'index.php?p=admin&c=settings#^4', false, 2500);", 1200);</script><?php
+				$log = new CSystemLog("m", "SEO настройки", $userbank->GetProperty("user") . " изменил SEO / Open Graph.");
+			} else {
+				CreateRedBox("Ошибка", "Не удалось сохранить SEO: " . htmlspecialchars($GLOBALS['db']->ErrorMsg(), ENT_QUOTES, 'UTF-8'));
+			}
+		}
+
+		if ($_POST['settingsGroup'] == "seo_rebuild")
+		{
+			if (!function_exists('sb_write_seo_files')) {
+				CreateRedBox("Ошибка", "Модуль SEO не загружен.");
+			} else {
+				$base = defined('SB_WP_URL') ? (string)SB_WP_URL : '';
+				$res = sb_write_seo_files(rtrim(str_replace('\\', '/', ROOT), '/'), $base, array('write_og_stub' => false));
+				if (!empty($res['ok'])) {
+					$files = !empty($res['files']) ? implode(', ', $res['files']) : 'sitemap.xml, robots.txt';
+					$msg = $files;
+					if (!empty($res['error']))
+						$msg .= ' (' . $res['error'] . ')';
+					$msgJs = json_encode($msg, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+					?><script>setTimeout(function(){ ShowBox('SEO файлы', <?php echo $msgJs; ?>, 'green', 'index.php?p=admin&c=settings#^4', false, 2800); }, 800);</script><?php
+					$log = new CSystemLog("m", "SEO файлы", $userbank->GetProperty("user") . " пересобрал sitemap.xml / robots.txt.");
+				} else {
+					$err = !empty($res['error']) ? $res['error'] : 'неизвестная ошибка';
+					CreateRedBox("Ошибка", htmlspecialchars($err, ENT_QUOTES, 'UTF-8'));
+					$log = new CSystemLog("w", "SEO файлы", $userbank->GetProperty("user") . " не смог пересобрать SEO-файлы: " . $err);
+				}
+			}
+		}
+
+		if ($_POST['settingsGroup'] == "seo_upload")
+		{
+			if (!function_exists('sb_seo_save_og_upload')) {
+				CreateRedBox("Ошибка", "Модуль SEO не загружен.");
+			} elseif (empty($_FILES['seo_og_file']) || !is_array($_FILES['seo_og_file'])) {
+				CreateRedBox("Ошибка", "Выберите файл обложки.");
+			} else {
+				$up = sb_seo_save_og_upload($_FILES['seo_og_file'], rtrim(str_replace('\\', '/', ROOT), '/'));
+				if (!empty($up['ok']) && !empty($up['path'])) {
+					$wStr = !empty($up['width']) ? (string)(int)$up['width'] : '';
+					$hStr = !empty($up['height']) ? (string)(int)$up['height'] : '';
+					$GLOBALS['db']->Execute(
+						"REPLACE INTO " . DB_PREFIX . "_settings (`value`, `setting`) VALUES
+							(?, 'seo.og_image'),
+							(?, 'seo.og_image_width'),
+							(?, 'seo.og_image_height')",
+						array($up['path'], $wStr, $hStr)
+					);
+					$GLOBALS['config']['seo.og_image'] = $up['path'];
+					if ($wStr !== '')
+						$GLOBALS['config']['seo.og_image_width'] = $wStr;
+					if ($hStr !== '')
+						$GLOBALS['config']['seo.og_image_height'] = $hStr;
+					?><script>setTimeout("ShowBox('Обложка OG', 'Файл сохранён как <?php echo htmlspecialchars($up['path'], ENT_QUOTES, 'UTF-8'); ?>', 'green', 'index.php?p=admin&c=settings#^4', false, 2500);", 800);</script><?php
+					$log = new CSystemLog("m", "SEO обложка", $userbank->GetProperty("user") . " загрузил " . $up['path'] . ".");
+				} else {
+					$err = !empty($up['error']) ? $up['error'] : 'загрузка не удалась';
+					CreateRedBox("Ошибка", htmlspecialchars($err, ENT_QUOTES, 'UTF-8'));
+					$log = new CSystemLog("w", "SEO обложка", $userbank->GetProperty("user") . " — ошибка загрузки: " . $err);
+				}
+			}
+		}
 	}
 
 	$date_offs = $GLOBALS['config']['config.timezone'];
@@ -391,6 +508,39 @@ else
 		sb_ui_v2_theme_fragment('admin_settings_features.twig');
 	echo '</div>';
 	#########/[Features Page]###############
+
+	#########[SEO Page]###############
+	echo '<div id="4" class="admin-pane">';
+		$seoBundle = function_exists('sb_seo_og_bundle')
+			? sb_seo_og_bundle(isset($GLOBALS['config']['template.title']) ? $GLOBALS['config']['template.title'] : '')
+			: array(
+				'og_site_name' => '',
+				'og_title' => '',
+				'og_description' => '',
+				'og_image' => 'images/og-cover.jpg',
+				'og_image_width' => 1200,
+				'og_image_height' => 630,
+				'meta_description' => '',
+				'site_base' => '',
+			);
+		$theme->assign('seo_og_site_name', function_exists('sb_seo_cfg') ? sb_seo_cfg('seo.og_site_name') : '');
+		$theme->assign('seo_og_title', function_exists('sb_seo_cfg') ? sb_seo_cfg('seo.og_title') : '');
+		$theme->assign('seo_og_description', function_exists('sb_seo_cfg') ? sb_seo_cfg('seo.og_description') : '');
+		$theme->assign('seo_meta_description', function_exists('sb_seo_cfg') ? sb_seo_cfg('seo.meta_description') : '');
+		$theme->assign('seo_og_image', function_exists('sb_seo_cfg') ? sb_seo_cfg('seo.og_image') : '');
+		$theme->assign('seo_og_image_width', function_exists('sb_seo_cfg') ? sb_seo_cfg('seo.og_image_width') : '');
+		$theme->assign('seo_og_image_height', function_exists('sb_seo_cfg') ? sb_seo_cfg('seo.og_image_height') : '');
+		$theme->assign('seo_resolved', $seoBundle);
+		$previewImg = function_exists('sb_seo_absolute_image_url')
+			? sb_seo_absolute_image_url($seoBundle['og_image'], $seoBundle['site_base'])
+			: '';
+		if ($previewImg !== '' && is_readable(ROOT . 'images/og-cover.jpg')) {
+			$previewImg .= (strpos($previewImg, '?') === false ? '?' : '&') . 'v=' . (int)@filemtime(ROOT . 'images/og-cover.jpg');
+		}
+		$theme->assign('seo_preview_image', $previewImg);
+		sb_ui_v2_theme_fragment('admin_settings_seo.twig');
+	echo '</div>';
+	#########/[SEO Page]###############
 	
 	#########[Themes Page]###############
 	echo '<div id="1" class="admin-pane">';

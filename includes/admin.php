@@ -484,6 +484,7 @@ else
 			if($userbank->HasAccess(ADMIN_OWNER|ADMIN_WEB_SETTINGS ) )
 			{
 				$settingsTabMenu->addMenuItem("Главные настройки",0);
+				$settingsTabMenu->addMenuItem("SEO",4);
 				$settingsTabMenu->addMenuItem("Опции",3);
 			}
 			$settingsTabMenu->addMenuItem("Уведомления", 1);

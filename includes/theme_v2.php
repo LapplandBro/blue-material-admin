@@ -48,7 +48,7 @@ function sb_ui_v2_boot()
 }
 
 /**
- * Прокинуть SEO/OG в Twig: сначала из $theme (header.php), иначе из SB_OG_* в config.php.
+ * Прокинуть SEO/OG в Twig: сначала из $theme (header.php), иначе sb_seo_og_bundle (DB → SB_OG_*).
  */
 function sb_ui_v2_apply_seo_vars(array &$vars)
 {
@@ -90,18 +90,24 @@ function sb_ui_v2_apply_seo_vars(array &$vars)
 	if ($brand === '')
 		$brand = 'SourceBans';
 
+	$bundle = function_exists('sb_seo_og_bundle')
+		? sb_seo_og_bundle($brand)
+		: null;
+
 	if (empty($vars['og_site_name']))
-		$vars['og_site_name'] = (defined('SB_OG_SITE_NAME') && SB_OG_SITE_NAME !== '') ? (string)SB_OG_SITE_NAME : $brand;
+		$vars['og_site_name'] = is_array($bundle) ? $bundle['og_site_name'] : $brand;
 	if (empty($vars['og_title']))
-		$vars['og_title'] = (defined('SB_OG_TITLE') && SB_OG_TITLE !== '')
-			? (string)SB_OG_TITLE
+		$vars['og_title'] = is_array($bundle)
+			? $bundle['og_title']
 			: ($vars['og_site_name'] . ' — игровые серверы');
 	if (empty($vars['og_description']))
-		$vars['og_description'] = (defined('SB_OG_DESCRIPTION') && SB_OG_DESCRIPTION !== '')
-			? (string)SB_OG_DESCRIPTION
+		$vars['og_description'] = is_array($bundle)
+			? $bundle['og_description']
 			: ('Онлайн, правила, банлист и админлист — ' . $vars['og_site_name']);
 	if (empty($vars['seo_description']))
-		$vars['seo_description'] = $vars['og_description'];
+		$vars['seo_description'] = (is_array($bundle) && !empty($bundle['meta_description']))
+			? $bundle['meta_description']
+			: $vars['og_description'];
 	if (empty($vars['seo_document_title']))
 		$vars['seo_document_title'] = $vars['og_title'];
 	if (empty($vars['seo_title']))
@@ -109,17 +115,21 @@ function sb_ui_v2_apply_seo_vars(array &$vars)
 	if (empty($vars['og_image_alt']))
 		$vars['og_image_alt'] = $vars['og_title'];
 	if (empty($vars['og_image_width']))
-		$vars['og_image_width'] = (defined('SB_OG_IMAGE_WIDTH') && (int)SB_OG_IMAGE_WIDTH > 0) ? (int)SB_OG_IMAGE_WIDTH : 1200;
+		$vars['og_image_width'] = is_array($bundle) ? (int)$bundle['og_image_width'] : 1200;
 	if (empty($vars['og_image_height']))
-		$vars['og_image_height'] = (defined('SB_OG_IMAGE_HEIGHT') && (int)SB_OG_IMAGE_HEIGHT > 0) ? (int)SB_OG_IMAGE_HEIGHT : 630;
+		$vars['og_image_height'] = is_array($bundle) ? (int)$bundle['og_image_height'] : 630;
 	if (empty($vars['og_image_type']))
 		$vars['og_image_type'] = 'image/jpeg';
 
 	if (empty($vars['og_image'])) {
-		$img = (defined('SB_OG_IMAGE') && SB_OG_IMAGE !== '') ? trim((string)SB_OG_IMAGE) : 'images/og-cover.jpg';
-		if (!preg_match('#^https?://#i', $img))
-			$img = ($siteBase !== '' ? $siteBase . '/' : '') . ltrim($img, '/');
-		$vars['og_image'] = $img;
+		$img = is_array($bundle) ? $bundle['og_image'] : 'images/og-cover.jpg';
+		if (function_exists('sb_seo_absolute_image_url'))
+			$vars['og_image'] = sb_seo_absolute_image_url($img, $siteBase !== '' ? $siteBase : (is_array($bundle) ? $bundle['site_base'] : ''));
+		else {
+			if (!preg_match('#^https?://#i', $img))
+				$img = ($siteBase !== '' ? $siteBase . '/' : '') . ltrim($img, '/');
+			$vars['og_image'] = $img;
+		}
 	} elseif (!preg_match('#^https?://#i', (string)$vars['og_image']) && $siteBase !== '') {
 		$vars['og_image'] = $siteBase . '/' . ltrim((string)$vars['og_image'], '/');
 	}

@@ -140,19 +140,14 @@ if (!function_exists('sb_account_punish_item')) {
 		$length = isset($row['length']) ? (int)$row['length'] : 0;
 		$ends = isset($row['ends']) ? (int)$row['ends'] : 0;
 		$remove = isset($row['RemoveType']) ? trim((string)$row['RemoveType']) : '';
-		// Любой RemoveType = снято (в т.ч. не D/U/E); иначе ловим рассинхрон со счётчиком active
-		$expired = ($remove !== '' || ($length > 0 && $ends > 0 && $ends < time()));
+		$expired = function_exists('sb_punish_is_inactive')
+			? sb_punish_is_inactive($length, $ends, $remove, $created)
+			: ($remove !== '' || ($length > 0 && $ends > 0 && $ends < time()));
 		$item['unbanned'] = $expired;
 		$item['perm'] = ($length === 0 && !$expired);
-		if ($length === 0)
-			$item['length'] = 'Навсегда';
-		elseif ($length < 0)
-			$item['length'] = 'Сессия';
-		elseif (function_exists('SecondsToString')) {
-			$ltemp = explode(',', SecondsToString($length));
-			$item['length'] = isset($ltemp[0]) ? $ltemp[0] : (string)$length;
-		} else
-			$item['length'] = (string)$length;
+		$item['length'] = function_exists('sb_punish_length_label')
+			? sb_punish_length_label($length, $expired, $remove)
+			: ($length === 0 ? 'Навсегда' : (string)$length);
 		$reason = isset($row['reason']) ? stripslashes((string)$row['reason']) : '';
 		$reason = html_entity_decode($reason, ENT_QUOTES | ENT_HTML5, 'UTF-8');
 		$item['reason'] = function_exists('trunc') ? trunc($reason, 80, true) : $reason;
@@ -195,8 +190,11 @@ if (isset($GLOBALS['db']) && is_object($GLOBALS['db'])) {
 	list($issuedWhere, $issuedParams) = function_exists('sb_admin_issued_where')
 		? sb_admin_issued_where($aid, $myAuth)
 		: array('aid = ?', array((int)$aid));
+	$activeSql = function_exists('sb_punish_active_sql')
+		? sb_punish_active_sql('')
+		: "((RemoveType IS NULL OR RemoveType = '') AND (`length` = 0 OR `ends` > UNIX_TIMESTAMP()))";
 	$banCounts = $GLOBALS['db']->GetRow(
-		"SELECT COUNT(*) AS total, SUM(CASE WHEN (RemoveType IS NULL OR RemoveType = '') AND (`length` = 0 OR `ends` > UNIX_TIMESTAMP()) THEN 1 ELSE 0 END) AS active FROM `".DB_PREFIX."_bans` WHERE ".$issuedWhere,
+		"SELECT COUNT(*) AS total, SUM(CASE WHEN ".$activeSql." THEN 1 ELSE 0 END) AS active FROM `".DB_PREFIX."_bans` WHERE ".$issuedWhere,
 		$issuedParams
 	);
 	if (is_array($banCounts)) {
@@ -204,7 +202,7 @@ if (isset($GLOBALS['db']) && is_object($GLOBALS['db'])) {
 		$my_bans_active = isset($banCounts['active']) ? (int)$banCounts['active'] : (isset($banCounts[1]) ? (int)$banCounts[1] : 0);
 	}
 	$commCounts = $GLOBALS['db']->GetRow(
-		"SELECT COUNT(*) AS total, SUM(CASE WHEN (RemoveType IS NULL OR RemoveType = '') AND (`length` = 0 OR `ends` > UNIX_TIMESTAMP()) THEN 1 ELSE 0 END) AS active FROM `".DB_PREFIX."_comms` WHERE ".$issuedWhere,
+		"SELECT COUNT(*) AS total, SUM(CASE WHEN ".$activeSql." THEN 1 ELSE 0 END) AS active FROM `".DB_PREFIX."_comms` WHERE ".$issuedWhere,
 		$issuedParams
 	);
 	if (is_array($commCounts)) {

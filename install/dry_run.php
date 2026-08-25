@@ -207,6 +207,17 @@ if (is_file(INCLUDES_PATH . '/seo.inc.php'))
 else
 	dry_fail('seo.inc.php missing');
 
+$sharedSeo = dirname(__DIR__) . '/includes/seo.inc.php';
+if (is_file($sharedSeo) && is_readable($sharedSeo)) {
+	require_once $sharedSeo;
+	if (function_exists('sb_write_seo_files') && function_exists('sb_seo_og_bundle'))
+		dry_ok('shared includes/seo.inc.php helpers');
+	else
+		dry_fail('shared seo.inc.php missing helpers');
+} else {
+	dry_fail('shared includes/seo.inc.php missing');
+}
+
 $page5 = file_get_contents(ROOT . 'template/page.5.php');
 if ($page5 !== false && strpos($page5, 'sb_install_write_cleanup_script') !== false)
 	dry_ok('page.5 wires cleanup script');

@@ -696,6 +696,8 @@ if (is_readable(INCLUDES_PATH . '/CTabsMenu.php'))
 	require_once INCLUDES_PATH . '/CTabsMenu.php';
 if (is_readable(INCLUDES_PATH . '/theme_v2.php'))
 	require_once INCLUDES_PATH . '/theme_v2.php';
+if (is_readable(INCLUDES_PATH . '/seo.inc.php'))
+	require_once INCLUDES_PATH . '/seo.inc.php';
 if (function_exists('sb_ui_v2_boot'))
 	sb_ui_v2_boot();
 

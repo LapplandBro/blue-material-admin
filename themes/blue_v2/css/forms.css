@@ -488,6 +488,20 @@
   gap: 0.5rem;
   align-items: center;
 }
+.settings-page .seo-og-preview {
+  margin-top: 0.65rem;
+  max-width: 20rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--surface, #fff);
+}
+.settings-page .seo-og-preview img {
+  display: block;
+  width: 100%;
+  height: auto;
+  vertical-align: top;
+}
 @media (max-width: 575.98px) {
   .form-page {
     padding: 1rem 0.9rem 1.1rem;

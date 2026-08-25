@@ -218,9 +218,14 @@ if ($seo_page_label !== '' && $seo_page !== 'home') {
 	if ($seo_strlen($seo_document_title) > 60)
 		$seo_document_title = $seo_substr($seo_document_title, 0, 57) . '…';
 } else {
-	// Главная: короткий template.title (часто < 35) — добиваем OG title или слоганом
-	if (defined('SB_OG_TITLE') && SB_OG_TITLE !== '' && $seo_strlen(SB_OG_TITLE) >= 35)
-		$seo_document_title = SB_OG_TITLE;
+	// Главная: короткий template.title (часто < 35) — добиваем SEO/OG title или слоганом
+	$homeOgTitle = '';
+	if (function_exists('sb_seo_cfg') && sb_seo_cfg('seo.og_title') !== '')
+		$homeOgTitle = sb_seo_cfg('seo.og_title');
+	elseif (defined('SB_OG_TITLE') && SB_OG_TITLE !== '')
+		$homeOgTitle = (string)SB_OG_TITLE;
+	if ($homeOgTitle !== '' && $seo_strlen($homeOgTitle) >= 35)
+		$seo_document_title = $homeOgTitle;
 	elseif ($seo_strlen($seo_title) < 35)
 		$seo_document_title = $seo_title . ' — серверы, банлист и админы';
 	else
@@ -229,8 +234,15 @@ if ($seo_page_label !== '' && $seo_page !== 'home') {
 		$seo_document_title = $seo_substr($seo_document_title, 0, 57) . '…';
 }
 
-// Описание: сначала per-page, иначе короткий текст из настроек (не dash.intro.text).
+// Описание: сначала per-page, иначе seo.meta_description / og, иначе короткие тексты настроек.
 $seo_description = isset($seo_page_meta[$seo_page]['desc']) ? $seo_page_meta[$seo_page]['desc'] : '';
+if ($seo_description === '') {
+	$seo_bundle_early = function_exists('sb_seo_og_bundle')
+		? sb_seo_og_bundle($seo_brand)
+		: null;
+	if (is_array($seo_bundle_early) && !empty($seo_bundle_early['meta_description']))
+		$seo_description = $seo_bundle_early['meta_description'];
+}
 if ($seo_description === '') {
 	$seo_desc_src = '';
 	if (!empty($GLOBALS['config']['config.text_home']))
@@ -260,19 +272,27 @@ else
 $base_href = $site_base . '/';
 $theme->assign('base_href', $base_href);
 
-// --- Social embed (Discord/Telegram/etc.): отдельно от dashboard UI ---
-$og_site_name = (defined('SB_OG_SITE_NAME') && SB_OG_SITE_NAME !== '')
-	? SB_OG_SITE_NAME
-	: $seo_brand;
-$og_title = (defined('SB_OG_TITLE') && SB_OG_TITLE !== '')
-	? SB_OG_TITLE
-	: ($seo_page === 'home' ? ($og_site_name . ' — SourceBans') : $seo_document_title);
-$og_description = (defined('SB_OG_DESCRIPTION') && SB_OG_DESCRIPTION !== '')
-	? SB_OG_DESCRIPTION
-	: $seo_description;
+// --- Social embed (Discord/Telegram/etc.): DB seo.* → SB_OG_* → эвристики ---
+$seo_og = function_exists('sb_seo_og_bundle')
+	? sb_seo_og_bundle($seo_brand)
+	: array(
+		'og_site_name' => (defined('SB_OG_SITE_NAME') && SB_OG_SITE_NAME !== '') ? SB_OG_SITE_NAME : $seo_brand,
+		'og_title' => (defined('SB_OG_TITLE') && SB_OG_TITLE !== '') ? SB_OG_TITLE : '',
+		'og_description' => (defined('SB_OG_DESCRIPTION') && SB_OG_DESCRIPTION !== '') ? SB_OG_DESCRIPTION : $seo_description,
+		'og_image' => (defined('SB_OG_IMAGE') && SB_OG_IMAGE !== '') ? trim((string)SB_OG_IMAGE) : 'images/og-cover.jpg',
+		'og_image_width' => (defined('SB_OG_IMAGE_WIDTH') && (int)SB_OG_IMAGE_WIDTH > 0) ? (int)SB_OG_IMAGE_WIDTH : 1200,
+		'og_image_height' => (defined('SB_OG_IMAGE_HEIGHT') && (int)SB_OG_IMAGE_HEIGHT > 0) ? (int)SB_OG_IMAGE_HEIGHT : 630,
+		'site_base' => $site_base,
+	);
 
-$og_image = (defined('SB_OG_IMAGE') && SB_OG_IMAGE !== '') ? trim((string)SB_OG_IMAGE) : '';
-	if ($og_image === '')
+$og_site_name = $seo_og['og_site_name'];
+$og_title = ($seo_og['og_title'] !== '')
+	? $seo_og['og_title']
+	: ($seo_page === 'home' ? ($og_site_name . ' — SourceBans') : $seo_document_title);
+$og_description = ($seo_og['og_description'] !== '') ? $seo_og['og_description'] : $seo_description;
+
+$og_image = isset($seo_og['og_image']) ? trim((string)$seo_og['og_image']) : '';
+if ($og_image === '')
 	$og_image = 'images/og-cover.jpg';
 if (!preg_match('#^https?://#i', $og_image))
 	$og_image = $site_base . '/' . ltrim($og_image, '/');
@@ -285,8 +305,8 @@ if ($og_image_mtime <= 0)
 	$og_image_mtime = time();
 $og_image .= (strpos($og_image, '?') === false ? '?' : '&') . 'v=' . $og_image_mtime;
 
-$og_image_width = (defined('SB_OG_IMAGE_WIDTH') && (int)SB_OG_IMAGE_WIDTH > 0) ? (int)SB_OG_IMAGE_WIDTH : 1200;
-$og_image_height = (defined('SB_OG_IMAGE_HEIGHT') && (int)SB_OG_IMAGE_HEIGHT > 0) ? (int)SB_OG_IMAGE_HEIGHT : 630;
+$og_image_width = !empty($seo_og['og_image_width']) ? (int)$seo_og['og_image_width'] : 1200;
+$og_image_height = !empty($seo_og['og_image_height']) ? (int)$seo_og['og_image_height'] : 630;
 $og_image_type = 'image/png';
 if (preg_match('/\.(jpe?g)(?:\?|$)/i', $og_image))
 	$og_image_type = 'image/jpeg';

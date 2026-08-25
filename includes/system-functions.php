@@ -2255,6 +2255,93 @@ function SecondsToString($sec, $textual=true)
 	}
 }
 
+/**
+ * Бан/мут снят или истёк по времени.
+ * Перманент (length=0, ends≈created) не считается истёкшим только из‑за ends < now.
+ * Временные с length=0 (ends заметно позже created) — считаются истёкшими после ends.
+ *
+ * @param int $length
+ * @param int $ends
+ * @param string $removeType
+ * @param int $created
+ * @return bool
+ */
+function sb_punish_is_inactive($length, $ends, $removeType = '', $created = 0)
+{
+	$remove = trim((string)$removeType);
+	if ($remove !== '')
+		return true;
+
+	$length = (int)$length;
+	$ends = (int)$ends;
+	$created = (int)$created;
+	$now = time();
+
+	if ($length > 0)
+		return ($ends > 0 && $ends < $now);
+	if ($length < 0)
+		return ($ends > 0 && $ends < $now);
+
+	// length === 0
+	if ($ends <= 0 || $ends >= $now)
+		return false;
+	if ($created > 0 && abs($ends - $created) <= 120)
+		return false;
+	if ($created > 0 && $ends > $created + 120)
+		return true;
+	return false;
+}
+
+/**
+ * SQL-фрагмент «запись ещё активна» (согласован с sb_punish_is_inactive).
+ *
+ * @param string $alias префикс таблицы, напр. '' или 'ba'
+ * @return string
+ */
+function sb_punish_active_sql($alias = '')
+{
+	$p = ($alias !== '') ? (rtrim($alias, '.') . '.') : '';
+	return "((" . $p . "RemoveType IS NULL OR " . $p . "RemoveType = '') AND ("
+		. "(" . $p . "`length` > 0 AND " . $p . "`ends` > UNIX_TIMESTAMP())"
+		. " OR (" . $p . "`length` < 0 AND (" . $p . "`ends` = 0 OR " . $p . "`ends` > UNIX_TIMESTAMP()))"
+		. " OR (" . $p . "`length` = 0 AND ("
+			. $p . "`ends` = 0"
+			. " OR " . $p . "`ends` > UNIX_TIMESTAMP()"
+			. " OR ABS(CAST(" . $p . "`ends` AS SIGNED) - CAST(" . $p . "`created` AS SIGNED)) <= 120"
+		. "))"
+		. "))";
+}
+
+/**
+ * Подпись срока для бейджа аккаунта / ленты.
+ *
+ * @param int $length
+ * @param bool $inactive
+ * @param string $removeType
+ * @return string
+ */
+function sb_punish_length_label($length, $inactive = false, $removeType = '')
+{
+	if ($inactive) {
+		$r = strtoupper(trim((string)$removeType));
+		if ($r === 'U')
+			return 'Снят';
+		if ($r === 'D')
+			return 'Удалён';
+		return 'Истёк';
+	}
+	$length = (int)$length;
+	if ($length === 0)
+		return 'Навсегда';
+	if ($length < 0)
+		return 'Сессия';
+	if (function_exists('SecondsToString')) {
+		$ltemp = explode(',', SecondsToString($length));
+		return (isset($ltemp[0]) && $ltemp[0] !== '') ? $ltemp[0] : (string)$length;
+	}
+	return (string)$length;
+}
+
 // unused, as loading too slowly.
 function CreateHostnameCache()
 {
