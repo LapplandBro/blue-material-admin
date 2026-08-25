@@ -21,6 +21,7 @@ function sb_install_build_config($vars)
 
 	$protected = isset($vars['protected']) ? $vars['protected'] : '';
 	$parsecPass = isset($vars['parsec_pass']) ? $vars['parsec_pass'] : '';
+	$dbcfgPass = isset($vars['dbcfg_pass']) ? $vars['dbcfg_pass'] : '';
 	$hostingUrl = isset($vars['hosting_url']) ? $vars['hosting_url'] : '';
 	$hostingLabel = isset($vars['hosting_label']) && $vars['hosting_label'] !== ''
 		? $vars['hosting_label']
@@ -70,6 +71,12 @@ define('PARSEC_PANEL_WRITE_STEAMIDS', '" . $esc($protected) . "');
 
 /** Пароль разблокировки write-режима PARSEC (твинки). Пусто = задать позже. */
 define('PARSEC_PANEL_WRITE_PASSWORD', '" . $esc($parsecPass) . "');
+
+/**
+ * Пароль просмотра databases.cfg в админке (Серверы → конфиг БД).
+ * Отдельный от пароля веб-аккаунта и PARSEC_PANEL_WRITE_PASSWORD.
+ */
+define('SB_DBCFG_VIEW_PASSWORD', '" . $esc($dbcfgPass) . "');
 
 /** Пункт меню «Оплатить хостинг» (пустой URL = скрыть). */
 define('SB_HOSTING_PAY_URL', '" . $esc($hostingUrl) . "');
@@ -181,10 +188,13 @@ $configDirWritable = is_writable(dirname($configPath));
 $configFileWritable = file_exists($configPath) ? is_writable($configPath) : $configDirWritable;
 
 if (isset($_POST['postd']) && $_POST['postd']) {
-	if (empty($_POST['uname']) || empty($_POST['pass1']) || empty($_POST['pass2']) || empty($_POST['steam']) || empty($_POST['email'])) {
-		echo "<script>setTimeout(function(){ ShowBox('Ошибка', 'Все поля должны быть заполнены.', 'red', '', true); }, 200);</script>";
+	$dbcfgPassPost = isset($_POST['dbcfg_pass']) ? trim((string)$_POST['dbcfg_pass']) : '';
+	if (empty($_POST['uname']) || empty($_POST['pass1']) || empty($_POST['pass2']) || empty($_POST['steam']) || empty($_POST['email']) || $dbcfgPassPost === '') {
+		echo "<script>setTimeout(function(){ ShowBox('Ошибка', 'Все поля должны быть заполнены (включая пароль просмотра databases.cfg).', 'red', '', true); }, 200);</script>";
 	} elseif ($_POST['pass1'] !== $_POST['pass2']) {
 		echo "<script>setTimeout(function(){ ShowBox('Ошибка', 'Пароли не совпадают.', 'red', '', true); }, 200);</script>";
+	} elseif (strlen($dbcfgPassPost) < 8) {
+		echo "<script>setTimeout(function(){ ShowBox('Ошибка', 'Пароль просмотра databases.cfg — минимум 8 символов.', 'red', '', true); }, 200);</script>";
 	} elseif (!preg_match(STEAM_FORMAT, $_POST['steam'])) {
 		echo "<script>setTimeout(function(){ ShowBox('Ошибка', 'Некорректный STEAM ID (формат STEAM_X:Y:Z).', 'red', '', true); }, 200);</script>";
 	} else {
@@ -246,6 +256,7 @@ if (isset($_POST['postd']) && $_POST['postd']) {
 				'sbwpurl' => isset($_POST['sb-wp-url']) ? $_POST['sb-wp-url'] : '',
 				'protected' => $_POST['steam'],
 				'parsec_pass' => isset($_POST['parsec_pass']) ? $_POST['parsec_pass'] : '',
+				'dbcfg_pass' => $dbcfgPassPost,
 				'hosting_url' => isset($_POST['hosting_url']) ? trim($_POST['hosting_url']) : '',
 				'hosting_label' => isset($_POST['hosting_label']) ? trim($_POST['hosting_label']) : 'Оплатить хостинг',
 				'hosting_newtab' => (isset($_POST['hosting_newtab']) && $_POST['hosting_newtab'] === 'on') ? 1 : 0,
@@ -399,6 +410,13 @@ $web_cfg_preview = sb_install_build_config($cfgVars);
 							<div class="col-sm-9"><div class="fg-line"><input type="email" class="form-control input-sm" id="email" name="email" placeholder="admin@example.com" /></div></div>
 						</div>
 					</div>
+					<div class="form-group">
+						<div class="row">
+							<label class="col-sm-3 control-label" for="dbcfg_pass"><?php echo HelpIcon('Пароль databases.cfg', 'SB_DBCFG_VIEW_PASSWORD — отдельный пароль для просмотра конфига БД SourceMod в админке. Обязателен, минимум 8 символов. Не путать с паролем аккаунта и паролем твинков.'); ?>Пароль databases.cfg</label>
+							<div class="col-sm-9"><div class="fg-line"><input type="password" class="form-control input-sm" id="dbcfg_pass" name="dbcfg_pass" placeholder="минимум 8 символов" autocomplete="new-password" required /></div></div>
+						</div>
+					</div>
+					<p class="c-gray m-b-0">Этот пароль попадёт в <code>config.php</code> и понадобится OWNER, чтобы снова открыть блок <code>databases.cfg</code> в админке.</p>
 				</div>
 
 				<div class="lv-header-alt clearfix"><div class="lvh-label"><span class="c-black">Опционально — config.php</span></div></div>
@@ -456,11 +474,12 @@ $web_cfg_preview = sb_install_build_config($cfgVars);
 <script>
 function CheckInput() {
 	var miss = 0;
-	['uname','pass1','pass2','steam','email'].forEach(function (id) {
+	['uname','pass1','pass2','steam','email','dbcfg_pass'].forEach(function (id) {
 		if (!$id(id) || !$id(id).value) miss++;
 	});
-	if (miss > 0) ShowBox('Ошибка', 'Все поля должны быть заполнены.', 'red', '', true);
+	if (miss > 0) ShowBox('Ошибка', 'Все поля должны быть заполнены (включая пароль databases.cfg).', 'red', '', true);
 	else if ($id('pass1').value !== $id('pass2').value) ShowBox('Ошибка', 'Пароли не совпадают.', 'red', '', true);
+	else if ($id('dbcfg_pass').value.length < 8) ShowBox('Ошибка', 'Пароль просмотра databases.cfg — минимум 8 символов.', 'red', '', true);
 	else $id('mfrm').submit();
 }
 window.sbInstallEnter = CheckInput;

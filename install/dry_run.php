@@ -237,6 +237,11 @@ if ($page5 === false) {
 	else
 		dry_fail('config template missing SB_PROTECTED_STEAMIDS');
 
+	if (strpos($page5, 'SB_DBCFG_VIEW_PASSWORD') !== false && strpos($page5, 'dbcfg_pass') !== false)
+		dry_ok('config template has SB_DBCFG_VIEW_PASSWORD (required installer field)');
+	else
+		dry_fail('config template missing SB_DBCFG_VIEW_PASSWORD / dbcfg_pass');
+
 	if (strpos($page5, 'REBANNER_USE_MA_DB') !== false && strpos($page5, 'PARSEC_API_PLAYER_URL') !== false)
 		dry_ok('config template has REBANNER/PARSEC/OG block');
 	else

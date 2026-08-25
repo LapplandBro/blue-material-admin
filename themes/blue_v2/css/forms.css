@@ -460,6 +460,34 @@
     margin-top: 0.25rem;
   }
 }
+.admin-servers-db .dbcfg-lock {
+  margin: 0 0 1.1rem;
+  padding: 1rem 1.05rem 1.1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--surface, #fff) 92%, var(--muted) 8%);
+}
+.admin-servers-db .dbcfg-lock__path {
+  margin: 0 0 0.55rem;
+}
+.admin-servers-db .dbcfg-lock__hint {
+  margin: 0 0 0.95rem;
+}
+.admin-servers-db .dbcfg-lock__form {
+  margin: 0;
+}
+.admin-servers-db .dbcfg-conf {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  white-space: pre;
+}
+.admin-servers-db .form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
 @media (max-width: 575.98px) {
   .form-page {
     padding: 1rem 0.9rem 1.1rem;
@@ -484,5 +512,8 @@
   .form-search-crit {
     width: auto;
     white-space: normal;
+  }
+  .admin-servers-db .form-actions .btn {
+    width: 100%;
   }
 }

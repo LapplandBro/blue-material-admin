@@ -5145,3 +5145,20 @@ function ParsecPanelMarkFingerprintBanned($fingerprint)
 	}
 	return $changed;
 }
+
+/**
+ * Пароль просмотра databases.cfg в админке (SB_DBCFG_VIEW_PASSWORD в config.php).
+ * Отдельный от PARSEC_PANEL_WRITE_PASSWORD и пароля веб-аккаунта.
+ */
+function SbDbcfgViewPasswordConfigured()
+{
+	$cfg = defined('SB_DBCFG_VIEW_PASSWORD') ? (string)SB_DBCFG_VIEW_PASSWORD : '';
+	return $cfg !== '' && $cfg !== 'change-me-dbcfg';
+}
+
+function SbDbcfgViewPasswordVerify($password)
+{
+	if (!SbDbcfgViewPasswordConfigured())
+		return false;
+	return hash_equals((string)SB_DBCFG_VIEW_PASSWORD, (string)$password);
+}

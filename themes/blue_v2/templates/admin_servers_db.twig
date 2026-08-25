@@ -1,16 +1,48 @@
-<div class="form-page admin-form">
+<div class="form-page admin-form admin-servers-db">
   <header class="form-page-head">
-    <p class="form-page-kicker">Админка</p>
-    <h2 class="form-page-title">Конфиг БД</h2>
-    <p class="form-page-lead">Вставить в databases.cfg на игровом сервере</p>
+    <p class="form-page-kicker">Админка · серверы</p>
+    <h2 class="form-page-title">Конфиг БД SourceMod</h2>
+    <p class="form-page-lead">Фрагмент для <code>databases.cfg</code> на игровом сервере. Содержит пароль MySQL — доступ только после пароля из <code>config.php</code>.</p>
   </header>
-  <p class="form-note">Путь: <code>/[mod]/addons/sourcemod/configs/databases.cfg</code></p>
+
+  {% if flash_err %}
+  <div class="alert alert-warning" role="alert">{{ flash_err }}</div>
+  {% endif %}
+
+  {% if not unlocked %}
+  <div class="dbcfg-lock">
+    <p class="form-note dbcfg-lock__path">Путь на сервере: <code>/[mod]/addons/sourcemod/configs/databases.cfg</code></p>
+    {% if not password_configured %}
+    <p class="form-note dbcfg-lock__hint">Задайте константу <code>SB_DBCFG_VIEW_PASSWORD</code> в <code>config.php</code> (отдельный пароль, не пароль админа и не PARSEC).</p>
+    {% else %}
+    <p class="form-note dbcfg-lock__hint">Введите пароль просмотра конфига БД. Каждый успешный просмотр пишется в системный лог.</p>
+    {% endif %}
+    <form method="post" action="{{ form_action }}" class="form-grid dbcfg-lock__form" autocomplete="off">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <input type="hidden" name="dbcfg_unlock" value="1">
+      <div class="form-field form-field--full">
+        <label class="form-label" for="dbcfg_password">Пароль просмотра</label>
+        <div class="input-group">
+          <input type="password" class="form-control" id="dbcfg_password" name="dbcfg_password" autocomplete="off" placeholder="SB_DBCFG_VIEW_PASSWORD"{% if not password_configured %} disabled{% endif %}>
+          <button type="submit" class="btn btn-outline-secondary"{% if not password_configured %} disabled{% endif %}>Показать конфиг</button>
+        </div>
+      </div>
+    </form>
+  </div>
+  {% else %}
+  <p class="form-note">Путь: <code>/[mod]/addons/sourcemod/configs/databases.cfg</code>. Скопируйте блок целиком. После ухода со страницы конфиг снова скроется.</p>
   <div class="form-grid">
     <div class="form-field form-field--full">
-      <textarea class="form-control" rows="23" readonly>{{ conf }}</textarea>
+      <label class="form-label" for="dbcfg_conf">databases.cfg</label>
+      <textarea class="form-control dbcfg-conf" id="dbcfg_conf" rows="22" readonly>{{ conf }}</textarea>
     </div>
   </div>
+  {% endif %}
+
   <div class="form-actions">
-    <button type="button" class="btn btn-outline-secondary" id="aconf" onclick="sbGo('index.php?p=admin&amp;c=servers')">Назад</button>
+    <a class="btn btn-outline-secondary" href="{{ back_url }}">Назад к серверам</a>
+    {% if unlocked %}
+    <a class="btn btn-outline-secondary" href="{{ form_action }}">Скрыть конфиг</a>
+    {% endif %}
   </div>
 </div>
