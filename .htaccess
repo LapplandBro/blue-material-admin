@@ -66,8 +66,9 @@ ErrorDocument 504 /errors/504.html
 	# ЧПУ: /banlist → index.php?p=banlist, /admin/bans → index.php?p=admin&c=bans
 	# Если панель в подпапке — раскомментируй: RewriteBase /подпапка/
 
-	# SEO: /index.php → https://host/ (не http — иначе аудиторы и mixed redirect).
-	# QUERY_STRING пустой: index.php?p=… не трогаем.
+	# SEO: голый GET /index.php → https://host/
+	# Только GET: POST без ? — это sb-api AJAX (JSON). Иначе 301→/ и «Сервер вернул не JSON».
+	RewriteCond %{REQUEST_METHOD} ^GET$ [NC]
 	RewriteCond %{THE_REQUEST} \s/+index\.php[\s?] [NC]
 	RewriteCond %{QUERY_STRING} ^$
 	RewriteRule ^index\.php$ https://%{HTTP_HOST}/ [R=301,L]
