@@ -2480,9 +2480,16 @@ function sbOpenPlayerMenu(ev, el) {
 	if (!p || !p.manage)
 		return false;
 	var sheet = sbFillPlayerSheet(p);
+	if (sheet._sbCloseTimer) {
+		clearTimeout(sheet._sbCloseTimer);
+		sheet._sbCloseTimer = null;
+	}
 	sheet.hidden = false;
 	sheet.removeAttribute("aria-hidden");
 	document.body.classList.add("sb-player-sheet-open");
+	// Force layout so opacity/transform transitions actually run.
+	void sheet.offsetWidth;
+	sheet.classList.add("is-open");
 	return false;
 }
 
