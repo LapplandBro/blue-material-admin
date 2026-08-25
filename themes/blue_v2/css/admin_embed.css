@@ -317,6 +317,7 @@
 .admin-embed-body .admin-detail-head {
   display: flex;
   flex-wrap: wrap;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 0.45rem 0.75rem;
   margin: 0 0 0.75rem;
@@ -829,11 +830,14 @@
 
 .admin-ticket {
   padding: 0.65rem 0.95rem 0.8rem;
+  min-width: 0;
 }
 .admin-facts--ticket {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  row-gap: 0.35rem;
   column-gap: 1.15rem;
+  align-items: start;
 }
 .admin-facts--ticket .admin-fact {
   padding: 0.28rem 0;
@@ -891,6 +895,14 @@
   color: var(--accent);
   font-size: 0.8rem;
   text-decoration: none;
+}
+.admin-detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.55rem;
+  justify-content: flex-end;
+  align-items: center;
+  min-width: 0;
 }
 
 .admin-search-toggle {

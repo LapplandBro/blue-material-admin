@@ -3,7 +3,7 @@
   <p class="form-flash form-flash--err">Нет доступа к архиву заявок.</p>
 </div>
 {% else %}
-<div class="panel">
+<div id="submissions-archiv" class="panel">
   <header class="form-page-head">
     <p class="form-page-kicker">Админка</p>
     <h2 class="form-page-title">Архив заявок</h2>
@@ -26,15 +26,15 @@
           <td>{% if sub.SteamId != "" %}{{ sub.SteamId }}{% else %}{{ sub.sip }}{% endif %}</td>
           <td class="text-end">
             {% if sub.archiv != "2" and sub.archiv != "3" %}
-            <a class="btn btn-sm btn-outline-secondary" href="#" onclick="xajax_SetupBan({{ sub.subid }}); return false;">Забанить</a>
+            <a class="btn btn-sm btn-outline-secondary" href="#" onclick="event.cancelBubble=true; xajax_SetupBan({{ sub.subid }}); return false;">Забанить</a>
               {% if permissions_editsub %}
-            <a class="btn btn-sm btn-outline-secondary" href="#" onclick='RemoveSubmission({{ sub.subid }}, {{ sub.name_js|raw }}, "2"); return false;'>Восстановить</a>
+            <a class="btn btn-sm btn-outline-secondary" href="#" onclick='event.cancelBubble=true; RemoveSubmission({{ sub.subid }}, {{ sub.name_js|raw }}, "2"); return false;'>Восстановить</a>
               {% endif %}
             {% endif %}
             {% if permissions_editsub %}
-            <a class="btn btn-sm btn-outline-danger" href="#" onclick='RemoveSubmission({{ sub.subid }}, {{ sub.name_js|raw }}, "0"); return false;'>Удалить</a>
+            <a class="btn btn-sm btn-outline-danger" href="#" onclick='event.cancelBubble=true; RemoveSubmission({{ sub.subid }}, {{ sub.name_js|raw }}, "0"); return false;'>Удалить</a>
             {% endif %}
-            <a class="btn btn-sm btn-outline-secondary" href="index.php?p=admin&amp;c=bans&amp;o=email&amp;type=s&amp;id={{ sub.subid }}">Контакты</a>
+            <a class="btn btn-sm btn-outline-secondary" href="index.php?p=admin&amp;c=bans&amp;o=email&amp;type=s&amp;id={{ sub.subid }}" onclick="event.cancelBubble=true;">Контакты</a>
           </td>
         </tr>
         <tr id="asid_{{ sub.subid }}a" class="banlist-detail-row">
@@ -101,5 +101,5 @@
     </table>
   </div>
 </div>
-<script>InitAccordion('tr.opener4', 'div.opener4', 'mainwrapper');</script>
+<script>InitAccordion('tr.opener4', 'div.opener4', 'submissions-archiv');</script>
 {% endif %}

@@ -3,7 +3,7 @@
   <p class="form-flash form-flash--err">Нет доступа к протестам.</p>
 </div>
 {% else %}
-<div id="protests" class="panel">
+<div id="protests-active" class="panel">
   <header class="form-page-head">
     <p class="form-page-kicker">Админка</p>
     <h2 class="form-page-title">Протесты</h2>
@@ -22,20 +22,23 @@
       <tbody>
       {% for protest in protest_list %}
         <tr id="pid_{{ protest.pid }}" class="opener2 banlist-row">
-          <td class="toggler"><a href="index.php?p=banlist&amp;advSearch={{ protest.authid }}&amp;advType=steamid" title="Показать бан">{{ protest.name }}</a></td>
+          <td class="toggler"><a href="index.php?p=banlist&amp;advSearch={{ protest.authid }}&amp;advType=steamid" title="Показать бан" onclick="event.cancelBubble=true;">{{ protest.name }}</a></td>
           <td>{% if protest.authid != "" %}{{ protest.authid }}{% else %}{{ protest.ip }}{% endif %}</td>
           <td class="text-end">
             {% if permission_editban %}
             <a class="btn btn-sm btn-outline-danger" href="#" onclick='RemoveProtest("{{ protest.pid }}", {{ protest.label_js|raw }}, "1"); return false;'>Удалить</a>
             {% endif %}
-            <a class="btn btn-sm btn-outline-secondary" href="index.php?p=admin&amp;c=bans&amp;o=email&amp;type=p&amp;id={{ protest.pid }}">Контакты</a>
+            <a class="btn btn-sm btn-outline-secondary" href="index.php?p=admin&amp;c=bans&amp;o=email&amp;type=p&amp;id={{ protest.pid }}" onclick="event.cancelBubble=true;">Контакты</a>
           </td>
         </tr>
         <tr id="pid_{{ protest.pid }}a" class="banlist-detail-row">
           <td colspan="3">
             <div class="opener2 admin-ticket">
               <div class="admin-detail-head">
-                <div class="admin-detail-title">Детали протеста</div>
+                <div>
+                  <div class="admin-detail-title">Детали протеста</div>
+                  <div class="form-note">Клик по строке открывает подробности и комментарии.</div>
+                </div>
                 <div class="admin-detail-actions">{{ protest.protaddcomment|raw }}</div>
               </div>
               <div class="admin-facts admin-facts--ticket">
@@ -93,5 +96,5 @@
     </table>
   </div>
 </div>
-<script>InitAccordion('tr.opener2', 'div.opener2', 'protests');</script>
+<script>InitAccordion('tr.opener2', 'div.opener2', 'protests-active');</script>
 {% endif %}

@@ -3,7 +3,7 @@
   <p class="form-flash form-flash--err">Нет доступа к архиву протестов.</p>
 </div>
 {% else %}
-<div id="protests" class="panel">
+<div id="protests-archiv" class="panel">
   <header class="form-page-head">
     <p class="form-page-kicker">Админка</p>
     <h2 class="form-page-title">Архив протестов</h2>
@@ -24,7 +24,7 @@
         <tr id="apid_{{ protest.pid }}" class="opener5 banlist-row">
           <td class="toggler">
             {% if protest.archiv != 2 %}
-              <a href="index.php?p=banlist{% if protest.authid != "" %}&amp;advSearch={{ protest.authid }}&amp;advType=steamid{% else %}&amp;advSearch={{ protest.ip }}&amp;advType=ip{% endif %}" title="Показать бан">{{ protest.name }}</a>
+              <a href="index.php?p=banlist{% if protest.authid != "" %}&amp;advSearch={{ protest.authid }}&amp;advType=steamid{% else %}&amp;advSearch={{ protest.ip }}&amp;advType=ip{% endif %}" title="Показать бан" onclick="event.cancelBubble=true;">{{ protest.name }}</a>
             {% else %}
               <span class="form-note">бан удалён</span>
             {% endif %}
@@ -35,7 +35,7 @@
             <a class="btn btn-sm btn-outline-secondary" href="#" onclick='RemoveProtest("{{ protest.pid }}", {{ protest.label_js|raw }}, "2"); return false;'>Восстановить</a>
             <a class="btn btn-sm btn-outline-danger" href="#" onclick='RemoveProtest("{{ protest.pid }}", {{ protest.label_js|raw }}, "0"); return false;'>Удалить</a>
             {% endif %}
-            <a class="btn btn-sm btn-outline-secondary" href="index.php?p=admin&amp;c=bans&amp;o=email&amp;type=p&amp;id={{ protest.pid }}">Контакты</a>
+            <a class="btn btn-sm btn-outline-secondary" href="index.php?p=admin&amp;c=bans&amp;o=email&amp;type=p&amp;id={{ protest.pid }}" onclick="event.cancelBubble=true;">Контакты</a>
           </td>
         </tr>
         <tr id="apid_{{ protest.pid }}a" class="banlist-detail-row">
@@ -109,5 +109,5 @@
     </table>
   </div>
 </div>
-<script>InitAccordion('tr.opener5', 'div.opener5', 'protests');</script>
+<script>InitAccordion('tr.opener5', 'div.opener5', 'protests-archiv');</script>
 {% endif %}
