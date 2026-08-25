@@ -72,7 +72,7 @@
     <div class="form-grid settings-block">
       <div class="form-field form-field--full">
         <label class="form-label" for="maintenance">{% include 'partials/help_icon.twig' with { title: 'Обслуживание системы', message: 'Выберите операцию для обслуживания системы, после чего нажмите «Выполнить».' } %} Обслуживание системы</label>
-        <div class="input-group">
+        <div class="settings-run">
           <select class="form-select" name="maintenance" id="maintenance">
             <option value="avatarcache">Очистить кеш аватарок</option>
             <option value="cleancountrycache">Очистить кеш стран банлиста</option>
