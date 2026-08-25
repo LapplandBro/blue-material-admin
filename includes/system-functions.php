@@ -350,12 +350,15 @@ function sb_menu_extract_icon($text)
 }
 
 /**
- * Короткая подпись пункта в сайдбаре. Для стандартных страниц совпадает с data.sql.
- * Свои названия из админки не трогает.
+ * Подпись пункта меню: всегда из БД/админки.
+ * Короткий fallback — только если заголовок пустой.
  */
 function sb_menu_nav_label($url, $title)
 {
 	$title = trim((string)$title);
+	if ($title !== '')
+		return $title;
+
 	$page = '';
 	if (preg_match('/(?:^|[?&])p=([a-z0-9_]+)/i', (string)$url, $m))
 		$page = strtolower($m[1]);
@@ -370,46 +373,16 @@ function sb_menu_nav_label($url, $title)
 		'adminlist' => 'Админы',
 		'pay' => 'Ваучер',
 	);
-	$defaults = array(
-		'home' => array('Главная'),
-		'servers' => array('Серверы'),
-		'banlist' => array('Список банов', 'Баны'),
-		'commslist' => array('Список мутов/гагов', 'Муты / гаги', 'Муты'),
-		'submit' => array('Пожаловаться на игрока', 'Жалоба'),
-		'protest' => array('Апелляция бана', 'Апелляция'),
-		'adminlist' => array('Админлист', 'Админы'),
-		'pay' => array('Активировать ваучер', 'Ваучер'),
-		'admin' => array('Админ-панель', 'Админка'),
-	);
-
-	$isAdminHub = ($page === 'admin' && !preg_match('/(?:[?&])c=/i', (string)$url));
-	if ($isAdminHub) {
-		if ($title === '' || in_array($title, $defaults['admin'], true))
-			return 'Админка';
-		return $title;
-	}
-	if ($page !== '' && isset($short[$page])) {
-		if ($title === '' || (isset($defaults[$page]) && in_array($title, $defaults[$page], true)))
-			return $short[$page];
-	}
-
-	$byTitle = array(
-		'Список банов' => 'Баны',
-		'Список мутов/гагов' => 'Муты / гаги',
-		'Пожаловаться на игрока' => 'Жалоба',
-		'Апелляция бана' => 'Апелляция',
-		'Админлист' => 'Админы',
-		'Активировать ваучер' => 'Ваучер',
-		'Админ-панель' => 'Админка',
-	);
-	if (isset($byTitle[$title]))
-		return $byTitle[$title];
-	return $title;
+	if ($page === 'admin' && !preg_match('/(?:[?&])c=/i', (string)$url))
+		return 'Админка';
+	if ($page !== '' && isset($short[$page]))
+		return $short[$page];
+	return 'Меню';
 }
 
 /**
- * Приводит устаревшие названия системных пунктов меню к каноническим
- * (как в сайдбаре / data.sql), чтобы админка меню и левое меню совпадали.
+ * Одноразово: старые длинные имена системных пунктов → канонические.
+ * Свои названия из админки больше не перетирает.
  */
 function sb_menu_normalize_system_labels()
 {
@@ -418,32 +391,46 @@ function sb_menu_normalize_system_labels()
 		return;
 	$done = true;
 
-	$rows = $GLOBALS['db']->GetAll("SELECT id, text, url FROM `" . DB_PREFIX . "_menu` WHERE system = 1");
-	if (!is_array($rows) || !$rows)
+	$flag = @$GLOBALS['db']->GetOne("SELECT value FROM `" . DB_PREFIX . "_settings` WHERE setting = 'menu.labels_v2'");
+	if ($flag === '1' || $flag === 1)
 		return;
 
-	foreach ($rows as $row) {
-		$id = isset($row['id']) ? (int)$row['id'] : 0;
-		if ($id <= 0)
-			continue;
-		$raw = isset($row['text']) ? (string)$row['text'] : '';
-		$url = isset($row['url']) ? (string)$row['url'] : '';
-		$plain = sb_menu_strip_icon($raw);
-		$canonical = sb_menu_nav_label($url, $plain);
-		if ($canonical === '' || $canonical === $plain)
-			continue;
+	$legacyOnly = array(
+		'Список банов' => 'Баны',
+		'Список мутов/гагов' => 'Муты / гаги',
+		'Пожаловаться на игрока' => 'Жалоба',
+		'Апелляция бана' => 'Апелляция',
+		'Админлист' => 'Админы',
+		'Активировать ваучер' => 'Ваучер',
+		'Админ-панель' => 'Админка',
+	);
 
-		$icon = sb_menu_extract_icon($raw);
-		if ($icon !== '')
-			$newText = '<i class=\'' . str_replace(array("'", '"'), '', $icon) . '\'></i> ' . $canonical;
-		else
-			$newText = $canonical;
-
-		$GLOBALS['db']->Execute(
-			"UPDATE `" . DB_PREFIX . "_menu` SET `text` = ? WHERE `id` = ?",
-			array($newText, $id)
-		);
+	$rows = $GLOBALS['db']->GetAll("SELECT id, text FROM `" . DB_PREFIX . "_menu` WHERE system = 1");
+	if (is_array($rows)) {
+		foreach ($rows as $row) {
+			$id = isset($row['id']) ? (int)$row['id'] : 0;
+			if ($id <= 0)
+				continue;
+			$raw = isset($row['text']) ? (string)$row['text'] : '';
+			$plain = sb_menu_strip_icon($raw);
+			if (!isset($legacyOnly[$plain]))
+				continue;
+			$canonical = $legacyOnly[$plain];
+			$icon = sb_menu_extract_icon($raw);
+			if ($icon !== '')
+				$newText = '<i class=\'' . str_replace(array("'", '"'), '', $icon) . '\'></i> ' . $canonical;
+			else
+				$newText = $canonical;
+			$GLOBALS['db']->Execute(
+				"UPDATE `" . DB_PREFIX . "_menu` SET `text` = ? WHERE `id` = ?",
+				array($newText, $id)
+			);
+		}
 	}
+
+	@$GLOBALS['db']->Execute(
+		"REPLACE INTO `" . DB_PREFIX . "_settings` (`value`, `setting`) VALUES ('1', 'menu.labels_v2')"
+	);
 }
 
 /** Убирает HTML-иконку из заголовка, оставляя чистый текст. */
