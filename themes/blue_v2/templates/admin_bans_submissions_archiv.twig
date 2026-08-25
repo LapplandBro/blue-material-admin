@@ -41,59 +41,61 @@
         </tr>
         <tr id="asid_{{ sub.subid }}a" class="banlist-detail-row">
           <td colspan="3">
-            <div class="opener4 admin-ticket">
-              <div class="admin-detail-head">
-                <div>
-                  <div class="admin-detail-title">Детали заявки</div>
-                  <div class="form-note">В архиве: {{ sub.archive }}</div>
+            <div class="opener4">
+              <div class="admin-ticket">
+                <div class="admin-detail-head">
+                  <div>
+                    <div class="admin-detail-title">Детали заявки</div>
+                    <div class="form-note">В архиве: {{ sub.archive }}</div>
+                  </div>
+                  <div class="admin-detail-actions">
+                    <span>{{ sub.demo|raw }}</span>
+                    <span>{{ sub.subaddcomment|raw }}</span>
+                  </div>
                 </div>
-                <div class="admin-detail-actions">
-                  <span>{{ sub.demo|raw }}</span>
-                  <span>{{ sub.subaddcomment|raw }}</span>
+                <div class="admin-facts admin-facts--ticket">
+                  <div class="admin-fact">
+                    <span class="admin-fact-label">Игрок</span>
+                    <span class="admin-fact-value">{{ sub.name|raw }}</span>
+                  </div>
+                  <div class="admin-fact">
+                    <span class="admin-fact-label">Добавлено</span>
+                    <span class="admin-fact-value">{{ sub.submitted }}</span>
+                  </div>
+                  <div class="admin-fact">
+                    <span class="admin-fact-label">SteamID</span>
+                    <span class="admin-fact-value">{% if sub.SteamId == "" %}<span class="admin-muted">не указан</span>{% else %}{{ sub.SteamId }}{% endif %}</span>
+                  </div>
+                  <div class="admin-fact">
+                    <span class="admin-fact-label">IP</span>
+                    <span class="admin-fact-value">{% if sub.sip == "" %}<span class="admin-muted">не указан</span>{% else %}{{ sub.sip }}{% endif %}</span>
+                  </div>
+                  <div class="admin-fact admin-fact--span">
+                    <span class="admin-fact-label">Причина</span>
+                    <span class="admin-fact-value">{{ sub.reason|raw }}</span>
+                  </div>
+                  <div class="admin-fact">
+                    <span class="admin-fact-label">Сервер</span>
+                    <span class="admin-fact-value" id="suba{{ sub.subid }}">{% if sub.hostname == "" %}<span class="admin-muted">Загрузка…</span>{% else %}{{ sub.hostname|raw }}{% endif %}</span>
+                  </div>
+                  <div class="admin-fact">
+                    <span class="admin-fact-label">Мод</span>
+                    <span class="admin-fact-value">{{ sub.mod }}</span>
+                  </div>
+                  <div class="admin-fact">
+                    <span class="admin-fact-label">Заявитель</span>
+                    <span class="admin-fact-value">{% if sub.subname == "" %}<span class="admin-muted">не указан</span>{% else %}{{ sub.subname }}{% endif %}</span>
+                  </div>
+                  <div class="admin-fact">
+                    <span class="admin-fact-label">IP заявителя</span>
+                    <span class="admin-fact-value">{{ sub.ip }}</span>
+                  </div>
+                  <div class="admin-fact admin-fact--span">
+                    <span class="admin-fact-label">В архив отправил</span>
+                    <span class="admin-fact-value">{% if sub.archivedby %}{{ sub.archivedby }}{% else %}<span class="admin-muted">админ удалён</span>{% endif %}</span>
+                  </div>
+                  {% include 'partials/admin_ticket_comments.twig' with { comments: sub.commentdata } %}
                 </div>
-              </div>
-              <div class="admin-facts admin-facts--ticket">
-                <div class="admin-fact">
-                  <span class="admin-fact-label">Игрок</span>
-                  <span class="admin-fact-value">{{ sub.name|raw }}</span>
-                </div>
-                <div class="admin-fact">
-                  <span class="admin-fact-label">Добавлено</span>
-                  <span class="admin-fact-value">{{ sub.submitted }}</span>
-                </div>
-                <div class="admin-fact">
-                  <span class="admin-fact-label">SteamID</span>
-                  <span class="admin-fact-value">{% if sub.SteamId == "" %}<span class="admin-muted">не указан</span>{% else %}{{ sub.SteamId }}{% endif %}</span>
-                </div>
-                <div class="admin-fact">
-                  <span class="admin-fact-label">IP</span>
-                  <span class="admin-fact-value">{% if sub.sip == "" %}<span class="admin-muted">не указан</span>{% else %}{{ sub.sip }}{% endif %}</span>
-                </div>
-                <div class="admin-fact admin-fact--span">
-                  <span class="admin-fact-label">Причина</span>
-                  <span class="admin-fact-value">{{ sub.reason|raw }}</span>
-                </div>
-                <div class="admin-fact">
-                  <span class="admin-fact-label">Сервер</span>
-                  <span class="admin-fact-value" id="suba{{ sub.subid }}">{% if sub.hostname == "" %}<span class="admin-muted">Загрузка…</span>{% else %}{{ sub.hostname|raw }}{% endif %}</span>
-                </div>
-                <div class="admin-fact">
-                  <span class="admin-fact-label">Мод</span>
-                  <span class="admin-fact-value">{{ sub.mod }}</span>
-                </div>
-                <div class="admin-fact">
-                  <span class="admin-fact-label">Заявитель</span>
-                  <span class="admin-fact-value">{% if sub.subname == "" %}<span class="admin-muted">не указан</span>{% else %}{{ sub.subname }}{% endif %}</span>
-                </div>
-                <div class="admin-fact">
-                  <span class="admin-fact-label">IP заявителя</span>
-                  <span class="admin-fact-value">{{ sub.ip }}</span>
-                </div>
-                <div class="admin-fact admin-fact--span">
-                  <span class="admin-fact-label">В архив отправил</span>
-                  <span class="admin-fact-value">{% if sub.archivedby %}{{ sub.archivedby }}{% else %}<span class="admin-muted">админ удалён</span>{% endif %}</span>
-                </div>
-                {% include 'partials/admin_ticket_comments.twig' with { comments: sub.commentdata } %}
               </div>
             </div>
           </td>
