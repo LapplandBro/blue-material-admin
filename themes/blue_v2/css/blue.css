@@ -1393,6 +1393,25 @@ code, kbd, samp {
   text-align: center !important;
   margin: 0 auto 0.55rem !important;
 }
+
+/* Ensure sweet-alert inner body uses theme background when content injects own white box */
+.blue-v2 .sweet-alert .sweet-alert-body,
+.blue-v2 .sweet-alert .content,
+.blue-v2 .sweet-alert #dialog-content-text,
+.blue-v2 .sweet-alert .dialog-control-inline {
+  background: transparent !important;
+  color: var(--muted) !important;
+}
+
+/* If sweet-alert contains server frames, ensure they inherit themed background */
+.blue-v2 .sweet-alert .servers-window,
+.blue-v2 .sweet-alert .serverpanel,
+.blue-v2 .sweet-alert .player-act-list,
+.blue-v2 .sweet-alert .player-act,
+.blue-v2 .sweet-alert .sb-player-sheet-card {
+  background: rgba(8, 15, 31, 0.5) !important;
+  color: var(--text-heading) !important;
+}
 .blue-v2 .sweet-alert button {
   float: none !important;
   width: auto !important;
@@ -1466,7 +1485,8 @@ code, kbd, samp {
   margin-top: 10px;
   border: 1px solid var(--border-hairline) !important;
   border-radius: var(--radius-sm);
-  background: var(--bg-sidebar) !important;
+  background: #0c1528 !important;
+  color: #ddeeff !important;
 }
 .blue-v2 .sweet-alert .dialog-control-inline {
   display: block !important;

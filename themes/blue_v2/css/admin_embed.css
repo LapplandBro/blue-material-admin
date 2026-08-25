@@ -1167,3 +1167,25 @@
   .perms-row-cmds { grid-column: 1; }
   .perms-row input[type="checkbox"] { grid-row: 1 / span 2; }
 }
+
+/* Ensure modals and server frames use theme background (fix white frames on ban modal) */
+.modal-content,
+.modal-body,
+.modal-header,
+.modal-footer {
+  background: var(--bg-card) !important;
+  color: var(--text) !important;
+  border-color: var(--border-hairline) !important;
+}
+.player-act-modal .modal-content {
+  border: 1px solid var(--border-hairline) !important;
+  box-shadow: var(--shadow-elevated) !important;
+}
+.servers-window,
+.serverpanel,
+.player-act-list,
+.player-act,
+.sb-player-sheet-card {
+  background: rgba(8, 15, 31, 0.5) !important;
+  color: var(--text-heading) !important;
+}

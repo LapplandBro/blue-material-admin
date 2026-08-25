@@ -1538,7 +1538,9 @@ function ShowBox(title, msg, color, redir, noclose, timer)
 		if (ifr) {
 			ifr.style.width = "100%";
 			ifr.style.border = "0";
-			ifr.style.background = "transparent";
+			ifr.style.background = "#0c1528";
+			ifr.style.backgroundColor = "#0c1528";
+			ifr.style.color = "#ddeeff";
 			if (!ifr.getAttribute("height") || parseInt(ifr.getAttribute("height"), 10) < 120)
 				ifr.style.minHeight = "220px";
 		}
@@ -2086,22 +2088,31 @@ function mapimg(filename)
 
 function selectLengthTypeReason(length, type, reason)
 {
-	for(var i=0; i<=$('banlength').length ; i++) {
-		if($('banlength').options[i].value == (length / 60)) {
-			$('banlength').options[i].selected=true;
+	var bl = $('banlength');
+	var tp = $('type');
+	var lr = $('listReason');
+	if (!bl || !tp || !lr)
+		return;
+	var i;
+	for (i = 0; i < bl.options.length; i++) {
+		if (bl.options[i].value == (length / 60)) {
+			bl.options[i].selected = true;
 			break;
 		}
 	}
-	$('type').options[type].selected = true;
-	for(var i=0;i<=$('listReason').length;i++)	{
-		if($('listReason').options[i].innerHTML == reason) {
-			$('listReason').options[i].selected=true;
+	if (tp.options[type])
+		tp.options[type].selected = true;
+	for (i = 0; i < lr.options.length; i++) {
+		if (lr.options[i].innerHTML == reason) {
+			lr.options[i].selected = true;
 			break;
 		}
-		if($('listReason').options[i].value == 'other') {
-			$('txtReason').value = reason;
-			$('dreason').style.display = 'block';
-			$('listReason').options[i].selected=true;
+		if (lr.options[i].value == 'other') {
+			if ($('txtReason'))
+				$('txtReason').value = reason;
+			if ($('dreason'))
+				$('dreason').style.display = 'block';
+			lr.options[i].selected = true;
 			break;
 		}
 	}
