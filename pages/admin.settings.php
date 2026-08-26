@@ -162,8 +162,7 @@ else
 		$csrf = isset($_POST['sb_csrf']) ? $_POST['sb_csrf'] : '';
 		if(!function_exists('sb_csrf_validate') || !sb_csrf_validate($csrf))
 		{
-			CreateRedBox("Ошибка", "Неверный CSRF-токен. Обновите страницу и попробуйте снова.");
-			PageDie();
+			sb_csrf_fail_page(true);
 		}
 
 		if ($_POST['settingsGroup'] == "mainsettings_themes")

@@ -215,6 +215,7 @@ class SbAjax
 			'ServerHostPlayers_list',
 			'ServerPlayers',
 			'RefreshServer',
+			'PingSession',
 		);
 		if (function_exists('sb_csrf_validate') && !in_array($action, $csrf_exempt, true)) {
 			if (function_exists('sb_session_start'))
@@ -231,13 +232,15 @@ class SbAjax
 			elseif (isset($parsed['csrf']))
 				$token = (string)$parsed['csrf'];
 			if (!sb_csrf_validate($token)) {
-				$msg = 'Сессия истекла или неверный CSRF-токен. Обновите страницу (Ctrl+F5) и попробуйте снова.';
+				$msg = 'Страница открыта слишком долго — защитный токен устарел. Данные не сохранены. Нажмите «Обновить страницу» и повторите действие.';
 				sb_ajax_emit(array(
 					'ok' => false,
 					'error' => $msg,
 					'cmds' => array(array(
 						'n' => 'js',
-						'data' => 'if(typeof ShowBox==="function"){ShowBox("Сессия",' . sb_ajax_json_encode($msg) . ',"red","",true);}else{alert(' . sb_ajax_json_encode($msg) . ');}',
+						'data' => 'if(typeof sbCsrfExpired==="function"){sbCsrfExpired(' . sb_ajax_json_encode($msg) . ');}'
+							. 'else if(typeof ShowBox==="function"){ShowBox("Сессия устарела",' . sb_ajax_json_encode($msg) . ',"red","",false);}'
+							. 'else if(confirm(' . sb_ajax_json_encode($msg . "\n\nОбновить страницу?") . ')){location.reload();}',
 					)),
 				));
 			}

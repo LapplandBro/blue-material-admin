@@ -4,21 +4,21 @@ global $userbank, $theme;
 
 echo '<div id="admin-page-content">';
 if(!$userbank->HasAccess(ADMIN_OWNER)) {
-	CreateRedBox("Доступ запрещен!", "У вас нету доступных привилегий на просмотр данной страницы.");
+	sb_forbidden_page(true);
 } elseif (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
-	CreateRedBox("Ошибка", "Пункт меню не указан.");
+	sb_bad_request_page(true, 'Пункт меню не указан.');
 } else {
 	$menuId = (int)$_GET['id'];
 	$existingMenu = $GLOBALS['db']->GetRow("SELECT * FROM ".DB_PREFIX."_menu WHERE id = ?", array($menuId));
 	if (!is_array($existingMenu) || empty($existingMenu)) {
-		CreateRedBox("Ошибка", "Пункт меню не найден.");
+		sb_not_found_page(true, 'Пункт меню не найден.');
 	} else {
 		if(isset($_POST['Link']) && $_POST['Link'] == "edit")
 		{
 			$csrf = isset($_POST['sb_csrf']) ? $_POST['sb_csrf'] : '';
 			if(!function_exists('sb_csrf_validate') || !sb_csrf_validate($csrf))
 			{
-				CreateRedBox("Ошибка", "Неверный CSRF-токен. Обновите страницу и попробуйте снова.");
+				sb_csrf_fail_page(true);
 			} else {
 				sb_menu_ensure_group_column();
 				$on_act = (isset($_POST['on_link']) && $_POST['on_link'] == "on" ? 1 : 0);

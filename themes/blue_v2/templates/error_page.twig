@@ -1,0 +1,41 @@
+{# Unified in-app error card (Blue Admin). kind: csrf|forbidden|not_found|bad_request|login_required|session|generic #}
+{% set tone = err_tone|default('warn') %}
+{% set kicker = err_kicker|default('Blue Admin') %}
+{% set title = err_title|default('Ошибка') %}
+{% set lead = err_lead|default('Что-то пошло не так.') %}
+{% set hint = err_hint|default('') %}
+{% set primary_label = err_primary_label|default('На главную') %}
+{% set secondary_label = err_secondary_label|default('Назад') %}
+
+<div class="form-page admin-form sb-error-page sb-error-page--{{ tone }}" role="alert" data-err-kind="{{ err_kind|default('generic') }}">
+  <header class="form-page-head">
+    <p class="form-page-kicker">{{ kicker }}</p>
+    <h2 class="form-page-title">{{ title }}</h2>
+    <p class="form-page-lead">{{ lead }}</p>
+  </header>
+
+  <section class="sb-error-page__panel">
+    {% if hint %}
+    <p class="sb-error-page__hint">{{ hint }}</p>
+    {% endif %}
+    <div class="form-actions sb-error-page__actions">
+      {% if err_primary_reload|default(false) %}
+        {% if reload_url %}
+        <a class="btn btn-accent" href="{{ reload_url }}">{{ primary_label }}</a>
+        {% else %}
+        {# GET-навигация, не location.reload() — иначе после POST снова уйдёт старый CSRF #}
+        <button type="button" class="btn btn-accent" onclick="if(typeof sbForceGetReload==='function')sbForceGetReload();else window.location.href=window.location.pathname+window.location.search+window.location.hash;">{{ primary_label }}</button>
+        {% endif %}
+      {% elseif primary_url %}
+      <a class="btn btn-accent" href="{{ primary_url }}">{{ primary_label }}</a>
+      {% elseif reload_url %}
+      <a class="btn btn-accent" href="{{ reload_url }}">{{ primary_label }}</a>
+      {% endif %}
+      {% if back_url %}
+      <a class="btn btn-outline-secondary" href="{{ back_url }}">{{ secondary_label }}</a>
+      {% elseif err_show_back|default(false) %}
+      <button type="button" class="btn btn-outline-secondary" onclick="history.back()">{{ secondary_label }}</button>
+      {% endif %}
+    </div>
+  </section>
+</div>

@@ -441,6 +441,7 @@ function sb_ui_v2_render($template, array $vars)
 		'brand_secondary' => $brandSecondary,
 		'login_url' => 'index.php?p=login',
 		'sb_csrf' => function_exists('sb_csrf_token') ? sb_csrf_token() : '',
+		'sb_session' => function_exists('sb_session_client_meta') ? sb_session_client_meta() : array(),
 		'nav_groups' => array(),
 		'page_notices' => array(),
 	);

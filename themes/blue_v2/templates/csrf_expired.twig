@@ -1,0 +1,13 @@
+{# Back-compat wrapper → unified error_page #}
+{% include 'error_page.twig' with {
+  err_kind: 'csrf',
+  err_tone: 'warn',
+  err_title: csrf_title|default('Сессия устарела'),
+  err_lead: csrf_lead|default('Страница была открыта слишком долго — защитный токен больше не действует. Данные формы не сохранены.'),
+  err_hint: 'Откройте страницу заново по кнопке ниже (обычное обновление после отправки формы снова шлёт старый токен). Затем повторите действие.',
+  err_primary_label: 'Открыть страницу заново',
+  err_primary_reload: false,
+  primary_url: reload_url|default(''),
+  reload_url: reload_url|default(''),
+  back_url: back_url|default('')
+} %}

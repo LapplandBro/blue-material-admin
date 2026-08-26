@@ -639,7 +639,10 @@ while (!$res->EOF)
 		$data['expires'] = SBDate($dateformat,$res->fields['ban_ends']);
 
 
-	if ($res->fields['demo_count'] == 0)
+	$canDemo = $userbank->is_logged_in() && $userbank->HasAccess(
+		ADMIN_OWNER|ADMIN_ADD_BAN|ADMIN_EDIT_OWN_BANS|ADMIN_EDIT_GROUP_BANS|ADMIN_EDIT_ALL_BANS
+	);
+	if ($res->fields['demo_count'] == 0 || !$canDemo)
 	{
 		$data['demo_available'] = false;
 		$data['demo_quick'] = 'Н/Д';
@@ -647,10 +650,16 @@ while (!$res->EOF)
 	}
 	else
 	{
-		$demtype = $GLOBALS['db']->GetRow("SELECT demtype FROM `".DB_PREFIX."_demos` WHERE demid = '".$data['ban_id']."'");
-		$data['demo_available'] = true;
-		$data['demo_quick'] = CreateLinkR('Демо',"getdemo.php?type=".$demtype['demtype']."&id=".$data['ban_id']);
-		$data['demo_link'] = CreateLinkR('Демка',"getdemo.php?type=".$demtype['demtype']."&id=".$data['ban_id']);
+		$demtype = $GLOBALS['db']->GetRow("SELECT demtype FROM `".DB_PREFIX."_demos` WHERE demid = ?", array($data['ban_id']));
+		if (!is_array($demtype) || empty($demtype['demtype'])) {
+			$data['demo_available'] = false;
+			$data['demo_quick'] = 'Н/Д';
+			$data['demo_link'] = CreateLinkR('Нет Демо',"#");
+		} else {
+			$data['demo_available'] = true;
+			$data['demo_quick'] = CreateLinkR('Демо',"getdemo.php?type=".$demtype['demtype']."&id=".$data['ban_id']);
+			$data['demo_link'] = CreateLinkR('Демка',"getdemo.php?type=".$demtype['demtype']."&id=".$data['ban_id']);
+		}
 	}
 
 	$data['server_id'] = $res->fields['ban_server'];

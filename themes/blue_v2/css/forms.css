@@ -102,6 +102,16 @@
 .form-field .form-label {
   display: block;
 }
+.form-field > .form-check {
+  margin-top: 0.4rem;
+}
+.form-field > .form-help + .form-check {
+  margin-top: 0.5rem;
+}
+.form-field > .form-check + .form-control,
+.form-field > .form-check + .form-select {
+  margin-top: 0.55rem;
+}
 .form-help {
   margin: 0.35rem 0 0;
   font-size: 0.8rem;
@@ -460,33 +470,231 @@
     margin-top: 0.25rem;
   }
 }
-.admin-servers-db .dbcfg-lock {
-  margin: 0 0 1.1rem;
+.csrf-expired,
+.sb-error-page {
+  max-width: 36rem;
+}
+.csrf-expired__panel,
+.sb-error-page__panel {
+  margin: 0;
   padding: 1rem 1.05rem 1.1rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: color-mix(in srgb, var(--surface, #fff) 92%, var(--muted) 8%);
+  border: 1px solid rgba(255, 193, 77, 0.28);
+  border-radius: var(--radius-md);
+  background:
+    linear-gradient(180deg, rgba(255, 193, 77, 0.08), transparent 46%),
+    var(--bg-card-alt);
+  box-shadow: var(--shadow-panel);
 }
-.admin-servers-db .dbcfg-lock__path {
-  margin: 0 0 0.55rem;
+.sb-error-page--danger .sb-error-page__panel {
+  border-color: rgba(255, 92, 122, 0.28);
+  background:
+    linear-gradient(180deg, rgba(255, 92, 122, 0.08), transparent 46%),
+    var(--bg-card-alt);
 }
-.admin-servers-db .dbcfg-lock__hint {
+.sb-error-page--muted .sb-error-page__panel {
+  border-color: var(--border-hairline);
+  background:
+    linear-gradient(180deg, rgba(30, 144, 255, 0.06), transparent 46%),
+    var(--bg-card-alt);
+}
+.csrf-expired__hint,
+.sb-error-page__hint {
+  margin: 0 0 1rem;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+.csrf-expired__actions,
+.sb-error-page__actions {
+  margin-top: 0;
+}
+.csrf-expired__actions .btn-accent,
+.sb-error-page__actions .btn-accent {
+  min-width: 11rem;
+}
+.admin-servers-db {
+  max-width: 52rem;
+}
+.admin-servers-db .dbcfg-panel {
+  margin: 0 0 0.35rem;
+  padding: 1.05rem 1.1rem 1.15rem;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  background:
+    linear-gradient(180deg, rgba(30, 144, 255, 0.06), transparent 42%),
+    var(--bg-card-alt);
+  box-shadow: var(--shadow-panel);
+}
+.admin-servers-db .dbcfg-panel--open {
+  background:
+    linear-gradient(180deg, rgba(61, 214, 140, 0.07), transparent 38%),
+    var(--bg-card-alt);
+}
+.admin-servers-db .dbcfg-panel__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.55rem 0.85rem;
+  margin: 0 0 0.85rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-hairline);
+}
+.admin-servers-db .dbcfg-panel__title {
+  margin: 0;
+  color: var(--text-heading);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+.admin-servers-db .dbcfg-badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+.admin-servers-db .dbcfg-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.22rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.admin-servers-db .dbcfg-badge--lock {
+  color: var(--warn);
+  background: rgba(255, 193, 77, 0.1);
+  border-color: rgba(255, 193, 77, 0.28);
+}
+.admin-servers-db .dbcfg-badge--warn {
+  color: #ff8aa0;
+  background: rgba(255, 92, 122, 0.12);
+  border-color: rgba(255, 92, 122, 0.28);
+}
+.admin-servers-db .dbcfg-badge--ok,
+.admin-servers-db .dbcfg-badge--ok-soft {
+  color: var(--ok);
+  background: rgba(61, 214, 140, 0.1);
+  border-color: rgba(61, 214, 140, 0.28);
+}
+.admin-servers-db .dbcfg-badge--ok-soft {
+  color: var(--muted);
+  background: rgba(30, 144, 255, 0.1);
+  border-color: rgba(30, 144, 255, 0.22);
+}
+.admin-servers-db .dbcfg-meta {
   margin: 0 0 0.95rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-sm);
+  background: rgba(8, 15, 31, 0.55);
+}
+.admin-servers-db .dbcfg-meta__row {
+  display: grid;
+  grid-template-columns: 8.5rem minmax(0, 1fr);
+  gap: 0.35rem 0.75rem;
+  align-items: baseline;
+}
+.admin-servers-db .dbcfg-meta__row + .dbcfg-meta__row {
+  margin-top: 0.45rem;
+  padding-top: 0.45rem;
+  border-top: 1px solid var(--border-hairline);
+}
+.admin-servers-db .dbcfg-meta dt {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.admin-servers-db .dbcfg-meta dd {
+  margin: 0;
+  min-width: 0;
+  color: var(--text);
+  font-size: 0.84rem;
+  line-height: 1.4;
+  word-break: break-all;
+}
+.admin-servers-db .dbcfg-meta code,
+.admin-servers-db .dbcfg-panel__hint code {
+  padding: 0.08rem 0.35rem;
+  border-radius: 0.28rem;
+  background: rgba(16, 29, 53, 0.9);
+  border: 1px solid var(--border);
+  color: var(--text-heading);
+  font-family: var(--font-mono);
+  font-size: 0.8em;
+}
+.admin-servers-db .dbcfg-panel__hint {
+  margin: 0 0 1rem;
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.5;
 }
 .admin-servers-db .dbcfg-lock__form {
   margin: 0;
 }
+.admin-servers-db .dbcfg-unlock-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: stretch;
+}
+.admin-servers-db .dbcfg-unlock-row .form-control {
+  flex: 1 1 14rem;
+  min-width: 0;
+}
+.admin-servers-db .dbcfg-unlock-row .btn {
+  flex: 0 0 auto;
+  min-width: 10.5rem;
+}
+.admin-servers-db .dbcfg-conf-wrap {
+  margin: 0;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: rgba(8, 15, 31, 0.72);
+}
 .admin-servers-db .dbcfg-conf {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  display: block;
+  width: 100%;
+  margin: 0;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font-family: var(--font-mono);
   font-size: 0.82rem;
-  line-height: 1.45;
+  line-height: 1.5;
   white-space: pre;
+  resize: vertical;
+  min-height: 18rem;
+  color: var(--text);
+}
+.admin-servers-db .dbcfg-conf:focus {
+  outline: none;
+  box-shadow: inset 0 0 0 1px rgba(30, 144, 255, 0.35) !important;
 }
 .admin-servers-db .form-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
   align-items: center;
+}
+@media (max-width: 575.98px) {
+  .admin-servers-db .dbcfg-meta__row {
+    grid-template-columns: 1fr;
+  }
+  .admin-servers-db .dbcfg-unlock-row .btn {
+    width: 100%;
+    min-width: 0;
+  }
 }
 .settings-page .seo-og-preview {
   margin-top: 0.65rem;

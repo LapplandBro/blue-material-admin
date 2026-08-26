@@ -239,8 +239,11 @@ function sb_verify_web_session($aid, $cookie, $storedHash = null)
  */
 function sb_session_start()
 {
-	if (session_status() === PHP_SESSION_ACTIVE)
+	if (session_status() === PHP_SESSION_ACTIVE) {
+		if (function_exists('sb_session_touch'))
+			sb_session_touch();
 		return;
+	}
 
 	$secure = defined('COOKIE_SECURE') ? COOKIE_SECURE : ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (!empty($_SERVER['SERVER_PORT']) && (int)$_SERVER['SERVER_PORT'] === 443));
 	$domain = defined('COOKIE_DOMAIN') ? COOKIE_DOMAIN : '';
@@ -259,6 +262,44 @@ function sb_session_start()
 		session_set_cookie_params(0, '/; samesite=Lax', $domain, $secure, true);
 	}
 	session_start();
+	if (function_exists('sb_session_touch'))
+		sb_session_touch();
+}
+
+/** TTL PHP-сессии (секунды) — от него зависит жизнь CSRF в $_SESSION. */
+function sb_session_ttl()
+{
+	$ttl = (int)ini_get('session.gc_maxlifetime');
+	if ($ttl < 120)
+		$ttl = 1440;
+	return $ttl;
+}
+
+/** Продлевает активность сессии и гарантирует CSRF-токен. */
+function sb_session_touch()
+{
+	if (session_status() !== PHP_SESSION_ACTIVE)
+		return;
+	$_SESSION['sb_last_active'] = time();
+	if (function_exists('sb_csrf_token'))
+		sb_csrf_token();
+}
+
+/** Метаданные сессии для JS-предупреждения / keepalive. */
+function sb_session_client_meta()
+{
+	$ttl = sb_session_ttl();
+	$last = isset($_SESSION['sb_last_active']) ? (int)$_SESSION['sb_last_active'] : time();
+	$expiresIn = max(0, $last + $ttl - time());
+	// Предупреждать за ~15% TTL, но не раньше 60с и не позже 5 мин.
+	$warnBefore = (int)max(60, min(300, (int)round($ttl * 0.15)));
+	return array(
+		'ttl' => $ttl,
+		'expires_in' => $expiresIn,
+		'warn_before' => $warnBefore,
+		'server_now' => time(),
+		'csrf' => function_exists('sb_csrf_token') ? sb_csrf_token() : '',
+	);
 }
 
 /**
@@ -717,3 +758,61 @@ $userbank = new CUserManager($l, $p);
 if (!defined('IS_UPDATE') && !defined('IN_INSTALL') && php_sapi_name() !== 'cli') {
 	sb_send_security_headers();
 }
+
+/**
+ * Пути, которые PHP должен уметь писать (аплоады, SEO, config).
+ * @return array[] {path, label}
+ */
+function sb_fs_permission_targets()
+{
+	$root = defined('ROOT') ? ROOT : (dirname(__FILE__) . DIRECTORY_SEPARATOR);
+	$root = rtrim(str_replace('\\', '/', $root), '/') . '/';
+	$targets = array(
+		array('path' => $root . 'demos', 'label' => 'demos/'),
+		array('path' => $root . 'images', 'label' => 'images/'),
+		array('path' => $root . 'images/maps', 'label' => 'images/maps/'),
+		array('path' => $root . 'images/games', 'label' => 'images/games/'),
+		array('path' => $root . 'data', 'label' => 'data/'),
+		array('path' => rtrim($root, '/'), 'label' => 'корень сайта (sitemap / robots)'),
+	);
+	$cfg = $root . 'config.php';
+	if (is_file($cfg))
+		$targets[] = array('path' => $cfg, 'label' => 'config.php');
+	return $targets;
+}
+
+/** @param string $path */
+function sb_fs_path_writable($path)
+{
+	$path = (string)$path;
+	if ($path === '')
+		return false;
+	if (is_file($path))
+		return is_writable($path);
+	if (is_dir($path))
+		return is_writable($path);
+	$parent = dirname($path);
+	return is_dir($parent) && is_writable($parent);
+}
+
+/**
+ * Список меток путей без прав на запись.
+ * @return string[]
+ */
+function sb_fs_permission_problems()
+{
+	$bad = array();
+	$seen = array();
+	foreach (sb_fs_permission_targets() as $t) {
+		$path = isset($t['path']) ? (string)$t['path'] : '';
+		$label = isset($t['label']) ? (string)$t['label'] : $path;
+		if ($path === '' || isset($seen[$label]))
+			continue;
+		if (!sb_fs_path_writable($path)) {
+			$seen[$label] = true;
+			$bad[] = $label;
+		}
+	}
+	return $bad;
+}
+

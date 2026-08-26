@@ -89,6 +89,7 @@
             <option value="updatecountries">Обновить файл GeoIP</option>
             <option value="optimizebd">Произвести оптимизацию БД</option>
             <option value="avatarupdate">Пересобрать кеш аватарок</option>
+            <option value="checkfsperms">Проверить права на папки</option>
           </select>
           <button type="button" class="btn btn-outline-secondary" id="amaintenance" onclick="var mv=document.getElementById('maintenance').value; if(mv=='demosclean' &amp;&amp; !confirm('Все загруженные демки и медиафайлы пользователей будут безвозвратно удалены с диска. Продолжить?')) return; xajax_Maintenance(mv);">Выполнить</button>
         </div>

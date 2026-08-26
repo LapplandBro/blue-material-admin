@@ -41,7 +41,7 @@ $sbAjax->setRequestURI(defined('SB_AJAX_URI') ? SB_AJAX_URI : './index.php');
 $xajax = $sbAjax;
 global $userbank;
 
-$methods = array('admin' => array('AddMod', 'RemoveMod', 'AddGroup', 'RemoveGroup', 'RemoveAdmin', 'RemoveSubmission', 'RemoveServer', 'UpdateGroupPermissions', 'UpdateAdminPermissions', 'AddAdmin', 'SetupEditServer', 'AddServerGroupName', 'AddServer', 'AddBan', 'RehashAdmins', 'EditGroup', 'RemoveProtest', 'SendRcon', 'EditAdminPerms', 'AddComment', 'EditComment', 'RemoveComment', 'PrepareReban', 'Maintenance', 'KickPlayer', 'GroupBan', 'BanMemberOfGroup', 'GetGroups', 'BanFriends', 'SendMessage', 'ViewCommunityProfile', 'SetupBan', 'CheckPassword', 'ChangePassword', 'CheckSrvPassword', 'ChangeSrvPassword', 'ChangeEmail', 'SendMail', 'AddBlock', 'PrepareReblock', 'PrepareBlockFromBan', 'removeExpiredAdmins', 'AddSupport', 'ChangeAdminsInfos', 'InstallMOD', 'PastePlayerData', 'AddWarning', 'RemoveWarning'), 'default' => array('Plogin', 'ServerHostPlayers', 'ServerHostProperty', 'ServerHostPlayers_list', 'ServerPlayers', 'LostPassword', 'RefreshServer', 'AddAdmin_pay', 'RehashAdmins_pay'));
+$methods = array('admin' => array('AddMod', 'RemoveMod', 'AddGroup', 'RemoveGroup', 'RemoveAdmin', 'RemoveSubmission', 'RemoveServer', 'UpdateGroupPermissions', 'UpdateAdminPermissions', 'AddAdmin', 'SetupEditServer', 'AddServerGroupName', 'AddServer', 'AddBan', 'RehashAdmins', 'EditGroup', 'RemoveProtest', 'SendRcon', 'EditAdminPerms', 'AddComment', 'EditComment', 'RemoveComment', 'PrepareReban', 'Maintenance', 'KickPlayer', 'GroupBan', 'BanMemberOfGroup', 'GetGroups', 'BanFriends', 'SendMessage', 'ViewCommunityProfile', 'SetupBan', 'CheckPassword', 'ChangePassword', 'CheckSrvPassword', 'ChangeSrvPassword', 'ChangeEmail', 'SendMail', 'AddBlock', 'PrepareReblock', 'PrepareBlockFromBan', 'removeExpiredAdmins', 'AddSupport', 'ChangeAdminsInfos', 'InstallMOD', 'PastePlayerData', 'AddWarning', 'RemoveWarning'), 'default' => array('Plogin', 'ServerHostPlayers', 'ServerHostProperty', 'ServerHostPlayers_list', 'ServerPlayers', 'LostPassword', 'RefreshServer', 'AddAdmin_pay', 'RehashAdmins_pay', 'PingSession'));
 
 if ($userbank->is_logged_in()
 	|| (isset($_COOKIE['aid'], $_COOKIE['password']) && $userbank->CheckLogin($_COOKIE['password'], $_COOKIE['aid'])))
@@ -152,6 +152,38 @@ function removeExpiredAdmins()
 		$log = new CSystemLog("w", "Удаление админов", "Ошибка удаления истёкших админок.");
 	}
 	
+	return $objResponse;
+}
+
+/**
+ * Keepalive PHP-сессии / CSRF: трогает sb_last_active и отдаёт актуальный токен в JS.
+ * CSRF-exempt (иначе при почти истёкшей сессии продление невозможно).
+ */
+function PingSession()
+{
+	$objResponse = new xajaxResponse();
+	if (function_exists('sb_rate_limit_hit') && sb_rate_limit_hit('ping_session', 30, 60)) {
+		$objResponse->addScript('if(typeof sbSessionApply==="function")sbSessionApply({ok:false,rate:1});');
+		return $objResponse;
+	}
+	if (function_exists('sb_session_start'))
+		sb_session_start();
+	elseif (session_status() !== PHP_SESSION_ACTIVE)
+		@session_start();
+	if (function_exists('sb_session_touch'))
+		sb_session_touch();
+	$meta = function_exists('sb_session_client_meta') ? sb_session_client_meta() : array(
+		'ttl' => 1440,
+		'expires_in' => 1440,
+		'warn_before' => 180,
+		'server_now' => time(),
+		'csrf' => function_exists('sb_csrf_token') ? sb_csrf_token() : '',
+	);
+	$meta['ok'] = true;
+	$json = function_exists('sb_ajax_json_encode')
+		? sb_ajax_json_encode($meta)
+		: json_encode($meta);
+	$objResponse->addScript('if(typeof sbSessionApply==="function")sbSessionApply(' . $json . ');');
 	return $objResponse;
 }
 
@@ -2713,7 +2745,7 @@ function ChangeAdminsInfos($aid, $vk, $discord)
 	$log = new CSystemLog("m", "Данные связи изменены", "У адмнистратора ".$admname['user']." успешно были изменены данные на (vk: ".$vk.", discord: ".$discord.")");
 	return $objResponse;
 }
-function ChangePassword($aid, $pass)
+function ChangePassword($aid, $pass, $current = '')
 {
 	global $userbank;
 	$objResponse = new xajaxResponse();
@@ -2727,6 +2759,23 @@ function ChangePassword($aid, $pass)
 			$log = new CSystemLog("w", "Ошибка доступа", $_SERVER["REMOTE_ADDR"] . " пытался сменить пароль, не имея на это прав.");
 			return $objResponse;
 		}
+	}
+	else
+	{
+		// Своя смена: без текущего пароля украденная сессия/XSS закрепляет атакующего.
+		if(!$userbank->is_logged_in() || !$userbank->verify_password((string)$current, $aid))
+		{
+			$objResponse->addScript("if($('current.msg')){ $('current.msg').setStyle('display', 'block'); $('current.msg').setHTML('<div class=\"c-red\">Данные не совпадают</div>'); }");
+			$objResponse->addScript("set_error(1);");
+			$objResponse->addScript("ShowBox('Ошибка', 'Текущий пароль неверен.', 'red', '', true);");
+			return $objResponse;
+		}
+	}
+
+	if(strlen((string)$pass) < MIN_PASS_LENGTH)
+	{
+		$objResponse->addScript("ShowBox('Ошибка', 'Пароль должен быть не менее " . (int)MIN_PASS_LENGTH . " символов.', 'red', '', true);");
+		return $objResponse;
 	}
 
 	$GLOBALS['db']->Execute("UPDATE `".DB_PREFIX."_admins` SET `password` = ? WHERE `aid` = ?", array($userbank->hash_password($pass), $aid));
@@ -3569,6 +3618,33 @@ function Maintenance($type) {
 
             new CSystemLog("m", "Обслуживание системы", $username . " очистил все демки и медиафайлы пользователей (удалено файлов: " . $removed . ", освобождено: " . sizeFormat($freed) . ").");
             ShowBox_ajx("Успех", "Удалено файлов: <b>" . $removed . "</b>, освобождено места: <b>" . sizeFormat($freed) . "</b>. Записи о демо/медиафайлах в базе очищены.", "green", $objResponse, "", true);
+            break;
+        }
+
+        case "checkfsperms": {
+            if (!$userbank->HasAccess(ADMIN_OWNER)) {
+                ShowBox_ajx("Ошибка", "Проверка прав на папки доступна только OWNER.", "red", $objResponse, "", true);
+                break;
+            }
+            $bad = function_exists('sb_fs_permission_problems') ? sb_fs_permission_problems() : array();
+            if (empty($bad)) {
+                ShowBox_ajx(
+                    "Права на папки",
+                    "Всё в порядке: PHP может писать в <code>demos/</code>, <code>images/</code>, <code>images/maps/</code>, <code>images/games/</code>, <code>data/</code>, корень сайта и <code>config.php</code>.",
+                    "green",
+                    $objResponse,
+                    "",
+                    true
+                );
+                break;
+            }
+            $safe = array();
+            foreach ($bad as $label)
+                $safe[] = htmlspecialchars((string)$label, ENT_QUOTES, 'UTF-8');
+            $msg = 'Некорректно настроены права. PHP не может писать в:<br><code>'
+                . implode('</code>, <code>', $safe)
+                . '</code><br><br>Обычно нужно: каталоги <b>775</b> (или владелец = пользователь PHP), файлы <b>644</b>, <code>config.php</code> — <b>640</b>. Не используйте 777.';
+            ShowBox_ajx("Права на папки", $msg, "red", $objResponse, "", true);
             break;
         }
         

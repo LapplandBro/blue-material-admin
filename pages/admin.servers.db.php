@@ -54,7 +54,7 @@ else
 	if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['dbcfg_unlock'])) {
 		$token = isset($_POST['csrf']) ? (string)$_POST['csrf'] : '';
 		if (!function_exists('sb_csrf_validate') || !sb_csrf_validate($token)) {
-			$flash_err = 'Сессия устарела. Обновите страницу и попробуйте снова.';
+			sb_csrf_fail_page(true);
 		} elseif (!$password_configured) {
 			$flash_err = 'Пароль не задан в config.php (SB_DBCFG_VIEW_PASSWORD).';
 			new CSystemLog('w', 'Просмотр databases.cfg',

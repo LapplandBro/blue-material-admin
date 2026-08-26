@@ -1528,6 +1528,250 @@ function CreateRedBox($title, $content)
 	echo $text;
 }
 
+/**
+ * Экран Blue Admin для типовых ошибок (csrf / доступ / 404 / сессия / generic).
+ *
+ * @param string $kind csrf|forbidden|not_found|bad_request|login_required|session|generic
+ * @param array $opts die, http, reload_url, back_url, primary_url, title, lead, hint, primary_label, secondary_label
+ */
+function sb_error_page($kind = 'generic', $opts = array())
+{
+	if (!is_array($opts))
+		$opts = array();
+	$die = !array_key_exists('die', $opts) || !empty($opts['die']);
+	$http = isset($opts['http']) ? (int)$opts['http'] : 0;
+	$home = function_exists('sb_url') ? sb_url('home') : 'index.php';
+	$login = function_exists('sb_url') ? sb_url('login') : 'index.php?p=login';
+
+	$presets = array(
+		'csrf' => array(
+			'tone' => 'warn', 'http' => 403,
+			'title' => 'Сессия устарела',
+			'lead' => 'Страница была открыта слишком долго — защитный токен больше не действует. Данные формы не сохранены.',
+			'hint' => 'Откройте страницу заново по кнопке ниже (обычное обновление после отправки формы снова шлёт старый токен). Затем повторите действие.',
+			'primary_label' => 'Открыть страницу заново', 'primary_reload' => false,
+		),
+		'forbidden' => array(
+			'tone' => 'danger', 'http' => 403,
+			'title' => 'Доступ запрещён',
+			'lead' => 'У вашего аккаунта нет прав на этот раздел или действие.',
+			'hint' => 'Если права только что выдали — выйдите и войдите снова. Иначе обратитесь к владельцу панели.',
+			'primary_label' => 'На главную', 'primary_url' => $home,
+			'show_back' => true,
+		),
+		'not_found' => array(
+			'tone' => 'muted', 'http' => 404,
+			'title' => 'Страница не найдена',
+			'lead' => 'Такого раздела нет или ссылка устарела.',
+			'hint' => 'Проверьте адрес или вернитесь на главную.',
+			'primary_label' => 'На главную', 'primary_url' => $home,
+			'show_back' => true,
+		),
+		'bad_request' => array(
+			'tone' => 'warn', 'http' => 400,
+			'title' => 'Некорректный запрос',
+			'lead' => 'Не хватает данных или параметр указан неверно.',
+			'hint' => 'Обновите страницу и попробуйте снова. Если ошибка повторяется — откройте раздел заново из меню.',
+			'primary_label' => 'Обновить страницу', 'primary_reload' => true,
+			'show_back' => true,
+		),
+		'login_required' => array(
+			'tone' => 'warn', 'http' => 401,
+			'title' => 'Нужен вход',
+			'lead' => 'Эта страница доступна только после авторизации.',
+			'hint' => 'Войдите в аккаунт администратора и повторите переход.',
+			'primary_label' => 'Войти', 'primary_url' => $login,
+			'secondary_label' => 'На главную', 'back_url' => $home,
+		),
+		'session' => array(
+			'tone' => 'warn', 'http' => 401,
+			'title' => 'Сессия завершена',
+			'lead' => 'Вход в панель больше не действует — возможно, вы вышли с другого устройства или долго не заходили.',
+			'hint' => 'Войдите снова. Несохранённые изменения на этой странице потеряны.',
+			'primary_label' => 'Войти', 'primary_url' => $login,
+			'secondary_label' => 'На главную', 'back_url' => $home,
+		),
+		'generic' => array(
+			'tone' => 'danger', 'http' => 500,
+			'title' => 'Ошибка',
+			'lead' => 'Не удалось выполнить действие.',
+			'hint' => 'Обновите страницу. Если проблема остаётся — смотрите системный лог панели.',
+			'primary_label' => 'Обновить страницу', 'primary_reload' => true,
+			'show_back' => true,
+		),
+	);
+
+	$kind = is_string($kind) ? strtolower($kind) : 'generic';
+	if (!isset($presets[$kind]))
+		$kind = 'generic';
+	$p = $presets[$kind];
+
+	if (!empty($opts['title'])) $p['title'] = (string)$opts['title'];
+	if (!empty($opts['lead'])) $p['lead'] = (string)$opts['lead'];
+	if (array_key_exists('hint', $opts)) $p['hint'] = (string)$opts['hint'];
+	if (!empty($opts['primary_label'])) $p['primary_label'] = (string)$opts['primary_label'];
+	if (!empty($opts['secondary_label'])) $p['secondary_label'] = (string)$opts['secondary_label'];
+	if (isset($opts['primary_url'])) $p['primary_url'] = (string)$opts['primary_url'];
+	if (isset($opts['back_url'])) $p['back_url'] = (string)$opts['back_url'];
+	if (array_key_exists('primary_reload', $opts)) $p['primary_reload'] = !empty($opts['primary_reload']);
+	if (array_key_exists('show_back', $opts)) $p['show_back'] = !empty($opts['show_back']);
+	if ($http <= 0)
+		$http = isset($p['http']) ? (int)$p['http'] : 0;
+
+	$vars = array(
+		'err_kind' => $kind,
+		'err_tone' => isset($p['tone']) ? $p['tone'] : 'warn',
+		'err_kicker' => 'Blue Admin',
+		'err_title' => $p['title'],
+		'err_lead' => $p['lead'],
+		'err_hint' => isset($p['hint']) ? $p['hint'] : '',
+		'err_primary_label' => isset($p['primary_label']) ? $p['primary_label'] : 'OK',
+		'err_secondary_label' => isset($p['secondary_label']) ? $p['secondary_label'] : 'Назад',
+		'err_primary_reload' => !empty($p['primary_reload']),
+		'err_show_back' => !empty($p['show_back']),
+		'reload_url' => isset($opts['reload_url']) ? (string)$opts['reload_url'] : '',
+		'primary_url' => isset($p['primary_url']) ? (string)$p['primary_url'] : '',
+		'back_url' => isset($p['back_url']) ? (string)$p['back_url'] : (isset($opts['back_url']) ? (string)$opts['back_url'] : ''),
+	);
+
+	if ($http > 0 && !headers_sent())
+		http_response_code($http);
+
+	$html = '';
+	if (function_exists('sb_ui_v2_fragment'))
+		$html = sb_ui_v2_fragment('error_page.twig', $vars);
+	if (!is_string($html) || trim($html) === '') {
+		$title = htmlspecialchars($vars['err_title'], ENT_QUOTES, 'UTF-8');
+		$lead = htmlspecialchars($vars['err_lead'], ENT_QUOTES, 'UTF-8');
+		$hint = htmlspecialchars($vars['err_hint'], ENT_QUOTES, 'UTF-8');
+		$html = '<div class="form-page sb-error-page" role="alert"><header class="form-page-head">'
+			. '<p class="form-page-kicker">Blue Admin</p><h2 class="form-page-title">' . $title . '</h2>'
+			. '<p class="form-page-lead">' . $lead . '</p></header><section class="sb-error-page__panel">'
+			. ($hint !== '' ? '<p class="sb-error-page__hint">' . $hint . '</p>' : '')
+			. '<div class="form-actions"><button type="button" class="btn btn-accent" onclick="window.location.reload()">Обновить</button></div>'
+			. '</section></div>';
+	}
+	echo $html;
+	if ($die) {
+		if (function_exists('PageDie'))
+			PageDie();
+		die();
+	}
+}
+
+function sb_csrf_fail_page($die = true, $reloadUrl = null, $backUrl = null)
+{
+	$target = ($reloadUrl !== null && $reloadUrl !== '')
+		? (string)$reloadUrl
+		: (function_exists('sb_safe_get_url') ? sb_safe_get_url() : 'index.php');
+
+	// После POST браузерный F5/Ctrl+F5 снова шлёт тот же запрос со старым CSRF —
+	// поэтому уходим на GET (303) с новым токеном в сессии.
+	$method = isset($_SERVER['REQUEST_METHOD']) ? strtoupper((string)$_SERVER['REQUEST_METHOD']) : 'GET';
+	if ($die && $method === 'POST' && !headers_sent()) {
+		if (function_exists('sb_session_start'))
+			sb_session_start();
+		elseif (session_status() !== PHP_SESSION_ACTIVE)
+			@session_start();
+		// Гарантируем свежий CSRF до редиректа (форма на GET его подхватит).
+		if (empty($_SESSION['sb_csrf']) || !is_string($_SESSION['sb_csrf'])) {
+			if (function_exists('sb_csrf_token'))
+				sb_csrf_token();
+		} else {
+			// Ротация: старый токен из формы больше не должен совпасть случайно.
+			$_SESSION['sb_csrf'] = bin2hex(function_exists('random_bytes') ? random_bytes(32) : openssl_random_pseudo_bytes(32));
+		}
+		if (function_exists('sb_ui_flash_set'))
+			sb_ui_flash_set(
+				'Сессия обновлена',
+				'Защитный токен сброшен. Повторите действие на форме.',
+				'blue',
+				4500
+			);
+		header('Location: ' . $target, true, 303);
+		exit;
+	}
+
+	sb_error_page('csrf', array(
+		'die' => $die,
+		'reload_url' => $target,
+		'primary_url' => $target,
+		'primary_reload' => false,
+		'primary_label' => 'Открыть страницу заново',
+		'back_url' => $backUrl,
+	));
+}
+
+/**
+ * URL текущей страницы для безопасного GET (без POST-resubmit, без sb_csrf в query).
+ */
+function sb_safe_get_url()
+{
+	$uri = isset($_SERVER['REQUEST_URI']) ? (string)$_SERVER['REQUEST_URI'] : '';
+	if ($uri !== '' && isset($uri[0]) && $uri[0] === '/') {
+		$parts = parse_url($uri);
+		$path = isset($parts['path']) ? $parts['path'] : '/';
+		$query = array();
+		if (!empty($parts['query']))
+			parse_str($parts['query'], $query);
+		unset($query['sb_csrf'], $query['csrf']);
+		$q = http_build_query($query);
+		return $q !== '' ? ($path . '?' . $q) : $path;
+	}
+	if (isset($_GET['p']) && function_exists('sb_url')) {
+		$extra = $_GET;
+		$p = (string)$extra['p'];
+		unset($extra['p'], $extra['sb_csrf'], $extra['csrf']);
+		return sb_url($p, $extra);
+	}
+	if (!empty($_SERVER['HTTP_REFERER'])) {
+		$ref = (string)$_SERVER['HTTP_REFERER'];
+		$host = function_exists('sb_get_site_host') ? sb_get_site_host() : '';
+		$refHost = parse_url($ref, PHP_URL_HOST);
+		if ($host !== '' && $refHost && strcasecmp($refHost, $host) === 0) {
+			$path = parse_url($ref, PHP_URL_PATH);
+			$q = parse_url($ref, PHP_URL_QUERY);
+			if (is_string($path) && $path !== '')
+				return $q ? ($path . '?' . $q) : $path;
+		}
+	}
+	return function_exists('sb_url') ? sb_url('home') : 'index.php';
+}
+
+function sb_forbidden_page($die = true, $lead = null)
+{
+	$opts = array('die' => $die);
+	if ($lead !== null && $lead !== '')
+		$opts['lead'] = (string)$lead;
+	sb_error_page('forbidden', $opts);
+}
+
+function sb_not_found_page($die = true, $lead = null)
+{
+	$opts = array('die' => $die);
+	if ($lead !== null && $lead !== '')
+		$opts['lead'] = (string)$lead;
+	sb_error_page('not_found', $opts);
+}
+
+function sb_bad_request_page($die = true, $lead = null)
+{
+	$opts = array('die' => $die);
+	if ($lead !== null && $lead !== '')
+		$opts['lead'] = (string)$lead;
+	sb_error_page('bad_request', $opts);
+}
+
+function sb_login_required_page($die = true)
+{
+	sb_error_page('login_required', array('die' => $die));
+}
+
+function sb_session_gone_page($die = true)
+{
+	sb_error_page('session', array('die' => $die));
+}
+
 function CreateGreenBox($title, $content)
 {
 	$text = '<div class="alert alert-success" id="msg-green-dbg" role="alert"><h4>' . $title .'</h4><span class="p-l-10">' . $content . '</span></div>';
@@ -1539,6 +1783,10 @@ function CheckAdminAccess($mask)
 	global $userbank;
 	if(!$userbank->HasAccess($mask))
 	{
+		if (isset($userbank) && is_object($userbank) && $userbank->is_logged_in() && function_exists('sb_forbidden_page'))
+			sb_forbidden_page(true);
+		if (function_exists('sb_login_required_page') && (!isset($userbank) || !is_object($userbank) || !$userbank->is_logged_in()))
+			sb_login_required_page(true);
 		RedirectJS("index.php?p=login&m=no_access");
 		die();
 	}
@@ -3149,7 +3397,7 @@ function sb_upload_require_csrf()
 	$token = isset($_POST['sb_csrf']) ? $_POST['sb_csrf'] : '';
 	if (!function_exists('sb_csrf_validate') || !sb_csrf_validate($token)) {
 		$log = new CSystemLog("w", "CSRF", "Отклонена загрузка файла: неверный CSRF-токен (" . (isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '?') . ").");
-		sb_upload_access_denied('Неверный CSRF-токен. Обновите страницу и попробуйте снова.');
+		sb_upload_csrf_denied();
 	}
 }
 
@@ -3243,6 +3491,30 @@ function sb_upload_access_denied($title = 'Нет доступа')
 		. '<h1 class="upload-card__title">' . $title . '</h1>'
 		. '<p>Войдите как администратор с нужными правами и откройте загрузку из панели.</p>'
 		. '</div></header>'
+		. '</main></body></html>';
+	exit;
+}
+
+/** Popup-загрузчик: протухший CSRF — перезагрузить окно. */
+function sb_upload_csrf_denied()
+{
+	header('Content-Type: text/html; charset=UTF-8');
+	echo '<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8">'
+		. '<meta name="viewport" content="width=device-width, initial-scale=1">'
+		. '<title>Сессия устарела · Blue Admin</title>'
+		. '<style>' . sb_upload_popup_css()
+		. '.upload-denied .upload-card__title{color:var(--warn,#ffc14d)}'
+		. '.upload-actions{margin-top:14px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap}'
+		. '.upload-actions button{cursor:pointer;border:0;border-radius:8px;padding:10px 16px;font:inherit;font-weight:650;background:#1e90ff;color:#fff}'
+		. '</style></head><body class="upload-page">'
+		. '<main class="upload-card upload-denied" role="alert">'
+		. '<header class="upload-card__head">'
+		. '<span class="upload-card__mark" aria-hidden="true">B</span>'
+		. '<div class="upload-card__titles">'
+		. '<h1 class="upload-card__title">Сессия устарела</h1>'
+		. '<p>Окно загрузки открыто слишком долго. Закройте его, обновите страницу панели и откройте загрузку снова.</p>'
+		. '</div></header>'
+		. '<div class="upload-actions"><button type="button" onclick="window.location.reload()">Обновить окно</button></div>'
 		. '</main></body></html>';
 	exit;
 }

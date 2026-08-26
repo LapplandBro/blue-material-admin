@@ -32,22 +32,22 @@
         <div id="password2.msg" class="msg-err"></div>
       </div>
       <div class="form-field form-field--full">
-        <label class="form-label" for="a_useserverpass">Пароль на сервер</label>
-        <label class="form-check">
+        <span class="form-label">Пароль на сервер</span>
+        <label class="form-check" for="a_useserverpass">
           <input class="form-check-input" type="checkbox" id="a_useserverpass" name="a_useserverpass" tabindex="6" onclick="$('a_serverpass').disabled = !$(this).checked;"{% if a_spass %} checked="checked"{% endif %}>
           <span class="form-check-label">Включить</span>
         </label>
-        <input type="password" tabindex="7" class="form-control mt-2" id="a_serverpass" name="a_serverpass" placeholder="Не обязательно"{% if not a_spass %} disabled{% endif %}>
+        <input type="password" tabindex="7" class="form-control" id="a_serverpass" name="a_serverpass" placeholder="Не обязательно" autocomplete="new-password"{% if not a_spass %} disabled{% endif %}>
         <div id="a_serverpass.msg" class="msg-err"></div>
       </div>
       <div class="form-field form-field--full">
-        <label class="form-label" for="a_foreverperiod">Доступ</label>
+        <label class="form-label" for="period">Доступ</label>
         <p class="form-help">На сколько дней изменить срок. Оставьте пустым, если не желаете менять.</p>
-        <label class="form-check">
+        <label class="form-check" for="a_foreverperiod">
           <input class="form-check-input" type="checkbox" id="a_foreverperiod" name="a_foreverperiod" tabindex="9" onclick="$('period').disabled = $(this).checked; $('permaadmin').value = $(this).checked;">
           <span class="form-check-label">Навсегда</span>
         </label>
-        <input type="text" tabindex="8" class="form-control mt-2" id="period" name="period">
+        <input type="text" tabindex="8" class="form-control" id="period" name="period" inputmode="numeric" autocomplete="off">
         <div id="period.msg" class="msg-err"></div>
         <input type="hidden" name="permaadmin" id="permaadmin" value="false">
       </div>

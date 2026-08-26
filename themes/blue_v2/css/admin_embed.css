@@ -388,11 +388,14 @@
   margin-top: 0.2rem;
 }
 .admin-embed-body .form-check {
-  min-height: 1.5rem;
+  min-height: 1.35rem;
   display: flex;
   align-items: center;
   gap: 0.45rem;
+  padding-left: 0;
+  margin-bottom: 0;
 }
+.admin-embed-body .form-check .form-check-input,
 .admin-embed-body .form-check-input {
   float: none;
   margin: 0;

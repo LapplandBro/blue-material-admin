@@ -55,13 +55,18 @@ if(strcasecmp($_GET['type'], "U") != 0 && strcasecmp($_GET['type'], "B") != 0 &&
 $id = (int)$_GET['id'];
 $type = strtoupper(substr((string)$_GET['type'], 0, 1));
 
-// SECURITY: demtype=S - демки жалоб (submissions), а не банов. В отличие от B/U (публичные
-// демо банов), submissions могут содержать чувствительные материалы обычных игроков и должны
-// быть доступны только залогиненным админам с правом на просмотр жалоб (или OWNER).
+// SECURITY: демо не публичные. S — жалобы; B/U — демо банов (файл / внешняя ссылка).
+$demoAcl = null;
 if ($type === 'S') {
-	if (!isset($userbank) || !is_object($userbank) || !$userbank->is_logged_in() || !$userbank->HasAccess(ADMIN_OWNER|ADMIN_BAN_SUBMISSIONS)) {
+	$demoAcl = ADMIN_OWNER|ADMIN_BAN_SUBMISSIONS;
+} elseif ($type === 'B' || $type === 'U') {
+	$demoAcl = ADMIN_OWNER|ADMIN_ADD_BAN|ADMIN_EDIT_OWN_BANS|ADMIN_EDIT_GROUP_BANS|ADMIN_EDIT_ALL_BANS;
+}
+if ($demoAcl !== null) {
+	$ok = isset($userbank) && is_object($userbank) && $userbank->is_logged_in() && $userbank->HasAccess($demoAcl);
+	if (!$ok) {
 		if (class_exists('CSystemLog'))
-			new CSystemLog("w", "Попытка взлома", "Неавторизованный доступ к демке жалобы (submission) id=" . $id . " с IP " . (isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '?') . ".");
+			new CSystemLog("w", "Попытка взлома", "Неавторизованный доступ к демке type=" . $type . " id=" . $id . " с IP " . (isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '?') . ".");
 		header('HTTP/1.1 403 Forbidden');
 		die('Access denied.');
 	}

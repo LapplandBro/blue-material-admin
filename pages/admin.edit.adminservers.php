@@ -29,8 +29,7 @@ if(!defined("IN_SB")){echo "Ошибка доступа!";die();}
 global $theme;
 if(!isset($_GET['id']))
 {
-	CreateRedBox("Ошибка", "ID администратора не указан");
-	PageDie();
+	sb_bad_request_page(true, 'ID администратора не указан.');
 }
 
 $_GET['id'] = (int)$_GET['id'];
@@ -39,15 +38,13 @@ $aid = (int)$_GET['id'];
 if(!$userbank->GetProperty("user", $aid))
 {
 	$log = new CSystemLog("e", "Получение данных администратора не удалось", "Не могу найти данные для администратора с идентификатором '".$aid."'");
-	CreateRedBox("Ошибка", "Ошибка получения текущих данных.");
-	PageDie();
+	sb_not_found_page(true, 'Администратор не найден.');
 }
 
 if(!$userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_ADMINS) || !sb_can_manage_admin($aid))
 {
 	$log = new CSystemLog("w", "Попытка взлома", $userbank->GetProperty("user") . " пытался изменить доступ к серверу админа ".$userbank->GetProperty('user', $aid).", не имея на это прав.");
-	CreateRedBox("Ошибка", "Вы не имеете прав редактирования доступа админа к серверу.");
-	PageDie();
+	sb_forbidden_page(true, 'Вы не имеете прав редактирования доступа админа к серверу.');
 }
 
 $servers = $GLOBALS['db']->GetAll("SELECT `server_id`, `srv_group_id` FROM ".DB_PREFIX."_admins_servers_groups WHERE admin_id = ?", array($aid));
@@ -62,8 +59,7 @@ if(isset($_POST['editadminserver']))
 	$csrf = isset($_POST['sb_csrf']) ? $_POST['sb_csrf'] : '';
 	if(!function_exists('sb_csrf_validate') || !sb_csrf_validate($csrf))
 	{
-		CreateRedBox("Ошибка", "Неверный CSRF-токен. Обновите страницу и попробуйте снова.");
-		PageDie();
+		sb_csrf_fail_page(true);
 	}
 
 	// clear old stuffs

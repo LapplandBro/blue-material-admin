@@ -52,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['parsec_action'])) {
 	$action = (string)$_POST['parsec_action'];
 	$token = isset($_POST['csrf']) ? (string)$_POST['csrf'] : '';
 	if (!ParsecPanelCheckCsrf($token)) {
-		$flash_err = 'Неверный CSRF-токен. Обновите страницу.';
+		sb_csrf_fail_page(true);
 	} else {
 		switch ($action) {
 			case 'unlock':

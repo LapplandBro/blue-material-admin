@@ -14,7 +14,7 @@ global $userbank, $theme;
 		if(isset($_SERVER['REQUEST_METHOD']) && strtoupper($_SERVER['REQUEST_METHOD']) === 'POST' && isset($_POST['voucher_delete'])){
 			$csrf = isset($_POST['sb_csrf']) ? $_POST['sb_csrf'] : '';
 			if(!function_exists('sb_csrf_validate') || !sb_csrf_validate($csrf)){
-				echo '<script>setTimeout(\'ShowBox("Ошибка", "Неверный CSRF-токен. Обновите страницу и попробуйте снова.", "red", "index.php?p=admin&c=pay_card");\', 1200);</script>';
+				sb_csrf_fail_page(true);
 			}elseif(!isset($_POST['voucher_delete_id']) || !is_numeric($_POST['voucher_delete_id'])){
 				echo '<script>setTimeout(\'ShowBox("Ошибка", "ID ваучера не указан!", "red", "index.php?p=admin&c=pay_card");\', 1200);</script>';
 			}else{
@@ -94,7 +94,7 @@ global $userbank, $theme;
 				if ($_POST['pay_card_admin'] == "pay_card_add"){
 					$csrf = isset($_POST['sb_csrf']) ? $_POST['sb_csrf'] : '';
 					if (function_exists('sb_csrf_validate') && !sb_csrf_validate($csrf)) {
-						echo "<script>setTimeout(\"ShowBox('Ваучер', 'Сессия устарела. Обновите страницу.', 'red', '', true);\", 1200);</script>";
+						sb_csrf_fail_page(true);
 					} elseif(($_POST['card_key'] != "") && ($_POST['card_exp'] >= 0) && ($_POST['card_gr_web'] != "")){
 						
 						$key_vr = function_exists('sb_voucher_normalize_key')

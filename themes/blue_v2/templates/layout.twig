@@ -51,7 +51,7 @@
   <script src="{{ asset_base }}scripts/mootools.js"></script>
   <script src="{{ asset_base }}scripts/sourcebans.js?v={{ sb_js_ver }}"></script>
   {{ xajax_js|raw }}
-  <script>window.SB_CSRF={{ sb_csrf|default('')|json_encode|raw }};</script>
+  <script>window.SB_CSRF={{ sb_csrf|default('')|json_encode|raw }};window.SB_SESSION={{ sb_session|default({})|json_encode|raw }};</script>
   {% block extra_head %}{% endblock %}
   <script>try{if(localStorage.getItem('sb-ui-sidebar')==='off')document.documentElement.classList.add('sidebar-off');}catch(e){}</script>
 </head>

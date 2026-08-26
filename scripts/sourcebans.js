@@ -1496,6 +1496,161 @@ function ProcessMod()
 				 $('steam_universe').value,
 				 $('enabled').checked);
 }
+/** GET-навигация на текущий URL (не reload — иначе F5 после POST шлёт старый CSRF). */
+function sbForceGetReload() {
+	var url = window.location.pathname + window.location.search + window.location.hash;
+	window.location.replace(url);
+}
+
+/** CSRF / долгая вкладка: модалка Blue Admin с кнопкой перезагрузки. */
+function sbCsrfExpired(msg) {
+	msg = msg || "Страница открыта слишком долго — защитный токен устарел. Данные не сохранены.";
+	if (typeof swal === "function") {
+		swal({
+			title: "Сессия устарела",
+			text: msg,
+			type: "warning",
+			html: true,
+			confirmButtonText: "Открыть страницу заново",
+			confirmButtonClass: "btn-accent",
+			showConfirmButton: true,
+			showCancelButton: true,
+			cancelButtonText: "Закрыть",
+			allowOutsideClick: true
+		}, function (isConfirm) {
+			if (isConfirm)
+				sbForceGetReload();
+		});
+		return;
+	}
+	if (window.confirm(msg + "\n\nОткрыть страницу заново?"))
+		sbForceGetReload();
+}
+
+/** Применить CSRF + таймеры сессии после PingSession / загрузки. */
+function sbSessionApply(meta) {
+	if (!meta || meta.ok === false)
+		return;
+	if (meta.csrf) {
+		window.SB_CSRF = meta.csrf;
+		try {
+			var nodes = document.querySelectorAll('input[name="sb_csrf"], input[name="csrf"]');
+			for (var i = 0; i < nodes.length; i++)
+				nodes[i].value = meta.csrf;
+		} catch (e) {}
+	}
+	window.SB_SESSION = window.SB_SESSION || {};
+	if (typeof meta.ttl === "number") window.SB_SESSION.ttl = meta.ttl;
+	if (typeof meta.expires_in === "number") window.SB_SESSION.expires_in = meta.expires_in;
+	if (typeof meta.warn_before === "number") window.SB_SESSION.warn_before = meta.warn_before;
+	if (typeof meta.server_now === "number") window.SB_SESSION.server_now = meta.server_now;
+	window.SB_SESSION._localDeadline = Date.now() + (Math.max(0, Number(meta.expires_in) || 0) * 1000);
+	window.SB_SESSION._warned = false;
+	sbSessionSchedule();
+}
+
+function sbSessionExtend() {
+	if (typeof xajax_PingSession === "function") {
+		xajax_PingSession();
+		return;
+	}
+	if (window.sbApi && typeof window.sbApi.call === "function") {
+		window.sbApi.call("PingSession", []);
+		return;
+	}
+	window.location.reload();
+}
+
+function sbSessionWarn() {
+	if (window.SB_SESSION && window.SB_SESSION._warned)
+		return;
+	if (window.SB_SESSION)
+		window.SB_SESSION._warned = true;
+	var msg = "Сеанс формы скоро завершится. Нажмите «Продлить», чтобы сохранить возможность отправлять формы без перезагрузки.";
+	if (typeof swal === "function") {
+		swal({
+			title: "Сессия истекает",
+			text: msg,
+			type: "warning",
+			html: true,
+			confirmButtonText: "Продлить",
+			confirmButtonClass: "btn-accent",
+			showConfirmButton: true,
+			showCancelButton: true,
+			cancelButtonText: "Позже",
+			allowOutsideClick: true
+		}, function (isConfirm) {
+			if (isConfirm)
+				sbSessionExtend();
+			else if (window.SB_SESSION)
+				window.SB_SESSION._warned = false;
+		});
+		return;
+	}
+	if (window.confirm(msg + "\n\nПродлить сейчас?"))
+		sbSessionExtend();
+	else if (window.SB_SESSION)
+		window.SB_SESSION._warned = false;
+}
+
+function sbSessionSchedule() {
+	if (sbSessionSchedule._timer)
+		clearTimeout(sbSessionSchedule._timer);
+	if (sbSessionSchedule._ping)
+		clearTimeout(sbSessionSchedule._ping);
+	var s = window.SB_SESSION || {};
+	var deadline = s._localDeadline;
+	if (!deadline && typeof s.expires_in === "number")
+		deadline = Date.now() + (s.expires_in * 1000);
+	if (!deadline)
+		return;
+	var warnBefore = Math.max(60, Number(s.warn_before) || 180) * 1000;
+	var untilWarn = deadline - Date.now() - warnBefore;
+	var untilPing = Math.max(60000, (Number(s.ttl) || 1440) * 1000 / 3);
+
+	if (untilWarn <= 0)
+		sbSessionWarn();
+	else {
+		sbSessionSchedule._timer = setTimeout(function () {
+			sbSessionWarn();
+		}, untilWarn);
+	}
+
+	// Тихий keepalive, пока вкладка видима — продлевает PHP-сессию и CSRF.
+	sbSessionSchedule._ping = setTimeout(function () {
+		if (document.hidden)
+			sbSessionSchedule();
+		else
+			sbSessionExtend();
+	}, untilPing);
+}
+
+(function sbSessionBoot() {
+	function start() {
+		var s = window.SB_SESSION || {};
+		if (typeof s.expires_in === "number")
+			sbSessionApply({
+				ok: true,
+				csrf: window.SB_CSRF || s.csrf || "",
+				ttl: s.ttl,
+				expires_in: s.expires_in,
+				warn_before: s.warn_before,
+				server_now: s.server_now
+			});
+	}
+	if (document.readyState === "loading")
+		document.addEventListener("DOMContentLoaded", start);
+	else
+		start();
+	document.addEventListener("visibilitychange", function () {
+		if (!document.hidden && window.SB_SESSION && window.SB_SESSION._localDeadline) {
+			var left = window.SB_SESSION._localDeadline - Date.now();
+			if (left < (Math.max(60, Number(window.SB_SESSION.warn_before) || 180) * 1000))
+				sbSessionExtend();
+		}
+	});
+})();
+
 function ShowBox(title, msg, color, redir, noclose, timer)
 {
 	var type = "info";

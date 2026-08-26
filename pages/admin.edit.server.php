@@ -34,14 +34,12 @@ global $theme, $userbank;
 if(!$userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_SERVERS))
 {
 	$log = new CSystemLog("w", "Попытка взлома", $userbank->GetProperty("user") . " пытался редактировать сервер, не имея на это прав.");
-	CreateRedBox("Ошибка", "Вы не имеете прав редактирования серверов.");
-	PageDie();
+	sb_forbidden_page(true, 'Вы не имеете прав редактирования серверов.');
 }
 
 if(!isset($_GET['id']))
 {
-	CreateRedBox("Ошибка", "Идентификатор сервера не указан");
-	die();
+	sb_bad_request_page(true, 'Идентификатор сервера не указан.');
 }
 $_GET['id'] = (int)$_GET['id'];
 
@@ -49,8 +47,7 @@ $server = $GLOBALS['db']->GetRow("SELECT * FROM ".DB_PREFIX."_servers WHERE sid 
 if(!$server)
 {
 	$log = new CSystemLog("e", "Получение данных сервера не удалось", "Не удается найти данные для сервера с идентификатором '".$_GET['id']."'");
-	CreateRedBox("Ошибка", "Ошибка получения текущих данных.");
-	PageDie();
+	sb_not_found_page(true, 'Сервер не найден.');
 }
 
 $errorScript = "";
@@ -61,8 +58,7 @@ if(isset($_POST['address']))
 	$csrf = isset($_POST['sb_csrf']) ? $_POST['sb_csrf'] : '';
 	if(!function_exists('sb_csrf_validate') || !sb_csrf_validate($csrf))
 	{
-		CreateRedBox("Ошибка", "Неверный CSRF-токен. Обновите страницу и попробуйте снова.");
-		PageDie();
+		sb_csrf_fail_page(true);
 	}
 
 	// Form validation

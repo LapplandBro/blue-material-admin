@@ -6,37 +6,66 @@
   </header>
 
   {% if flash_err %}
-  <div class="alert alert-warning" role="alert">{{ flash_err }}</div>
+  <p class="form-flash form-flash--err" role="alert">{{ flash_err }}</p>
   {% endif %}
 
   {% if not unlocked %}
-  <div class="dbcfg-lock">
-    <p class="form-note dbcfg-lock__path">Путь на сервере: <code>/[mod]/addons/sourcemod/configs/databases.cfg</code></p>
+  <section class="dbcfg-panel dbcfg-panel--lock" aria-labelledby="dbcfg-lock-title">
+    <div class="dbcfg-panel__head">
+      <h3 class="dbcfg-panel__title" id="dbcfg-lock-title">Просмотр защищён</h3>
+      <div class="dbcfg-badges">
+        <span class="dbcfg-badge dbcfg-badge--lock">Закрыто</span>
+        {% if not password_configured %}
+        <span class="dbcfg-badge dbcfg-badge--warn">Пароль не задан</span>
+        {% else %}
+        <span class="dbcfg-badge dbcfg-badge--ok-soft">Готово к вводу</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <dl class="dbcfg-meta">
+      <div class="dbcfg-meta__row">
+        <dt>Файл</dt>
+        <dd><code>databases.cfg</code></dd>
+      </div>
+      <div class="dbcfg-meta__row">
+        <dt>Путь на сервере</dt>
+        <dd><code>/[mod]/addons/sourcemod/configs/databases.cfg</code></dd>
+      </div>
+    </dl>
+
     {% if not password_configured %}
-    <p class="form-note dbcfg-lock__hint">Задайте константу <code>SB_DBCFG_VIEW_PASSWORD</code> в <code>config.php</code> (отдельный пароль, не пароль админа и не PARSEC).</p>
+    <p class="dbcfg-panel__hint">Задайте константу <code>SB_DBCFG_VIEW_PASSWORD</code> в <code>config.php</code> (отдельный пароль, не пароль аккаунта и не PARSEC). Без неё конфиг открыть нельзя.</p>
     {% else %}
-    <p class="form-note dbcfg-lock__hint">Введите пароль просмотра конфига БД. Каждый успешный просмотр пишется в системный лог.</p>
+    <p class="dbcfg-panel__hint">Введите пароль просмотра. Каждый успешный просмотр пишется в системный лог.</p>
     {% endif %}
-    <form method="post" action="{{ form_action }}" class="form-grid dbcfg-lock__form" autocomplete="off">
+
+    <form method="post" action="{{ form_action }}" class="dbcfg-lock__form" autocomplete="off">
       <input type="hidden" name="csrf" value="{{ csrf }}">
       <input type="hidden" name="dbcfg_unlock" value="1">
       <div class="form-field form-field--full">
         <label class="form-label" for="dbcfg_password">Пароль просмотра</label>
-        <div class="input-group">
-          <input type="password" class="form-control" id="dbcfg_password" name="dbcfg_password" autocomplete="off" placeholder="SB_DBCFG_VIEW_PASSWORD"{% if not password_configured %} disabled{% endif %}>
-          <button type="submit" class="btn btn-outline-secondary"{% if not password_configured %} disabled{% endif %}>Показать конфиг</button>
+        <div class="dbcfg-unlock-row">
+          <input type="password" class="form-control" id="dbcfg_password" name="dbcfg_password" autocomplete="off" placeholder="пароль из config.php"{% if not password_configured %} disabled{% endif %}{% if password_configured %} autofocus{% endif %}>
+          <button type="submit" class="btn btn-accent"{% if not password_configured %} disabled{% endif %}>Показать конфиг</button>
         </div>
       </div>
     </form>
-  </div>
+  </section>
   {% else %}
-  <p class="form-note">Путь: <code>/[mod]/addons/sourcemod/configs/databases.cfg</code>. Скопируйте блок целиком. После ухода со страницы конфиг снова скроется.</p>
-  <div class="form-grid">
-    <div class="form-field form-field--full">
-      <label class="form-label" for="dbcfg_conf">databases.cfg</label>
-      <textarea class="form-control dbcfg-conf" id="dbcfg_conf" rows="22" readonly>{{ conf }}</textarea>
+  <section class="dbcfg-panel dbcfg-panel--open" aria-labelledby="dbcfg-open-title">
+    <div class="dbcfg-panel__head">
+      <h3 class="dbcfg-panel__title" id="dbcfg-open-title">databases.cfg</h3>
+      <div class="dbcfg-badges">
+        <span class="dbcfg-badge dbcfg-badge--ok">Открыто</span>
+        <button type="button" class="btn btn-sm btn-outline-secondary" id="dbcfg_copy" data-target="dbcfg_conf">Копировать</button>
+      </div>
     </div>
-  </div>
+    <p class="dbcfg-panel__hint">Скопируйте блок целиком в файл на игровом сервере. После ухода со страницы конфиг снова скроется.</p>
+    <div class="dbcfg-conf-wrap">
+      <textarea class="form-control dbcfg-conf" id="dbcfg_conf" rows="22" readonly spellcheck="false">{{ conf }}</textarea>
+    </div>
+  </section>
   {% endif %}
 
   <div class="form-actions">
@@ -46,3 +75,28 @@
     {% endif %}
   </div>
 </div>
+{% if unlocked %}
+<script>
+(function () {
+  var btn = document.getElementById('dbcfg_copy');
+  var ta = document.getElementById('dbcfg_conf');
+  if (!btn || !ta) return;
+  var label = btn.textContent;
+  btn.addEventListener('click', function () {
+    var done = function () {
+      btn.textContent = 'Скопировано';
+      window.setTimeout(function () { btn.textContent = label; }, 1600);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(ta.value).then(done).catch(function () {
+        ta.select();
+        try { document.execCommand('copy'); done(); } catch (e) {}
+      });
+    } else {
+      ta.select();
+      try { document.execCommand('copy'); done(); } catch (e) {}
+    }
+  });
+})();
+</script>
+{% endif %}

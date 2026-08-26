@@ -223,7 +223,7 @@ if (isset($GLOBALS['db']) && is_object($GLOBALS['db'])) {
 	);
 	if (is_array($commRows)) {
 		foreach ($commRows as $commRow)
-			$my_comms[] = sb_account_punish_item($commProps, 'commslist');
+			$my_comms[] = sb_account_punish_item($commRow, 'commslist');
 	}
 }
 

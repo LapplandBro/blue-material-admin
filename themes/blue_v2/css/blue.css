@@ -931,22 +931,29 @@ div.opener5 {
   caret-color: var(--text);
   border-color: var(--accent);
 }
+/* Bootstrap 5: .form-check { padding-left:1.5em } + float:-1.5em —
+   ломает flex-выравнивание и даёт наложения полей после галочки. */
 .form-check {
   display: flex;
   align-items: center;
   gap: 0.45rem;
+  padding-left: 0;
+  margin-bottom: 0;
+  min-height: 1.35rem;
 }
+.form-check .form-check-input,
 .form-check-input {
   -webkit-appearance: none;
   appearance: none;
   --bs-form-check-bg-image: none;
+  float: none;
   display: inline-grid;
   place-content: center;
   width: 1.2rem;
   height: 1.2rem;
   margin: 0;
   flex-shrink: 0;
-  vertical-align: top;
+  vertical-align: middle;
   background-color: var(--bg-input);
   background-image: none;
   background-repeat: no-repeat;
@@ -987,7 +994,12 @@ div.opener5 {
   opacity: 0.45;
   cursor: not-allowed;
 }
-.form-check-label { color: var(--text); font-size: 0.88rem; }
+.form-check-label {
+  color: var(--text);
+  font-size: 0.88rem;
+  line-height: 1.2;
+  margin: 0;
+}
 
 .btn {
   --bs-btn-padding-x: 0.9rem;

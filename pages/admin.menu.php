@@ -4,20 +4,20 @@ global $userbank, $theme;
 
 echo '<div id="admin-page-content">';
 if(!$userbank->HasAccess(ADMIN_OWNER)) {
-	CreateRedBox("Доступ запрещен!", "У вас нету доступных привилегий на просмотр данной страницы.");
+	sb_forbidden_page(true);
 } else {
 	$menuAction = isset($_GET['o']) ? (string)$_GET['o'] : '';
 	$menuIdOk = isset($_GET['id']) && is_numeric($_GET['id']);
 	$doToggle = in_array($menuAction, array('del', 'on', 'off'), true);
 
 	if ($doToggle && !$menuIdOk) {
-		CreateRedBox("Ошибка", "Пункт меню не указан.");
+		sb_bad_request_page(true, 'Пункт меню не указан.');
 	} elseif ($menuAction !== '' && !empty($_GET['id']) && !is_numeric($_GET['id'])) {
-		CreateRedBox("Ошибка", "Пункт меню не указан.");
+		sb_bad_request_page(true, 'Пункт меню не указан.');
 	} elseif ($doToggle) {
 		$csrf = isset($_GET['sb_csrf']) ? $_GET['sb_csrf'] : '';
 		if (!function_exists('sb_csrf_validate') || !sb_csrf_validate($csrf)) {
-			CreateRedBox("Ошибка", "Неверный CSRF-токен. Обновите страницу и попробуйте снова.");
+			sb_csrf_fail_page(true);
 		} elseif ($menuAction === "del") {
 			$check_sys = $GLOBALS['db']->GetOne("SELECT system FROM `" . DB_PREFIX . "_menu` WHERE id = '".(int)$_GET['id']."'");
 			if($check_sys != "1"){
@@ -56,7 +56,7 @@ if(!$userbank->HasAccess(ADMIN_OWNER)) {
 		$csrf = isset($_POST['sb_csrf']) ? $_POST['sb_csrf'] : '';
 		if(!function_exists('sb_csrf_validate') || !sb_csrf_validate($csrf))
 		{
-			CreateRedBox("Ошибка", "Неверный CSRF-токен. Обновите страницу и попробуйте снова.");
+			sb_csrf_fail_page(true);
 		} else {
 			sb_menu_ensure_group_column();
 			$on_act = (isset($_POST['on_link']) && $_POST['on_link'] == "on" ? 1 : 0);

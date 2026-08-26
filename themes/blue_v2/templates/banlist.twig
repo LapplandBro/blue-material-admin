@@ -364,7 +364,7 @@
                       {% if not ban.unbanned and ban.view_unban %}{{ ban.unban_link|raw }}{% endif %}
                       {% if ban.view_delete %}{{ ban.delete_link|raw }}{% endif %}
                     {% else %}
-                      {{ ban.demo_link|raw }}
+                      {% if ban.demo_available %}{{ ban.demo_link|raw }}{% endif %}
                     {% endif %}
                   </nav>
                   {% if not hideadminname %}

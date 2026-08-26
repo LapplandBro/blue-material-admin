@@ -307,7 +307,7 @@ try
 			throw new Exception("Нет доступа к переопределениям.");
 		$csrf = isset($_POST['sb_csrf']) ? $_POST['sb_csrf'] : '';
 		if(!function_exists('sb_csrf_validate') || !sb_csrf_validate($csrf))
-			throw new Exception("Неверный CSRF-токен. Обновите страницу и попробуйте снова.");
+			throw new Exception('__SB_CSRF__');
 
 		// Handle old overrides, if there are any.
 		if(isset($_POST['override_id']))
@@ -362,6 +362,9 @@ try
 		$overrides_save_success = true;
 	}
 } catch (Exception $e) {
+	if ($e->getMessage() === '__SB_CSRF__') {
+		sb_csrf_fail_page(true);
+	}
 	$overrides_error = $e->getMessage();
 }
 
