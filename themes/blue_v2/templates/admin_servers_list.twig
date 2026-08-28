@@ -13,7 +13,7 @@
   <p class="form-note">Конфиг SourceMod (<code>databases.cfg</code>) — <a href="index.php?p=admin&amp;c=servers&amp;o=dbsetup">открыть по паролю</a></p>
   {% endif %}
   <div class="table-responsive table-cards-wrap">
-    <table class="table table-v2 table-cards">
+    <table class="table table-v2 table-cards admin-servers-table">
       <thead>
         <tr>
           <th class="text-center" style="width:6%;">ID</th>
@@ -26,12 +26,12 @@
       <tbody>
         {% for server in server_list|default([]) %}
         <script>xajax_ServerHostPlayers({{ server.sid }});</script>
-        <tr id="sid_{{ server.sid }}" class="banlist-row{% if server.enabled == 0 %} admin-row--off{% endif %}"{% if server.enabled == 0 %} title="Отключён"{% endif %}>
-          <td class="text-center" data-label="ID">{{ server.sid }}</td>
-          <td id="host_{{ server.sid }}" data-label="Сервер"><span class="text-muted">Загрузка…</span></td>
-          <td class="text-end" id="players_{{ server.sid }}" data-label="Игроки"><span class="text-muted">—</span></td>
-          <td class="text-center" data-label="Мод">{{ server.icon_html|raw }}</td>
-          <td class="text-end" data-label="Действия">
+        <tr id="sid_{{ server.sid }}" class="banlist-row list-compact-row admin-server-row{% if server.enabled == 0 %} admin-row--off{% endif %}"{% if server.enabled == 0 %} title="Отключён"{% endif %}>
+          <td class="text-center admin-server-td-id" data-label="ID">{{ server.sid }}</td>
+          <td class="admin-server-td-host" id="host_{{ server.sid }}" data-label="Сервер"><span class="text-muted">Загрузка…</span></td>
+          <td class="text-end admin-server-td-players" id="players_{{ server.sid }}" data-label="Игроки"><span class="text-muted">—</span></td>
+          <td class="text-center admin-server-td-mod" data-label="Мод">{{ server.icon_html|raw }}</td>
+          <td class="text-end admin-server-td-actions" data-label="Действия">
             <span class="admin-actions">
               {% if server.rcon_access %}
               <a class="btn btn-sm btn-outline-secondary" href="index.php?p=admin&amp;c=servers&amp;o=rcon&amp;id={{ server.sid }}">RCON</a>

@@ -635,6 +635,48 @@
 .recid-points-raw { font-size: 0.72rem; color: var(--muted); font-weight: 400; }
 .recid-score-note { color: #ffab91; font-size: 0.78rem; font-weight: 650; margin-top: 0.4rem; }
 
+.recid-top-table .recid-top-scores {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.35rem;
+}
+.recid-top-table .recid-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  min-width: 2.6rem;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  border: 1px solid var(--border-hairline);
+  line-height: 1.15;
+}
+.recid-top-table .recid-pill-k {
+  font-size: 0.65rem;
+  font-weight: 800;
+  opacity: 0.75;
+}
+.recid-top-table .recid-pill-ban {
+  color: #ffab91;
+  border-color: rgba(244, 67, 54, 0.35);
+  background: rgba(244, 67, 54, 0.1);
+}
+.recid-top-table .recid-pill-gag {
+  color: #ffcc80;
+  border-color: rgba(255, 152, 0, 0.35);
+  background: rgba(255, 152, 0, 0.1);
+}
+.recid-top-table .recid-pill-mute {
+  color: #81d4fa;
+  border-color: rgba(3, 155, 229, 0.35);
+  background: rgba(3, 155, 229, 0.1);
+}
+
 /* Parsec / recidivism tables — compact card rows (<992px) */
 .parsec-table .parsec-td-name,
 .recid-top-table .parsec-td-name { min-width: 0; }
@@ -644,140 +686,544 @@
 
 /* --bs-lg-max */
 @media (max-width: 991.98px) {
+  .parsec-panel .form-page-head,
+  .recid-panel .form-page-head {
+    padding-bottom: 0.35rem;
+  }
+
+  .parsec-panel .form-page-title,
+  .recid-panel .form-page-title {
+    font-size: 1rem;
+  }
+
+  .parsec-panel .form-page-lead,
+  .recid-panel .form-page-lead {
+    font-size: 0.72rem;
+  }
+
+  .parsec-note {
+    padding: 0.5rem 0.6rem;
+    font-size: 0.82rem;
+  }
+
+  .parsec-links {
+    font-size: 0.78rem;
+    line-height: 1.45;
+  }
+
+  .parsec-block {
+    padding: 0.5rem 0.6rem;
+  }
+
+  .parsec-block-title {
+    font-size: 0.88rem;
+    margin-bottom: 0.35rem;
+  }
+
+  .parsec-fp {
+    font-size: 0.78rem;
+    padding: 0.4rem 0.5rem;
+  }
+
+  .parsec-fp-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 0.45rem;
+    font-size: 0.72rem;
+  }
+
+  .parsec-api-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.45rem 0.55rem;
+    font-size: 0.78rem;
+  }
+
+  .parsec-api-num {
+    font-size: 1rem;
+  }
+
+  .parsec-write-bar {
+    gap: 0.55rem 0.75rem;
+  }
+
   .parsec-stats,
   .recid-scores {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.35rem;
+    margin-bottom: 0.65rem;
+  }
+
+  .recid-scores {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .parsec-stat,
   .recid-score-box {
-    padding: 0.45rem 0.4rem;
+    padding: 0.4rem 0.35rem;
+  }
+
+  .parsec-stat-label,
+  .recid-score-label {
+    font-size: 0.62rem;
   }
 
   .parsec-stat-value,
   .recid-score-value {
-    font-size: 1.05rem;
+    font-size: 0.95rem;
   }
 
-  .parsec-block {
-    padding: 0.55rem 0.65rem;
+  .parsec-stat-hint,
+  .recid-score-sub {
+    font-size: 0.62rem;
+    margin-top: 0.15rem;
   }
 
-  .parsec-table.table-cards > tbody > tr,
-  .recid-events.table-cards > tbody > tr,
-  .recid-top-table.table-cards > tbody > tr {
+  .recid-bar {
+    margin-top: 0.4rem;
+  }
+
+  .parsec-table.table-cards:not(.recid-top-table) > tbody > tr.list-compact-row,
+  .recid-events.table-cards > tbody > tr.list-compact-row,
+  .parsec-table-fp.table-cards > tbody > tr.list-compact-row {
     display: flex !important;
     flex-wrap: wrap;
     align-items: center;
-    gap: 0.2rem 0.45rem;
-    padding: 0.4rem 0.55rem;
-    margin-bottom: 0.32rem;
+    gap: 0.2rem 0.4rem;
+    padding: 0.4rem 0.5rem 0.38rem;
+    margin-bottom: 0.3rem;
     border: 1px solid var(--border-hairline);
     border-radius: var(--radius-sm);
     background: rgba(8, 15, 31, 0.55);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+    overflow: hidden;
   }
 
-  .parsec-table.table-cards > tbody > tr > td,
-  .recid-events.table-cards > tbody > tr > td,
-  .recid-top-table.table-cards > tbody > tr > td {
+  .parsec-table.table-cards > tbody > tr.list-compact-row > td,
+  .recid-events.table-cards > tbody > tr.list-compact-row > td,
+  .recid-top-table.table-cards > tbody > tr.list-compact-row > td,
+  .parsec-table-fp.table-cards > tbody > tr.list-compact-row > td {
     display: block !important;
     flex: 0 0 auto;
     width: auto !important;
     padding: 0 !important;
     border: 0 !important;
+    background: transparent !important;
+    text-align: left !important;
+    box-shadow: none !important;
+    --bs-table-accent-bg: transparent;
+    --bs-table-bg-type: initial;
+    --bs-table-color-type: initial;
   }
 
-  .parsec-table.table-cards > tbody > tr > td::before,
-  .recid-events.table-cards > tbody > tr > td::before,
-  .recid-top-table.table-cards > tbody > tr > td::before {
+  .parsec-table.table-cards > tbody > tr.list-compact-row > td::before,
+  .recid-events.table-cards > tbody > tr.list-compact-row > td::before,
+  .recid-top-table.table-cards > tbody > tr.list-compact-row > td::before,
+  .parsec-table-fp.table-cards > tbody > tr.list-compact-row > td::before {
     display: none !important;
     content: none !important;
   }
 
-  .parsec-table .parsec-td-name,
-  .recid-top-table .parsec-td-name {
-    flex: 1 1 8rem;
+  .recid-events .recid-td--optional {
+    display: none !important;
+  }
+
+  /* Связанные аккаунты (Parsec + Recidivism) */
+  .parsec-table.table-cards > tbody > tr.parsec-linked-row.list-compact-row {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-areas:
+      "name points ban"
+      "source source source"
+      "steam steam steam"
+      "actions actions actions";
+    gap: 0.25rem 0.35rem;
+    align-items: center;
+    padding: 0.48rem 0.55rem 0.42rem;
+  }
+
+  .parsec-linked-row .parsec-td-name {
+    grid-area: name;
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-  }
-
-  .parsec-table .parsec-td-steam,
-  .recid-top-table .parsec-td-steam {
-    flex: 1 1 100%;
-    font-size: 0.68rem;
-    order: 10;
-  }
-
-  .parsec-table .parsec-td-steam code,
-  .recid-top-table .parsec-td-steam code {
-    font-size: inherit;
-  }
-
-  .parsec-table .parsec-td-points,
-  .recid-events .parsec-td-points {
-    flex: 0 0 auto;
     font-size: 0.78rem;
+    font-weight: 650;
+    color: var(--text-heading);
   }
 
-  .recid-events .recid-td-date {
-    flex: 0 0 auto;
+  .parsec-linked-row .parsec-td-points {
+    grid-area: points;
+    justify-self: end;
+    font-size: 0.72rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    text-align: right !important;
+  }
+
+  .parsec-linked-row .parsec-td-ban {
+    grid-area: ban;
+    justify-self: end;
     font-size: 0.68rem;
+    text-align: right !important;
+  }
+
+  .parsec-linked-row .parsec-td-ban .parsec-badge {
+    font-size: 0.62rem;
+    padding: 0.06rem 0.35rem;
+  }
+
+  .parsec-linked-row .parsec-td-source {
+    grid-area: source;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.15rem 0.25rem;
+    min-width: 0;
+  }
+
+  .parsec-linked-row .parsec-chip {
+    font-size: 0.62rem;
+    padding: 0.05rem 0.35rem;
+  }
+
+  .parsec-linked-row .parsec-td-steam {
+    grid-area: steam;
+    min-width: 0;
+    font-size: 0.62rem;
     color: var(--muted);
   }
 
-  .recid-events .recid-td-reason {
-    flex: 1 1 100%;
+  .parsec-linked-row .parsec-td-steam code {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: inherit;
+  }
+
+  .parsec-linked-row .parsec-td-actions {
+    grid-area: actions;
+    padding-top: 0.36rem !important;
+    margin-top: 0.1rem;
+    border-top: 1px solid var(--border-hairline);
+  }
+
+  .parsec-linked-row .parsec-td-actions .admin-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.28rem;
+    width: 100%;
+  }
+
+  .parsec-linked-row .admin-action {
+    width: 100%;
+    min-height: 2rem;
+    font-size: 0.64rem;
+    padding: 0.2rem 0.3rem;
+    border-radius: var(--radius-sm);
+    box-sizing: border-box;
+  }
+
+  /* Инциденты */
+  .recid-events.table-cards > tbody > tr.recid-event-row.list-compact-row {
+    display: grid !important;
+    grid-template-columns: auto auto auto 1fr auto;
+    grid-template-areas:
+      "date track points len status"
+      "reason reason reason reason reason";
+    gap: 0.22rem 0.32rem;
+    align-items: center;
+    padding: 0.45rem 0.55rem 0.42rem;
+  }
+
+  .recid-event-row .recid-td-date {
+    grid-area: date;
+    font-size: 0.64rem;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .recid-event-row .recid-td-track {
+    grid-area: track;
+  }
+
+  .recid-event-row .recid-td-track .recid-track {
+    font-size: 0.62rem;
+    padding: 0.05rem 0.35rem;
+  }
+
+  .recid-event-row .parsec-td-points {
+    grid-area: points;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-align: right !important;
+  }
+
+  .recid-event-row .recid-points-raw {
+    display: none;
+  }
+
+  .recid-event-row .recid-td-len {
+    grid-area: len;
+    font-size: 0.66rem;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .recid-event-row .recid-td-status {
+    grid-area: status;
+    justify-self: end;
+    text-align: right !important;
+  }
+
+  .recid-event-row .recid-td-status .parsec-badge {
+    font-size: 0.62rem;
+    padding: 0.05rem 0.35rem;
+  }
+
+  .recid-event-row .recid-td-reason {
+    grid-area: reason;
+    font-size: 0.74rem;
+    line-height: 1.35;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    white-space: normal;
+    min-width: 0;
+  }
+
+  /* Топ по очкам — одна ячейка B/G/M, сетка 3×2 */
+  .recid-top-table.table-cards > tbody > tr.recid-top-row.list-compact-row {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "name total"
+      "scores scores"
+      "steam actions";
+    gap: 0.16rem 0.3rem;
+    align-items: center;
+    padding: 0.34rem 0.44rem 0.32rem;
+    margin-bottom: 0.2rem;
+    border: 1px solid var(--border-hairline);
+    border-radius: var(--radius-sm);
+    background: rgba(8, 15, 31, 0.55);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+    overflow: hidden;
+  }
+
+  .recid-top-table.table-cards > tbody > tr.recid-top-row > td {
+    display: block !important;
+    width: auto !important;
+    min-width: 0;
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    text-align: left !important;
+    box-shadow: none !important;
+    --bs-table-accent-bg: transparent;
+    --bs-table-bg-type: initial;
+    --bs-table-color-type: initial;
+  }
+
+  .recid-top-table.table-cards > tbody > tr.recid-top-row > td::before {
+    display: none !important;
+    content: none !important;
+  }
+
+  .recid-top-row .parsec-td-name {
+    grid-area: name;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     font-size: 0.76rem;
-    order: 8;
+    font-weight: 650;
+    color: var(--text-heading);
+    line-height: 1.15;
+  }
+
+  .recid-top-row .parsec-td-name .parsec-chip-esc {
+    font-size: 0.56rem;
+    margin-left: 0.16rem;
+  }
+
+  .recid-top-row .recid-td-total {
+    grid-area: total;
+    justify-self: end;
+    text-align: right !important;
+  }
+
+  .recid-top-row .recid-top-total {
+    font-size: 0.82rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-heading);
+  }
+
+  .recid-top-row .recid-td-scores {
+    grid-area: scores;
+    text-align: left !important;
+  }
+
+  .recid-top-row .recid-top-scores {
+    display: flex;
+    gap: 0.2rem;
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .recid-top-row .recid-pill {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 0.08rem 0.22rem;
+    font-size: 0.6rem;
+  }
+
+  .recid-top-row .recid-pill-k {
+    font-size: 0.52rem;
+  }
+
+  .recid-top-row .recid-td-date {
+    display: none !important;
+  }
+
+  .recid-top-row .parsec-td-steam {
+    grid-area: steam;
+    font-size: 0.56rem;
+    color: var(--muted);
+    line-height: 1.15;
+    overflow: hidden;
+  }
+
+  .recid-top-row .parsec-td-steam code {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: inherit;
+    color: inherit;
+    background: transparent;
+    border: 0;
+    padding: 0;
+  }
+
+  .recid-top-row .parsec-td-actions {
+    grid-area: actions;
+    text-align: right !important;
+  }
+
+  .recid-top-row .parsec-td-actions .admin-actions {
+    display: inline-flex;
+    flex-wrap: nowrap;
+    gap: 0.18rem;
+    justify-content: flex-end;
+    width: auto;
+    max-width: 100%;
+  }
+
+  .recid-top-row .admin-action {
+    flex: 0 1 auto;
+    min-width: 0;
+    min-height: 1.65rem;
+    padding: 0.1rem 0.32rem;
+    font-size: 0.58rem;
+    line-height: 1.1;
+    border-radius: var(--radius-sm);
+    white-space: nowrap;
+  }
+
+  /* Забаненные группы (Parsec) */
+  .parsec-fp-row .parsec-td-fp {
+    order: 0;
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  .parsec-fp-row .parsec-td-count {
+    order: 1;
+    flex: 0 0 auto;
+    font-size: 0.72rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .parsec-fp-row .parsec-td-duration {
+    order: 2;
+    flex: 0 0 auto;
+    font-size: 0.68rem;
+  }
+
+  .parsec-fp-row .parsec-td-when {
+    order: 3;
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: 0.64rem;
+    color: var(--muted);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
-  .recid-events .recid-td-len {
+  .parsec-fp-row .parsec-td-actions {
+    order: 4;
     flex: 0 0 auto;
-    font-size: 0.68rem;
+    margin-left: auto;
   }
 
-  .parsec-table .parsec-td-actions,
-  .recid-top-table .parsec-td-actions {
-    flex: 1 1 100%;
-    order: 11;
-  }
-
-  .parsec-table .parsec-td-actions .admin-actions,
-  .recid-top-table .parsec-td-actions .admin-actions {
-    flex-wrap: wrap;
-    gap: 0.2rem;
-  }
-
-  .parsec-table .admin-action,
-  .recid-top-table .admin-action {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 2.75rem;
-    font-size: 0.68rem;
-    padding: 0.35rem 0.55rem;
-  }
-
-  .parsec-table-fp .parsec-td-fp {
-    flex: 1 1 100%;
+  .parsec-fp-row .parsec-td-actions .admin-action {
+    min-height: 1.85rem;
+    font-size: 0.66rem;
+    padding: 0.18rem 0.45rem;
   }
 
   .parsec-fp-compact {
-    font-size: 0.72rem;
-    padding: 0.35rem 0.45rem;
+    font-size: 0.68rem;
+    padding: 0.28rem 0.38rem;
+    background: rgba(8, 15, 31, 0.72);
+    border-color: var(--border-hairline);
+  }
+
+  .parsec-fp-steams {
+    font-size: 0.62rem;
+    margin-top: 0.15rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Кнопки действий (linked-row и recid-top — свои сетки выше) */
+  .parsec-table:not(.recid-top-table) .parsec-td-actions .admin-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .parsec-table:not(.recid-top-table) .admin-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2rem;
+    font-size: 0.66rem;
+    padding: 0.2rem 0.45rem;
+    line-height: 1.2;
   }
 }
 /* --bs-sm-max */
 @media (max-width: 575.98px) {
-  .parsec-stats,
-  .recid-scores {
+  .parsec-stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .recid-scores {
+    grid-template-columns: 1fr;
+  }
+
+  .parsec-api-grid {
+    grid-template-columns: 1fr;
   }
 }
 

@@ -223,17 +223,17 @@
       </thead>
       <tbody>
         {% for la in linked_accounts %}
-        <tr>
+        <tr class="list-compact-row parsec-linked-row">
           <td class="parsec-td-name" data-label="Игрок">{% if la.name %}<strong>{{ la.name }}</strong>{% else %}<span class="parsec-muted">без ника</span>{% endif %}</td>
           <td class="parsec-td-steam" data-label="SteamID"><code>{{ la.authid }}</code></td>
-          <td data-label="Как связаны">
+          <td class="parsec-td-source" data-label="Как связаны">
             {% for chip in la.source_chips %}
             <span class="parsec-chip {{ chip.class }}">{{ chip.text }}</span>
             {% endfor %}
             {% if la.source_chips|length == 0 %}<span class="parsec-muted">—</span>{% endif %}
           </td>
           <td class="text-end parsec-td-points" data-label="Очки">{{ la.points_display }}</td>
-          <td data-label="Бан">{% if la.active_ban %}<span class="parsec-badge parsec-badge-danger">забанен</span>{% else %}<span class="parsec-muted">нет</span>{% endif %}</td>
+          <td class="parsec-td-ban" data-label="Бан">{% if la.active_ban %}<span class="parsec-badge parsec-badge-danger">забанен</span>{% else %}<span class="parsec-muted">нет</span>{% endif %}</td>
           <td class="text-end parsec-td-actions" data-label="Действия">
             <span class="admin-actions">
               <a class="admin-action" href="{{ la.parsec_url }}">Твинки</a>
@@ -274,17 +274,17 @@
         <tr><td colspan="5" class="parsec-muted" data-label="">Сейчас нет групп с пометкой «забанена».</td></tr>
         {% else %}
         {% for br in banned_rows %}
-        <tr>
+        <tr class="list-compact-row parsec-fp-row">
           <td class="parsec-td-fp" data-label="Отпечаток ПК">
             <div class="parsec-fp parsec-fp-compact" title="{{ br.fingerprint }}">{{ br.fingerprint_fmt }}</div>
             {% if br.steams_preview %}
             <div class="parsec-fp-steams parsec-muted">{{ br.steams_preview }}</div>
             {% endif %}
           </td>
-          <td class="text-end" data-label="Аккаунтов">{{ br.steam_count }}</td>
-          <td data-label="Срок">{{ br.banned_duration_fmt }}</td>
-          <td data-label="Когда">{{ br.banned_at_fmt }}</td>
-          <td class="text-end" data-label="Действия"><a class="btn btn-outline-secondary btn-sm" href="{{ br.open_url }}">Открыть</a></td>
+          <td class="text-end parsec-td-count" data-label="Аккаунтов">{{ br.steam_count }}</td>
+          <td class="parsec-td-duration" data-label="Срок">{{ br.banned_duration_fmt }}</td>
+          <td class="parsec-td-when" data-label="Когда">{{ br.banned_at_fmt }}</td>
+          <td class="text-end parsec-td-actions" data-label="Действия"><a class="admin-action" href="{{ br.open_url }}">Открыть</a></td>
         </tr>
         {% endfor %}
         {% endif %}

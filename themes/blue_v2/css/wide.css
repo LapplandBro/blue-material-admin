@@ -45,6 +45,15 @@
     padding: 1.05rem 1.45rem 1.65rem;
   }
 
+  .app-footer {
+    font-size: 0.84rem;
+    padding: 0.95rem 1.45rem 1.15rem;
+  }
+
+  .app-footer-nav {
+    max-width: 52rem;
+  }
+
   .panel,
   .form-page,
   .admin-page-content {
@@ -64,6 +73,18 @@
 
   .app-content {
     padding: 1.15rem 1.65rem 1.85rem;
+  }
+
+  .banlist-chrome,
+  .commslist-chrome,
+  .servers-head {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+
+  .servers-list-head,
+  .servers-toggle {
+    grid-template-columns: 2.6rem 2.6rem 2.6rem minmax(0, 1fr) 6rem 20% 1.75rem;
   }
 
   .banlist-facts,
@@ -89,6 +110,12 @@
 
   .dash-feeds--3 {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .dash-feed-list {
+    max-height: 22rem;
+    overflow-y: auto;
   }
 }
 
@@ -106,6 +133,11 @@
     min-height: 56px;
   }
 
+  .servers-list-head,
+  .servers-toggle {
+    grid-template-columns: 2.75rem 2.75rem 2.75rem minmax(0, 1fr) 6.5rem 18% 1.85rem;
+  }
+
   .banlist-facts,
   .commslist-facts {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -119,6 +151,10 @@
 
   .dash-stats {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .dash-prose table {
+    font-size: 0.88rem;
   }
 }
 
@@ -142,6 +178,11 @@
     font-size: 15.5px;
   }
 
+  .servers-list-head,
+  .servers-toggle {
+    grid-template-columns: 2.85rem 2.85rem 2.85rem minmax(0, 1fr) 7rem 16% 2rem;
+  }
+
   .banlist-facts,
   .commslist-facts {
     column-gap: 2.75rem;
@@ -149,5 +190,16 @@
 
   .app-content {
     padding: 1.35rem 2rem 2.1rem;
+  }
+
+  .app-footer {
+    font-size: 0.9rem;
+    padding: 1.05rem 2rem 1.35rem;
+  }
+
+  .topbar {
+    min-height: 58px;
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
   }
 }

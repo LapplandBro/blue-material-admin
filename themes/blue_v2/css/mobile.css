@@ -82,9 +82,14 @@
   }
 
   html.sidebar-off .sidebar {
-    transform: translateX(calc(-1 * var(--sidebar-drawer-width) - 4px));
+    transform: translateX(-100%);
     box-shadow: none;
     pointer-events: none !important;
+    visibility: hidden;
+  }
+
+  html:not(.sidebar-off) .sidebar {
+    visibility: visible;
   }
 
   .sidebar-nav {
@@ -348,11 +353,11 @@
     box-sizing: border-box;
   }
 
-  .table-cards > tbody > tr:not(.banlist-detail-row):not(.commslist-detail):not(.admin-detail-row):not(.servers-detail-row) > td:last-child {
+  .table-cards > tbody > tr:not(.banlist-detail-row):not(.commslist-detail):not(.admin-detail-row):not(.servers-detail-row):not(.list-compact-row) > td:last-child {
     border-bottom: 0;
   }
 
-  .table-cards > tbody > tr:not(.banlist-detail-row):not(.commslist-detail):not(.admin-detail-row):not(.servers-detail-row) > td::before {
+  .table-cards > tbody > tr:not(.banlist-detail-row):not(.commslist-detail):not(.admin-detail-row):not(.servers-detail-row):not(.list-compact-row) > td::before {
     content: attr(data-label);
     flex: 0 0 38%;
     max-width: 9.5rem;
@@ -365,18 +370,18 @@
     padding-top: 0.12rem;
   }
 
-  .table-cards > tbody > tr:not(.banlist-detail-row):not(.commslist-detail):not(.admin-detail-row):not(.servers-detail-row) > td[data-label=""]:only-child {
+  .table-cards > tbody > tr:not(.banlist-detail-row):not(.commslist-detail):not(.admin-detail-row):not(.servers-detail-row):not(.list-compact-row) > td[data-label=""]:only-child {
     justify-content: center;
     text-align: center;
     border-bottom: 0;
   }
 
-  .table-cards > tbody > tr:not(.banlist-detail-row):not(.commslist-detail):not(.admin-detail-row):not(.servers-detail-row) > td[data-label=""]::before,
-  .table-cards > tbody > tr:not(.banlist-detail-row):not(.commslist-detail):not(.admin-detail-row):not(.servers-detail-row) > td:not([data-label])::before {
+  .table-cards > tbody > tr:not(.banlist-detail-row):not(.commslist-detail):not(.admin-detail-row):not(.servers-detail-row):not(.list-compact-row) > td[data-label=""]::before,
+  .table-cards > tbody > tr:not(.banlist-detail-row):not(.commslist-detail):not(.admin-detail-row):not(.servers-detail-row):not(.list-compact-row) > td:not([data-label])::before {
     display: none;
   }
 
-  .table-cards > tbody > tr:not(.banlist-detail-row):not(.commslist-detail):not(.admin-detail-row):not(.servers-detail-row) > td[data-label=""] {
+  .table-cards > tbody > tr:not(.banlist-detail-row):not(.commslist-detail):not(.admin-detail-row):not(.servers-detail-row):not(.list-compact-row) > td[data-label=""] {
     justify-content: flex-start;
     border-bottom: 1px solid rgba(61, 96, 127, 0.22);
   }
@@ -409,9 +414,21 @@
     display: none;
   }
 
+  /* Bootstrap .table-striped рисует ячейки через inset box-shadow — ломает
+     скругления кнопок и бейджей внутри flex-карточек. */
+  .table-cards > tbody > tr.list-compact-row > td,
+  .table-cards > tbody > tr.list-compact-row > th {
+    box-shadow: none !important;
+    --bs-table-accent-bg: transparent;
+    --bs-table-bg-type: initial;
+    --bs-table-color-type: initial;
+    --bs-table-striped-bg: transparent;
+  }
+
   /* Banlist / commslist — одна строка (как adminlist); scoped via .list-compact-row */
   .table-cards.banlist-table > tbody > tr.list-compact-row,
-  .table-cards.commslist-table > tbody > tr.list-compact-row {
+  .table-cards.commslist-table > tbody > tr.list-compact-row,
+  .table-cards.admin-servers-table > tbody > tr.list-compact-row {
     display: flex !important;
     flex-wrap: nowrap;
     align-items: center;
@@ -449,6 +466,100 @@
     width: 3px;
     background: var(--ok);
     pointer-events: none;
+  }
+
+  /* Admin → servers: компактная строка вместо label/value карточки */
+  .table-cards.admin-servers-table > tbody > tr.list-compact-row {
+    flex-wrap: wrap;
+    align-items: center;
+    padding: 0.48rem 0.55rem 0.4rem;
+  }
+
+  .table-cards.admin-servers-table > tbody > tr.list-compact-row > td {
+    display: block !important;
+    flex: 0 0 auto;
+    width: auto !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    text-align: left !important;
+  }
+
+  .table-cards.admin-servers-table > tbody > tr.list-compact-row > td::before {
+    display: none !important;
+    content: none !important;
+  }
+
+  .table-cards.admin-servers-table > tbody > tr.list-compact-row > td.admin-server-td-id {
+    order: 0;
+    flex: 0 0 auto;
+    min-width: 1.35rem;
+    font-size: 0.62rem;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .table-cards.admin-servers-table > tbody > tr.list-compact-row > td.admin-server-td-mod {
+    order: 1;
+    flex: 0 0 1.35rem;
+  }
+
+  .table-cards.admin-servers-table > tbody > tr.list-compact-row > td.admin-server-td-mod .sb-ico,
+  .table-cards.admin-servers-table > tbody > tr.list-compact-row > td.admin-server-td-mod img {
+    width: 18px;
+    height: 18px;
+    max-width: 18px;
+    max-height: 18px;
+  }
+
+  .table-cards.admin-servers-table > tbody > tr.list-compact-row > td.admin-server-td-host {
+    order: 2;
+    flex: 1 1 0;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.76rem;
+    font-weight: 650;
+    color: var(--text-heading);
+  }
+
+  .table-cards.admin-servers-table > tbody > tr.list-compact-row > td.admin-server-td-players {
+    order: 3;
+    flex: 0 0 auto;
+    font-size: 0.66rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    padding: 0.06rem 0.38rem !important;
+    border-radius: 999px;
+    background: rgba(61, 214, 140, 0.12);
+    color: var(--ok);
+    text-align: center !important;
+    white-space: nowrap;
+  }
+
+  .table-cards.admin-servers-table > tbody > tr.list-compact-row > td.admin-server-td-actions {
+    order: 4;
+    flex: 1 1 100%;
+    padding-top: 0.38rem !important;
+    margin-top: 0.2rem;
+    border-top: 1px solid var(--border-hairline);
+  }
+
+  .table-cards.admin-servers-table .admin-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    width: 100%;
+    max-width: none;
+    justify-content: flex-start;
+  }
+
+  .table-cards.admin-servers-table .admin-actions .btn {
+    font-size: 0.68rem;
+    padding: 0.22rem 0.5rem;
+    min-height: 2rem;
+    line-height: 1.2;
   }
 
   .table-cards.banlist-table > tbody > tr.list-compact-row > td,

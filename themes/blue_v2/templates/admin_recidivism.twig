@@ -138,17 +138,17 @@
       </thead>
       <tbody>
         {% for la in linked_accounts %}
-        <tr>
+        <tr class="list-compact-row parsec-linked-row">
           <td class="parsec-td-name" data-label="Игрок">{% if la.name %}<strong>{{ la.name }}</strong>{% else %}<span class="parsec-muted">без ника</span>{% endif %}</td>
           <td class="parsec-td-steam" data-label="SteamID"><code>{{ la.authid }}</code></td>
-          <td data-label="Откуда связь">
+          <td class="parsec-td-source" data-label="Откуда связь">
             {% for chip in la.source_chips %}
             <span class="parsec-chip {{ chip.class }}">{{ chip.text }}</span>
             {% endfor %}
             {% if la.source_chips|length == 0 %}<span class="parsec-muted">—</span>{% endif %}
           </td>
           <td class="text-end parsec-td-points" data-label="Очки">{{ la.points_display }}</td>
-          <td data-label="Бан">{% if la.active_ban %}<span class="parsec-badge parsec-badge-danger">забанен</span>{% else %}<span class="parsec-muted">нет</span>{% endif %}</td>
+          <td class="parsec-td-ban" data-label="Бан">{% if la.active_ban %}<span class="parsec-badge parsec-badge-danger">забанен</span>{% else %}<span class="parsec-muted">нет</span>{% endif %}</td>
           <td class="text-end parsec-td-actions" data-label="Действия">
             <span class="admin-actions">
               <a class="admin-action" href="{{ la.view_url }}">Нарушения</a>
@@ -191,25 +191,25 @@
         </tr>
         {% else %}
         {% for ev in events %}
-        <tr{% if ev.is_revoked %} class="recid-row-revoked"{% endif %}>
+        <tr class="list-compact-row recid-event-row{% if ev.is_revoked %} recid-row-revoked{% endif %}">
           <td class="recid-td-date" data-label="Когда">{{ ev.created_fmt }}</td>
-          <td data-label="Ветка"><span class="recid-track {{ ev.track_class }}">{{ ev.track_label }}</span></td>
+          <td class="recid-td-track" data-label="Ветка"><span class="recid-track {{ ev.track_class }}">{{ ev.track_label }}</span></td>
           <td class="text-end parsec-td-points" data-label="Очки" title="С учётом «съедания» со временем (вес {{ ev.decay_weight }})">
             <strong>{{ ev.points_display }}</strong>
             {% if ev.has_decay %}<div class="recid-points-raw">из {{ ev.points_raw_total }}</div>{% endif %}
           </td>
           <td class="recid-td-len" data-label="Срок">{{ ev.length_fmt }}</td>
-          <td data-label="Категория">{{ ev.category_label }}</td>
+          <td class="recid-td-cat recid-td--optional" data-label="Категория">{{ ev.category_label }}</td>
           <td class="recid-td-reason" data-label="Причина">{{ ev.reason }}</td>
-          <td data-label="Админ">{{ ev.admin_display }}</td>
-          <td data-label="Источник">
+          <td class="recid-td-admin recid-td--optional" data-label="Админ">{{ ev.admin_display }}</td>
+          <td class="recid-td-source recid-td--optional" data-label="Источник">
             {% if ev.source_link %}
             <a href="{{ ev.source_link }}">{{ ev.source_label }}{% if ev.ma_bid %} #{{ ev.ma_bid }}{% endif %}</a>
             {% else %}
             {{ ev.source_label }}{% if ev.ma_bid %} #{{ ev.ma_bid }}{% endif %}
             {% endif %}
           </td>
-          <td data-label="Статус">
+          <td class="recid-td-status" data-label="Статус">
             {% if ev.is_revoked %}
             <span class="parsec-badge parsec-badge-muted">Снято</span>
             {% else %}
@@ -237,10 +237,8 @@
           <th>Игрок</th>
           <th>SteamID</th>
           <th class="text-end">Всего</th>
-          <th class="text-end">Бан</th>
-          <th class="text-end">Гаг</th>
-          <th class="text-end">Мут</th>
-          <th class="text-end">Обновлено</th>
+          <th colspan="3" class="text-end recid-th-scores">Бан · Гаг · Мут</th>
+          <th class="text-end recid-th-updated">Обновлено</th>
           <th class="text-end"></th>
         </tr>
       </thead>
@@ -251,17 +249,21 @@
         </tr>
         {% else %}
         {% for rp in recent_players %}
-        <tr>
-          <td data-label="Игрок">
+        <tr class="list-compact-row recid-top-row">
+          <td class="parsec-td-name" data-label="Игрок">
             {% if rp.name %}<strong>{{ rp.name }}</strong>{% else %}<span class="parsec-muted">без ника</span>{% endif %}
             {% if rp.has_escalate %}<span class="parsec-chip parsec-chip-esc" title="Уже был автоперм">автоперм</span>{% endif %}
           </td>
           <td class="parsec-td-steam" data-label="SteamID"><code>{{ rp.authid }}</code></td>
-          <td class="text-end" data-label="Всего"><strong>{{ rp.points_total }}</strong></td>
-          <td class="text-end parsec-td-points" data-label="Бан">{{ rp.points_ban }}</td>
-          <td class="text-end parsec-td-points" data-label="Гаг">{{ rp.points_gag }}</td>
-          <td class="text-end parsec-td-points" data-label="Мут">{{ rp.points_mute }}</td>
-          <td class="text-end recid-td-date" data-label="Обновлено">{{ rp.updated_fmt }}</td>
+          <td class="text-end recid-td-total" data-label="Всего"><strong class="recid-top-total">{{ rp.points_total }}</strong></td>
+          <td class="recid-td-scores" colspan="3" data-label="Очки">
+            <div class="recid-top-scores">
+              <span class="recid-pill recid-pill-ban" title="Бан"><span class="recid-pill-k" aria-hidden="true">B</span>{{ rp.points_ban }}</span>
+              <span class="recid-pill recid-pill-gag" title="Гаг"><span class="recid-pill-k" aria-hidden="true">G</span>{{ rp.points_gag }}</span>
+              <span class="recid-pill recid-pill-mute" title="Мут"><span class="recid-pill-k" aria-hidden="true">M</span>{{ rp.points_mute }}</span>
+            </div>
+          </td>
+          <td class="text-end recid-td-date recid-td--optional" data-label="Обновлено">{{ rp.updated_fmt }}</td>
           <td class="text-end parsec-td-actions" data-label="Действия">
             <span class="admin-actions">
               <a class="admin-action" href="{{ rp.view_url }}">Нарушения</a>

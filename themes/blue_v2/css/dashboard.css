@@ -448,9 +448,15 @@
   grid-template-columns: 1fr;
   gap: 1rem;
   align-items: stretch;
+  width: 100%;
+  min-width: 0;
 }
 .dash-feeds--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .dash-feeds--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.dash-feeds > .dash-feed,
+.dash-feeds > .panel {
+  min-width: 0;
+}
 
 .dash-feed-row {
   display: grid;
