@@ -101,12 +101,6 @@ function BuildSubMenu()
 {
 	if (function_exists('sb_ui_v2_enabled') && sb_ui_v2_enabled())
 		return;
-	global $theme;
-	$theme->left_delimiter = '<!--{';
-	$theme->right_delimiter = '}-->';
-	$theme->display('submenu.tpl');
-	$theme->left_delimiter = '{';
-	$theme->right_delimiter = '}';
 }
 
 /**
@@ -131,9 +125,6 @@ function BuildContHeader()
 		$page = "<b>".$GLOBALS['pagetitle']."</b>";
 	}
 
-	$theme->assign('main_title', isset($page)?$page:'');
-	$theme->assign('xleb', $GLOBALS['config']['page.xleb']);
-	$theme->display('content_header.tpl');
 }
 
 
@@ -1434,7 +1425,7 @@ function sb_render_developer_debug_panel($userbank)
 	echo '<div class="card" style="border:1px solid rgba(255,193,7,.45);">';
 	echo '<div class="card-header"><h2>Режим отладки <small>только владелец · секреты скрыты</small></h2></div>';
 	echo '<div class="card-body card-padding">';
-	echo '<p class="m-b-10">Включены PHP <code>display_errors</code> и принудительная компиляция Smarty. ';
+	echo '<p class="m-b-10">Включён PHP <code>display_errors</code>. ';
 	echo 'Отключить: уберите <code>define(\'DEVELOPER_MODE\', true);</code> из <code>config.php</code>.</p>';
 	$dump('Сводка', $meta);
 	$dump('Текущий админ (без паролей)', $safeUser);
@@ -1524,7 +1515,26 @@ function CreateGreenBox($title, $contnet)
 */
 function CreateRedBox($title, $content)
 {
-	$text = '<div class="alert alert-danger" id="msg-red-debug" role="alert"><h4>' . $title .'</h4><span class="p-l-10">' . $content . '</span></div>';
+	$title = (string)$title;
+	$content = (string)$content;
+	if (function_exists('sb_error_page') && function_exists('sb_ui_v2_enabled') && sb_ui_v2_enabled()) {
+		$primary = function_exists('sb_url') ? sb_url('admin') : 'index.php?p=admin';
+		if (isset($_GET['p']) && $_GET['p'] === 'admin' && !empty($_GET['c']) && function_exists('sb_url'))
+			$primary = sb_url('admin', array('c' => preg_replace('/[^a-zA-Z0-9_]/', '', (string)$_GET['c'])));
+		sb_error_page('generic', array(
+			'die' => true,
+			'http' => 0,
+			'title' => $title,
+			'lead' => $content,
+			'hint' => '',
+			'primary_label' => 'К разделу',
+			'primary_url' => $primary,
+			'primary_reload' => false,
+			'show_back' => true,
+		));
+		return;
+	}
+	$text = '<div class="alert alert-danger" id="msg-red-debug" role="alert"><h4>' . htmlspecialchars($title, ENT_QUOTES, 'UTF-8') . '</h4><span class="p-l-10">' . htmlspecialchars($content, ENT_QUOTES, 'UTF-8') . '</span></div>';
 	echo $text;
 }
 
@@ -1634,6 +1644,17 @@ function sb_error_page($kind = 'generic', $opts = array())
 		'back_url' => isset($p['back_url']) ? (string)$p['back_url'] : (isset($opts['back_url']) ? (string)$opts['back_url'] : ''),
 	);
 
+	// В админке «На главную» бессмысленно — возвращаем в текущий раздел (?c=).
+	// login_required / session — оставляем «Войти».
+	if (isset($_GET['p']) && $_GET['p'] === 'admin' && !isset($opts['primary_url'])
+		&& !in_array($kind, array('login_required', 'session'), true)
+		&& function_exists('sb_url')) {
+		$c = isset($_GET['c']) ? preg_replace('/[^a-zA-Z0-9_]/', '', (string)$_GET['c']) : '';
+		$vars['primary_url'] = ($c !== '') ? sb_url('admin', array('c' => $c)) : sb_url('admin');
+		$vars['err_primary_label'] = 'К разделу';
+		$vars['err_primary_reload'] = false;
+	}
+
 	if ($http > 0 && !headers_sent())
 		http_response_code($http);
 
@@ -1641,16 +1662,28 @@ function sb_error_page($kind = 'generic', $opts = array())
 	if (function_exists('sb_ui_v2_fragment'))
 		$html = sb_ui_v2_fragment('error_page.twig', $vars);
 	if (!is_string($html) || trim($html) === '') {
-		$title = htmlspecialchars($vars['err_title'], ENT_QUOTES, 'UTF-8');
-		$lead = htmlspecialchars($vars['err_lead'], ENT_QUOTES, 'UTF-8');
-		$hint = htmlspecialchars($vars['err_hint'], ENT_QUOTES, 'UTF-8');
+		$titleEsc = htmlspecialchars($vars['err_title'], ENT_QUOTES, 'UTF-8');
+		$leadEsc = htmlspecialchars($vars['err_lead'], ENT_QUOTES, 'UTF-8');
+		$hintEsc = htmlspecialchars($vars['err_hint'], ENT_QUOTES, 'UTF-8');
 		$html = '<div class="form-page sb-error-page" role="alert"><header class="form-page-head">'
-			. '<p class="form-page-kicker">Blue Admin</p><h2 class="form-page-title">' . $title . '</h2>'
-			. '<p class="form-page-lead">' . $lead . '</p></header><section class="sb-error-page__panel">'
-			. ($hint !== '' ? '<p class="sb-error-page__hint">' . $hint . '</p>' : '')
+			. '<p class="form-page-kicker">Blue Admin</p><h2 class="form-page-title">' . $titleEsc . '</h2>'
+			. '<p class="form-page-lead">' . $leadEsc . '</p></header><section class="sb-error-page__panel">'
+			. ($hintEsc !== '' ? '<p class="sb-error-page__hint">' . $hintEsc . '</p>' : '')
 			. '<div class="form-actions"><button type="button" class="btn btn-accent" onclick="window.location.reload()">Обновить</button></div>'
 			. '</section></div>';
 	}
+
+	// die() внутри include (админка) обрывает page-builder до wrap — отдаём полный layout с CSS.
+	if ($die && function_exists('sb_ui_v2_enabled') && sb_ui_v2_enabled() && function_exists('sb_ui_v2_render')) {
+		$renderVars = $vars;
+		$renderVars['title'] = $vars['err_title'] . ' — Blue Admin';
+		$renderVars['nav_active'] = isset($_GET['p']) ? (string)$_GET['p'] : '';
+		if ($renderVars['nav_active'] === '')
+			$renderVars['nav_active'] = 'home';
+		sb_ui_v2_render('error_full.twig', $renderVars);
+		exit;
+	}
+
 	echo $html;
 	if ($die) {
 		if (function_exists('PageDie'))
@@ -2795,18 +2828,6 @@ function sb_redirect($url, $code = 303)
 		@ob_end_clean();
 	header('Location: ' . sb_abs_url($url), true, (int)$code);
 	exit;
-}
-
-/** Оставить URL без преобразования в ЧПУ. */
-function sb_legacy_to_pretty_url($url)
-{
-	return $url;
-}
-
-/** Smarty outputfilter отключён: вывод остаётся без преобразования в ЧПУ. */
-function sb_smarty_pretty_urls($tpl_output, &$smarty)
-{
-	return $tpl_output;
 }
 
 /** Отдать статическую errors/404.html с HTTP 404 и завершить скрипт. */

@@ -65,7 +65,6 @@ allow_url_fopen = On  # запасной путь к Steam API без curl
 
 # Обязательно writable:
 demos/
-themes_c/
 config.php          # или writable корень сайта, чтобы создать файл
 data/               # data/db.php, служебное
 

@@ -285,12 +285,3 @@ if ($v2) {
 	));
 	return;
 }
-
-$theme->left_delimiter = "-{";
-$theme->right_delimiter = "}-";
-$theme->display('page_youraccount.tpl');
-$theme->left_delimiter = "{";
-$theme->right_delimiter = "}";
-if ($totp_msg !== '' || $totp_setup_secret !== '' || $totp_recovery_once) {
-	echo '<script>if(typeof SwapPane==="function"){SwapPane(5);}else if(window.location){window.location.hash="^5";}</script>';
-}

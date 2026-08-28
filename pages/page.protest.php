@@ -302,15 +302,3 @@ if (sb_protest_v2_on()) {
 	));
 	return;
 }
-
-$theme->display('page_protestban.tpl');
-?>
-<script type="text/javascript">
-function changeType(szListValue)
-{
-	$('steam.row').style.display = (szListValue == "0" ? "" : "none");
-	$('ip.row').style.display    = (szListValue == "1" ? "" : "none");
-}
-$('Type').options[<?php echo $Type; ?>].selected = true;
-changeType(<?php echo $Type; ?>);
-</script>

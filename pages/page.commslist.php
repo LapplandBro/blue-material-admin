@@ -936,4 +936,3 @@ if (function_exists('sb_ui_v2_enabled') && sb_ui_v2_enabled()) {
 	));
 	return;
 }
-$theme->display('page_comms.tpl');

@@ -1527,10 +1527,35 @@ function sbCsrfExpired(msg) {
 		sbForceGetReload();
 }
 
+/** Сессия уже истекла — только перезагрузка, без «Продлить». */
+function sbSessionExpired(msg) {
+	msg = msg || "Сеанс формы завершён. Откройте страницу заново, затем повторите действие.";
+	if (window.SB_SESSION) {
+		window.SB_SESSION._expired = true;
+		window.SB_SESSION._warned = true;
+	}
+	if (sbSessionSchedule._timer)
+		clearTimeout(sbSessionSchedule._timer);
+	if (sbSessionSchedule._ping)
+		clearTimeout(sbSessionSchedule._ping);
+	if (sbSessionSchedule._expire)
+		clearTimeout(sbSessionSchedule._expire);
+	sbCsrfExpired(msg);
+}
+
 /** Применить CSRF + таймеры сессии после PingSession / загрузки. */
 function sbSessionApply(meta) {
-	if (!meta || meta.ok === false)
+	if (!meta || meta.ok === false) {
+		if (meta && meta.expired)
+			sbSessionExpired();
 		return;
+	}
+	if (window.SB_SESSION && window.SB_SESSION._expired)
+		return;
+	if (typeof meta.expires_in === "number" && meta.expires_in <= 0) {
+		sbSessionExpired();
+		return;
+	}
 	if (meta.csrf) {
 		window.SB_CSRF = meta.csrf;
 		try {
@@ -1546,10 +1571,19 @@ function sbSessionApply(meta) {
 	if (typeof meta.server_now === "number") window.SB_SESSION.server_now = meta.server_now;
 	window.SB_SESSION._localDeadline = Date.now() + (Math.max(0, Number(meta.expires_in) || 0) * 1000);
 	window.SB_SESSION._warned = false;
+	window.SB_SESSION._expired = false;
 	sbSessionSchedule();
 }
 
 function sbSessionExtend() {
+	if (window.SB_SESSION && window.SB_SESSION._expired) {
+		sbSessionExpired();
+		return;
+	}
+	if (window.SB_SESSION && window.SB_SESSION._localDeadline && window.SB_SESSION._localDeadline <= Date.now()) {
+		sbSessionExpired();
+		return;
+	}
 	if (typeof xajax_PingSession === "function") {
 		xajax_PingSession();
 		return;
@@ -1562,6 +1596,12 @@ function sbSessionExtend() {
 }
 
 function sbSessionWarn() {
+	if (window.SB_SESSION && window.SB_SESSION._expired)
+		return;
+	if (window.SB_SESSION && window.SB_SESSION._localDeadline && window.SB_SESSION._localDeadline <= Date.now()) {
+		sbSessionExpired();
+		return;
+	}
 	if (window.SB_SESSION && window.SB_SESSION._warned)
 		return;
 	if (window.SB_SESSION)
@@ -1598,6 +1638,10 @@ function sbSessionSchedule() {
 		clearTimeout(sbSessionSchedule._timer);
 	if (sbSessionSchedule._ping)
 		clearTimeout(sbSessionSchedule._ping);
+	if (sbSessionSchedule._expire)
+		clearTimeout(sbSessionSchedule._expire);
+	if (window.SB_SESSION && window.SB_SESSION._expired)
+		return;
 	var s = window.SB_SESSION || {};
 	var deadline = s._localDeadline;
 	if (!deadline && typeof s.expires_in === "number")
@@ -1605,9 +1649,19 @@ function sbSessionSchedule() {
 	if (!deadline)
 		return;
 	var warnBefore = Math.max(60, Number(s.warn_before) || 180) * 1000;
-	var untilWarn = deadline - Date.now() - warnBefore;
+	var remaining = deadline - Date.now();
 	var untilPing = Math.max(60000, (Number(s.ttl) || 1440) * 1000 / 3);
 
+	if (remaining <= 0) {
+		sbSessionExpired();
+		return;
+	}
+
+	sbSessionSchedule._expire = setTimeout(function () {
+		sbSessionExpired();
+	}, remaining);
+
+	var untilWarn = remaining - warnBefore;
 	if (untilWarn <= 0)
 		sbSessionWarn();
 	else {
@@ -1616,13 +1670,16 @@ function sbSessionSchedule() {
 		}, untilWarn);
 	}
 
-	// Тихий keepalive, пока вкладка видима — продлевает PHP-сессию и CSRF.
-	sbSessionSchedule._ping = setTimeout(function () {
-		if (document.hidden)
-			sbSessionSchedule();
-		else
-			sbSessionExtend();
-	}, untilPing);
+	// Тихий keepalive только до окна предупреждения — иначе «Продлить» бессмысленно.
+	if (remaining > warnBefore) {
+		var pingIn = Math.min(untilPing, remaining - warnBefore);
+		sbSessionSchedule._ping = setTimeout(function () {
+			if (document.hidden)
+				sbSessionSchedule();
+			else
+				sbSessionExtend();
+		}, pingIn);
+	}
 }
 
 (function sbSessionBoot() {
@@ -1643,11 +1700,15 @@ function sbSessionSchedule() {
 	else
 		start();
 	document.addEventListener("visibilitychange", function () {
-		if (!document.hidden && window.SB_SESSION && window.SB_SESSION._localDeadline) {
-			var left = window.SB_SESSION._localDeadline - Date.now();
-			if (left < (Math.max(60, Number(window.SB_SESSION.warn_before) || 180) * 1000))
-				sbSessionExtend();
-		}
+		if (document.hidden || !window.SB_SESSION || !window.SB_SESSION._localDeadline)
+			return;
+		if (window.SB_SESSION._expired)
+			return;
+		var left = window.SB_SESSION._localDeadline - Date.now();
+		if (left <= 0)
+			sbSessionExpired();
+		else if (left < (Math.max(60, Number(window.SB_SESSION.warn_before) || 180) * 1000))
+			sbSessionWarn();
 	});
 })();
 

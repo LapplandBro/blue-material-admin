@@ -730,8 +730,6 @@ if(!@file_exists(SB_THEMES . SB_THEME . "/theme.conf.php"))
 	die("<b>Ошибка шаблона</b>: Шаблон повреждён. Отсутствует файл <b>theme.conf.php</b>.");
 
 $theme = new CThemeBag();
-$theme->compile_id			= 	SB_THEME;
-$theme->template_dir 		= 	SB_THEMES . SB_THEME;
 
 if (is_readable(INCLUDES_PATH . '/CTabsMenu.php'))
 	require_once INCLUDES_PATH . '/CTabsMenu.php';

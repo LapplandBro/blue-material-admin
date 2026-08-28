@@ -359,5 +359,3 @@ if (sb_submit_v2_on()) {
 	));
 	return;
 }
-
-$theme->display('page_submitban.tpl');

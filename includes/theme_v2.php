@@ -456,7 +456,7 @@ function sb_ui_v2_render($template, array $vars)
 	}
 	$vars['page_notices'] = sb_ui_v2_page_notices(isset($vars['nav_active']) ? $vars['nav_active'] : '');
 
-	// SEO / Open Graph: Smarty-мешок + жёсткий fallback из SB_OG_* (config.php).
+	// SEO / Open Graph: $theme->_tpl_vars + fallback из SB_OG_* (config.php).
 	// На проде layout уже новый, а без этих vars Discord/аудиторы видят пустой <head>.
 	sb_ui_v2_apply_seo_vars($vars);
 

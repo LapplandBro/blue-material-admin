@@ -79,7 +79,7 @@ $theme->assign('server_list', $servers);
 $theme->assign('IN_SERVERS_PAGE', !defined('IN_HOME'));
 $theme->assign('opened_server', $number);
 
-// IN_HOME: dashboard widget. Smarty-only (page_dashboard.tpl includes page_servers.tpl).
+// IN_HOME: dashboard widget (Twig: home.twig / servers.twig).
 // Never Twig here — v2 intercepts only the full servers page.
 if (defined('IN_HOME'))
 	return;
@@ -100,5 +100,3 @@ if (function_exists('sb_ui_v2_enabled') && sb_ui_v2_enabled()) {
 	));
 	return;
 }
-
-$theme->display('page_servers.tpl');

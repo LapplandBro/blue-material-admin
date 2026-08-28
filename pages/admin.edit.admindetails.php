@@ -30,16 +30,14 @@ global $userbank, $theme;
 
 if(!isset($_GET['id']))
 {
-	CreateRedBox("Ошибка", "ID администратора не указан");
-	PageDie();
+	sb_bad_request_page(true, 'ID администратора не указан.');
 }
 $_GET['id'] = (int)$_GET['id'];
 
 if(!$userbank->GetProperty("user", $_GET['id']))
 {
 	$log = new CSystemLog("e", "Получение данных администратора не удалось", "Не могу найти данные для администратора с идентификатором '".$_GET['id']."'");
-	CreateRedBox("Ошибка", "Ошибка получения текущих данных.");
-	PageDie();
+	sb_not_found_page(true, 'Администратор с таким ID не найден.');
 }
 
 
@@ -49,8 +47,7 @@ if (!$userbank->HasAccess(ADMIN_OWNER)) {
 	$can = $editing_self || ($userbank->HasAccess(ADMIN_EDIT_ADMINS) && function_exists('sb_can_manage_admin') && sb_can_manage_admin((int)$_GET['id']));
 	if (!$can) {
 		$log = new CSystemLog("w", "Попытка взлома", $userbank->GetProperty("user") . " пытался редактировать детали ".$userbank->GetProperty('user', $_GET['id']).", не имея на это прав.");
-		CreateRedBox("Ошибка", "Вы не имеете прав редактирования других профилей.");
-		PageDie();
+		sb_forbidden_page(true, 'Вы не имеете прав редактирования этого профиля.');
 	}
 }
 

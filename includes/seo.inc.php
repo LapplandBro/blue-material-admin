@@ -217,7 +217,6 @@ function sb_write_seo_files($siteRoot, $baseUrl = '', $options = array())
 		. "Allow: /\n"
 		. "Disallow: /install/\n"
 		. "Disallow: /updater/\n"
-		. "Disallow: /themes_c/\n"
 		. "Disallow: /data/\n"
 		. "Disallow: /includes/\n\n"
 		. 'Sitemap: ' . $base . "/sitemap.xml\n";

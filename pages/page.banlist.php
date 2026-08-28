@@ -737,7 +737,7 @@ while (!$res->EOF)
  	$data['banlength'] = $data['ban_length'];
  	//$data['banlength'] = $data['ban_length'] . " " .  $data['ub_reason'];
 
-	// UI status for banlist badges (avoid string-compare quirks in Smarty)
+	// UI status for banlist badges (avoid string-compare quirks in legacy templates).
 	if (!empty($data['unbanned'])) {
 		$ubr = (string)$data['ub_reason'];
 		if ($ubr === 'Истек' || stripos($ubr, 'истек') !== false)
@@ -962,5 +962,3 @@ if (function_exists('sb_ui_v2_enabled') && sb_ui_v2_enabled()) {
 	));
 	return;
 }
-
-$theme->display('page_bans.tpl');

@@ -184,5 +184,5 @@ $theme->assign('can_editadmin', $userbank->HasAccess(ADMIN_EDIT_ADMINS|ADMIN_OWN
 
 if (function_exists('sb_ui_v2_enabled') && sb_ui_v2_enabled())
 	return;
-$theme->display('box_admin_admins_search.tpl');
+
 ?>

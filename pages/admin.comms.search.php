@@ -64,8 +64,6 @@ if (function_exists('sb_ui_v2_enabled') && sb_ui_v2_enabled() && function_exists
 		}
 	}
 	echo sb_ui_v2_fragment('search_comms.twig', $vars);
-} else {
-	$theme->display('box_admin_comms_search.tpl');
 }
 ?>
 <script type="text/javascript">

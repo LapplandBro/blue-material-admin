@@ -173,14 +173,3 @@ if (function_exists('sb_ui_v2_enabled') && sb_ui_v2_enabled()) {
 	));
 	return;
 }
-
-/* Add to theme */
-if (count($mods) > 0) {
-    $theme->assign('IN_HOME', '');
-    $theme->assign('server_script', '');
-    $theme->assign('games', $mods);
-    $theme->assign('server_list', $servers);
-    $theme->display('page_adminlist.tpl');
-} else
-    CreateRedBox("Пусто", "Пока нет админов, привязанных к серверам.");
-//var_dump($servers);

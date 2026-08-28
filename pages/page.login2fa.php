@@ -85,8 +85,7 @@ if ($mode === 'enroll') {
 				'sb_csrf' => function_exists('sb_csrf_token') ? sb_csrf_token() : '',
 			)))
 				return;
-			$theme->display('page_login2fa.tpl');
-			return;
+			PageDie('Не удалось отобразить страницу 2FA (Twig).');
 		}
 	}
 
@@ -105,8 +104,7 @@ if ($mode === 'enroll') {
 		'sb_csrf' => function_exists('sb_csrf_token') ? sb_csrf_token() : '',
 	)))
 		return;
-	$theme->display('page_login2fa.tpl');
-	return;
+	PageDie('Не удалось отобразить страницу 2FA (Twig).');
 }
 
 // Challenge mode.
@@ -153,4 +151,4 @@ if (sb_login2fa_v2_render(array(
 	'sb_csrf' => function_exists('sb_csrf_token') ? sb_csrf_token() : '',
 )))
 	return;
-$theme->display('page_login2fa.tpl');
+PageDie('Не удалось отобразить страницу 2FA (Twig).');

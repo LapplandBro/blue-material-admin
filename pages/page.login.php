@@ -74,13 +74,4 @@ if (function_exists('sb_ui_v2_enabled') && sb_ui_v2_enabled()) {
 	));
 	return;
 }
-
-$theme->left_delimiter = "-{";
-$theme->right_delimiter = "}-";
-$theme->display('page_login.tpl');
-$theme->left_delimiter = "{";
-$theme->right_delimiter = "}";
 ?>
-</div>
-</div>
-</div>

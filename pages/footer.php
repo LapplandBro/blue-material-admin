@@ -54,8 +54,6 @@ if ($asset_ver === false) {
 }
 $theme->assign('asset_ver', $asset_ver);
 
-$theme->display('page_footer.tpl');
-
 if(isset($_GET['p']))
 	$_SESSION['p'] = $_GET['p'];
 if(isset($_GET['c']))

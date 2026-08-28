@@ -53,7 +53,7 @@ Blue Material Admin — тёмный Firewatch-стиль, свой логоти
 - Пароли: **bcrypt** (`password_hash`), миграция со старого sha1  
 - Сессии: HttpOnly / Secure / SameSite=Lax, regenerate после логина  
 - Security-заголовки: X-Frame-Options, nosniff, Referrer-Policy, CSP (с оговоркой под legacy JS)  
-- `.htaccess`: без листинга каталогов; закрыты `includes/`, `data/`, `themes_c/`, `config.php`, дампы/бэкапы/`.tpl`  
+- `.htaccess`: без листинга каталогов; закрыты `includes/`, `data/`, `config.php`, дампы/бэкапы  
 - Демки не скачиваются напрямую — только через `getdemo.php`  
 - RCON с проверкой прав и привязки к серверу; веб-OWNER не ломает доступ  
 - Проверки прав `ADMIN_*` на админ-страницах и callbacks  
@@ -107,7 +107,7 @@ Blue Material Admin — тёмный Firewatch-стиль, свой логоти
 | MySQL / MariaDB | 5.0 | 5.5+ / 10.x |
 | Расширения | mysqli, bcmath, xml, json, mbstring, openssl, curl | gd, gmp (или 64-bit PHP) |
 
-Нужны права на запись: `demos/`, `themes_c/`, `data/`, `config.php` (или корень сайта).
+Нужны права на запись: `demos/`, `data/`, `config.php` (или корень сайта).
 
 ## Установка
 
@@ -188,7 +188,6 @@ ZIP с ветки `main`: https://github.com/LapplandBro/blue-material-admin
 | `config.php` | ключи, БД, Steam API |
 | `data/` | доступы к БД |
 | `demos/` | демозаписи |
-| `themes_c/` | кеш Smarty (можно очистить) |
 | `images/maps/`, свои лого/og-cover | кастом |
 | `install/` | на проде папки быть не должно |
 

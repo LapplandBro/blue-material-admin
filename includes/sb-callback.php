@@ -170,11 +170,23 @@ function PingSession()
 		sb_session_start();
 	elseif (session_status() !== PHP_SESSION_ACTIVE)
 		@session_start();
+
+	$ttl = function_exists('sb_session_ttl') ? sb_session_ttl() : 1440;
+	$last = isset($_SESSION['sb_last_active']) ? (int)$_SESSION['sb_last_active'] : time();
+	$expiresIn = max(0, $last + $ttl - time());
+	if ($expiresIn <= 0) {
+		$json = function_exists('sb_ajax_json_encode')
+			? sb_ajax_json_encode(array('ok' => false, 'expired' => true))
+			: json_encode(array('ok' => false, 'expired' => true));
+		$objResponse->addScript('if(typeof sbSessionApply==="function")sbSessionApply(' . $json . ');');
+		return $objResponse;
+	}
+
 	if (function_exists('sb_session_touch'))
 		sb_session_touch();
 	$meta = function_exists('sb_session_client_meta') ? sb_session_client_meta() : array(
-		'ttl' => 1440,
-		'expires_in' => 1440,
+		'ttl' => $ttl,
+		'expires_in' => $expiresIn,
 		'warn_before' => 180,
 		'server_now' => time(),
 		'csrf' => function_exists('sb_csrf_token') ? sb_csrf_token() : '',
@@ -3386,7 +3398,7 @@ function Maintenance($type) {
         }
 
         case "adminsexpired": {
-            // БАГ-ФИКС: в выпадающем списке "Обслуживание системы" (page_admin_settings_settings.tpl)
+            // БАГ-ФИКС: в выпадающем списке «Обслуживание системы» (admin_settings_settings.twig)
             // есть пункт adminsexpired, дёргающий xajax_Maintenance('adminsexpired'), но для этого
             // значения не было case - срабатывал default ("Неизвестная операция"). Используем ту же
             // логику удаления, что и в отдельной функции removeExpiredAdmins().

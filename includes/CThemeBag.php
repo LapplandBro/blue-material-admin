@@ -5,21 +5,11 @@ if (!defined('IN_SB')) {
 }
 
 /**
- * Мешок переменных вместо Smarty на живом сайте.
- * Страницы по-прежнему делают $theme->assign(); Blue V2 читает _tpl_vars.
- * display() не компилирует шаблоны — живой UI только Twig.
+ * Мешок переменных для страниц: $theme->assign() → _tpl_vars для Twig (Blue V2).
  */
 class CThemeBag
 {
 	var $_tpl_vars = array();
-	var $left_delimiter = '{';
-	var $right_delimiter = '}';
-	var $error_reporting = 0;
-	var $use_sub_dirs = false;
-	var $compile_id = '';
-	var $caching = false;
-	var $template_dir = '';
-	var $force_compile = false;
 
 	function assign($tpl_var, $value = null)
 	{
@@ -44,15 +34,5 @@ class CThemeBag
 	function get_template_vars($name = null)
 	{
 		return $this->getTemplateVars($name);
-	}
-
-	function display($tpl)
-	{
-		@error_log('CThemeBag::display skipped (Blue V2, no Smarty): ' . (string)$tpl);
-	}
-
-	function clear_compiled_tpl($tpl_file = null, $compile_id = null, $exp_time = null)
-	{
-		return true;
 	}
 }

@@ -388,5 +388,3 @@ $theme->assign('asset_ver', $css_ver);
 // Cache-bust scripts/sourcebans.js (иначе прод годами крутит старый файл без sbSetChecked).
 $sb_js_mt = @filemtime(dirname(__FILE__) . '/../scripts/sourcebans.js');
 $theme->assign('sb_js_ver', ($sb_js_mt !== false) ? $sb_js_mt : $css_ver);
-
-$theme->display('page_header.tpl');

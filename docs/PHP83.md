@@ -8,7 +8,7 @@
 | Компонент | Изменение |
 |-----------|-----------|
 | **ADOdb** | Патч: `each()` → `foreach`, `get_magic_quotes_gpc` с `function_exists` |
-| **Smarty 2.6** | Патч: `create_function` → closure, `each()` → `current`/`next` |
+| **Smarty 2.6** | На ветке `php-8.3` удалён; UI только Twig (Blue V2) |
 | **xajax** | `get_magic_quotes_gpc` только через `function_exists` (CSRF не тронут) |
 | **SourceQuery** | Замена вендорки на **xPaw PHP-Source-Query 6.0.0** (min PHP 8.2) |
 | **CServerControl** | Загрузка без `bootstrap.php`, API панели прежний |
@@ -25,8 +25,7 @@
 
 1. Бери код с ветки `php-8.3` (не с `main`).
 2. Не затирай `config.php` / `data/`.
-3. Очисти `themes_c/` после заливки.
-4. Если раньше стоял `main` на 7.1 — это **смена runtime**, не «просто обновить файлы» на том же PHP.
+3. Если раньше стоял `main` на 7.1 — это **смена runtime**, не «просто обновить файлы» на том же PHP.
 
 ## Не делать
 

@@ -24,7 +24,7 @@ ErrorDocument 504 /errors/504.html
 # errors/*.html, robots.txt. Демки — только через getdemo.php (см. demos/).
 # =============================================================================
 <IfModule mod_authz_core.c>
-	# Бэкапы, дампы, архивы, шаблоны Smarty, логи, env
+	# Бэкапы, дампы, архивы, логи, env
 	<FilesMatch "(?i)\.(sql|bak|old|orig|save|swp|dist|env|log|yml|yaml|phar|zip|rar|7z|tar|gz|tgz|bz2|tpl|md)$">
 		Require all denied
 	</FilesMatch>

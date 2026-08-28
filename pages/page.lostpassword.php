@@ -202,7 +202,7 @@ if ($confirm_get) {
 		));
 		return;
 	}
-	$theme->display('page_lostpassword.tpl');
+	PageDie('Не удалось отобразить страницу восстановления пароля (Twig).');
 } else {
 	$theme->assign('lostpass_confirm', false);
 	if (sb_lostpass_v2_on()) {
@@ -221,5 +221,5 @@ if ($confirm_get) {
 		));
 		return;
 	}
-	$theme->display('page_lostpassword.tpl');
+	PageDie('Не удалось отобразить страницу восстановления пароля (Twig).');
 }
