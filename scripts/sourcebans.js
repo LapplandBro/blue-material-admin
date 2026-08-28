@@ -545,10 +545,13 @@ function InitAccordion(opener, element, container, num)
 			var el = element;
 			window.setTimeout(function () {
 				try {
-					if (el && el.setStyle)
+					if (el && el.setStyle) {
 						el.setStyle('height', 'auto');
-					else if (el && el.style)
+						el.setStyle('visibility', 'visible');
+					} else if (el && el.style) {
 						el.style.height = 'auto';
+						el.style.visibility = 'visible';
+					}
 				} catch (err) {}
 			}, 420);
 		},
@@ -2741,6 +2744,7 @@ function sbAddServerPlayerHead(sid) {
 	if (!e)
 		return;
 	var tr = e.insertRow(-1);
+	tr.className = "servers-players-head";
 	var labels = ["Игрок", "Счёт", "Время"];
 	var i, td, b;
 	for (i = 0; i < labels.length; i++) {

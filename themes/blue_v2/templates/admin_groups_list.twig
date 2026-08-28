@@ -14,8 +14,8 @@
 
   <section class="admin-manage-section">
     <h3 class="admin-manage-section-title">Веб-группы · {{ web_group_count }}</h3>
-    <div class="table-responsive">
-      <table class="admin-manage-table">
+    <div class="table-responsive table-cards-wrap">
+      <table class="admin-manage-table table-cards">
         <thead>
           <tr>
             <th>Группа</th>
@@ -26,9 +26,9 @@
         <tbody>
           {% for group in web_group_list %}
           <tr id="gid_{{ group.gid }}" class="opener admin-manage-row">
-            <td><span class="admin-manage-name">{{ group.name }}</span></td>
-            <td class="text-center">{{ web_admins[loop.index0] }}</td>
-            <td class="text-end">
+            <td data-label="Группа"><span class="admin-manage-name">{{ group.name }}</span></td>
+            <td class="text-center" data-label="Админов">{{ web_admins[loop.index0] }}</td>
+            <td class="text-end" data-label="Действия">
               <span class="admin-actions">
               {% if permission_editgroup %}
               <a class="admin-action" href="index.php?p=admin&amp;c=groups&amp;o=edit&amp;type=web&amp;id={{ group.gid }}">Изменить</a>
@@ -77,8 +77,8 @@
 
   <section class="admin-manage-section">
     <h3 class="admin-manage-section-title">Серверные группы админов · {{ server_admin_group_count }}</h3>
-    <div class="table-responsive">
-      <table class="admin-manage-table">
+    <div class="table-responsive table-cards-wrap">
+      <table class="admin-manage-table table-cards">
         <thead>
           <tr>
             <th>Группа</th>
@@ -89,9 +89,9 @@
         <tbody>
           {% for group in server_group_list %}
           <tr id="gid_{{ group.id }}" class="opener admin-manage-row">
-            <td><span class="admin-manage-name">{{ group.name }}</span></td>
-            <td class="text-center">{{ server_admins[loop.index0] }}</td>
-            <td class="text-end">
+            <td data-label="Группа"><span class="admin-manage-name">{{ group.name }}</span></td>
+            <td class="text-center" data-label="Админов">{{ server_admins[loop.index0] }}</td>
+            <td class="text-end" data-label="Действия">
               <span class="admin-actions">
               {% if permission_editgroup %}
               <a class="admin-action" href="index.php?p=admin&amp;c=groups&amp;o=edit&amp;type=srv&amp;id={{ group.id }}">Изменить</a>
@@ -154,8 +154,8 @@
 
   <section class="admin-manage-section">
     <h3 class="admin-manage-section-title">Группы серверов · {{ server_group_count }}</h3>
-    <div class="table-responsive">
-      <table class="admin-manage-table">
+    <div class="table-responsive table-cards-wrap">
+      <table class="admin-manage-table table-cards">
         <thead>
           <tr>
             <th>Группа</th>
@@ -166,9 +166,9 @@
         <tbody>
           {% for group in server_list %}
           <tr id="gid_{{ group.gid }}" class="opener admin-manage-row">
-            <td><span class="admin-manage-name">{{ group.name }}</span></td>
-            <td class="text-center">{% if group.servers %}{{ group.servers|length }}{% else %}0{% endif %}</td>
-            <td class="text-end">
+            <td data-label="Группа"><span class="admin-manage-name">{{ group.name }}</span></td>
+            <td class="text-center" data-label="Серверов">{% if group.servers %}{{ group.servers|length }}{% else %}0{% endif %}</td>
+            <td class="text-end" data-label="Действия">
               <span class="admin-actions">
               {% if permission_editgroup %}
               <a class="admin-action" href="index.php?p=admin&amp;c=groups&amp;o=edit&amp;type=server&amp;id={{ group.gid }}">Изменить</a>

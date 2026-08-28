@@ -23,8 +23,8 @@
       </div>
     </div>
   </header>
-  <div class="table-responsive">
-    <table class="table table-v2 banlist-table">
+  <div class="table-responsive table-cards-wrap">
+    <table class="table table-v2 banlist-table table-cards">
       <thead>
         <tr>
           <th>Игрок</th>
@@ -38,7 +38,7 @@
       <tbody>
         {% for row in rows %}
         <tr>
-          <td>
+          <td data-label="Игрок">
             <div class="banlist-player">
               <div class="banlist-player-text">
                 <strong class="player">{{ row.player }}</strong>
@@ -46,11 +46,11 @@
               </div>
             </div>
           </td>
-          <td>{{ row.reason }}</td>
-          <td><span class="banlist-admin">{{ row.admin }}</span></td>
-          <td class="banlist-td-length">{{ row.length }}</td>
-          <td class="banlist-td-date"><span class="banlist-date">{{ row.date }}</span></td>
-          <td class="banlist-td-length">
+          <td data-label="Причина">{{ row.reason }}</td>
+          <td data-label="Админ"><span class="banlist-admin">{{ row.admin }}</span></td>
+          <td class="banlist-td-length" data-label="Длительность">{{ row.length }}</td>
+          <td class="banlist-td-date" data-label="Дата"><span class="banlist-date">{{ row.date }}</span></td>
+          <td class="banlist-td-length" data-label="Статус">
             {% if row.badge == 'perm' %}
               <span class="badge badge-perm">{{ row.status }}</span>
             {% elseif row.badge == 'temp' %}

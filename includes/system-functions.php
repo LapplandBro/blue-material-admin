@@ -730,6 +730,31 @@ function sb_menu_collect_groups()
 	return $groups;
 }
 
+/** Слот нижней панели для пункта меню (пусто = только в drawer). */
+function sb_ui_v2_tabbar_slot($url)
+{
+	$url = (string)$url;
+	$p = '';
+	if (preg_match('/(?:\?|&)p=([^&]+)/', $url, $m))
+		$p = $m[1];
+	elseif (preg_match('#/(home|default|servers|banlist|commslist|adminlist|admin|account|login)(?:/|\?|$)#i', $url, $m))
+		$p = strtolower($m[1]);
+	$map = array(
+		'home' => 'home',
+		'default' => 'home',
+		'banlist' => 'banlist',
+		'ui_v2' => 'banlist',
+		'commslist' => 'commslist',
+		'servers' => 'servers',
+		'adminlist' => 'adminlist',
+		'admin' => 'admin',
+		'account' => 'account',
+		'login' => 'login',
+		'login2fa' => 'login',
+	);
+	return isset($map[$p]) ? $map[$p] : '';
+}
+
 /** Пункты бокового меню Blue V2. */
 function sb_ui_v2_nav_groups()
 {
@@ -764,6 +789,7 @@ function sb_ui_v2_nav_groups()
 				'icon' => $bi,
 				'newtab' => (isset($item['newtab']) && (string)$item['newtab'] === '1'),
 				'active' => sb_menu_item_is_active($url),
+				'tab_slot' => sb_ui_v2_tabbar_slot($url),
 			);
 		}
 		if (!empty($items))

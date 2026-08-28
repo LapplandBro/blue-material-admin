@@ -10,8 +10,8 @@
     <p class="form-page-lead">{{ submission_count }} · клик по строке — детали</p>
     <ul class="actions" id="banlist-nav">{{ submission_nav|raw }}</ul>
   </header>
-  <div class="table-responsive">
-    <table class="table table-v2">
+  <div class="table-responsive table-cards-wrap">
+    <table class="table table-v2 table-cards">
       <thead>
         <tr>
           <th>Ник</th>
@@ -22,9 +22,9 @@
       <tbody>
       {% for sub in submission_list %}
         <tr id="sid_{{ sub.subid }}" class="opener3 banlist-row"{% if sub.hostname == "" %} onclick="xajax_ServerHostPlayers('{{ sub.server }}', 'id', 'sub{{ sub.subid }}');"{% endif %}>
-          <td>{{ sub.name|raw }}</td>
-          <td>{% if sub.SteamId != "" %}{{ sub.SteamId }}{% else %}{{ sub.sip }}{% endif %}</td>
-          <td class="text-end">
+          <td data-label="Ник">{{ sub.name|raw }}</td>
+          <td data-label="SteamID / IP">{% if sub.SteamId != "" %}{{ sub.SteamId }}{% else %}{{ sub.sip }}{% endif %}</td>
+          <td class="text-end" data-label="Действия">
             <span class="admin-actions">
               <a class="admin-action" href="#" onclick="event.cancelBubble=true; xajax_SetupBan({{ sub.subid }});return false;">Забанить</a>
               {% if permissions_editsub %}

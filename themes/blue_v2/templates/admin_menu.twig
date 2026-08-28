@@ -5,8 +5,8 @@
       <h2 class="form-page-title">Меню</h2>
       <p class="form-page-lead">Включённые пункты появляются в боковой панели — те же разделы, что и на публичке: Сайт, Инструменты, Сообщество, Админка.</p>
     </header>
-    <div class="table-responsive">
-      <table class="admin-manage-table admin-menu-table">
+    <div class="table-responsive table-cards-wrap">
+      <table class="admin-manage-table admin-menu-table table-cards">
         <thead>
           <tr>
             <th class="admin-menu-icon-col"></th>
@@ -19,22 +19,22 @@
         <tbody>
           {% for menu in menu_list %}
           <tr class="admin-manage-row{% if menu.enabled != '1' %} admin-row--off{% endif %}">
-            <td class="admin-menu-icon-cell">
+            <td class="admin-menu-icon-cell" data-label="">
               {% if menu.icon_bi == 'sb-bi-vk' %}
               <i class="sb-bi-vk" aria-hidden="true" title="{{ menu.icon_class }}"></i>
               {% else %}
               <i class="bi {{ menu.icon_bi|default('bi-link-45deg') }}" aria-hidden="true" title="{{ menu.icon_class }}"></i>
               {% endif %}
             </td>
-            <td>
+            <td data-label="Пункт">
               <span class="admin-menu-title">{{ menu.text_plain }}</span>
               {% if menu.description %}
               <p class="admin-menu-desc">{{ menu.description }}</p>
               {% endif %}
               <p class="admin-menu-url"><a href="{{ menu.url }}"{% if menu.newtab == '1' %} target="_blank" rel="noopener noreferrer"{% endif %}>{{ menu.url }}</a></p>
             </td>
-            <td>{{ menu.group_label }}</td>
-            <td class="admin-menu-meta">
+            <td data-label="Раздел">{{ menu.group_label }}</td>
+            <td class="admin-menu-meta" data-label="Статус">
               {% if menu.enabled == "1" %}
               <span class="parsec-chip parsec-chip-fp">вкл</span>
               {% else %}
@@ -42,7 +42,7 @@
               {% endif %}
               <span class="parsec-muted">id {{ menu.id }} · приор. {{ menu.priority }}</span>
             </td>
-            <td class="text-end">
+            <td class="text-end" data-label="Действия">
               <span class="admin-actions">
                 <a class="admin-action" href="index.php?p=admin&amp;c=menu&amp;o=edit&amp;id={{ menu.id }}">Изменить</a>
                 {% if menu.enabled != "1" %}
@@ -58,7 +58,7 @@
           </tr>
           {% else %}
           <tr>
-            <td colspan="5" class="parsec-muted">Пунктов меню пока нет.</td>
+            <td colspan="5" class="parsec-muted" data-label="">Пунктов меню пока нет.</td>
           </tr>
           {% endfor %}
         </tbody>

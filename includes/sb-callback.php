@@ -2104,7 +2104,7 @@ function ServerHostPlayers($sid, $type="servers", $obId="", $tplsid="", $open=""
 									'pid' => (int)$id,
 									'name' => (string)$player['Name'],
 									'frags' => (string)$player['Frags'],
-									'time' => SecondsToString($player['Time']),
+									'time' => SecondsToString($player['Time'], false),
 									'manage' => $needAddPlayerManaging ? 1 : 0,
 									'banUrl' => 'index.php?p=admin&c=bans&action=pasteBan&sid='.$sid.'&pName='.urlencode($player['Name']),
 									'muteUrl' => 'index.php?p=admin&c=comms&action=pasteBan&sid='.$sid.'&pName='.urlencode($player['Name']),
@@ -2145,7 +2145,7 @@ function ServerHostPlayers($sid, $type="servers", $obId="", $tplsid="", $open=""
 		// (see page.servers.php), so we resolve the actual DOM element to open by its
 		// stable id instead of trusting a fragile numeric position.
 		if($tplsid != "" && $open != "" && $tplsid==$open)
-			$objResponse->addScript("InitAccordion('tr.opener', 'div.opener', 'content', $('serverpanel_".(int)$sid."'));");
+			$objResponse->addScript("InitAccordion('div.servers-toggle', 'div.servers-detail', 'content', $('serverpanel_".(int)$sid."'));");
 		//$objResponse->addScript("$('dialog-control').setStyle('display', 'block');");
 		$objResponse->addScript("$('dialog-placement').setStyle('display', 'none');");
 	}
@@ -4327,9 +4327,9 @@ function GetGroups($friendid)
 			continue;
 		$objResponse->addScript(
 			'var e=document.getElementById("steamGroupsTable");'
-			. 'if(e){var tr=e.insertRow(-1);var td=tr.insertCell(-1);td.style.padding="0px";td.style.width="3px";'
+			. 'if(e){var tr=e.insertRow(-1);var td=tr.insertCell(-1);td.setAttribute("data-label","");td.style.padding="0px";td.style.width="3px";'
 			. 'var input=document.createElement("input");input.type="checkbox";input.id="chkb_' . $i . '";input.value=' . sb_ajax_json_encode($groupURL) . ';'
-			. 'td.appendChild(input);td=tr.insertCell(-1);var a=document.createElement("a");a.href="https://steamcommunity.com/groups/"+encodeURIComponent(' . sb_ajax_json_encode($groupURL) . ');a.target="_blank";a.rel="noopener";'
+			. 'td.appendChild(input);td=tr.insertCell(-1);td.setAttribute("data-label","Группа");var a=document.createElement("a");a.href="https://steamcommunity.com/groups/"+encodeURIComponent(' . sb_ajax_json_encode($groupURL) . ');a.target="_blank";a.rel="noopener";'
 			. 'a.appendChild(document.createTextNode(' . sb_ajax_json_encode($groupName) . '));td.appendChild(a);'
 			. 'td.appendChild(document.createTextNode(" ("));'
 			. 'var span=document.createElement("span");span.id="membcnt_' . $i . '";span.appendChild(document.createTextNode(' . sb_ajax_json_encode($memberCount) . '));td.appendChild(span);'

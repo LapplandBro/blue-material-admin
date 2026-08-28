@@ -88,8 +88,10 @@ if (function_exists('sb_ui_v2_enabled') && sb_ui_v2_enabled()) {
 	// V2 skips pages/footer.php, so xajax polling must ride extra_js (layout dumps it after #content).
 	$qry = isset($GLOBALS['server_qry']) ? (string)$GLOBALS['server_qry'] : '';
 	$extra_js = "<script>\n"
-		. "window.addEvent('domready', function(){ " . $qry . " });\n"
-		. "InitAccordion('tr.opener', 'div.opener', 'content');\n"
+		. "window.addEvent('domready', function(){ "
+		. $qry
+		. " InitAccordion('div.servers-toggle', 'div.servers-detail', 'content'); "
+		. "});\n"
 		. "</script>\n";
 	sb_ui_v2_render('servers.twig', array(
 		'title' => 'Серверы — Blue Admin',

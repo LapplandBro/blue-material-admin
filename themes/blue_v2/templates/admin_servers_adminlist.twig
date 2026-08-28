@@ -4,8 +4,8 @@
     <h2 class="form-page-title">Админы сервера</h2>
     <p class="form-page-lead">{{ admin_count }} · клик по строке, если админ в игре</p>
   </header>
-  <div class="table-responsive">
-    <table class="table table-v2">
+  <div class="table-responsive table-cards-wrap">
+    <table class="table table-v2 table-cards">
       <thead>
         <tr>
           <th>Имя админа</th>
@@ -16,17 +16,18 @@
         {% for admin in admin_list|default([]) %}
         {% if admin.user %}
         <tr class="opener tbl_out" onmouseout="this.className='tbl_out'" onmouseover="this.className='tbl_hover'">
-          <td{% if admin.ingame %} class="listtable_1_unbanned"{% endif %}>{{ admin.user }}</td>
-          <td{% if admin.ingame %} class="listtable_1_unbanned"{% endif %}>{{ admin.authid }}</td>
+          <td{% if admin.ingame %} class="listtable_1_unbanned"{% endif %} data-label="Имя админа">{{ admin.user }}</td>
+          <td{% if admin.ingame %} class="listtable_1_unbanned"{% endif %} data-label="SteamID админа">{{ admin.authid }}</td>
         </tr>
-        <tr>
+        <tr class="admin-detail-row">
           <td colspan="7">
             <div class="opener">
               {% if admin.ingame %}
               <div class="admin-detail-head">
                 <div class="admin-detail-title">Детали администратора</div>
               </div>
-              <table class="table table-v2">
+              <div class="table-responsive table-cards-wrap">
+              <table class="table table-v2 table-cards">
                 <thead>
                   <tr>
                     <th>Ник</th>
@@ -38,14 +39,15 @@
                 </thead>
                 <tbody>
                   <tr>
-                    <td>{{ admin.iname }}</td>
-                    <td>{{ admin.authid }}</td>
-                    <td>{{ admin.iip }}</td>
-                    <td>{{ admin.itime }}</td>
-                    <td>{{ admin.iping }}</td>
+                    <td data-label="Ник">{{ admin.iname }}</td>
+                    <td data-label="Steam ID">{{ admin.authid }}</td>
+                    <td data-label="IP">{{ admin.iip }}</td>
+                    <td data-label="Время">{{ admin.itime }}</td>
+                    <td data-label="Пинг">{{ admin.iping }}</td>
                   </tr>
                 </tbody>
               </table>
+              </div>
               {% endif %}
             </div>
           </td>

@@ -200,3 +200,27 @@ body.upload-page {
 	color: var(--up-muted);
 	font-size: 13px;
 }
+
+@media (max-width: 767.98px) {
+	body.upload-page {
+		align-items: flex-start;
+		padding: 12px;
+	}
+
+	.upload-card {
+		max-width: none;
+		padding: 18px 16px;
+	}
+}
+
+@media (max-width: 575.98px) {
+	.upload-drop {
+		min-height: 132px;
+		padding: 16px 12px;
+	}
+
+	.upload-btn {
+		width: 100%;
+		min-height: 2.75rem;
+	}
+}

@@ -1,3 +1,4 @@
+/* Breakpoints: see mobile.css (--bs-lg-max 991.98px, --bs-md-max 767.98px, --bs-sm-max 575.98px). */
 .form-page {
   max-width: 46rem;
   padding: 1.15rem 1.2rem 1.3rem;
@@ -10,7 +11,22 @@
   padding: 1.3rem 1.4rem 1.5rem;
 }
 .form-page-head {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.5rem;
   margin: 0 0 1.05rem;
+}
+.form-page-head ul.actions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.65rem;
+  font-size: 0.85rem;
+  color: var(--muted);
 }
 .form-page-kicker {
   margin: 0 0 0.22rem;
@@ -177,6 +193,13 @@
   resize: vertical;
   padding-top: 0.55rem;
 }
+/* Input type hints — markup attrs that pair with form styles:
+   type="file"  — custom upload button below
+   type="email" — use with autocomplete="email"
+   type="password" — use autocomplete="current-password" / "new-password"
+   type="text" + inputmode="numeric" — digit-only fields (dates, TOTP codes)
+   type="text" + autocomplete="one-time-code" — OTP / 2FA fields
+*/
 .form-page input[type="file"].form-control {
   padding: 0;
   min-height: 2.45rem;
@@ -462,12 +485,25 @@
   align-items: center;
 }
 
+/* --bs-lg-max */
 @media (max-width: 991.98px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  .form-page--wide .form-grid {
+    grid-template-columns: 1fr;
+  }
+  .voucher-add .form-grid {
+    grid-template-columns: 1fr;
+  }
   .form-page--wide .form-page-split {
     grid-template-columns: 1fr;
   }
   .form-page--wide .form-page-split .form-aside {
     margin-top: 0.25rem;
+  }
+  .form-page {
+    padding-bottom: calc(1.3rem + 3.65rem + env(safe-area-inset-bottom, 0px));
   }
 }
 .csrf-expired,
@@ -687,6 +723,7 @@
   gap: 0.5rem;
   align-items: center;
 }
+/* --bs-sm-max */
 @media (max-width: 575.98px) {
   .admin-servers-db .dbcfg-meta__row {
     grid-template-columns: 1fr;
@@ -710,12 +747,11 @@
   height: auto;
   vertical-align: top;
 }
+/* --bs-sm-max */
 @media (max-width: 575.98px) {
   .form-page {
     padding: 1rem 0.9rem 1.1rem;
-  }
-  .form-grid {
-    grid-template-columns: 1fr;
+    padding-bottom: calc(1.1rem + 3.65rem + env(safe-area-inset-bottom, 0px));
   }
   .form-captcha .form-control {
     flex: 1 1 100%;

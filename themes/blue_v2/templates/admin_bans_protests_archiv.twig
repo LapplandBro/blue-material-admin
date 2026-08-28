@@ -10,8 +10,8 @@
     <p class="form-page-lead">{{ protest_count_archiv }} · клик по строке — детали</p>
     <ul class="actions" id="banlist-nav">{{ aprotest_nav|raw }}</ul>
   </header>
-  <div class="table-responsive">
-    <table class="table table-v2">
+  <div class="table-responsive table-cards-wrap">
+    <table class="table table-v2 table-cards">
       <thead>
         <tr>
           <th>Ник</th>
@@ -22,15 +22,15 @@
       <tbody>
       {% for protest in protest_list_archiv %}
         <tr id="apid_{{ protest.pid }}" class="opener5 banlist-row">
-          <td class="toggler">
+          <td class="toggler" data-label="Ник">
             {% if protest.archiv != 2 %}
               <a href="index.php?p=banlist{% if protest.authid != "" %}&amp;advSearch={{ protest.authid }}&amp;advType=steamid{% else %}&amp;advSearch={{ protest.ip }}&amp;advType=ip{% endif %}" title="Показать бан" onclick="event.cancelBubble=true;">{{ protest.name }}</a>
             {% else %}
               <span class="form-note">бан удалён</span>
             {% endif %}
           </td>
-          <td>{% if protest.authid != "" %}{{ protest.authid }}{% else %}{{ protest.ip }}{% endif %}</td>
-          <td class="text-end">
+          <td data-label="SteamID / IP">{% if protest.authid != "" %}{{ protest.authid }}{% else %}{{ protest.ip }}{% endif %}</td>
+          <td class="text-end" data-label="Действия">
             <span class="admin-actions">
               {% if permission_editban %}
               <a class="admin-action" href="#" onclick='event.cancelBubble=true; RemoveProtest("{{ protest.pid }}", {{ protest.label_js|raw }}, "2"); return false;'>Восстановить</a>

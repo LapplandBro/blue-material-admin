@@ -209,8 +209,8 @@
     <h2 class="form-page-title">Твинки</h2>
     <p class="form-page-lead">{{ linked_accounts|length }} шт. · кроме текущего аккаунта</p>
   </header>
-  <div class="table-responsive">
-    <table class="table table-striped parsec-table">
+  <div class="table-responsive table-cards-wrap">
+    <table class="table table-striped parsec-table table-cards">
       <thead>
         <tr>
           <th>Игрок</th>
@@ -224,17 +224,17 @@
       <tbody>
         {% for la in linked_accounts %}
         <tr>
-          <td class="parsec-td-name">{% if la.name %}<strong>{{ la.name }}</strong>{% else %}<span class="parsec-muted">без ника</span>{% endif %}</td>
-          <td class="parsec-td-steam"><code>{{ la.authid }}</code></td>
-          <td>
+          <td class="parsec-td-name" data-label="Игрок">{% if la.name %}<strong>{{ la.name }}</strong>{% else %}<span class="parsec-muted">без ника</span>{% endif %}</td>
+          <td class="parsec-td-steam" data-label="SteamID"><code>{{ la.authid }}</code></td>
+          <td data-label="Как связаны">
             {% for chip in la.source_chips %}
             <span class="parsec-chip {{ chip.class }}">{{ chip.text }}</span>
             {% endfor %}
             {% if la.source_chips|length == 0 %}<span class="parsec-muted">—</span>{% endif %}
           </td>
-          <td class="text-end parsec-td-points">{{ la.points_display }}</td>
-          <td>{% if la.active_ban %}<span class="parsec-badge parsec-badge-danger">забанен</span>{% else %}<span class="parsec-muted">нет</span>{% endif %}</td>
-          <td class="text-end parsec-td-actions">
+          <td class="text-end parsec-td-points" data-label="Очки">{{ la.points_display }}</td>
+          <td data-label="Бан">{% if la.active_ban %}<span class="parsec-badge parsec-badge-danger">забанен</span>{% else %}<span class="parsec-muted">нет</span>{% endif %}</td>
+          <td class="text-end parsec-td-actions" data-label="Действия">
             <span class="admin-actions">
               <a class="admin-action" href="{{ la.parsec_url }}">Твинки</a>
               <a class="admin-action" href="{{ la.view_url }}">Нарушения</a>
@@ -258,8 +258,8 @@
     <h2 class="form-page-title">Группы с пометкой «забанена»</h2>
     <p class="form-page-lead">всего {{ banned_total }}</p>
   </header>
-  <div class="table-responsive">
-    <table class="table table-striped parsec-table parsec-table-fp">
+  <div class="table-responsive table-cards-wrap">
+    <table class="table table-striped parsec-table parsec-table-fp table-cards">
       <thead>
         <tr>
           <th>Отпечаток ПК</th>
@@ -271,20 +271,20 @@
       </thead>
       <tbody>
         {% if banned_total == 0 %}
-        <tr><td colspan="5" class="parsec-muted">Сейчас нет групп с пометкой «забанена».</td></tr>
+        <tr><td colspan="5" class="parsec-muted" data-label="">Сейчас нет групп с пометкой «забанена».</td></tr>
         {% else %}
         {% for br in banned_rows %}
         <tr>
-          <td class="parsec-td-fp">
+          <td class="parsec-td-fp" data-label="Отпечаток ПК">
             <div class="parsec-fp parsec-fp-compact" title="{{ br.fingerprint }}">{{ br.fingerprint_fmt }}</div>
             {% if br.steams_preview %}
             <div class="parsec-fp-steams parsec-muted">{{ br.steams_preview }}</div>
             {% endif %}
           </td>
-          <td class="text-end">{{ br.steam_count }}</td>
-          <td>{{ br.banned_duration_fmt }}</td>
-          <td>{{ br.banned_at_fmt }}</td>
-          <td class="text-end"><a class="btn btn-outline-secondary btn-sm" href="{{ br.open_url }}">Открыть</a></td>
+          <td class="text-end" data-label="Аккаунтов">{{ br.steam_count }}</td>
+          <td data-label="Срок">{{ br.banned_duration_fmt }}</td>
+          <td data-label="Когда">{{ br.banned_at_fmt }}</td>
+          <td class="text-end" data-label="Действия"><a class="btn btn-outline-secondary btn-sm" href="{{ br.open_url }}">Открыть</a></td>
         </tr>
         {% endfor %}
         {% endif %}

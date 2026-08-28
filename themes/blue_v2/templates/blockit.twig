@@ -60,6 +60,24 @@ html, body {
 	color: #81c784;
 	display: none;
 }
+@media (max-width: 575.98px) {
+	.blockit-list tr {
+		display: block;
+		padding: 6px 0;
+		border-top: 1px solid rgba(30, 144, 255, 0.12);
+	}
+	.blockit-list tr:first-child { border-top: 0; }
+	.blockit-list tr + tr td { border-top: 0; }
+	.blockit-list td {
+		display: block;
+		padding: 2px 4px;
+	}
+	.blockit-host { padding-right: 0; }
+	.blockit-status {
+		text-align: left;
+		white-space: normal;
+	}
+}
 </style>
 <script type="text/javascript">
 //<![CDATA[

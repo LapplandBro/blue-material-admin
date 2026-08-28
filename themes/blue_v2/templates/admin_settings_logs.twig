@@ -6,24 +6,24 @@
   </header>
 
   <div class="admin-logs-search mb-3">
-    <div class="table-responsive">
-      <table class="table">
+    <div class="table-responsive table-cards-wrap">
+      <table class="table form-search-table table-cards">
         <thead>
           <tr>
-            <th>#</th>
-            <th>Критерий</th>
+            <th class="form-search-pick">#</th>
+            <th class="form-search-crit">Критерий</th>
             <th>Ввод</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td>
+            <td class="form-search-pick" data-label="">
               <div class="form-check">
                 <input class="form-check-input" id="admin_" name="search_type" type="radio" value="radiobutton">
               </div>
             </td>
-            <td><label for="admin" onclick="$('admin_').checked = true">Администратор</label></td>
-            <td>
+            <td class="form-search-crit" data-label="Критерий"><label for="admin" onclick="$('admin_').checked = true">Администратор</label></td>
+            <td data-label="Ввод">
               <select class="form-select" id="admin" onmouseup="$('admin_').checked = true">
                 {% for admin in admin_list %}
                 <option label="{{ admin.user }}" value="{{ admin.aid }}">{{ admin.user }}</option>
@@ -32,24 +32,24 @@
             </td>
           </tr>
           <tr>
-            <td>
+            <td class="form-search-pick" data-label="">
               <div class="form-check">
                 <input class="form-check-input" id="message_" name="search_type" type="radio" value="radiobutton">
               </div>
             </td>
-            <td><label for="message" onclick="$('message_').checked = true">Текст сообщения</label></td>
-            <td>
+            <td class="form-search-crit" data-label="Критерий"><label for="message" onclick="$('message_').checked = true">Текст сообщения</label></td>
+            <td data-label="Ввод">
               <input type="text" class="form-control" id="message" value="" onmouseup="$('message_').checked = true" placeholder="Введите текст">
             </td>
           </tr>
           <tr>
-            <td>
+            <td class="form-search-pick" data-label="">
               <div class="form-check">
                 <input class="form-check-input" id="date_" name="search_type" type="radio" value="radiobutton">
               </div>
             </td>
-            <td><label for="day" onclick="$('date_').checked = true">Дата</label></td>
-            <td>
+            <td class="form-search-crit" data-label="Критерий"><label for="day" onclick="$('date_').checked = true">Дата</label></td>
+            <td data-label="Ввод">
               <div class="row g-2">
                 <div class="col-4">
                   <input type="text" class="form-control" id="day" value="" onmouseup="$('date_').checked = true" placeholder="День" maxlength="2">
@@ -68,13 +68,13 @@
             </td>
           </tr>
           <tr>
-            <td>
+            <td class="form-search-pick" data-label="">
               <div class="form-check">
                 <input class="form-check-input" id="type_" name="search_type" type="radio" value="radiobutton">
               </div>
             </td>
-            <td><label for="type" onclick="$('type_').checked = true">Тип сообщения</label></td>
-            <td>
+            <td class="form-search-crit" data-label="Критерий"><label for="type" onclick="$('type_').checked = true">Тип сообщения</label></td>
+            <td data-label="Ввод">
               <select class="form-select" id="type" onmouseup="$('type_').checked = true">
                 <option label="Сообщение" value="m">Сообщение</option>
                 <option label="Предупреждение" value="w">Предупреждение</option>
@@ -96,8 +96,8 @@
   </div>
   {% endif %}
 
-  <div class="table-responsive">
-    <table class="table table-striped">
+  <div class="table-responsive table-cards-wrap">
+    <table class="table table-striped table-cards">
       <thead>
         <tr>
           <th class="text-center">Тип</th>
@@ -109,10 +109,10 @@
       <tbody>
         {% for log in log_items %}
         <tr class="opener banlist-row admin-manage-row">
-          <td class="text-center">{{ log.type_img|raw }}</td>
-          <td>{{ log.title }}</td>
-          <td>{{ log.user }}</td>
-          <td>{{ log.date_str }}</td>
+          <td class="text-center" data-label="Тип">{{ log.type_img|raw }}</td>
+          <td data-label="Событие">{{ log.title }}</td>
+          <td data-label="Пользователь">{{ log.user }}</td>
+          <td data-label="Дата">{{ log.date_str }}</td>
         </tr>
         <tr class="banlist-detail-row">
           <td colspan="4" class="banlist-detail-cell">

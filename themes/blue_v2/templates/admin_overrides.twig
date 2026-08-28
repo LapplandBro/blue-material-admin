@@ -18,8 +18,8 @@
       <h2 class="form-page-title">Переопределения</h2>
       <p class="form-page-lead">Флаги команд SourceMod без правки плагинов · пустое название = удалить. Справка — <a href="https://wiki.alliedmods.net/Ru:Overriding_Command_Access_(SourceMod)" target="_blank" rel="noopener">AlliedModders Wiki</a>.</p>
     </header>
-    <div class="table-responsive">
-      <table class="admin-manage-table" id="overrides">
+    <div class="table-responsive table-cards-wrap">
+      <table class="admin-manage-table table-cards" id="overrides">
         <thead>
           <tr>
             <th>Тип</th>
@@ -30,26 +30,26 @@
         <tbody>
           {% for override in overrides_list %}
           <tr>
-            <td>
+            <td data-label="Тип">
               <select name="override_type[]" class="form-select">
                 <option{% if override.type == "command" %} selected="selected"{% endif %} value="command">Команда</option>
                 <option{% if override.type == "group" %} selected="selected"{% endif %} value="group">Группа</option>
               </select>
               <input type="hidden" name="override_id[]" value="{{ override.id }}">
             </td>
-            <td><input class="form-control" name="override_name[]" value="{{ override.name }}"></td>
-            <td><input class="form-control" name="override_flags[]" value="{{ override.flags }}"></td>
+            <td data-label="Название"><input class="form-control" name="override_name[]" value="{{ override.name }}"></td>
+            <td data-label="Флаги"><input class="form-control" name="override_flags[]" value="{{ override.flags }}"></td>
           </tr>
           {% endfor %}
           <tr>
-            <td>
+            <td data-label="Тип">
               <select class="form-select" name="new_override_type">
                 <option value="command">Команда</option>
                 <option value="group">Группа</option>
               </select>
             </td>
-            <td><input class="form-control" name="new_override_name" placeholder="Новое…"></td>
-            <td><input class="form-control" name="new_override_flags" placeholder="Флаги"></td>
+            <td data-label="Название"><input class="form-control" name="new_override_name" placeholder="Новое…"></td>
+            <td data-label="Флаги"><input class="form-control" name="new_override_flags" placeholder="Флаги"></td>
           </tr>
         </tbody>
       </table>

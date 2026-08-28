@@ -9,8 +9,8 @@
     <h2 class="form-page-title">Моды</h2>
     <p class="form-page-lead">{{ mod_count }} шт. · игры, привязанные к серверам</p>
   </header>
-  <div class="table-responsive">
-    <table class="table table-v2">
+  <div class="table-responsive table-cards-wrap">
+    <table class="table table-v2 table-cards">
       <thead>
         <tr>
           <th>Название</th>
@@ -25,12 +25,12 @@
       <tbody>
         {% for mod in mod_list|default([]) %}
         <tr id="mid_{{ mod.mid }}" class="banlist-row">
-          <td>{{ mod.name }}</td>
-          <td><code>{{ mod.modfolder }}</code></td>
-          <td class="text-center">{{ mod.icon_html|raw }}</td>
-          <td class="text-center">{{ mod.steam_universe }}</td>
+          <td data-label="Название">{{ mod.name }}</td>
+          <td data-label="Папка"><code>{{ mod.modfolder }}</code></td>
+          <td class="text-center" data-label="Иконка">{{ mod.icon_html|raw }}</td>
+          <td class="text-center" data-label="Steam universe">{{ mod.steam_universe }}</td>
           {% if permission_editmods or permission_deletemods %}
-          <td class="text-end">
+          <td class="text-end" data-label="Действия">
             <span class="admin-actions">
               {% if permission_editmods %}
               <a class="btn btn-sm btn-outline-secondary" href="index.php?p=admin&amp;c=mods&amp;o=edit&amp;id={{ mod.mid }}">Изменить</a>

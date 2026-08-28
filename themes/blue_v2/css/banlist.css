@@ -218,11 +218,14 @@
 .banlist-row-deleted td { color: var(--muted); }
 .banlist-row-expired,
 .banlist-row-deleted { opacity: 0.72; }
-.banlist-row-perm td:first-child {
-  box-shadow: inset 3px 0 0 var(--danger);
-}
-.banlist-row-unbanned td:first-child {
-  box-shadow: inset 3px 0 0 var(--ok);
+
+@media (min-width: 992px) {
+  .banlist-row-perm {
+    border-left: 3px solid var(--danger);
+  }
+  .banlist-row-unbanned {
+    border-left: 3px solid var(--ok);
+  }
 }
 
 .banlist-player {
@@ -505,12 +508,23 @@
 
 @media (max-width: 991.98px) {
   .banlist-detail { grid-template-columns: 1fr; }
+  .banlist-nav .pagination > li > a,
+  .banlist-nav .pagination > li > span,
+  .banlist-nav .pagination a {
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    height: auto;
+  }
 }
-@media (max-width: 767.98px) {
-  .banlist-chrome { padding: 0.75rem 0.85rem; }
-  .banlist-search { max-width: none; flex-basis: 100%; }
-  .banlist-fact { grid-template-columns: 1fr; gap: 0.12rem; }
+@media (max-width: 575.98px) {
   .banlist-th-date,
   .banlist-td-date { width: auto; }
   .banlist-comment-body { padding: 0.75rem 0.85rem 1rem; }
+}
+
+/* Compact row: optional cols hidden on xs (<576px), visible from sm via mobile.css flex rules */
+@media (max-width: 575.98px) {
+  .table-cards.banlist-table > tbody > tr.list-compact-row > td.banlist-td--optional {
+    display: none !important;
+  }
 }

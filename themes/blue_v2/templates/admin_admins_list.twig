@@ -19,8 +19,8 @@
 
   {% include 'admin_admins_search.twig' %}
 
-  <div class="table-responsive" id="banlist">
-    <table class="admin-manage-table">
+  <div class="table-responsive table-cards-wrap" id="banlist">
+    <table class="admin-manage-table table-cards">
       <thead>
         <tr>
           <th>Имя</th>
@@ -32,13 +32,13 @@
       <tbody>
         {% for admin in admins|default([]) %}
         <tr class="opener admin-manage-row">
-          <td>
+          <td data-label="Имя">
             <span class="admin-manage-name">{{ admin.user }}</span>
             <span class="admin-manage-chip" title="Иммунитет">{{ admin.immunity }}</span>
           </td>
-          <td>{{ admin.server_group }}</td>
-          <td>{{ admin.web_group }}</td>
-          <td class="text-end">{{ admin.expired_text|raw }}</td>
+          <td data-label="Серверная группа">{{ admin.server_group }}</td>
+          <td data-label="Веб-группа">{{ admin.web_group }}</td>
+          <td class="text-end" data-label="Срок">{{ admin.expired_text|raw }}</td>
         </tr>
         <tr class="admin-detail-row">
           <td colspan="4">

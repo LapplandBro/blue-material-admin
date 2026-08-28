@@ -19,71 +19,71 @@
   </div>
   {% endif %}
   <div class="servers-scroll">
-    <table class="servers-table">
-      <thead>
-        <tr>
-          <th class="servers-col-ico">Игра</th>
-          <th class="servers-col-ico">ОС</th>
-          <th class="servers-col-ico">VAC</th>
-          <th>Сервер</th>
-          <th class="servers-col-players">Игроки</th>
-          <th class="servers-col-map">Карта</th>
-          <th class="servers-col-chevron"></th>
-        </tr>
-      </thead>
-      <tbody>
-        {% if server_list %}
-          {% for server in server_list %}
-            <tr id="opener_{{ server.sid }}" class="opener servers-row">
-              <td class="servers-td-mod">{{ server.icon_html|raw }}</td>
-              <td class="servers-td-ico" id="os_{{ server.sid }}"></td>
-              <td class="servers-td-ico" id="vac_{{ server.sid }}"></td>
-              <td class="servers-td-host" id="host_{{ server.sid }}"><span class="servers-muted">Загрузка…</span></td>
-              <td class="servers-td-players" id="players_{{ server.sid }}"><span class="servers-muted">—</span></td>
-              <td class="servers-td-map" id="map_{{ server.sid }}"><span class="servers-muted">—</span></td>
-              <td class="servers-td-chevron">
-                <svg class="servers-chevron" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path fill="currentColor" d="M2.2 4.2L6 8l3.8-3.8-.9-.9L6 6.2 3.1 3.3z"/></svg>
-              </td>
-            </tr>
-            <tr class="servers-detail-row">
-              <td colspan="7">
-                <div id="serverpanel_{{ server.sid }}" class="opener servers-detail" style="visibility: hidden; zoom: 1; opacity: 0; height: 0px;">
-                  <div id="serverwindow_{{ server.sid }}" class="servers-window">
-                    <div class="servers-detail-grid">
-                      <div class="servers-players-col">
-                        <div id="sinfo_{{ server.sid }}">
-                          <table class="servers-players-table" width="100%" border="0" id="playerlist_{{ server.sid }}"></table>
-                        </div>
-                        <div id="noplayer_{{ server.sid }}" class="servers-empty">
-                          <p class="servers-empty-text">Сейчас на сервере никого нет.</p>
-                        </div>
+    <div class="servers-list" role="table" aria-label="Список серверов">
+      <div class="servers-list-head" role="row">
+        <div class="servers-col servers-col-ico" role="columnheader">Игра</div>
+        <div class="servers-col servers-col-ico" role="columnheader">ОС</div>
+        <div class="servers-col servers-col-ico" role="columnheader">VAC</div>
+        <div class="servers-col servers-col-host" role="columnheader">Сервер</div>
+        <div class="servers-col servers-col-players" role="columnheader">Игроки</div>
+        <div class="servers-col servers-col-map" role="columnheader">Карта</div>
+        <div class="servers-col servers-col-chevron" role="columnheader" aria-hidden="true"></div>
+      </div>
+      {% if server_list %}
+        {% for server in server_list %}
+        <div class="servers-item" role="rowgroup">
+          <div id="opener_{{ server.sid }}" class="servers-toggle servers-row" role="row" tabindex="0">
+            <div class="servers-icons">
+              <div class="servers-col servers-td-mod" role="cell">{{ server.icon_html|raw }}</div>
+              <div class="servers-col servers-td-ico" role="cell" id="os_{{ server.sid }}"></div>
+              <div class="servers-col servers-td-ico" role="cell" id="vac_{{ server.sid }}"></div>
+            </div>
+            <div class="servers-col servers-td-host" role="cell" id="host_{{ server.sid }}"><span class="servers-muted">Загрузка…</span></div>
+            <div class="servers-col servers-td-players" role="cell" id="players_{{ server.sid }}"><span class="servers-muted">—</span></div>
+            <div class="servers-col servers-td-map" role="cell" id="map_{{ server.sid }}"><span class="servers-muted">—</span></div>
+            <div class="servers-col servers-td-chevron" role="cell" aria-hidden="true">
+              <svg class="servers-chevron" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path fill="currentColor" d="M2.2 4.2L6 8l3.8-3.8-.9-.9L6 6.2 3.1 3.3z"/></svg>
+            </div>
+          </div>
+          <div class="servers-detail-row" role="row">
+            <div class="servers-detail-cell" role="cell">
+              <div id="serverpanel_{{ server.sid }}" class="opener servers-detail">
+                <div id="serverwindow_{{ server.sid }}" class="servers-window">
+                  <div class="servers-detail-grid">
+                    <div class="servers-players-col">
+                      <div id="sinfo_{{ server.sid }}">
+                        <table class="servers-players-table" width="100%" border="0" id="playerlist_{{ server.sid }}"></table>
                       </div>
-                      <aside class="servers-aside">
-                        <div class="servers-map-frame">
-                          <img id="mapimg_{{ server.sid }}" src="images/maps/nomap.jpg" alt="Карта" loading="lazy" onerror="if(this.getAttribute('data-nomap'))return;this.setAttribute('data-nomap','1');this.src='images/maps/nomap.jpg';">
-                        </div>
-                        <div class="servers-addr">
-                          <span class="servers-addr-label">Адрес</span>
-                          <code>{{ server.ip }}:{{ server.port }}</code>
-                        </div>
-                        <div class="servers-actions">
-                          <button type="button" class="btn btn-accent" onclick="document.location = 'steam://connect/{{ server.ip }}:{{ server.port }}'">Подключиться</button>
-                          <button type="button" class="btn btn-outline-secondary" onclick="ShowBox('Обновление','Обновляем статус сервера…', 'blue', '', true, 1000);xajax_RefreshServer({{ server.sid }});">Обновить</button>
-                        </div>
-                      </aside>
+                      <div id="noplayer_{{ server.sid }}" class="servers-empty">
+                        <p class="servers-empty-text">Сейчас на сервере никого нет.</p>
+                      </div>
                     </div>
+                    <aside class="servers-aside">
+                      <div class="servers-map-frame">
+                        <img id="mapimg_{{ server.sid }}" src="images/maps/nomap.jpg" alt="Карта" loading="lazy" onerror="if(this.getAttribute('data-nomap'))return;this.setAttribute('data-nomap','1');this.src='images/maps/nomap.jpg';">
+                      </div>
+                      <div class="servers-addr">
+                        <span class="servers-addr-label">Адрес</span>
+                        <code>{{ server.ip }}:{{ server.port }}</code>
+                      </div>
+                      <div class="servers-actions">
+                        <button type="button" class="btn btn-accent" onclick="document.location = 'steam://connect/{{ server.ip }}:{{ server.port }}'">Подключиться</button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="ShowBox('Обновление','Обновляем статус сервера…', 'blue', '', true, 1000);xajax_RefreshServer({{ server.sid }});">Обновить</button>
+                      </div>
+                    </aside>
                   </div>
                 </div>
-              </td>
-            </tr>
-          {% endfor %}
-        {% else %}
-          <tr>
-            <td colspan="7" class="servers-empty-table">Нет включённых серверов.</td>
-          </tr>
-        {% endif %}
-      </tbody>
-    </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="servers-empty-table" role="row">
+          <div class="servers-empty-table-cell" role="cell">Нет включённых серверов.</div>
+        </div>
+      {% endif %}
+    </div>
   </div>
 </div>
 {% endblock %}

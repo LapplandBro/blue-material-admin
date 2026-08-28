@@ -424,6 +424,8 @@ function sb_ui_v2_render($template, array $vars)
 		'sb_js_ver' => (string)(@filemtime((defined('ROOT') ? ROOT : '') . 'scripts/sourcebans.js') ?: time()),
 		'css_ver' => (string)max(
 			(int)(@filemtime((defined('ROOT') ? ROOT : '') . 'themes/blue_v2/css/blue.css') ?: time()),
+			(int)(@filemtime((defined('ROOT') ? ROOT : '') . 'themes/blue_v2/css/mobile.css') ?: 0),
+			(int)(@filemtime((defined('ROOT') ? ROOT : '') . 'themes/blue_v2/css/wide.css') ?: 0),
 			(int)(@filemtime((defined('ROOT') ? ROOT : '') . 'themes/blue_v2/css/admin_embed.css') ?: 0),
 			(int)(@filemtime((defined('ROOT') ? ROOT : '') . 'themes/blue_v2/css/forms.css') ?: 0),
 			(int)(@filemtime((defined('ROOT') ? ROOT : '') . 'themes/blue_v2/css/servers.css') ?: 0),

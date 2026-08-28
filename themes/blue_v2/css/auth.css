@@ -61,3 +61,33 @@
 .login-steam .bi { font-size: 1.15rem; line-height: 1; }
 .login-card .alert { margin-bottom: 0.9rem; }
 #msg-blue, #msg-red { font-size: 0.86rem; }
+
+@media (max-width: 767.98px) {
+  .login-screen {
+    padding: 1rem 0.75rem;
+    align-items: flex-start;
+  }
+
+  .login-card,
+  .login-card.auth-card-wide {
+    max-width: none;
+    width: 100%;
+    padding: 1.15rem 1rem 1.25rem;
+  }
+
+  .totp-qr img,
+  .totp-qr canvas {
+    max-width: min(220px, 100%);
+    height: auto;
+  }
+
+  .recovery-codes {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .recovery-codes {
+    grid-template-columns: 1fr;
+  }
+}

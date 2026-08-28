@@ -1,3 +1,4 @@
+/* Breakpoints: see mobile.css (--bs-lg-max 991.98px, --bs-md-max 767.98px, --bs-sm-max 575.98px). */
 .sb-v2-breadcrumb {
   margin: 0 0 0.85rem;
 }
@@ -633,6 +634,152 @@
 .recid-row-revoked td { opacity: 0.55; }
 .recid-points-raw { font-size: 0.72rem; color: var(--muted); font-weight: 400; }
 .recid-score-note { color: #ffab91; font-size: 0.78rem; font-weight: 650; margin-top: 0.4rem; }
+
+/* Parsec / recidivism tables — compact card rows (<992px) */
+.parsec-table .parsec-td-name,
+.recid-top-table .parsec-td-name { min-width: 0; }
+.parsec-table .parsec-td-steam code,
+.recid-top-table .parsec-td-steam code { font-size: 0.82em; }
+.recid-events .recid-td-reason { max-width: 24rem; }
+
+/* --bs-lg-max */
+@media (max-width: 991.98px) {
+  .parsec-stats,
+  .recid-scores {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.35rem;
+  }
+
+  .parsec-stat,
+  .recid-score-box {
+    padding: 0.45rem 0.4rem;
+  }
+
+  .parsec-stat-value,
+  .recid-score-value {
+    font-size: 1.05rem;
+  }
+
+  .parsec-block {
+    padding: 0.55rem 0.65rem;
+  }
+
+  .parsec-table.table-cards > tbody > tr,
+  .recid-events.table-cards > tbody > tr,
+  .recid-top-table.table-cards > tbody > tr {
+    display: flex !important;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.2rem 0.45rem;
+    padding: 0.4rem 0.55rem;
+    margin-bottom: 0.32rem;
+    border: 1px solid var(--border-hairline);
+    border-radius: var(--radius-sm);
+    background: rgba(8, 15, 31, 0.55);
+  }
+
+  .parsec-table.table-cards > tbody > tr > td,
+  .recid-events.table-cards > tbody > tr > td,
+  .recid-top-table.table-cards > tbody > tr > td {
+    display: block !important;
+    flex: 0 0 auto;
+    width: auto !important;
+    padding: 0 !important;
+    border: 0 !important;
+  }
+
+  .parsec-table.table-cards > tbody > tr > td::before,
+  .recid-events.table-cards > tbody > tr > td::before,
+  .recid-top-table.table-cards > tbody > tr > td::before {
+    display: none !important;
+    content: none !important;
+  }
+
+  .parsec-table .parsec-td-name,
+  .recid-top-table .parsec-td-name {
+    flex: 1 1 8rem;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .parsec-table .parsec-td-steam,
+  .recid-top-table .parsec-td-steam {
+    flex: 1 1 100%;
+    font-size: 0.68rem;
+    order: 10;
+  }
+
+  .parsec-table .parsec-td-steam code,
+  .recid-top-table .parsec-td-steam code {
+    font-size: inherit;
+  }
+
+  .parsec-table .parsec-td-points,
+  .recid-events .parsec-td-points {
+    flex: 0 0 auto;
+    font-size: 0.78rem;
+  }
+
+  .recid-events .recid-td-date {
+    flex: 0 0 auto;
+    font-size: 0.68rem;
+    color: var(--muted);
+  }
+
+  .recid-events .recid-td-reason {
+    flex: 1 1 100%;
+    font-size: 0.76rem;
+    order: 8;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .recid-events .recid-td-len {
+    flex: 0 0 auto;
+    font-size: 0.68rem;
+  }
+
+  .parsec-table .parsec-td-actions,
+  .recid-top-table .parsec-td-actions {
+    flex: 1 1 100%;
+    order: 11;
+  }
+
+  .parsec-table .parsec-td-actions .admin-actions,
+  .recid-top-table .parsec-td-actions .admin-actions {
+    flex-wrap: wrap;
+    gap: 0.2rem;
+  }
+
+  .parsec-table .admin-action,
+  .recid-top-table .admin-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.75rem;
+    font-size: 0.68rem;
+    padding: 0.35rem 0.55rem;
+  }
+
+  .parsec-table-fp .parsec-td-fp {
+    flex: 1 1 100%;
+  }
+
+  .parsec-fp-compact {
+    font-size: 0.72rem;
+    padding: 0.35rem 0.45rem;
+  }
+}
+/* --bs-sm-max */
+@media (max-width: 575.98px) {
+  .parsec-stats,
+  .recid-scores {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
 
 .admin-manage {
   background: var(--bg-card);
@@ -1302,19 +1449,30 @@ div.opener5 > .admin-ticket {
   color: #e8f0ff;
 }
 
+/* --bs-lg-max */
 @media (max-width: 991.98px) {
   .perms-section--grid { grid-template-columns: 1fr; }
   .voucher-admin-help { grid-template-columns: 1fr; }
   .settings-toggles { grid-template-columns: 1fr; }
 }
-@media (max-width: 719.98px) {
+/* --bs-md-max */
+@media (max-width: 767.98px) {
+  .admin-manage-head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.65rem;
+  }
+  .admin-manage-tools {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
   .admin-embed-body .form-horizontal .form-group {
     grid-template-columns: 1fr;
   }
   .admin-embed-body .admin-log-detail { grid-template-columns: 1fr; }
-  .parsec-stats, .recid-scores { grid-template-columns: 1fr 1fr; }
   .admin-detail { grid-template-columns: 1fr; }
-  .admin-fact { grid-template-columns: 1fr; }
+  .admin-detail .admin-fact:not(.admin-fact--stack) { grid-template-columns: 1fr; }
   .admin-facts--ticket { grid-template-columns: 1fr; }
   .admin-facts--ticket .admin-fact,
   .admin-facts--ticket .admin-fact--span {
@@ -1343,6 +1501,13 @@ div.opener5 > .admin-ticket {
   }
   .perms-row-cmds { grid-column: 1; }
   .perms-row input[type="checkbox"] { grid-row: 1 / span 2; }
+}
+/* --bs-sm-max */
+@media (max-width: 575.98px) {
+  .admin-manage-tools .btn {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
 }
 
 /* Ensure modals and server frames use theme background (fix white frames on ban modal) */

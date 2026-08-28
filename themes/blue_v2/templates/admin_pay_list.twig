@@ -47,8 +47,8 @@ define('SB_VOUCHER_API_ALLOW_IPS', ''); // опционально: 1.2.3.4,5.6.7
   {% if card_list|length == 0 %}
   <p class="voucher-empty">Ключей пока нет. Выпустите на вкладке «Добавить».</p>
   {% else %}
-  <div class="table-responsive">
-    <table class="admin-manage-table voucher-table">
+  <div class="table-responsive table-cards-wrap">
+    <table class="admin-manage-table voucher-table table-cards">
       <thead>
         <tr>
           <th>№</th>
@@ -64,23 +64,23 @@ define('SB_VOUCHER_API_ALLOW_IPS', ''); // опционально: 1.2.3.4,5.6.7
       <tbody>
         {% for card in card_list %}
         <tr class="admin-manage-row{% if card.activ != "1" %} admin-row-muted{% endif %}">
-          <td class="voucher-col-id">{{ card.aid }}</td>
-          <td>
+          <td class="voucher-col-id" data-label="№">{{ card.aid }}</td>
+          <td data-label="Статус">
             {% if card.activ == "1" %}<span class="admin-manage-chip">Рабочий</span>{% else %}<span class="parsec-text-danger">Использованный</span>{% endif %}
           </td>
-          <td>
+          <td data-label="Ключ">
             {% if card.value != "" %}<code class="voucher-key">{{ card.value }}</code>{% else %}<span class="parsec-text-danger">Нету ключа</span>{% endif %}
           </td>
-          <td>
+          <td data-label="Срок">
             {% if card.days == "0" %}Навсегда{% else %}{{ card.days }} дн.{% endif %}
           </td>
-          <td>
+          <td data-label="Сервер">
             {% if card.group_srv != "" %}{{ card.group_srv }}{% else %}<span class="admin-muted">—</span>{% endif %}
           </td>
-          <td>
+          <td data-label="Веб">
             {% if card.group_web != "0" %}{{ card.group_web }}{% else %}<span class="admin-muted">—</span>{% endif %}
           </td>
-          <td>
+          <td data-label="Доступ">
             {% if card.servers == "" %}
             Свободный выбор
             {% elseif card.servers == "-1" %}
@@ -89,7 +89,7 @@ define('SB_VOUCHER_API_ALLOW_IPS', ''); // опционально: 1.2.3.4,5.6.7
             Ограничен
             {% endif %}
           </td>
-          <td class="text-end">
+          <td class="text-end" data-label="">
             <form action="index.php?p=admin&amp;c=pay_card" method="post" class="d-inline" onsubmit="return confirm('Удалить ваучер?');">
               <input type="hidden" name="sb_csrf" value="{{ sb_csrf }}">
               <input type="hidden" name="voucher_delete_id" value="{{ card.aid }}">

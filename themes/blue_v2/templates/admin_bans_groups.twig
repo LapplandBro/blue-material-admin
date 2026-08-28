@@ -41,7 +41,9 @@
     <div class="form-field form-field--full" id="steamGroups" name="steamGroups">
       <label class="form-label">Группы <mark style="cursor:pointer;" id="tickswitch" name="tickswitch" onclick="TickSelectAll();"> (пометить) </mark></label>
       <div id="steamGroupsText" name="steamGroupsText"> Загрузка групп...</div>
-      <table id="steamGroupsTable" name="steamGroupsTable" border="0" width="500px"></table>
+      <div class="table-responsive table-cards-wrap">
+        <table id="steamGroupsTable" name="steamGroupsTable" class="table table-cards"></table>
+      </div>
     </div>
     <div class="form-field form-field--full">
       <label class="form-label" for="groupreason">Причина бана группы</label>

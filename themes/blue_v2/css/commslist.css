@@ -217,16 +217,19 @@
 }
 .commslist-flag img { width: 18px; height: 18px; }
 
-.commslist-row-perm td:first-child {
-  box-shadow: inset 3px 0 0 var(--danger);
-}
 .commslist-row-expired td,
 .commslist-row-deleted td,
 .commslist-row-unbanned td { color: var(--muted); }
 .commslist-row-expired,
 .commslist-row-deleted { opacity: 0.72; }
-.commslist-row-unbanned td:first-child {
-  box-shadow: inset 3px 0 0 var(--ok);
+
+@media (min-width: 992px) {
+  .commslist-row-perm {
+    border-left: 3px solid var(--danger);
+  }
+  .commslist-row-unbanned {
+    border-left: 3px solid var(--ok);
+  }
 }
 
 .commslist-player {
@@ -463,12 +466,23 @@
 
 @media (max-width: 991.98px) {
   .commslist-detail-grid { grid-template-columns: 1fr; }
+  .commslist-nav .pagination > li > a,
+  .commslist-nav .pagination > li > span,
+  .commslist-nav .pagination a {
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    height: auto;
+  }
 }
-@media (max-width: 767.98px) {
-  .commslist-chrome { padding: 0.75rem 0.85rem; }
-  .commslist-search { max-width: none; flex-basis: 100%; }
-  .commslist-fact { grid-template-columns: 1fr; gap: 0.12rem; }
+@media (max-width: 575.98px) {
   .commslist-toolbar,
   .commslist-status { padding-left: 0.85rem; padding-right: 0.85rem; }
   .commslist-comment-body { padding: 0.75rem 0.85rem 1rem; }
+}
+
+/* Compact row: optional cols hidden on xs (<576px), visible from sm via mobile.css flex rules */
+@media (max-width: 575.98px) {
+  .table-cards.commslist-table > tbody > tr.list-compact-row > td.commslist-td--optional {
+    display: none !important;
+  }
 }

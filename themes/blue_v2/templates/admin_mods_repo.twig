@@ -4,8 +4,8 @@
     <h2 class="form-page-title">Репозиторий МОДов</h2>
     <p class="form-page-lead">Список всех МОДов, доступных в репозитории SourceBans</p>
   </header>
-  <div class="table-responsive">
-    <table class="table table-v2">
+  <div class="table-responsive table-cards-wrap">
+    <table class="table table-v2 table-cards">
       <thead>
         <tr>
           <th class="text-center" style="width:5%;">Иконка</th>
@@ -16,9 +16,9 @@
       <tbody>
         {% for mod in modlist|default([]) %}
         <tr id="{{ mod.folder }}">
-          <td class="text-center"><img src="{{ mirror }}{{ mirror_iconsdir }}{{ mod.icon }}" alt=""></td>
-          <td>{{ mod.name }}</td>
-          <td class="text-end">
+          <td class="text-center" data-label="Иконка"><img src="{{ mirror }}{{ mirror_iconsdir }}{{ mod.icon }}" alt=""></td>
+          <td data-label="Имя">{{ mod.name }}</td>
+          <td class="text-end" data-label="Статус">
             {% if mod.installed %}
             <strong>Установлен</strong>
             {% else %}

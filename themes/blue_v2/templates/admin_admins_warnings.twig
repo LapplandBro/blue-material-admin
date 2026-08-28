@@ -4,8 +4,8 @@
     <h2 class="form-page-title">Список предупреждений</h2>
     <p class="form-page-lead">Всего: {{ count }}</p>
   </header>
-  <div class="table-responsive">
-    <table class="admin-manage-table">
+  <div class="table-responsive table-cards-wrap">
+    <table class="admin-manage-table table-cards">
       <thead>
         <tr>
           <th>ID</th>
@@ -18,11 +18,11 @@
       <tbody>
         {% for warning in Warnings|default([]) %}
         <tr{% if warning.expired %} class="admin-row-muted"{% endif %}>
-          <td>{{ warning.id }}</td>
-          <td><strong>{{ warning.from }}</strong></td>
-          <td>{{ warning.reason }}</td>
-          <td>{{ warning.expires|raw }}</td>
-          <td class="text-end">
+          <td data-label="ID">{{ warning.id }}</td>
+          <td data-label="От кого"><strong>{{ warning.from }}</strong></td>
+          <td data-label="Причина">{{ warning.reason }}</td>
+          <td data-label="Истекает">{{ warning.expires|raw }}</td>
+          <td class="text-end" data-label="Действия">
             {% if warning.expired %}
               Недоступно
             {% else %}

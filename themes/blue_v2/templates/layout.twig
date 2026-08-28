@@ -53,7 +53,9 @@
   {{ xajax_js|raw }}
   <script>window.SB_CSRF={{ sb_csrf|default('')|json_encode|raw }};window.SB_SESSION={{ sb_session|default({})|json_encode|raw }};</script>
   {% block extra_head %}{% endblock %}
-  <script>try{if(localStorage.getItem('sb-ui-sidebar')==='off')document.documentElement.classList.add('sidebar-off');}catch(e){}</script>
+  <link href="{{ asset_base }}themes/blue_v2/css/mobile.css?v={{ css_ver }}" rel="stylesheet">
+  <link href="{{ asset_base }}themes/blue_v2/css/wide.css?v={{ css_ver }}" rel="stylesheet">
+  <script>try{var _mq=window.matchMedia('(max-width: 991.98px)');var _k=_mq.matches?'sb-ui-sidebar-mobile':'sb-ui-sidebar-desktop';var _s=localStorage.getItem(_k);if(_mq.matches){if(_s!=='on')document.documentElement.classList.add('sidebar-off');}else{if(_s==='off')document.documentElement.classList.add('sidebar-off');else document.documentElement.classList.remove('sidebar-off');}}catch(e){}</script>
 </head>
 <body class="blue-v2">
 <div class="page-loader" id="page-loader">
@@ -91,11 +93,12 @@
     {% else %}
       <a class="topbar-btn topbar-btn-accent" href="{{ login_url }}">Вход</a>
     {% endif %}
-    <button type="button" class="menu-trigger" id="menu-trigger" aria-label="Показать или скрыть меню" aria-controls="sidebar" aria-expanded="true">
+    <button type="button" class="menu-trigger" id="menu-trigger" aria-label="Полное меню: админка, аккаунт, жалобы" aria-controls="sidebar" aria-expanded="true">
       <span class="menu-trigger-lines" aria-hidden="true"><span></span><span></span><span></span></span>
     </button>
   </div>
 </header>
+<div class="sidebar-backdrop" id="sidebar-backdrop" hidden aria-hidden="true"></div>
 <div class="app-shell">
   <aside class="sidebar" id="sidebar" aria-label="Главное меню">
     <div class="profile-menu">
@@ -120,7 +123,7 @@
         <div class="nav-group-label">{{ group.label }}</div>
         <div class="nav-v2">
           {% for item in group.items %}
-          <a class="nav-link{% if item.active %} active{% endif %}" href="{{ item.href }}"{% if item.active %} aria-current="page"{% endif %}{% if item.newtab %} target="_blank" rel="noopener noreferrer"{% endif %}{% if item.desc %} title="{{ item.desc }}"{% endif %}>
+          <a class="nav-link{% if item.active %} active{% endif %}{% if item.tab_slot|default('') %} nav-link--tabbar-slot{% endif %}" href="{{ item.href }}"{% if item.tab_slot|default('') %} data-tab-slot="{{ item.tab_slot }}"{% endif %}{% if item.active %} aria-current="page"{% endif %}{% if item.newtab %} target="_blank" rel="noopener noreferrer"{% endif %}{% if item.desc %} title="{{ item.desc }}"{% endif %}>
             {% if item.icon == 'sb-bi-vk' %}
             <i class="sb-bi-vk nav-ico" aria-hidden="true"></i>
             {% else %}
@@ -136,11 +139,11 @@
       <div class="nav-group">
         <div class="nav-group-label">Обзор</div>
         <div class="nav-v2">
-          <a class="nav-link{% if nav_active == 'home' or nav_active == '' %} active{% endif %}" href="index.php?p=home"{% if nav_active == 'home' or nav_active == '' %} aria-current="page"{% endif %}>
+          <a class="nav-link nav-link--tabbar-slot{% if nav_active == 'home' or nav_active == '' %} active{% endif %}" href="index.php?p=home" data-tab-slot="home"{% if nav_active == 'home' or nav_active == '' %} aria-current="page"{% endif %}>
             <i class="bi bi-house-door nav-ico" aria-hidden="true"></i>
             Главная
           </a>
-          <a class="nav-link{% if nav_active == 'servers' %} active{% endif %}" href="index.php?p=servers"{% if nav_active == 'servers' %} aria-current="page"{% endif %}>
+          <a class="nav-link nav-link--tabbar-slot{% if nav_active == 'servers' %} active{% endif %}" href="index.php?p=servers" data-tab-slot="servers"{% if nav_active == 'servers' %} aria-current="page"{% endif %}>
             <i class="bi bi-hdd-stack nav-ico" aria-hidden="true"></i>
             Серверы
           </a>
@@ -149,15 +152,15 @@
       <div class="nav-group">
         <div class="nav-group-label">Списки</div>
         <div class="nav-v2">
-          <a class="nav-link{% if nav_active == 'banlist' or nav_active == 'ui_v2' %} active{% endif %}" href="index.php?p=banlist"{% if nav_active == 'banlist' or nav_active == 'ui_v2' %} aria-current="page"{% endif %}>
+          <a class="nav-link nav-link--tabbar-slot{% if nav_active == 'banlist' or nav_active == 'ui_v2' %} active{% endif %}" href="index.php?p=banlist" data-tab-slot="banlist"{% if nav_active == 'banlist' or nav_active == 'ui_v2' %} aria-current="page"{% endif %}>
             <i class="bi bi-shield-x nav-ico" aria-hidden="true"></i>
             Баны
           </a>
-          <a class="nav-link{% if nav_active == 'commslist' %} active{% endif %}" href="index.php?p=commslist"{% if nav_active == 'commslist' %} aria-current="page"{% endif %}>
+          <a class="nav-link nav-link--tabbar-slot{% if nav_active == 'commslist' %} active{% endif %}" href="index.php?p=commslist" data-tab-slot="commslist"{% if nav_active == 'commslist' %} aria-current="page"{% endif %}>
             <i class="bi bi-mic-mute nav-ico" aria-hidden="true"></i>
             Муты
           </a>
-          <a class="nav-link{% if nav_active == 'adminlist' %} active{% endif %}" href="index.php?p=adminlist"{% if nav_active == 'adminlist' %} aria-current="page"{% endif %}>
+          <a class="nav-link nav-link--tabbar-slot{% if nav_active == 'adminlist' %} active{% endif %}" href="index.php?p=adminlist" data-tab-slot="adminlist"{% if nav_active == 'adminlist' %} aria-current="page"{% endif %}>
             <i class="bi bi-people nav-ico" aria-hidden="true"></i>
             Админы
           </a>
@@ -166,17 +169,17 @@
       <div class="nav-group">
         <div class="nav-group-label">Кабинет</div>
         <div class="nav-v2">
-          <a class="nav-link{% if nav_active == 'admin' %} active{% endif %}" href="index.php?p=admin"{% if nav_active == 'admin' %} aria-current="page"{% endif %}>
+          <a class="nav-link nav-link--tabbar-slot{% if nav_active == 'admin' %} active{% endif %}" href="index.php?p=admin" data-tab-slot="admin"{% if nav_active == 'admin' %} aria-current="page"{% endif %}>
             <i class="bi bi-gear nav-ico" aria-hidden="true"></i>
             Админка
           </a>
           {% if logged_in %}
-          <a class="nav-link{% if nav_active == 'account' %} active{% endif %}" href="index.php?p=account"{% if nav_active == 'account' %} aria-current="page"{% endif %}>
+          <a class="nav-link nav-link--tabbar-slot{% if nav_active == 'account' %} active{% endif %}" href="index.php?p=account" data-tab-slot="account"{% if nav_active == 'account' %} aria-current="page"{% endif %}>
             <i class="bi bi-person nav-ico" aria-hidden="true"></i>
             Аккаунт
           </a>
           {% else %}
-          <a class="nav-link{% if nav_active == 'login' %} active{% endif %}" href="{{ login_url }}"{% if nav_active == 'login' %} aria-current="page"{% endif %}>
+          <a class="nav-link nav-link--tabbar-slot{% if nav_active == 'login' %} active{% endif %}" href="{{ login_url }}" data-tab-slot="login"{% if nav_active == 'login' %} aria-current="page"{% endif %}>
             <i class="bi bi-box-arrow-in-right nav-ico" aria-hidden="true"></i>
             Вход
           </a>
@@ -210,6 +213,7 @@
     </footer>
   </div>
 </div>
+{% include 'partials/mobile_tabbar.twig' %}
 {% endblock %}
 <script src="{{ asset_base }}themes/blue_v2/vendor/bootstrap/bootstrap.bundle.min.js"></script>
 <script src="{{ asset_base }}themes/blue_v2/vendor/sweetalert/sweet-alert.min.js"></script>
@@ -278,18 +282,124 @@
   window.setTimeout(hideLoader, 12000);
 
   var trigger = document.getElementById('menu-trigger');
+  var backdrop = document.getElementById('sidebar-backdrop');
+  var mqDrawer = window.matchMedia('(max-width: 991.98px)');
+
   function sidebarOff() {
     return document.documentElement.classList.contains('sidebar-off');
   }
+
+  function drawerMode() {
+    return mqDrawer.matches;
+  }
+
+  function syncSidebarUi() {
+    var off = sidebarOff();
+    if (trigger) trigger.setAttribute('aria-expanded', off ? 'false' : 'true');
+    if (backdrop) {
+      if (drawerMode() && !off) {
+        backdrop.removeAttribute('hidden');
+        backdrop.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('sidebar-drawer-open');
+      } else {
+        backdrop.setAttribute('hidden', 'hidden');
+        backdrop.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('sidebar-drawer-open');
+      }
+    }
+  }
+
   function setSidebar(off) {
     document.documentElement.classList.toggle('sidebar-off', off);
-    if (trigger) trigger.setAttribute('aria-expanded', off ? 'false' : 'true');
-    try { localStorage.setItem('sb-ui-sidebar', off ? 'off' : 'on'); } catch (err) {}
+    try {
+      var key = drawerMode() ? 'sb-ui-sidebar-mobile' : 'sb-ui-sidebar-desktop';
+      localStorage.setItem(key, off ? 'off' : 'on');
+    } catch (err) {}
+    syncSidebarUi();
   }
+
+  function applySidebarForViewport() {
+    try {
+      var key = drawerMode() ? 'sb-ui-sidebar-mobile' : 'sb-ui-sidebar-desktop';
+      var stored = localStorage.getItem(key);
+      if (drawerMode()) {
+        setSidebar(stored !== 'on');
+      } else {
+        setSidebar(stored === 'off');
+      }
+    } catch (err) {}
+  }
+
+  function tabbarVisibleSlots() {
+    var slots = ['home', 'banlist', 'commslist', 'servers'];
+    if (window.matchMedia('(min-width: 576px)').matches) {
+      slots.push('adminlist');
+      slots.push('account');
+      slots.push('login');
+    }
+    if (window.matchMedia('(min-width: 768px)').matches) slots.push('admin');
+    return slots;
+  }
+
+  function syncTabbarSidebar() {
+    var root = document.documentElement;
+    var inDrawer = drawerMode();
+    var hasMore = inDrawer && window.matchMedia('(min-width: 768px)').matches;
+    root.classList.toggle('tabbar-has-more', hasMore);
+    if (!inDrawer) {
+      document.querySelectorAll('.nav-link--in-tabbar').forEach(function (el) {
+        el.classList.remove('nav-link--in-tabbar');
+      });
+      document.querySelectorAll('.nav-group--tabbar-empty').forEach(function (el) {
+        el.classList.remove('nav-group--tabbar-empty');
+      });
+      return;
+    }
+    var visible = tabbarVisibleSlots();
+    document.querySelectorAll('.sidebar-nav .nav-link[data-tab-slot]').forEach(function (el) {
+      var slot = el.getAttribute('data-tab-slot');
+      el.classList.toggle('nav-link--in-tabbar', visible.indexOf(slot) !== -1);
+    });
+    document.querySelectorAll('.sidebar-nav .nav-group').forEach(function (group) {
+      var links = group.querySelectorAll('.nav-link:not(.nav-link--in-tabbar)');
+      group.classList.toggle('nav-group--tabbar-empty', links.length === 0);
+    });
+  }
+
   if (trigger) {
-    trigger.setAttribute('aria-expanded', sidebarOff() ? 'false' : 'true');
+    syncSidebarUi();
+    syncTabbarSidebar();
     trigger.addEventListener('click', function () { setSidebar(!sidebarOff()); });
+  } else {
+    syncTabbarSidebar();
   }
+  var tabMenu = document.getElementById('mobile-tabbar-menu');
+  if (tabMenu) {
+    tabMenu.addEventListener('click', function () { setSidebar(false); });
+  }
+  if (backdrop) {
+    backdrop.addEventListener('click', function () { setSidebar(true); });
+  }
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && drawerMode() && !sidebarOff()) setSidebar(true);
+  });
+  if (mqDrawer.addEventListener) {
+    mqDrawer.addEventListener('change', function () {
+      applySidebarForViewport();
+      syncSidebarUi();
+      syncTabbarSidebar();
+    });
+  } else if (mqDrawer.addListener) {
+    mqDrawer.addListener(function () {
+      applySidebarForViewport();
+      syncSidebarUi();
+      syncTabbarSidebar();
+    });
+  }
+  window.addEventListener('resize', function () {
+    syncSidebarUi();
+    syncTabbarSidebar();
+  });
 })();
 </script>
 <script>

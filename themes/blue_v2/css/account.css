@@ -1,3 +1,4 @@
+/* Breakpoints: see mobile.css (--bs-lg-max 991.98px, --bs-md-max 767.98px, --bs-sm-max 575.98px). */
 .account-kicker {
   margin: 0 0 0.28rem;
   color: var(--muted);
@@ -389,6 +390,7 @@ a.account-summary-link:focus {
   background: rgba(255, 92, 122, 0.28);
   border-color: var(--danger);
 }
+/* --bs-lg-max */
 @media (max-width: 991.98px) {
   .account-summary,
   .account-perms,
@@ -397,6 +399,14 @@ a.account-summary-link:focus {
     grid-template-columns: 1fr 1fr;
   }
 }
+/* --bs-md-max */
+@media (max-width: 767.98px) {
+  .account-perms,
+  .account-activity {
+    grid-template-columns: 1fr;
+  }
+}
+/* --bs-sm-max */
 @media (max-width: 575.98px) {
   .account-summary,
   .account-perms,
@@ -409,5 +419,10 @@ a.account-summary-link:focus {
   }
   .account-card {
     padding: 0.95rem 0.95rem 1.05rem;
+  }
+  .account-tabs > li > a {
+    min-height: 2.5rem;
+    display: inline-flex;
+    align-items: center;
   }
 }

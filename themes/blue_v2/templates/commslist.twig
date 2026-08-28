@@ -86,8 +86,8 @@
     <a href="index.php?p=commslist&amp;advSearch={{ bstatus_aid }}&amp;advType=admin&amp;bstatus=removed" class="commslist-status-btn{% if bstatus == 'removed' %} is-on{% endif %}">Снятые</a>
   </nav>
   {% endif %}
-  <div class="table-responsive">
-    <table class="table table-v2 commslist-table">
+  <div class="table-responsive table-cards-wrap">
+    <table class="table table-v2 commslist-table table-cards">
       <thead>
         <tr>
           <th class="commslist-th-mod">Игра</th>
@@ -104,10 +104,10 @@
       </thead>
       <tbody>
         {% for ban in ban_list %}
-        <tr class="opener commslist-row commslist-row-{{ ban.status_kind }}"{% if ban.server_id != 0 %} onclick="xajax_ServerHostPlayers({{ ban.server_id }}, {{ ban.ban_id }});"{% endif %}>
-          <td class="commslist-td-mod commslist-mod">{{ ban.mod_icon|raw }}</td>
-          <td class="commslist-td-date"><span class="commslist-date">{{ ban.ban_date_info }}</span></td>
-          <td>
+        <tr class="opener commslist-row list-compact-row commslist-row-{{ ban.status_kind }}"{% if ban.server_id != 0 %} onclick="xajax_ServerHostPlayers({{ ban.server_id }}, {{ ban.ban_id }});"{% endif %}>
+          <td class="commslist-td-mod commslist-mod" data-label="Игра">{{ ban.mod_icon|raw }}</td>
+          <td class="commslist-td-date commslist-td--optional" data-label="Дата"><span class="commslist-date">{{ ban.ban_date_info }}</span></td>
+          <td data-label="Игрок">
             <div class="commslist-player">
               <span class="commslist-flag" title="Тип блокировки">{{ ban.type_icon_p|raw }}</span>
               <div class="commslist-player-text">
@@ -136,7 +136,7 @@
             </div>
           </td>
           {% if view_recidivism %}
-          <td class="commslist-td-recid" onclick="event.cancelBubble=true;">
+          <td class="commslist-td-recid" data-label="Нарушения" onclick="event.cancelBubble=true;">
             {% if ban.recid_url %}
               <a class="commslist-recid" href="{{ ban.recid_url }}" title="История нарушений">{{ ban.recid_display }}</a>
             {% elseif ban.recid_display %}
@@ -147,7 +147,7 @@
           </td>
           {% endif %}
           {% if not hideadminname %}
-          <td class="commslist-td-admin">
+          <td class="commslist-td-admin commslist-td--optional" data-label="Админ">
             {% if ban.admin == 'CONSOLE' %}
               <span class="commslist-admin">CONSOLE</span>
             {% elseif ban.admin %}
@@ -157,7 +157,7 @@
             {% endif %}
           </td>
           {% endif %}
-          <td class="commslist-td-length">
+          <td class="commslist-td-length" data-label="Срок">
             {% if ban.status_kind == 'expired' %}
               <span class="badge badge-muted">Истёк</span>
             {% elseif ban.status_kind == 'deleted' %}
@@ -365,7 +365,7 @@
         </tr>
         {% else %}
         <tr>
-          <td class="commslist-empty" colspan="{{ ban_colspan }}">Блокировок нет.</td>
+          <td class="commslist-empty" colspan="{{ ban_colspan }}" data-label="">Блокировок нет.</td>
         </tr>
         {% endfor %}
       </tbody>

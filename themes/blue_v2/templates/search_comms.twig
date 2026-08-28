@@ -5,7 +5,8 @@
     <p class="form-page-lead">Выберите один критерий и нажмите «Поиск». Результат откроется в списке мутов.</p>
   </header>
 
-  <table class="form-search-table">
+  <div class="table-responsive table-cards-wrap">
+  <table class="form-search-table table-cards">
     <thead>
       <tr>
         <th class="form-search-pick"></th>
@@ -15,14 +16,14 @@
     </thead>
     <tbody>
       <tr>
-        <td class="form-search-pick"><input id="name" name="search_type" type="radio" value="name"></td>
-        <td class="form-search-crit"><label for="nick" onclick="$('name').checked = true">Ник игрока</label></td>
-        <td><input type="text" class="form-control" id="nick" value="" onmouseup="$('name').checked = true" placeholder="Введите ник"></td>
+        <td class="form-search-pick" data-label=""><input id="name" name="search_type" type="radio" value="name"></td>
+        <td class="form-search-crit" data-label="Критерий"><label for="nick" onclick="$('name').checked = true">Ник игрока</label></td>
+        <td data-label="Ввод"><input type="text" class="form-control" id="nick" value="" onmouseup="$('name').checked = true" placeholder="Введите ник"></td>
       </tr>
       <tr>
-        <td class="form-search-pick"><input id="steam_" name="search_type" type="radio" value="radiobutton"></td>
-        <td class="form-search-crit"><label for="steamid" onclick="$('steam_').checked = true">SteamID</label></td>
-        <td>
+        <td class="form-search-pick" data-label=""><input id="steam_" name="search_type" type="radio" value="radiobutton"></td>
+        <td class="form-search-crit" data-label="Критерий"><label for="steamid" onclick="$('steam_').checked = true">SteamID</label></td>
+        <td data-label="Ввод">
           <div class="form-search-split">
             <input type="text" class="form-control" id="steamid" value="" onmouseup="$('steam_').checked = true" placeholder="Введите SteamID">
             <select class="form-select" id="steam_match" onmouseup="$('steam_').checked = true">
@@ -33,14 +34,14 @@
         </td>
       </tr>
       <tr>
-        <td class="form-search-pick"><input id="reason_" name="search_type" type="radio" value="name"></td>
-        <td class="form-search-crit"><label for="ban_reason" onclick="$('reason_').checked = true">Причина</label></td>
-        <td><input type="text" class="form-control" id="ban_reason" value="" onmouseup="$('reason_').checked = true" placeholder="Введите причину бана"></td>
+        <td class="form-search-pick" data-label=""><input id="reason_" name="search_type" type="radio" value="name"></td>
+        <td class="form-search-crit" data-label="Критерий"><label for="ban_reason" onclick="$('reason_').checked = true">Причина</label></td>
+        <td data-label="Ввод"><input type="text" class="form-control" id="ban_reason" value="" onmouseup="$('reason_').checked = true" placeholder="Введите причину бана"></td>
       </tr>
       <tr>
-        <td class="form-search-pick"><input id="date" name="search_type" type="radio" value="name"></td>
-        <td class="form-search-crit"><label for="day" onclick="$('date').checked = true">Дата</label></td>
-        <td>
+        <td class="form-search-pick" data-label=""><input id="date" name="search_type" type="radio" value="name"></td>
+        <td class="form-search-crit" data-label="Критерий"><label for="day" onclick="$('date').checked = true">Дата</label></td>
+        <td data-label="Ввод">
           <div class="form-search-date">
             <input type="text" class="form-control" id="day" value="" onmouseup="$('date').checked = true" placeholder="День" maxlength="2">
             <input type="text" class="form-control" id="month" value="" onmouseup="$('date').checked = true" placeholder="Месяц" maxlength="2">
@@ -49,9 +50,9 @@
         </td>
       </tr>
       <tr>
-        <td class="form-search-pick"><input id="length_" name="search_type" type="radio" value="radiobutton"></td>
-        <td class="form-search-crit"><label onclick="$('length_').checked = true" for="length_type">Срок</label></td>
-        <td>
+        <td class="form-search-pick" data-label=""><input id="length_" name="search_type" type="radio" value="radiobutton"></td>
+        <td class="form-search-crit" data-label="Критерий"><label onclick="$('length_').checked = true" for="length_type">Срок</label></td>
+        <td data-label="Ввод">
           <div class="form-search-length">
             <select class="form-select" id="length_type" onmouseup="$('length_').checked = true">
               <option value="e" title="=">=</option>
@@ -105,9 +106,9 @@
         </td>
       </tr>
       <tr>
-        <td class="form-search-pick"><input id="ban_type_" name="search_type" type="radio" value="radiobutton"></td>
-        <td class="form-search-crit"><label for="ban_type" onclick="$('ban_type_').checked = true">Тип бана</label></td>
-        <td>
+        <td class="form-search-pick" data-label=""><input id="ban_type_" name="search_type" type="radio" value="radiobutton"></td>
+        <td class="form-search-crit" data-label="Критерий"><label for="ban_type" onclick="$('ban_type_').checked = true">Тип бана</label></td>
+        <td data-label="Ввод">
           <select class="form-select" id="ban_type" onmouseup="$('ban_type_').checked = true">
             <option value="0" selected>Steam ID</option>
             <option value="1">IP адрес</option>
@@ -115,15 +116,15 @@
         </td>
       </tr>
       <tr>
-        <td class="form-search-pick"><input id="bancount" name="search_type" type="radio" value="radiobutton"></td>
-        <td class="form-search-crit"><label for="timesbanned" onclick="$('bancount').checked = true">Количество блокировок</label></td>
-        <td><input type="text" class="form-control" id="timesbanned" value="" onmouseup="$('bancount').checked = true" placeholder="Сколько раз блокировали"></td>
+        <td class="form-search-pick" data-label=""><input id="bancount" name="search_type" type="radio" value="radiobutton"></td>
+        <td class="form-search-crit" data-label="Критерий"><label for="timesbanned" onclick="$('bancount').checked = true">Количество блокировок</label></td>
+        <td data-label="Ввод"><input type="text" class="form-control" id="timesbanned" value="" onmouseup="$('bancount').checked = true" placeholder="Сколько раз блокировали"></td>
       </tr>
       {% if not hideadminname %}
       <tr>
-        <td class="form-search-pick"><input id="admin" name="search_type" type="radio" value="radiobutton"></td>
-        <td class="form-search-crit"><label for="ban_admin" onclick="$('admin').checked = true">Админ</label></td>
-        <td>
+        <td class="form-search-pick" data-label=""><input id="admin" name="search_type" type="radio" value="radiobutton"></td>
+        <td class="form-search-crit" data-label="Критерий"><label for="ban_admin" onclick="$('admin').checked = true">Админ</label></td>
+        <td data-label="Ввод">
           <select class="form-select" id="ban_admin" onmouseup="$('admin').checked = true">
             {% if admin_list %}
             {% for admin in admin_list %}
@@ -135,15 +136,15 @@
       </tr>
       {% else %}
       <tr class="d-none" aria-hidden="true">
-        <td><input id="admin" name="search_type" type="radio" value="radiobutton"></td>
-        <td></td>
-        <td><select id="ban_admin"><option value=""></option></select></td>
+        <td class="form-search-pick" data-label=""><input id="admin" name="search_type" type="radio" value="radiobutton"></td>
+        <td class="form-search-crit" data-label=""></td>
+        <td data-label="Ввод"><select id="ban_admin"><option value=""></option></select></td>
       </tr>
       {% endif %}
       <tr>
-        <td class="form-search-pick"><input id="where_banned" name="search_type" type="radio" value="radiobutton"></td>
-        <td class="form-search-crit"><label for="server" onclick="$('where_banned').checked = true">Забанен из</label></td>
-        <td>
+        <td class="form-search-pick" data-label=""><input id="where_banned" name="search_type" type="radio" value="radiobutton"></td>
+        <td class="form-search-crit" data-label="Критерий"><label for="server" onclick="$('where_banned').checked = true">Забанен из</label></td>
+        <td data-label="Ввод">
           <select class="form-select" id="server" onmouseup="$('where_banned').checked = true">
             <option label="Web Бан" value="0">Web Бан</option>
             {% if server_list %}
@@ -156,19 +157,20 @@
       </tr>
       {% if is_admin %}
       <tr>
-        <td class="form-search-pick"><input id="comment_" name="search_type" type="radio" value="radiobutton"></td>
-        <td class="form-search-crit"><label for="ban_comment" onclick="$('comment_').checked = true">Комментарий</label></td>
-        <td><input type="text" class="form-control" id="ban_comment" value="" onmouseup="$('comment_').checked = true" placeholder="Введите комментарий"></td>
+        <td class="form-search-pick" data-label=""><input id="comment_" name="search_type" type="radio" value="radiobutton"></td>
+        <td class="form-search-crit" data-label="Критерий"><label for="ban_comment" onclick="$('comment_').checked = true">Комментарий</label></td>
+        <td data-label="Ввод"><input type="text" class="form-control" id="ban_comment" value="" onmouseup="$('comment_').checked = true" placeholder="Введите комментарий"></td>
       </tr>
       {% else %}
       <tr class="d-none" aria-hidden="true">
-        <td><input id="comment_" name="search_type" type="radio" value="radiobutton"></td>
-        <td></td>
-        <td><input type="hidden" id="ban_comment" value=""></td>
+        <td class="form-search-pick" data-label=""><input id="comment_" name="search_type" type="radio" value="radiobutton"></td>
+        <td class="form-search-crit" data-label=""></td>
+        <td data-label="Ввод"><input type="hidden" id="ban_comment" value=""></td>
       </tr>
       {% endif %}
     </tbody>
   </table>
+  </div>
 
   <div class="form-actions">
     <button type="button" class="btn btn-accent" id="searchbtn" onclick="search_blocks();">Поиск</button>
