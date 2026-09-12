@@ -385,6 +385,22 @@ function ProcessAdminTabs()
 	return tabNo;
 }
 
+function sbReduceMotion()
+{
+	return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+function sbPaneEnter(el)
+{
+	if (!el || !el.classList)
+		return;
+	el.classList.remove('sb-pane-enter');
+	if (sbReduceMotion())
+		return;
+	void el.offsetWidth;
+	el.classList.add('sb-pane-enter');
+}
+
 function Swap2ndPane(id, ttype)
 {
 	// Примечание: переключение вкладок сделано на чистом DOM API (без MooTools $/setStyle),
@@ -411,7 +427,11 @@ function Swap2ndPane(id, ttype)
 			i2++;
 		}
 		document.getElementById("utab-" + ttype + id).classList.add('active');
-		document.getElementById(ttype + id).style.display = 'block';
+		var shown2 = document.getElementById(ttype + id);
+		if (shown2) {
+			shown2.style.display = 'block';
+			sbPaneEnter(shown2);
+		}
 	}
 }
 
@@ -456,11 +476,15 @@ function SwapPane(id)
 	if (panes.length) {
 		for (i = 0; i < panes.length; i++) {
 			if (panes[i] === show) {
+				var wasOn = panes[i].classList.contains('is-on') && panes[i].style.display !== 'none';
 				panes[i].style.display = 'block';
 				panes[i].classList.add('is-on');
+				if (!wasOn)
+					sbPaneEnter(panes[i]);
 			} else {
 				panes[i].style.display = 'none';
 				panes[i].classList.remove('is-on');
+				panes[i].classList.remove('sb-pane-enter');
 			}
 		}
 	} else if (show) {
@@ -2788,7 +2812,7 @@ function sbClosePlayerSheet() {
 	sheet._sbCloseTimer = setTimeout(function () {
 		sheet.hidden = true;
 		sheet._sbCloseTimer = null;
-	}, 240);
+	}, 340);
 }
 
 function sbEnsurePlayerSheet() {

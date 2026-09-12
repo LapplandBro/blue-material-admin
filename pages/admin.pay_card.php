@@ -186,3 +186,4 @@ function Check_cal(){
 	if (h) h.value = svr_vv;
 }
 </script>
+</div>

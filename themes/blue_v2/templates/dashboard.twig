@@ -204,40 +204,4 @@
     {% endif %}
   </div>
 </div>
-<button type="button" class="dash-top" id="dash-top" aria-label="Наверх">
-  <i class="bi bi-chevron-up" aria-hidden="true"></i>
-</button>
-{% endblock %}
-{% block extra_js %}
-<script>
-(function () {
-  var btn = document.getElementById('dash-top');
-  if (!btn) return;
-  var shown = false;
-  var ticking = false;
-  var showAt = 280;
-  function sync() {
-    ticking = false;
-    var y = window.pageYOffset || document.documentElement.scrollTop || 0;
-    var on = y > showAt;
-    if (on === shown) return;
-    shown = on;
-    btn.classList.toggle('is-on', on);
-  }
-  function onScroll() {
-    if (ticking) return;
-    ticking = true;
-    window.requestAnimationFrame(sync);
-  }
-  window.addEventListener('scroll', onScroll, { passive: true });
-  btn.addEventListener('click', function () {
-    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (typeof window.scrollTo === 'function')
-      window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
-    else
-      window.scrollTop = 0;
-  });
-  sync();
-})();
-</script>
 {% endblock %}

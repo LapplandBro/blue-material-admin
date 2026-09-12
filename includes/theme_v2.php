@@ -711,13 +711,17 @@ function sb_ui_v2_admin_href($url)
 function sb_ui_v2_balance_admin_divs($html)
 {
 	$html = (string)$html;
-	if ($html === '' || stripos($html, '</div>') === false)
+	if ($html === '')
+		return $html;
+	if (stripos($html, '<div') === false && stripos($html, '</div>') === false)
 		return $html;
 
 	// Drop leftover CTabsMenu closers even when they are not at the very end
 	// (a trailing <script> would hide them from a "$" regex). Unmatched </div>
 	// would otherwise close wrap.twig's #admin-page-wrap and dump the body out
 	// of .admin-embed-body — tabs stay, content vanishes.
+	// Missing </div> (e.g. unclosed #admin-page-content) would pull <footer>
+	// into #content and leave the site footer sitting under the last card.
 	$len = strlen($html);
 	$out = '';
 	$depth = 0;
@@ -794,6 +798,8 @@ function sb_ui_v2_balance_admin_divs($html)
 		$out .= substr($html, $lt, $gt + 1 - $lt);
 		$i = $gt + 1;
 	}
+	if ($depth > 0)
+		$out .= str_repeat('</div>', $depth);
 	return $out;
 }
 

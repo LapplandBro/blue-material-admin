@@ -10,6 +10,26 @@
 .form-page.settings-page {
   padding: 1.3rem 1.4rem 1.5rem;
 }
+/* Соседние карточки (часто каждая в своём <form>) не должны слипаться.
+   `~` нужен, когда между ними вклинивается flash/заметка. */
+.form-page + .form-page,
+.form-page ~ .form-page,
+form:has(> .form-page) + form:has(> .form-page),
+form:has(> .form-page) ~ form:has(> .form-page),
+form:has(> .form-page) + .form-page,
+form:has(> .form-page) ~ .form-page,
+.form-page + form:has(> .form-page),
+.form-page ~ form:has(> .form-page),
+.form-page + .panel,
+.form-page ~ .panel,
+.panel + .form-page,
+.panel ~ .form-page,
+form:has(> .form-page) + .panel,
+form:has(> .form-page) ~ .panel,
+.panel + form:has(> .form-page),
+.panel ~ form:has(> .form-page) {
+  margin-top: 1rem;
+}
 .form-page-head {
   display: flex;
   flex-direction: column;
@@ -29,7 +49,7 @@
   color: var(--muted);
 }
 .form-page-kicker {
-  margin: 0 0 0.22rem;
+  margin: 0;
   color: var(--muted);
   font-size: 0.68rem;
   font-weight: 700;
@@ -37,7 +57,7 @@
   text-transform: uppercase;
 }
 .form-page-title {
-  margin: 0 0 0.4rem;
+  margin: 0;
   color: var(--text-heading);
   font-size: 1.28rem;
   font-weight: 700;
@@ -73,6 +93,11 @@
   border: 1px solid var(--border-hairline);
   font-size: 0.88rem;
   line-height: 1.45;
+  animation: sbFlashIn var(--sb-motion, 0.32s) var(--sb-ease, ease);
+}
+@keyframes sbFlashIn {
+  from { opacity: 0; transform: translateY(-0.35rem); }
+  to { opacity: 1; transform: none; }
 }
 .form-flash-title {
   margin: 0 0 0.2rem;
@@ -148,7 +173,8 @@
 }
 
 .form-page .form-control,
-.form-page .form-select {
+.form-page .form-select,
+.form-page .sb-select {
   width: 100%;
   min-height: 2.45rem;
 }
@@ -159,7 +185,8 @@
   align-items: stretch;
 }
 .form-page .input-group .form-control,
-.form-page .input-group .form-select {
+.form-page .input-group .form-select,
+.form-page .input-group .sb-select {
   flex: 1 1 12rem;
   width: auto;
   min-width: 0;
@@ -178,7 +205,8 @@
   gap: 0.45rem;
   align-items: stretch;
 }
-.form-page .settings-run .form-select {
+.form-page .settings-run .form-select,
+.form-page .settings-run .sb-select {
   flex: 1 1 14rem;
   width: auto;
   min-width: 0;
@@ -348,9 +376,10 @@
   width: 0.9rem;
   color: var(--accent);
   font-weight: 700;
+  transition: transform var(--sb-motion, 0.32s) var(--sb-ease, ease);
 }
 .form-fold[open] > summary::before {
-  content: "▾";
+  transform: rotate(90deg);
 }
 .form-fold[open] > summary {
   border-bottom: 1px solid var(--border-hairline);
@@ -371,6 +400,14 @@
 }
 .form-fold-body li + li {
   margin-top: 0.18rem;
+}
+@media (prefers-reduced-motion: reduce) {
+  .form-flash {
+    animation: none;
+  }
+  .form-fold > summary::before {
+    transition: none;
+  }
 }
 
 .voucher-page .form-page-head,
@@ -503,7 +540,7 @@
     margin-top: 0.25rem;
   }
   .form-page {
-    padding-bottom: calc(1.3rem + 3.65rem + env(safe-area-inset-bottom, 0px));
+    padding-bottom: 1.3rem;
   }
 }
 .csrf-expired,
@@ -751,7 +788,6 @@
 @media (max-width: 575.98px) {
   .form-page {
     padding: 1rem 0.9rem 1.1rem;
-    padding-bottom: calc(1.1rem + 3.65rem + env(safe-area-inset-bottom, 0px));
   }
   .form-captcha .form-control {
     flex: 1 1 100%;

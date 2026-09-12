@@ -113,6 +113,8 @@ else {
         if (class_exists('CSystemLog')) {
             $log = new CSystemLog("m", "Успешный вход", "Администратор '" . htmlspecialchars($adminName) . "' вошёл через Steam.", false);
             $log->aid = (int)$aid;
+            $log->parent_function = 'steam_auth.php::{main}()';
+            $log->query = 'Steam OpenID';
             $log->WriteLog();
         }
 

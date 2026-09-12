@@ -1,4 +1,4 @@
-# Blue Material Admin | SourceBans 2.0.8
+# Blue Material Admin | SourceBans 2.0.9
 
 Веб-панель от **[Lappland](https://github.com/LapplandBro)** ([lapplandbro](https://github.com/lapplandbro)) для игровых серверов Source (**CS:GO / CS2**, **TF2** и др.). Это **самостоятельный форк [SourceBans](https://github.com/GameConnect/sourcebansv1) / [SourceBans++](https://github.com/sbpp/sourcebans-pp)** с темой **Blue Admin**, лицензия **[GNU GPLv3](LICENSE)**.
 

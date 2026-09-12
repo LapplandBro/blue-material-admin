@@ -5,6 +5,10 @@
 .tox .tox-edit-area__iframe {
   background: var(--bg-input) !important;
 }
-.admin-embed-body .html-editor {
-  min-height: 12rem;
+.admin-embed-body .html-editor,
+textarea.html-editor {
+  min-height: 21.25rem;
+  color: transparent;
+  caret-color: transparent;
+  overflow: hidden;
 }

@@ -42,12 +42,17 @@
   }
 
   .app-content {
-    padding: 1.05rem 1.45rem 1.65rem;
+    padding: 1.05rem 1.45rem 1.15rem;
   }
 
   .app-footer {
     font-size: 0.84rem;
     padding: 0.95rem 1.45rem 1.15rem;
+  }
+
+  .cookie-notice-inner {
+    max-width: 46rem;
+    padding: 0.75rem 1rem;
   }
 
   .app-footer-nav {
@@ -72,7 +77,11 @@
   }
 
   .app-content {
-    padding: 1.15rem 1.65rem 1.85rem;
+    padding: 1.15rem 1.65rem 1.15rem;
+  }
+
+  .cookie-notice-inner {
+    max-width: 48rem;
   }
 
   .banlist-chrome,
@@ -189,7 +198,7 @@
   }
 
   .app-content {
-    padding: 1.35rem 2rem 2.1rem;
+    padding: 1.35rem 2rem 1.25rem;
   }
 
   .app-footer {

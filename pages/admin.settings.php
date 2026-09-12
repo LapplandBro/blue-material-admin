@@ -88,40 +88,47 @@ if(!defined("IN_SB")){echo "Ошибка доступа!";die();}
 	else
 		$searchlink = "";
 	
-	$list_start = ($page-1) * intval($GLOBALS['config']['banlist.bansperpage']);
-	$list_end = $list_start + intval($GLOBALS['config']['banlist.bansperpage']);
-	
+	$perpage = intval($GLOBALS['config']['banlist.bansperpage']);
+	if ($perpage < 1)
+		$perpage = 20;
+
 	$log_count = $logs->LogCount($where);
-	$log = $logs->getAll($list_start, intval($GLOBALS['config']['banlist.bansperpage']), $where);
-	if(($page > 1))
+	$pages = (int)ceil($log_count / $perpage);
+	if ($pages < 1)
+		$pages = 1;
+	if ($page > $pages)
+		$page = $pages;
+	if ($page < 1)
+		$page = 1;
+
+	$list_start = ($page - 1) * $perpage;
+	$list_end = $list_start + $perpage;
+	$log = $logs->getAll($list_start, $perpage, $where);
+	if ($page > 1)
 		$prev = CreateLinkR('<- пред', sb_url_query('admin', $searchlink . '&c=settings&page=' . ($page-1)) . '#^2');
-	else 
+	else
 		$prev = "";
-		
-	if($list_end < $log_count)
+
+	if ($list_end < $log_count)
 		$next = CreateLinkR('след ->', sb_url_query('admin', $searchlink . '&c=settings&page=' . ($page+1)) . '#^2');
-	else 
+	else
 		$next = "";
 
-		
-	$pages = (round($log_count/intval($GLOBALS['config']['banlist.bansperpage']))==0)?1:round($log_count/intval($GLOBALS['config']['banlist.bansperpage']));
-	if($pages>1)
-		$page_numbers =  'Страница ' . $page . ' из ' . $pages . " - " . $prev . " | " . $next;
+	if ($pages > 1)
+		$page_numbers = 'Страница ' . $page . ' из ' . $pages . " - " . $prev . " | " . $next;
 	else
 		$page_numbers = 'Страница ' . $page . ' из ' . $pages;
-		
-		
-	$pages = ceil($log_count/intval($GLOBALS['config']['banlist.bansperpage']));
-	if($pages > 1) {
-		if(!isset($_GET['advSearch']) || !isset($_GET['advType'])) {
+
+	if ($pages > 1) {
+		if (!isset($_GET['advSearch']) || !isset($_GET['advType'])) {
 			$_GET['advSearch'] = "";
 			$_GET['advType'] = "";
 		}
 		$advSearchJs = json_encode((string)$_GET['advSearch'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
 		$advTypeJs = json_encode((string)$_GET['advType'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
 		$page_numbers .= '&nbsp;<select onchange=\'changePage(this,"L",' . $advSearchJs . ',' . $advTypeJs . ');\'>';
-		for($i=1;$i<=$pages;$i++) {
-			if(isset($_GET["page"]) && $i==$_GET["page"]) {
+		for ($i = 1; $i <= $pages; $i++) {
+			if ($i == $page) {
 				$page_numbers .= '<option value="' . $i . '" selected="selected">' . $i . '</option>';
 				continue;
 			}
@@ -145,7 +152,10 @@ if(!defined("IN_SB")){echo "Ошибка доступа!";die();}
 		$log_item['function'] = function_exists('sb_log_plain_stack')
 			? sb_log_plain_stack(isset($l['function']) ? $l['function'] : '')
 			: (isset($l['function']) ? $l['function'] : '');
-		$log_item['query'] = isset($l['query']) ? html_entity_decode(strip_tags((string)$l['query']), ENT_QUOTES, 'UTF-8') : '';
+		if (trim((string)$log_item['function']) === '')
+			$log_item['function'] = '—';
+		$qraw = isset($l['query']) ? html_entity_decode(strip_tags((string)$l['query']), ENT_QUOTES, 'UTF-8') : '';
+		$log_item['query'] = method_exists($logs, 'SanitizeQuery') ? $logs->SanitizeQuery($qraw) : $qraw;
 		$log_item['message'] = isset($l['message']) ? html_entity_decode(strip_tags((string)$l['message']), ENT_QUOTES, 'UTF-8') : '';
 		array_push($log_list, $log_item);
 	}
@@ -648,3 +658,4 @@ function MoreFields()
 	t.appendChild(div_add);
 }
 </script>
+</div>

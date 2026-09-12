@@ -56,7 +56,7 @@ class CSystemLog {
 			$this->host = $_SERVER['REMOTE_ADDR'];
 			$this->created = time(); 
 			$this->parent_function = $this->_getCaller();
-			$this->query = $this->SanitizeSensitive(isset($_SERVER['QUERY_STRING'])?$_SERVER['QUERY_STRING']:'');
+			$this->query = $this->SanitizeQuery(isset($_SERVER['QUERY_STRING'])?$_SERVER['QUERY_STRING']:'');
 			$this->title = $this->SanitizeSensitive($this->title);
 			$this->msg = $this->SanitizeSensitive($this->msg);
 			if(isset($done) && $done == true)
@@ -74,7 +74,7 @@ class CSystemLog {
 		$item['host'] = $_SERVER['REMOTE_ADDR'];
 		$item['created'] = time(); 
 		$item['parent_function'] = $this->_getCaller();
-		$item['query'] = $this->SanitizeSensitive(isset($_SERVER['QUERY_STRING'])?$_SERVER['QUERY_STRING']:'');
+		$item['query'] = $this->SanitizeQuery(isset($_SERVER['QUERY_STRING'])?$_SERVER['QUERY_STRING']:'');
 		
 		array_push($this->log_list, $item);
 	}
@@ -125,7 +125,37 @@ class CSystemLog {
 			$line = isset($bt[$idx]['line']) ? (int)$bt[$idx]['line'] : 0;
 			$lines[] = ($count - $idx) . ': ' . $file . '::' . $fn . '() - ' . $line;
 		}
+		if ($lines === []) {
+			$file = isset($_SERVER['SCRIPT_FILENAME']) ? str_replace('\\', '/', (string)$_SERVER['SCRIPT_FILENAME']) : '';
+			if ($root !== '' && $file !== '' && strncmp($file, $root, strlen($root)) === 0)
+				$file = ltrim(substr($file, strlen($root)), '/');
+			elseif ($file !== '')
+				$file = basename($file);
+			if ($file === '')
+				$file = isset($_SERVER['SCRIPT_NAME']) ? basename((string)$_SERVER['SCRIPT_NAME']) : 'unknown';
+			$lines[] = '1: ' . $file . '::{main}()';
+		}
 		return implode("\n", $lines);
+	}
+
+	/**
+	 * QUERY_STRING для лога: без OpenID-дампа Steam и без секретов.
+	 */
+	function SanitizeQuery($qs)
+	{
+		$qs = $this->SanitizeSensitive((string)$qs);
+		if ($qs === '')
+			return $qs;
+		$decoded = urldecode(str_replace('&amp;', '&', $qs));
+		if (stripos($decoded, 'openid.') !== false || stripos($decoded, 'openid_') !== false) {
+			$mode = '';
+			if (preg_match('/openid[._]mode=([^&]+)/i', $decoded, $m))
+				$mode = preg_replace('/[^a-z0-9_\-]/i', '', (string)$m[1]);
+			return $mode !== '' ? ('Steam OpenID (' . $mode . ')') : 'Steam OpenID';
+		}
+		if (strlen($qs) > 400)
+			return substr($qs, 0, 400) . '…';
+		return $qs;
 	}
 
 	/**
