@@ -16,6 +16,8 @@
 
 Gamedata `gamedata/filenetwork.txt` — в `addons/sourcemod/gamedata/` (движок TF2).
 
+Метод FastDL: `fastdl/serve.php` кладётся в корень HTTP FastDL (рядом с `materials/`, `models/`, `sound/` и т.д.). Без него клиент не получает fingerprint-файл, и антифрод не склеивает твинки. В шапке файла — nginx/PHP-FPM (`gzip off`, `Content-Length`) и путь `$fingerprintFilePath` (должен совпасть с путём в rebanner).
+
 ## Сборка
 
 Компилятор SourceMod 1.11+, include из этой папки `scripting/include/` плюс стандартные SM (`sourcemod`, `sdktools`, `dhooks` для filenetwork).
