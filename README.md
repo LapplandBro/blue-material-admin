@@ -30,6 +30,7 @@
 - Уведомления, системный лог, SMTP  
 - SEO: `sitemap.xml`, `robots.txt`, Open Graph-обложка  
 - Антифрод LinkedAccounts (PARSEC API)  
+- Исходники SourceMod: [`sourcemod/`](sourcemod/) — Material Admin и стек PARSEC для TF2 (`filenetwork` + `blackout_module` + `rebanner`)  
 - Ваучеры: HEX-ключи, активация только гостем, API для магазина/бота  
 - Встроенный установщик с проверкой требований  
 
