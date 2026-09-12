@@ -17,6 +17,12 @@ define('INCLUDES_PATH', ROOT . 'includes');
 define('SB_SALT', 'SourceBans');
 
 $isCli = (php_sapi_name() === 'cli');
+if (!$isCli && is_file(dirname(__DIR__) . '/config.php')) {
+	http_response_code(403);
+	header('Content-Type: text/plain; charset=UTF-8');
+	echo "Installer locked: config.php exists.\n";
+	exit(1);
+}
 if (!$isCli) {
 	header('Content-Type: text/plain; charset=UTF-8');
 	if (!isset($_GET['key']) || $_GET['key'] !== 'install-dry-run') {

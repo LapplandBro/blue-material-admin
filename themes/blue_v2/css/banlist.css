@@ -92,6 +92,7 @@
   font-weight: 700;
   padding: 0 0.85rem;
   cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
 }
 .banlist-search-go:hover { color: #fff; background: var(--accent-soft); }
 
@@ -221,10 +222,10 @@
 
 @media (min-width: 992px) {
   .banlist-row-perm {
-    border-left: 3px solid var(--danger);
+    box-shadow: inset 3px 0 0 var(--danger);
   }
   .banlist-row-unbanned {
-    border-left: 3px solid var(--ok);
+    box-shadow: inset 3px 0 0 var(--ok);
   }
 }
 
@@ -317,9 +318,7 @@
 }
 
 .banlist-detail-row > td {
-  padding: 0;
   border-top: 0;
-  background: var(--bg-sidebar);
 }
 .banlist-table .opener { overflow: hidden; }
 .banlist-detail {

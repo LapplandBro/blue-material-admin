@@ -26,15 +26,25 @@
 // *************************************************************************
 
 if(!defined("IN_SB")){echo "Ошибка доступа!";die();}
-global $theme;
+global $theme, $userbank;
+
+$sid = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+if($sid <= 0 || !function_exists('sb_admin_has_server_access') || !sb_admin_has_server_access($sid))
+{
+	new CSystemLog("w", "Попытка взлома", $userbank->GetProperty("user")
+		. " запросил список админов сервера sid=" . $sid . " без доступа к этому серверу.");
+	sb_forbidden_page(true, 'Нет доступа к этому серверу.');
+}
+$srv_can_rcon = $userbank->HasAccess(ADMIN_OWNER) || $userbank->HasAccess(SM_RCON . SM_ROOT);
+
 $srv_admins = $GLOBALS['db']->GetAll("SELECT authid, user
 										FROM " . DB_PREFIX . "_admins_servers_groups AS asg						
 										LEFT JOIN " . DB_PREFIX . "_admins AS a ON a.aid = asg.admin_id			
-										WHERE (server_id = " . (int)$_GET['id'] . " OR srv_group_id = ANY					
+										WHERE (server_id = " . $sid . " OR srv_group_id = ANY					
 										(															
 			   								SELECT group_id											
 			   								FROM " . DB_PREFIX . "_servers_groups									
-			   								WHERE server_id = " . (int)$_GET['id'] . ")									
+			   								WHERE server_id = " . $sid . ")									
 										)															
 										GROUP BY aid, authid, srv_password, srv_group, srv_flags, user ");
 if (!is_array($srv_admins))
@@ -47,7 +57,7 @@ foreach($srv_admins as $admin) {
 		continue;
 	$admsteam[] = $admin['authid'];
 }
-if(sizeof($admsteam)>0 && $serverdata = checkMultiplePlayers((int)$_GET['id'], $admsteam))
+if($srv_can_rcon && sizeof($admsteam)>0 && $serverdata = checkMultiplePlayers($sid, $admsteam))
 	$noproblem = true;
 foreach($srv_admins as $admin) {
 	if (!is_array($admin))

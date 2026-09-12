@@ -130,7 +130,7 @@
   </div>
 
   <div class="form-actions">
-    <button type="button" class="btn btn-accent" id="aadmin" onclick="ConvertSteamID_3to2('steam');ProcessAddAdmin();">Добавить админа</button>
+    <button type="button" class="btn btn-accent" id="aadmin" onclick="if (typeof sbBusy === 'function' &amp;&amp; sbBusy(this)) return; ConvertSteamID_3to2('steam');ProcessAddAdmin();">Добавить админа</button>
     <button type="button" class="btn btn-outline-secondary" id="aback" onclick="sbAdminBack(0, 'index.php?p=admin&amp;c=admins')">Назад</button>
   </div>
   {{ server_script|raw }}

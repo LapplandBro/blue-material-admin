@@ -1136,12 +1136,32 @@ function CreateLinkR($title, $url, $tooltip="", $target="_self", $wide=false, $o
 	// XSS: $url часто содержит значения из запроса (поиск, фильтры и т.п.). Без экранирования
 	// кавычки в $url позволяли вырваться из атрибута href и внедрить произвольные атрибуты/JS.
 	$url_attr = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
+	$onclick_attr = htmlspecialchars((string)$onclick, ENT_QUOTES, 'UTF-8');
 	if(strlen($tooltip) == 0)
 	{
-		return '<a href="' . $url_attr . '" onclick="' . $onclick . '" target="' . $target . '">' . $title .' </a>';
+		return '<a href="' . $url_attr . '" onclick="' . $onclick_attr . '" target="' . $target . '">' . $title .' </a>';
 	}else{
-		return '<a href="' . $url_attr . '" class="' . $class .'" data-original-title="' .  htmlspecialchars($tooltip, ENT_QUOTES, 'UTF-8') . '" target="' . $target . '" data-toggle="tooltip" data-placement="top">' . $title .' </a>';
+		$tip = htmlspecialchars($tooltip, ENT_QUOTES, 'UTF-8');
+		$oc = ($onclick === '' || $onclick === null) ? '' : ' onclick="' . $onclick_attr . '"';
+		return '<a href="' . $url_attr . '" class="' . $class .'" data-original-title="' . $tip . '" target="' . $target . '" data-toggle="tooltip" data-placement="top"' . $oc . '>' . $title .' </a>';
 	}
+}
+
+/** JSON для вставки в HTML/JS: < > & ' " как \uXXXX, чтобы не рвать script/onclick. */
+function sb_json_js($value)
+{
+	return json_encode($value, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE);
+}
+
+function sb_ensure_list_postkey()
+{
+	$key = isset($_SESSION['banlist_postkey']) ? (string)$_SESSION['banlist_postkey'] : '';
+	if (strlen($key) >= 32)
+		return;
+	if (function_exists('random_bytes'))
+		$_SESSION['banlist_postkey'] = bin2hex(random_bytes(16));
+	else
+		$_SESSION['banlist_postkey'] = bin2hex(openssl_random_pseudo_bytes(16));
 }
 
 function HelpIcon($title, $text)
@@ -1795,6 +1815,47 @@ function sb_safe_get_url()
 		}
 	}
 	return function_exists('sb_url') ? sb_url('home') : 'index.php';
+}
+
+/** Имя файла демки: только basename, без path traversal. */
+function sb_demo_filename_safe($name)
+{
+	$base = basename(str_replace('\\', '/', (string)$name));
+	if ($base === '' || $base === '.' || $base === '..')
+		return '';
+	if (!preg_match('/^[a-zA-Z0-9._-]+$/', $base))
+		return '';
+	return $base;
+}
+
+/** Удалить демку только внутри SB_DEMOS. */
+function sb_unlink_demo($filename)
+{
+	$base = sb_demo_filename_safe($filename);
+	if ($base === '' || !defined('SB_DEMOS'))
+		return;
+	$dir = realpath(SB_DEMOS);
+	if ($dir === false)
+		return;
+	$path = $dir . DIRECTORY_SEPARATOR . $base;
+	$real = realpath($path);
+	if ($real === false || !is_file($real))
+		return;
+	$dirPref = $dir . DIRECTORY_SEPARATOR;
+	if (strpos($real, $dirPref) !== 0 && $real !== $dir)
+		return;
+	@unlink($real);
+}
+
+/** unserialize настроек: только массивы, без классов. */
+function sb_unserialize_array($raw)
+{
+	if (is_array($raw))
+		return $raw;
+	if (!is_string($raw) || $raw === '')
+		return false;
+	$decoded = @unserialize($raw, array('allowed_classes' => false));
+	return is_array($decoded) ? $decoded : false;
 }
 
 function sb_forbidden_page($die = true, $lead = null)
@@ -3102,6 +3163,66 @@ function sb_strip_nonowner_web_flags($flags)
 	if (!isset($userbank) || !is_object($userbank) || !$userbank->HasAccess(ADMIN_OWNER))
 		$flags = $flags & ~ADMIN_OWNER;
 	return $flags;
+}
+
+/** Не-OWNER выдаёт только те веб-флаги, что есть у него самого. */
+function sb_clamp_web_flags_to_actor($flags)
+{
+	global $userbank;
+	$flags = (int)$flags;
+	if (!isset($userbank) || !is_object($userbank))
+		return $flags & ~ADMIN_OWNER;
+	if ($userbank->HasAccess(ADMIN_OWNER))
+		return $flags;
+	$mine = (int)$userbank->GetProperty('extraflags');
+	return $flags & $mine & ~ADMIN_OWNER;
+}
+
+/**
+ * SM_ROOT и серверные флаги/иммунитет выше своих — только OWNER.
+ * @param string $srv_flags
+ * @param int $immunity
+ * @return string
+ */
+function sb_clamp_srv_flags_to_actor($srv_flags, &$immunity)
+{
+	global $userbank;
+	$srv_flags = (string)$srv_flags;
+	$immunity = (int)$immunity;
+	if (isset($userbank) && is_object($userbank) && $userbank->HasAccess(ADMIN_OWNER))
+		return $srv_flags;
+	$mineFlags = (isset($userbank) && is_object($userbank)) ? (string)$userbank->GetProperty('srv_flags') : '';
+	$mineImm = (isset($userbank) && is_object($userbank)) ? (int)$userbank->GetProperty('srv_immunity') : 0;
+	$out = '';
+	$len = strlen($srv_flags);
+	for ($i = 0; $i < $len; $i++) {
+		$ch = $srv_flags[$i];
+		if ($ch === '#' || $ch === ' ' || $ch === SM_ROOT)
+			continue;
+		if (strpos($mineFlags, $ch) === false)
+			continue;
+		if (strpos($out, $ch) === false)
+			$out .= $ch;
+	}
+	if ($immunity > $mineImm)
+		$immunity = $mineImm;
+	return $out;
+}
+
+/** Веб-группа не шире прав текущего админа. */
+function sb_web_group_flags_within_actor($gid)
+{
+	global $userbank;
+	$gid = (int)$gid;
+	if ($gid <= 0)
+		return true;
+	if (!isset($userbank) || !is_object($userbank) || $userbank->HasAccess(ADMIN_OWNER))
+		return true;
+	if (empty($GLOBALS['db']))
+		return false;
+	$flags = (int)$GLOBALS['db']->GetOne("SELECT flags FROM `" . DB_PREFIX . "_groups` WHERE gid = ?", array($gid));
+	$mine = (int)$userbank->GetProperty('extraflags');
+	return ($flags & ~$mine) === 0;
 }
 
 /** Веб-группа содержит бит ADMIN_OWNER? */
@@ -4434,11 +4555,36 @@ function prepareSize($bytes, $precision = 2) {
 }
 
 function generateMsgBoxJS($title = "Успех!", $text = "Действие успешно выполнено", $color = "green", $redirect = "", $button = true) {
-    return sprintf('ShowBox("%s", "%s", "%s", "%s", %s)', htmlspecialchars(addslashes($title)), htmlspecialchars(addslashes($text)), $color, $redirect, $button?"true":"false");
+	$enc = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE;
+	return sprintf(
+		'ShowBox(%s, %s, %s, %s, %s)',
+		json_encode((string)$title, $enc),
+		json_encode((string)$text, $enc),
+		json_encode((string)$color, $enc),
+		json_encode((string)$redirect, $enc),
+		$button ? 'true' : 'false'
+	);
 }
 
 function PushScriptToExecuteAfterLoadPage($script) {
-	setcookie("ScriptFooter", $script, time()+60);
+	if (session_status() === PHP_SESSION_NONE && function_exists('sb_session_start'))
+		sb_session_start();
+	if (session_status() === PHP_SESSION_ACTIVE)
+		$_SESSION['sb_script_footer'] = (string)$script;
+}
+
+function sb_consume_script_footer()
+{
+	$html = '';
+	if (session_status() === PHP_SESSION_ACTIVE && !empty($_SESSION['sb_script_footer'])) {
+		$html = '<script>' . $_SESSION['sb_script_footer'] . '</script>';
+		unset($_SESSION['sb_script_footer']);
+	}
+	if (isset($_COOKIE['ScriptFooter'])) {
+		setcookie('ScriptFooter', '', time() - 86400, '/');
+		unset($_COOKIE['ScriptFooter']);
+	}
+	return $html;
 }
 
 function FatalRefresh($url = 0) {

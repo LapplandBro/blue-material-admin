@@ -90,9 +90,10 @@ if(trim($_SERVER['PHP_SELF']) == '') $_SERVER['PHP_SELF'] = preg_replace("/(\?.*
  */
 function sb_is_local_host()
 {
-	$host = isset($_SERVER['HTTP_HOST']) ? strtolower((string)$_SERVER['HTTP_HOST']) : '';
-	$host = preg_replace('/:\d+$/', '', $host);
-	return ($host === 'localhost' || $host === '127.0.0.1' || $host === '::1');
+	$ip = isset($_SERVER['REMOTE_ADDR']) ? (string)$_SERVER['REMOTE_ADDR'] : '';
+	if ($ip === '::ffff:127.0.0.1')
+		$ip = '127.0.0.1';
+	return ($ip === '127.0.0.1' || $ip === '::1');
 }
 
 if (!file_exists(ROOT . '/config.php')) {
@@ -111,7 +112,7 @@ if (!@include_once(ROOT . '/config.php')) {
 	die();
 }
 
-// Папка install на боевом хосте после установки — блок. На localhost/127.0.0.1 пропускаем.
+// Папка install на боевом хосте после установки — блок. С локального IP (127.0.0.1 / ::1) пропускаем.
 if (!defined('DEVELOPER_MODE') && !defined('IS_UPDATE') && file_exists(ROOT . '/install')) {
 	if (!sb_is_local_host()) {
 		echo 'Из соображений безопасности удалите директорию /install/ с сервера перед работой с системой.';
@@ -776,6 +777,11 @@ function sb_fs_permission_targets()
 	$cfg = $root . 'config.php';
 	if (is_file($cfg))
 		$targets[] = array('path' => $cfg, 'label' => 'config.php');
+	if (function_exists('sb_ui_v2_twig_cache_dir')) {
+		$targets[] = array('path' => sb_ui_v2_twig_cache_dir(), 'label' => 'cache/twig_predcompiled/');
+	} elseif (is_dir($root . 'cache/twig_predcompiled') || is_dir($root . 'cache')) {
+		$targets[] = array('path' => is_dir($root . 'cache/twig_predcompiled') ? $root . 'cache/twig_predcompiled' : $root . 'cache', 'label' => 'cache/twig_predcompiled/');
+	}
 	return $targets;
 }
 

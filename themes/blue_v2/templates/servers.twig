@@ -68,7 +68,7 @@
                       </div>
                       <div class="servers-actions">
                         <button type="button" class="btn btn-accent" onclick="document.location = 'steam://connect/{{ server.ip }}:{{ server.port }}'">Подключиться</button>
-                        <button type="button" class="btn btn-outline-secondary" onclick="ShowBox('Обновление','Обновляем статус сервера…', 'blue', '', true, 1000);xajax_RefreshServer({{ server.sid }});">Обновить</button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="if (typeof sbBusy === 'function' &amp;&amp; sbBusy(this)) return; xajax_RefreshServer({{ server.sid }});">Обновить</button>
                       </div>
                     </aside>
                   </div>

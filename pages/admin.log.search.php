@@ -28,7 +28,7 @@
  if(!defined("IN_SB")){echo "Ошибка доступа!";die();}
  global $theme;
  
- $admin_list = $GLOBALS['db']->GetAll("SELECT * FROM `" . DB_PREFIX . "_admins` ORDER BY user ASC");
+ $admin_list = $GLOBALS['db']->GetAll("SELECT aid, user FROM `" . DB_PREFIX . "_admins` ORDER BY user ASC");
  $theme->assign('admin_list', $admin_list);
 
  if (function_exists('sb_ui_v2_enabled') && sb_ui_v2_enabled())

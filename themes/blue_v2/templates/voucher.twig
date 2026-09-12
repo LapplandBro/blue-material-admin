@@ -57,6 +57,7 @@
     <div class="form-flash form-flash--info voucher-meta" role="alert">
       Ваучер <b>{{ klu4ik }}</b> принят. Срок: <b>{{ days }}</b> · веб: <b>{{ gr_web }}</b> · сервер: <b>{{ gr_srv }}</b>
     </div>
+    <form onsubmit="if (typeof sbBusy === 'function' &amp;&amp; sbBusy(document.getElementById('pay_send_activ'))) return false; AddAdmin_pay(); return false;" action="#" method="post" autocomplete="off">
     <div class="form-grid">
       <div class="form-field">
         <label class="form-label" for="user_login">Логин <span class="mandatory">*</span></label>
@@ -125,9 +126,10 @@
     </script>
     <p class="form-legend"><span class="mandatory">*</span> = обязательные поля</p>
     <div class="form-actions form-actions--split">
-      <button type="button" class="btn btn-accent" id="pay_send_activ" name="pay_send_activ" value="Активировать" onclick="AddAdmin_pay();">Активировать</button>
+      <button type="submit" class="btn btn-accent" id="pay_send_activ" name="pay_send_activ" value="Активировать">Активировать</button>
       <a class="btn btn-outline-secondary" href="{{ pay_url }}">Другой ваучер</a>
     </div>
+    </form>
     {% endif %}
   {% endif %}
 </div>

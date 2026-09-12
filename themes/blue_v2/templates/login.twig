@@ -25,12 +25,12 @@
     <form onsubmit="{{ redir_js|raw }} return false;" action="#" method="post">
       <div class="field">
         <label class="form-label" for="loginUsername">Логин</label>
-        <input class="form-control" type="text" id="loginUsername" autocomplete="username">
+        <input class="form-control" type="text" id="loginUsername" name="username" autocomplete="username" required>
         <div id="loginUsername.msg" class="msg-err"></div>
       </div>
       <div class="field">
         <label class="form-label" for="loginPassword">Пароль</label>
-        <input class="form-control" type="password" id="loginPassword" autocomplete="current-password">
+        <input class="form-control" type="password" id="loginPassword" name="password" autocomplete="current-password">
         <div id="loginPassword.msg" class="msg-err"></div>
       </div>
       <div class="form-check field-check">
@@ -38,7 +38,7 @@
         <label class="form-check-label" for="loginRememberMe">Запомнить</label>
       </div>
       <div class="login-actions">
-        <button type="button" class="btn btn-accent" id="alogin" onclick="{{ redir_js|raw }}">Войти</button>
+        <button type="submit" class="btn btn-accent" id="alogin">Войти</button>
         <a class="btn btn-outline-secondary" href="{{ lost_url }}">Забыл пароль</a>
       </div>
     </form>
@@ -50,14 +50,9 @@
     {% endif %}
     <p class="login-lead login-links">
       <a href="{{ preview_url }}">Банлист</a>
+      · <a href="index.php?p=submit">Жалоба</a>
+      · <a href="index.php?p=protest">Апелляция</a>
     </p>
   </div>
 </div>
-{% endblock %}
-{% block extra_js %}
-<script>
-document.addEventListener('keydown', function (e) {
-  if (e.key === 'Enter') { {{ redir_js|raw }} }
-});
-</script>
 {% endblock %}

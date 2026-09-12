@@ -49,6 +49,38 @@ function sbSetValue(id, value) {
 	if (el) el.value = value;
 }
 
+/** onclick: if (sbBusy(this)) return; xajax_... */
+function sbBusy(el) {
+	if (!el)
+		return false;
+	if ((el.getAttribute && el.getAttribute('data-sb-busy')) || el.disabled)
+		return true;
+	el.disabled = true;
+	if (el.setAttribute)
+		el.setAttribute('data-sb-busy', '1');
+	return false;
+}
+
+function sbIdle(el) {
+	if (!el)
+		return;
+	el.disabled = false;
+	if (el.removeAttribute)
+		el.removeAttribute('data-sb-busy');
+}
+
+function sbIdleLast() {
+	var b = document.querySelector('[data-sb-busy="1"]');
+	if (b)
+		sbIdle(b);
+}
+
+function sbSetDisplay(id, on) {
+	var el = document.getElementById(id);
+	if (el)
+		el.style.display = on ? 'block' : 'none';
+}
+
 /** Сообщение сайта вместо window.alert (fallback на alert, если ShowBox ещё нет). */
 function sbSiteAlert(msg, title, color)
 {
@@ -460,28 +492,57 @@ function SwapPane(id)
 		tab.classList.add('active');
 }
 
+function sbAccEl(el) {
+	return el && (el.nodeType === 1 || el.style) ? el : (el && el.element) || null;
+}
+
+function sbAccReveal(el) {
+	var n = sbAccEl(el);
+	if (!n || !n.style)
+		return n;
+	n.style.visibility = 'visible';
+	n.style.opacity = '1';
+	return n;
+}
+
+function sbAccMeasure(el) {
+	var n = sbAccReveal(el);
+	if (!n)
+		return 0;
+	if (n.scrollHeight > 1)
+		return n.scrollHeight;
+	var prev = n.style.height;
+	n.style.height = 'auto';
+	var h = n.offsetHeight;
+	n.style.height = prev;
+	return h || 0;
+}
+
+function sbAccPanelClosed(node) {
+	node = sbAccEl(node);
+	if (!node || !node.style)
+		return true;
+	if (node.style.height === '0px' || node.style.height === '0')
+		return true;
+	if (node.classList && node.classList.contains('is-open'))
+		return false;
+	if (node.style.visibility === 'hidden' || node.style.display === 'none')
+		return true;
+	return !node.offsetHeight;
+}
+
+function sbAccPinHeight(el) {
+	var n = sbAccEl(el);
+	if (!n || !n.style)
+		return;
+	if (n.style.height !== 'auto' && n.style.height !== '')
+		return;
+	if (n.offsetHeight > 0)
+		n.style.height = n.offsetHeight + 'px';
+}
+
 function InitAccordion(opener, element, container, num)
 {
-	// BUG FIX: this used to unconditionally build a brand new Accordion widget on every
-	// call, bound to the very same rows (via the "opener"/"element" selectors) every time.
-	// It was called more than once for the same set of rows in two situations:
-	//   1) the "window load" listener registered a few lines below re-ran InitAccordion
-	//      with the exact same arguments once the page finished loading;
-	//   2) on the servers list (index.php?p=servers&s=N), ServerHostPlayers() calls
-	//      InitAccordion again (with a different "num") once the matching server's async
-	//      status request comes back, purely to auto-expand that one server's panel.
-	// Each extra call created ANOTHER independent Accordion instance on top of the old
-	// one, and MooTools' Accordion binds its own click handler to every toggler row on
-	// construction - so every row ended up with 2-3 competing click handlers/animations
-	// fighting over the same DOM. That's exactly what caused the servers list to glitch:
-	// clicking a server could visually open a different one, or flicker, depending on
-	// which of the stacked handlers/animations "won" the race.
-	// Fix: keep a single Accordion instance per unique (opener, element, container)
-	// selector set and reuse it - if it already exists, just jump to the requested panel
-	// instead of creating a competing instance.
-	// "num" can be either a plain panel index (legacy callers) or an actual element
-	// reference (e.g. $('serverpanel_123')) - Accordion.display() accepts both and
-	// resolves an element to its current index itself, so no coercion is needed here.
 	var key = opener + '|' + element + '|' + container;
 	if (accordionInstances[key]) {
 		if (num != null && num != -1)
@@ -489,80 +550,120 @@ function InitAccordion(opener, element, container, num)
 		return accordionInstances[key];
 	}
 
-	// IE6 got no window.addEventListener
-	if (window.addEventListener) {
-		window.addEventListener("load", function () {
-				InitAccordion(opener, element, container, num);
+	if (window.addEventListener && document.readyState !== 'complete') {
+		window.addEventListener('load', function () {
+			InitAccordion(opener, element, container, num);
 		}, false);
-	} else {
-		window.attachEvent('onload', function () {
-				InitAccordion(opener, element, container, num);
-		});
 	}
 
-	if(num == null)
+	if (num == null)
 		num = -1;
-	var wrap = (typeof $ === 'function') ? $(container) : document.getElementById(container);
+	var wrap = document.getElementById(container);
 	if (!wrap)
 		return null;
-	var wrapEl = wrap.offsetHeight !== undefined ? wrap : (wrap.element || null);
-	var wrapVisible = !!(wrapEl && (wrapEl.offsetHeight > 0 || wrapEl.offsetWidth > 0));
-	var ExtendedAccordion = Accordion.extend({
-	showAll: function() {
-		var obj = {};
-		 this.previous = -1;
-		this.elements.each(function(el, i){
-			obj[i] = {};
-			this.fireEvent('onActive', [this.togglers[i], el]);
-			for (var fx in this.effects) obj[i][fx] = el[this.effects[fx]];
-		}, this);
-		return this.start(obj);
-	},
-	hideAll: function() {
-		var obj = {};
-		 this.previous = -1;
-		this.elements.each(function(el, i){
-			obj[i] = {};
-			this.fireEvent('onBackground', [this.togglers[i], el]);
-			for (var fx in this.effects) obj[i][fx] = 0;
-		}, this);
-		return this.start(obj);
-	}
-  });
+	var togglers, panels;
+	if (typeof wrap.getElements === 'function') {
+		togglers = wrap.getElements(opener);
+		panels = wrap.getElements(element);
+	} else if (wrap.querySelectorAll) {
+		togglers = wrap.querySelectorAll(opener);
+		panels = wrap.querySelectorAll(element);
+	} else
+		return null;
 
-	var togglers = (wrap.getElements) ? wrap.getElements(opener) : $$(opener);
-	var panels = (wrap.getElements) ? wrap.getElements(element) : $$(element);
+	function accOpenClass(toggler, panel, on) {
+		var nodes = [sbAccEl(toggler), sbAccEl(panel)], i, n;
+		for (i = 0; i < nodes.length; i++) {
+			n = nodes[i];
+			if (n && n.classList)
+				n.classList[on ? 'add' : 'remove']('is-open');
+		}
+	}
+	function accStop(el) {
+		el = sbAccEl(el);
+		if (el && el._sbHTimer) {
+			clearTimeout(el._sbHTimer);
+			el._sbHTimer = null;
+		}
+		return el;
+	}
+	function accAuto(el) {
+		el = sbAccEl(el);
+		if (!el || !el.style || el.style.height === 'auto' || sbAccPanelClosed(el))
+			return;
+		el.style.height = 'auto';
+		el.style.visibility = 'visible';
+	}
+
+	var ExtendedAccordion = Accordion.extend({
+		hideAll: function () {
+			var obj = {};
+			this.previous = -1;
+			this.elements.each(function (el, i) {
+				obj[i] = { height: 0 };
+				this.fireEvent('onBackground', [this.togglers[i], el]);
+			}, this);
+			return this.start(obj);
+		},
+		display: function (index) {
+			index = ($type(index) == 'element') ? this.elements.indexOf(index) : index;
+			if ((this.timer && this.options.wait) || (index === this.previous && !this.options.alwaysHide))
+				return this;
+			this.previous = index;
+			var obj = {};
+			this.elements.each(function (el, i) {
+				var hide = (i != index) || (this.options.alwaysHide && el.offsetHeight > 0);
+				this.fireEvent(hide ? 'onBackground' : 'onActive', [this.togglers[i], el]);
+				obj[i] = { height: hide ? 0 : sbAccMeasure(el) };
+			}, this);
+			return this.start(obj);
+		}
+	});
 
 	accordion = new ExtendedAccordion(togglers, panels, {
-		opacity: true,
+		opacity: false,
 		alwaysHide: true,
 		display: false,
 		show: false,
-		transition:Fx.Transitions.Quart.easeOut,
-		onActive: function(toggler, element){
-			toggler.setStyle('cursor', 'pointer');
-			toggler.setStyle('background-color', '');
-			var el = element;
-			window.setTimeout(function () {
-				try {
-					if (el && el.setStyle) {
-						el.setStyle('height', 'auto');
-						el.setStyle('visibility', 'visible');
-					} else if (el && el.style) {
-						el.style.height = 'auto';
-						el.style.visibility = 'visible';
-					}
-				} catch (err) {}
-			}, 420);
+		transition: Fx.Transitions.Quart.easeOut,
+		onActive: function (toggler, element) {
+			if (toggler && toggler.style)
+				toggler.style.cursor = 'pointer';
+			var el = accStop(element);
+			if (!el)
+				return;
+			sbAccReveal(el);
+			accOpenClass(toggler, el, true);
+			el._sbHTimer = window.setTimeout(function () {
+				el._sbHTimer = null;
+				accAuto(el);
+			}, 550);
 		},
-	 
-		onBackground: function(toggler, element){
-			//toggler.setStyle('cursor', 'pointer');
-			//toggler.setStyle('background-color', '');		
+		onBackground: function (toggler, element) {
+			accStop(element);
+			sbAccPinHeight(element);
+			accOpenClass(toggler, element, false);
+		},
+		onComplete: function () {
+			var acc = this;
+			if (!acc.elements)
+				return;
+			acc.elements.each(function (el, i) {
+				accStop(el);
+				if (acc.previous == i)
+					accAuto(el);
+			});
 		}
 	});
-	if (accordion && accordion.elements && accordion.elements.length && wrapVisible)
-		accordion.hideAll();
+	if (accordion && accordion.elements && accordion.elements.length) {
+		var anyOpen = false;
+		accordion.elements.each(function (el) {
+			if (el && el.offsetHeight > 0)
+				anyOpen = true;
+		});
+		if (anyOpen)
+			accordion.hideAll();
+	}
 	if (num != null && num != -1 && accordion)
 		accordion.display(num);
 
@@ -602,46 +703,69 @@ function FadeElIn(id, time)
 }
 function FXShow(id)
 {
-	$(document.getElementById(id)).setStyle('display', 'block');
+	var el = document.getElementById(id);
+	if (el) el.style.display = 'block';
 }
 function FXHide(id)
 {
-	$(document.getElementById(id)).setStyle('display', 'none');
+	var el = document.getElementById(id);
+	if (el) el.style.display = 'none';
 }
 function DoLogin(redir)
 {
+	if (window._sbLoginBusy)
+		return;
+
+	function showLoginMsg(id, text, on) {
+		var el = document.getElementById(id);
+		if (!el)
+			return;
+		el.textContent = text || '';
+		el.style.display = on ? 'block' : 'none';
+	}
+
 	var err = 0;
 	var nopw = 0;
-	if(!$('loginUsername').value)
+	var userEl = document.getElementById('loginUsername');
+	var passEl = document.getElementById('loginPassword');
+	if(!userEl || !userEl.value)
 	{
-		$('loginUsername.msg').setHTML('Вы должны ввести логин!');
-		$('loginUsername.msg').setStyle('display', 'block');
+		showLoginMsg('loginUsername.msg', 'Вы должны ввести логин!', true);
 		err++;
 	}else
 	{
-		$('loginUsername.msg').setHTML('');
-		$('loginUsername.msg').setStyle('display', 'none');
+		showLoginMsg('loginUsername.msg', '', false);
 	}
-	
-	if(!$('loginPassword').value)
+
+	if(!passEl || !passEl.value)
 	{
-		$('loginPassword.msg').setHTML('Вы должны ввести пароль!');
-		$('loginPassword.msg').setStyle('display', 'block');
+		showLoginMsg('loginPassword.msg', 'Вы должны ввести пароль!', true);
 		nopw = 1;
 	}else
 	{
-		$('loginPassword.msg').setHTML('');
-		$('loginPassword.msg').setStyle('display', 'none');
+		showLoginMsg('loginPassword.msg', '', false);
 	}
 
 	if(err)
 		return 0;
-		
+
 	if(redir == "undefined")
 		redir = "";
-	xajax_Plogin(document.getElementById('loginUsername').value, 
-				document.getElementById('loginPassword').value,
-				 document.getElementById('loginRememberMe').checked,
+
+	window._sbLoginBusy = true;
+	var btn = document.getElementById('alogin');
+	if (btn) {
+		btn.disabled = true;
+		if (btn.tagName === 'INPUT')
+			btn.value = 'Вход…';
+		else if (btn.tagName === 'BUTTON')
+			btn.textContent = 'Вход…';
+	}
+
+	var rem = document.getElementById('loginRememberMe');
+	xajax_Plogin(userEl.value,
+				passEl.value,
+				 rem ? rem.checked : false,
 				 redir,
 				 nopw);
 }
@@ -1281,6 +1405,7 @@ function process_edit_server()
     {
         $('rcon2.msg').innerHTML = 'Пароли не совпадают.';
         $('rcon2.msg').setStyle('display', 'block');
+        sbIdleLast();
         return;
     }
     
@@ -1353,6 +1478,8 @@ function search_bans()
 	}
 	if(type!="" && input!="")
 		window.location = sbLoc("banlist", "advSearch=" + input + "&advType=" + type);
+	else
+		ShowBox('Поиск', 'Укажите значение для поиска', 'blue', '', true);
 }
 var webSelected = new Array();
 var srvSelected = new Array();
@@ -1428,6 +1555,8 @@ function search_admins(chek)
 	}
 	if(type!="" && input!="")
 		window.location = sbLoc("admin/admins", "advSearch=" + encodeURIComponent(input) + "&advType=" + encodeURIComponent(type) + add_search);
+	else
+		ShowBox('Поиск', 'Укажите значение для поиска', 'blue', '', true);
 }
 
 function search_log()
@@ -1456,6 +1585,8 @@ function search_log()
 	}
 	if(type!="" && input!="")
 		window.location = sbLoc("admin/settings", "advSearch=" + input + "&advType=" + type) + "#^2";
+	else
+		ShowBox('Поиск', 'Укажите значение для поиска', 'blue', '', true);
 }
 var icname = "";
 function icon(name)
@@ -1490,8 +1621,10 @@ function ProcessMod()
 		$('folder.msg').setStyle('display', 'none');
 	}
 
-	if(err)
+	if(err) {
+		sbIdleLast();
 		return 0;
+	}
 
 	xajax_AddMod($('name').value,
 				 $('folder').value,
@@ -1728,35 +1861,13 @@ function ShowBox(title, msg, color, redir, noclose, timer)
 	if (redir && typeof sbAbs === "function")
 		redir = sbAbs(redir);
 
-	// Legacy hooks for kickit/blockit iframes (they poke parent #dialog-control)
-	function ensureDialogNode(id) {
-		var el = document.getElementById(id);
-		if (!el) {
-			el = document.createElement("div");
-			el.id = id;
-			el.style.display = "none";
-			document.body.appendChild(el);
-		}
-		return el;
-	}
-	ensureDialogNode("dialog-placement");
-	ensureDialogNode("dialog-title");
-	ensureDialogNode("dialog-content-text");
-	var dControl = ensureDialogNode("dialog-control");
+	ShowBox._anim = new Date().getTime();
 
 	var hasSrvFrame = (msg && String(msg).indexOf("srvkicker") !== -1);
-	var opts = {
-		title: title || "",
-		text: msg || "",
-		html: true,
-		type: type,
-		allowOutsideClick: true,
-		containerClass: hasSrvFrame ? "sweet-alert-srv" : ""
-	};
+	msg = msg || "";
 
-	opts.showConfirmButton = false;
-	opts.showCancelButton = false;
 	// Старые вызовы передавали задержку 5-м аргументом (noclose), а не 6-м (timer).
+	// noclose=true значит «не редиректить», а не «без кнопки закрытия».
 	if (timer == null && noclose != null && noclose !== false && noclose !== true && noclose !== "") {
 		var asDelay = parseInt(noclose, 10);
 		if (asDelay > 0 && String(asDelay) === String(noclose).replace(/^\s+|\s+$/g, "")) {
@@ -1764,50 +1875,91 @@ function ShowBox(title, msg, color, redir, noclose, timer)
 			noclose = false;
 		}
 	}
-	if (timer) {
+
+	if (typeof swal !== "function")
+		return;
+
+	var ctrlPre = document.querySelector(".sweet-alert #dialog-control");
+	if (ctrlPre)
+		ctrlPre.innerHTML = "";
+
+	var opts = {
+		title: title || "",
+		text: "\u00a0",
+		type: type,
+		allowOutsideClick: true,
+		confirmButtonText: "ОК",
+		showConfirmButton: true,
+		showCancelButton: false,
+		closeOnConfirm: true,
+		containerClass: hasSrvFrame ? "sweet-alert-srv" : ""
+	};
+	if (timer)
 		opts.timer = timer;
+
+	swal(opts);
+
+	function contentP(box) {
+		var ps = box.querySelectorAll("p");
+		var i;
+		for (i = 0; i < ps.length; i++) {
+			if (!ps[i].querySelector("button.confirm, button.cancel"))
+				return ps[i];
+		}
+		return null;
 	}
-	if (!noclose) {
-		opts.confirmButtonText = "OK";
-		opts.showConfirmButton = true;
-	} else if (!timer) {
-		opts.showCancelButton = true;
-		opts.cancelButtonText = "Закрыть";
-	}
 
-	if (typeof swal === "function")
-		swal(opts);
-
-	var dt = document.getElementById("dialog-title");
-	var dct = document.getElementById("dialog-content-text");
-	if (dt) dt.innerHTML = title || "";
-	if (dct) dct.innerHTML = msg || "";
-
-	ShowBox._gen = (ShowBox._gen || 0) + 1;
-	var boxGen = ShowBox._gen;
-	setTimeout(function () {
-		if (boxGen !== ShowBox._gen)
-			return;
+	function mountBox() {
 		var box = document.querySelector(".sweet-alert");
-		var pane = box ? (box.querySelector(".sweet-alert-body") || box.querySelector("p")) : null;
-		if (pane && pane.tagName === "P") {
-			var rich = pane.querySelector("textarea, input, iframe, table, .dialog-control-inline");
-			if (rich || (dControl && dControl.innerHTML && dControl.innerHTML.replace(/\s+/g, "") !== "")) {
-				var body = document.createElement("div");
-				body.className = "sweet-alert-body";
-				while (pane.firstChild)
-					body.appendChild(pane.firstChild);
-				pane.parentNode.replaceChild(body, pane);
-				pane = body;
+		if (!box)
+			return;
+
+		box.setAttribute("data-has-confirm-button", "true");
+		box.setAttribute("data-has-cancel-button", "false");
+		var ok = box.querySelector("button.confirm");
+		if (ok)
+			ok.style.display = "inline-block";
+		var cancel = box.querySelector("button.cancel");
+		if (cancel)
+			cancel.style.display = "none";
+
+		var pane = contentP(box);
+		var extra = box.querySelector(".sweet-alert-body");
+		var rich = /<(textarea|input|iframe|table|div|form)\b/i.test(msg);
+
+		if (rich) {
+			if (!extra) {
+				extra = document.createElement("div");
+				extra.className = "sweet-alert-body";
+				if (pane && pane.parentNode)
+					pane.parentNode.insertBefore(extra, pane.nextSibling);
+				else
+					box.appendChild(extra);
+			}
+			if (pane) {
+				pane.innerHTML = "";
+				pane.style.display = "none";
+			}
+			extra.style.display = "block";
+			extra.innerHTML = msg;
+		} else {
+			if (extra) {
+				extra.innerHTML = "";
+				extra.style.display = "none";
+			}
+			if (pane) {
+				pane.style.display = "block";
+				pane.innerHTML = msg;
 			}
 		}
-		if (pane && dControl && (hasSrvFrame || (dControl.innerHTML && dControl.innerHTML.replace(/\s+/g, "") !== ""))) {
-			dControl.className = "dialog-control-inline";
-			dControl.style.display = "block";
-			if (!pane.contains(dControl))
-				pane.appendChild(dControl);
+
+		var ctrl = box.querySelector("#dialog-control");
+		if (ctrl && ctrl.innerHTML && ctrl.innerHTML.replace(/\s+/g, "") !== "") {
+			ctrl.className = "dialog-control-inline";
+			ctrl.style.display = "block";
 		}
-		var ifr = document.getElementById("srvkicker");
+
+		var ifr = box.querySelector("#srvkicker");
 		if (ifr) {
 			ifr.style.width = "100%";
 			ifr.style.border = "0";
@@ -1817,7 +1969,20 @@ function ShowBox(title, msg, color, redir, noclose, timer)
 			if (!ifr.getAttribute("height") || parseInt(ifr.getAttribute("height"), 10) < 120)
 				ifr.style.minHeight = "220px";
 		}
-	}, 40);
+	}
+
+	ShowBox._gen = (ShowBox._gen || 0) + 1;
+	var boxGen = ShowBox._gen;
+	function mountGen() {
+		if (boxGen !== ShowBox._gen)
+			return;
+		mountBox();
+	}
+	mountGen();
+	if (typeof window.requestAnimationFrame === "function")
+		requestAnimationFrame(mountGen);
+	else
+		setTimeout(mountGen, 0);
 
 	// Auto-redirect only for simple notices (not server-sync modals — they redirect themselves).
 	// Same path+query (типично settings#^N после POST) — location= не перезагружает страницу,
@@ -1881,8 +2046,13 @@ function closeMsg(redir)
 function TabToReload()
 {
 	var url = window.location.toString();
-	var nurl = "window.location = '" + url.replace("#^" + url[url.length-1],"") + "'";
-	$('admin_tab_0').setProperty('onclick', nurl);
+	var dest = url.replace("#^" + url[url.length-1],"");
+	var tab = document.getElementById('admin_tab_0');
+	if (!tab)
+		return;
+	tab.onclick = function () {
+		window.location = dest;
+	};
 }
 
 
@@ -2004,7 +2174,21 @@ function ClearLogs()
 	{
 		return;
 	}
-	window.location = sbLoc("admin/settings", "log_clear=true") + "#^2";
+	var f = document.createElement("form");
+	f.method = "POST";
+	f.action = sbLoc("admin/settings") + "#^2";
+	var a = document.createElement("input");
+	a.type = "hidden";
+	a.name = "log_clear";
+	a.value = "true";
+	f.appendChild(a);
+	var c = document.createElement("input");
+	c.type = "hidden";
+	c.name = "sb_csrf";
+	c.value = (typeof window.SB_CSRF === "string") ? window.SB_CSRF : "";
+	f.appendChild(c);
+	document.body.appendChild(f);
+	f.submit();
 }
 
 function RemoveMod(name, id)
@@ -2071,7 +2255,6 @@ function changePage(newPage, type, advSearch, advType)
 
 function ShowKickBox(check, type)
 {
-	//ShowBox('Бан добавлен', 'Бан был успешно добавлен<br><iframe id="srvkicker" frameborder="0" width="100%" src="pages/admin.kickit.php?check='+check+'&type='+type+'"></iframe>', 'green', 'index.php?p=admin&c=bans', true);
 	ShowBox('Бан добавлен', 'Бан был успешно добавлен<br><iframe id="srvkicker" frameborder="0" width="100%" src="pages/admin.kickit.php?check='+check+'&type='+type+'"></iframe>', 'green', '', false);
 }
 
@@ -2319,6 +2502,8 @@ function OpenMessageBox(sid, name, popup)
 
 function KickPlayerConfirm(sid, name, conf)
 {
+	if(conf==1 && KickPlayerConfirm._busy)
+		return;
 	if(conf==0)	{
 		if (typeof swal === "function") {
 			swal({
@@ -2342,6 +2527,8 @@ function KickPlayerConfirm(sid, name, conf)
 		$('dialog-control').setStyle('display', 'inline-block');
 		$('kbutton').addEvent('click', function(){KickPlayerConfirm(sid, name, 1);});
 	} else if(conf==1) {
+		KickPlayerConfirm._busy = true;
+		ShowBox._anim = 0;
 		var waitName = String(name).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 		ShowBox("Кик игрока", "Кикаем «" + waitName + "»…", "blue", "", true);
 		var dc = $id("dialog-control");
@@ -2528,6 +2715,8 @@ function search_blocks()
 	}
 	if(type!="" && input!="")
 		window.location = sbLoc("commslist", "advSearch=" + input + "&advType=" + type);
+	else
+		ShowBox('Поиск', 'Укажите значение для поиска', 'blue', '', true);
 }
 
 function ShowBlockBox(check, type, length)
@@ -2730,12 +2919,14 @@ function sbRevealServerPlayers(sid) {
 	var panel = document.getElementById("serverpanel_" + sid);
 	if (!panel)
 		return;
-	var closed = panel.style.height === "0px" || panel.style.visibility === "hidden";
-	if (closed && (!panel.offsetHeight || panel.style.opacity === "0"))
+	if (sbAccPanelClosed(panel))
+		return;
+	if (panel._sbHTimer)
+		return;
+	if (panel.style.height === "auto")
 		return;
 	panel.style.height = "auto";
 	panel.style.overflow = "visible";
-	panel.style.opacity = "1";
 	panel.style.visibility = "visible";
 }
 

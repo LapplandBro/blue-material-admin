@@ -75,6 +75,8 @@
         <div class="settings-run">
           <select class="form-select" name="maintenance" id="maintenance">
             <option value="avatarcache">Очистить кеш аватарок</option>
+            <option value="twigprecompile">Скомпилировать шаблоны Twig</option>
+            <option value="twigcache">Очистить кеш Twig</option>
             <option value="cleancountrycache">Очистить кеш стран банлиста</option>
             <option value="bansexpired">Удалить истёкшие баны</option>
             <option value="commsexpired">Удалить истёкшие блокировки чата</option>
@@ -91,7 +93,7 @@
             <option value="avatarupdate">Пересобрать кеш аватарок</option>
             <option value="checkfsperms">Проверить права на папки</option>
           </select>
-          <button type="button" class="btn btn-outline-secondary" id="amaintenance" onclick="var mv=document.getElementById('maintenance').value; if(mv=='demosclean' &amp;&amp; !confirm('Все загруженные демки и медиафайлы пользователей будут безвозвратно удалены с диска. Продолжить?')) return; xajax_Maintenance(mv);">Выполнить</button>
+          <button type="button" class="btn btn-outline-secondary" id="amaintenance" onclick="runMaintenance();">Выполнить</button>
         </div>
       </div>
     </div>
@@ -211,4 +213,20 @@ document.getElementById('smtp_enabled').onclick = function() {
     document.getElementById('smtp').style.display = "";
 };
 document.getElementById('smtp_enabled').onclick();
+function runMaintenance() {
+  var mv = document.getElementById('maintenance').value;
+  var msgs = {
+    bansexpired: 'Будут безвозвратно удалены все истёкшие баны. Продолжить?',
+    commsexpired: 'Будут безвозвратно удалены все истёкшие блокировки чата. Продолжить?',
+    adminsexpired: 'Будут безвозвратно удалены все истёкшие администраторы. Продолжить?',
+    commentsclean: 'Будут безвозвратно удалены все комментарии. Продолжить?',
+    protests: 'Будут безвозвратно удалены все протесты банов. Продолжить?',
+    reports: 'Будут безвозвратно удалены все предложения бана (репорты). Продолжить?',
+    banlogclean: 'Будет безвозвратно очищена история заблокированных соединений. Продолжить?',
+    demosclean: 'Все загруженные демки и медиафайлы пользователей будут безвозвратно удалены с диска. Продолжить?',
+    warningsexpired: 'Будут безвозвратно удалены все истёкшие предупреждения. Продолжить?'
+  };
+  if (msgs[mv] && !confirm(msgs[mv])) return;
+  xajax_Maintenance(mv);
+}
 </script>

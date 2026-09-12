@@ -70,6 +70,11 @@ if($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['wg']) || isset($_POST
 		$log = new CSystemLog("w", "Ошибка доступа", $userbank->GetProperty("user") . " пытался назначить OWNER веб-группу #" . $_POST['wg'] . " админу #" . $_GET['id']);
 		sb_forbidden_page(true, 'Нельзя назначить группу с правами OWNER.');
 	}
+	else if(!$userbank->HasAccess(ADMIN_OWNER) && $_POST['wg'] > 0 && function_exists('sb_web_group_flags_within_actor') && !sb_web_group_flags_within_actor($_POST['wg']))
+	{
+		$log = new CSystemLog("w", "Ошибка доступа", $userbank->GetProperty("user") . " пытался назначить веб-группу #" . $_POST['wg'] . " шире своих прав админу #" . $_GET['id']);
+		sb_forbidden_page(true, 'Нельзя назначить группу с правами шире ваших.');
+	}
 	else
 	{
 		if(isset($_POST['wg']) && $_POST['wg'] != "-2")	{

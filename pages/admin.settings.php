@@ -34,8 +34,11 @@ if(!defined("IN_SB")){echo "Ошибка доступа!";die();}
 	if (isset($_GET['page']) && $_GET['page'] > 0)
 		$page = intval($_GET['page']);
 		
-	if(isset($_GET['log_clear']) && $_GET['log_clear'] == "true")
+	if(isset($_POST['log_clear']) && $_POST['log_clear'] == "true")
 	{
+		$csrf = isset($_POST['sb_csrf']) ? $_POST['sb_csrf'] : '';
+		if(!function_exists('sb_csrf_validate') || !sb_csrf_validate($csrf))
+			sb_csrf_fail_page(true);
 		if($userbank->HasAccess(ADMIN_OWNER))
 		{
 			$clearing_admin = $userbank->GetProperty('user');
@@ -320,6 +323,7 @@ else
 			
 			$map_autofetch = (isset($_POST['map_autofetch']) && $_POST['map_autofetch'] == "on" ? 1 : 0);
 			$totp_enforce_owner = (isset($_POST['totp_enforce_owner']) && $_POST['totp_enforce_owner'] == "on" ? 1 : 0);
+			$twig_precompile = (isset($_POST['twig_precompile']) && $_POST['twig_precompile'] == "on" ? 1 : 0);
 			
 			$edit = $GLOBALS['db']->Execute("REPLACE INTO ".DB_PREFIX."_settings (`value`, `setting`) VALUES
 											(" . (int)$exportpub . ", 'config.exportpublic'),
@@ -334,9 +338,24 @@ else
 											(" . (int)$admin_warns . ", 'admin.warns'),
 											(" . (int)$_POST['admin_warns_max'] . ", 'admin.warns.max'),
 											(" . (int)$map_autofetch . ", 'feature.map_autofetch'),
-											(" . (int)$totp_enforce_owner . ", 'config.totp.enforce_owner');");
+											(" . (int)$totp_enforce_owner . ", 'config.totp.enforce_owner'),
+											(" . (int)$twig_precompile . ", 'config.twig.precompile');");
 
 			if ($edit) {
+				if ((int)$twig_precompile === 1 && function_exists('sb_ui_v2_twig_precompile_all')) {
+					try {
+						sb_ui_v2_twig_precompile_all();
+					} catch (Throwable $e) {
+					}
+				} elseif ((int)$twig_precompile === 0 && function_exists('sb_ui_v2_twig_cache_clear')) {
+					$twig_was_on = isset($GLOBALS['config']['config.twig.precompile']) && (string)$GLOBALS['config']['config.twig.precompile'] === '1';
+					if ($twig_was_on) {
+						try {
+							sb_ui_v2_twig_cache_clear();
+						} catch (Throwable $e) {
+						}
+					}
+				}
 				?><script>setTimeout("ShowBox('Настройки опций изменены', 'Изменения были успешно применены!', 'green', 'index.php?p=admin&c=settings#^3', false, 2500);", 1200);</script><?php
 				$log = new CSystemLog("m", "Настройки изменены", $userbank->GetProperty("user") . " изменил настройки раздела \"Опции\" (features).");
 			} else {
@@ -482,7 +501,7 @@ else
 		$theme->assign('config_dash_text', 		stripslashes($GLOBALS['config']['dash.intro.text']));
 		$theme->assign('config_bans_per_page',	$GLOBALS['config']['banlist.bansperpage']);
 		
-		$theme->assign('bans_customreason', ((isset($GLOBALS['config']['bans.customreasons'])&&$GLOBALS['config']['bans.customreasons']!="")?unserialize($GLOBALS['config']['bans.customreasons']):array()));
+		$theme->assign('bans_customreason', sb_unserialize_array(isset($GLOBALS['config']['bans.customreasons']) ? $GLOBALS['config']['bans.customreasons'] : '') ?: array());
 		
 		// SMTP Settings
 		$theme->assign('smtp_enabled', ($GLOBALS['config']['smtp.enabled'] == "1"));
@@ -558,7 +577,7 @@ else
 			$theme->assign('clear_logs', "( <a href='javascript:ClearLogs();'>Очистить лог</a> )");
 		$theme->assign('page_numbers', 			$page_numbers);
 		$theme->assign('log_items',				$log_list);
-		$theme->assign('admin_list', $GLOBALS['db']->GetAll("SELECT * FROM `" . DB_PREFIX . "_admins` ORDER BY user ASC"));
+		$theme->assign('admin_list', $GLOBALS['db']->GetAll("SELECT aid, user FROM `" . DB_PREFIX . "_admins` ORDER BY user ASC"));
 		sb_ui_v2_theme_fragment('admin_settings_logs.twig');
 	echo '</div>';
 	#########/[Logs Page]###############
@@ -598,6 +617,7 @@ else
 	setChecked('enable_submit', <?php echo $sbCfgInt('config.enablesubmit'); ?>);
 	setChecked('enable_protest', <?php echo $sbCfgInt('config.enableprotest'); ?>);
 	setChecked('enable_kickit', <?php echo $sbCfgInt('config.enablekickit', 1); ?>);
+	setChecked('twig_precompile', <?php echo $sbCfgInt('config.twig.precompile'); ?>);
 	setChecked('export_public', <?php echo $sbCfgInt('config.exportpublic'); ?>);
 	setValue('default_page', <?php echo $sbCfgInt('config.defaultpage'); ?>);
 	setValue('block_home', <?php echo $sbCfgInt('config.home.comms', 1); ?>);

@@ -127,7 +127,7 @@ elseif($_GET['type'] == 'server') $type_label = 'группа серверов';
 
 <script>
 <?php if($_GET['type'] == "web" || $_GET['type'] == "server"){?>
-		$('groupname').value = "<?php echo addslashes($web_group['name'])?>";
+		$('groupname').value = <?php echo json_encode((string)$web_group['name'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE); ?>;
 <?php }?>
 <?php if(!$userbank->HasAccess(ADMIN_OWNER)) { ?>
 	if($("wrootcheckbox")) {
@@ -179,7 +179,7 @@ $('p31').checked = <?php echo check_flag($web_flags, ADMIN_DELETE_MODS) ? "true"
 if (typeof BindWebPermissionGroupSync === 'function') BindWebPermissionGroupSync();
 
 <?php }elseif($_GET['type'] == "srv"){?>
-$('groupname').value = "<?php echo addslashes($srv_group['name'])?>";
+$('groupname').value = <?php echo json_encode((string)$srv_group['name'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE); ?>;
 $('s14').checked = <?php echo strstr($srv_flags, SM_ROOT) ? "true" : "false"?>;
 $('s1').checked = <?php echo strstr($srv_flags, SM_RESERVED_SLOT) ? "true" : "false"?>;
 $('s23').checked = <?php echo strstr($srv_flags, SM_GENERIC) ? "true" : "false"?>;

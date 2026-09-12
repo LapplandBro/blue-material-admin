@@ -199,19 +199,14 @@ window.addEvent('domready', function(){
 <![endif]-->
 
 
-<?php // Cookie "ScriptFooter" пишется на сервере через PushScriptToExecuteAfterLoadPage()/
-      // AddScriptWithReload() и выводится здесь как есть, как JavaScript. Проверены все текущие
-      // места вызова (admin.menu.php, admin.menu.edit.php) - все передают только жёстко заданные
-      // строки через безопасный generateMsgBoxJS(), пользовательский ввод туда не попадает.
-      // Если в будущем появится новый вызов с пользовательскими данными - его нужно будет
-      // экранировать (json_encode/addslashes) ПЕРЕД передачей в PushScriptToExecuteAfterLoadPage(). ?>
-<?php if (isset($_COOKIE['ScriptFooter'])) { ?>
-    <script>
-        <?php echo $_COOKIE['ScriptFooter']; ?>
-    </script>
 <?php
-    setcookie("ScriptFooter", "", time());
-    } ?>
+$sf = function_exists('sb_consume_script_footer') ? sb_consume_script_footer() : '';
+if ($sf !== '')
+	echo $sf;
+elseif (isset($_COOKIE['ScriptFooter'])) {
+	setcookie('ScriptFooter', '', time() - 86400, '/');
+}
+?>
 
 </body>
 </html>

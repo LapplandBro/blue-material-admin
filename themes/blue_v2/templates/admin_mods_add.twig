@@ -39,7 +39,7 @@
     </div>
   </div>
   <div class="form-actions">
-    <button type="button" class="btn btn-accent" id="amod" onclick="ProcessMod();">Добавить мод</button>
+    <button type="button" class="btn btn-accent" id="amod" onclick="if (typeof sbBusy === 'function' &amp;&amp; sbBusy(this)) return; ProcessMod();">Добавить мод</button>
   </div>
 </div>
 {% endif %}

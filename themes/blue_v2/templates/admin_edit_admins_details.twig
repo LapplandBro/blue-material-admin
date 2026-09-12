@@ -1,4 +1,5 @@
 <form action="" method="post">
+  {% if sb_csrf %}<input type="hidden" name="sb_csrf" value="{{ sb_csrf }}">{% endif %}
   <div class="form-page admin-form" id="add-group">
     <header class="form-page-head">
       <p class="form-page-kicker">Редактирование</p>
@@ -21,6 +22,12 @@
         <input type="text" tabindex="3" class="form-control" id="email" name="email" placeholder="Почта" value="{{ email }}">
         <div id="email.msg" class="msg-err"></div>
       </div>
+      {% if editing_self %}
+      <div class="form-field form-field--full">
+        <label class="form-label" for="current_password">Текущий пароль</label>
+        <input type="password" class="form-control" id="current_password" name="current_password" autocomplete="current-password" placeholder="Нужен, если меняете пароль">
+      </div>
+      {% endif %}
       <div class="form-field">
         <label class="form-label" for="password">Пароль</label>
         <input type="password" tabindex="4" class="form-control" id="password" name="password" placeholder="Пусто — не менять">
@@ -40,6 +47,7 @@
         <input type="password" tabindex="7" class="form-control" id="a_serverpass" name="a_serverpass" placeholder="Не обязательно" autocomplete="new-password"{% if not a_spass %} disabled{% endif %}>
         <div id="a_serverpass.msg" class="msg-err"></div>
       </div>
+      {% if can_set_period %}
       <div class="form-field form-field--full">
         <label class="form-label" for="period">Доступ</label>
         <p class="form-help">На сколько дней изменить срок. Оставьте пустым, если не желаете менять.</p>
@@ -51,6 +59,7 @@
         <div id="period.msg" class="msg-err"></div>
         <input type="hidden" name="permaadmin" id="permaadmin" value="false">
       </div>
+      {% endif %}
       <div class="form-field">
         <label class="form-label" for="discord">Discord</label>
         <input type="text" tabindex="9" class="form-control" id="discord" name="discord" placeholder="Не обязательно" value="{{ discord }}">

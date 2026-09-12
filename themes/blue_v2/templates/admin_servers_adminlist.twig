@@ -15,12 +15,12 @@
       <tbody>
         {% for admin in admin_list|default([]) %}
         {% if admin.user %}
-        <tr class="opener tbl_out" onmouseout="this.className='tbl_out'" onmouseover="this.className='tbl_hover'">
-          <td{% if admin.ingame %} class="listtable_1_unbanned"{% endif %} data-label="Имя админа">{{ admin.user }}</td>
-          <td{% if admin.ingame %} class="listtable_1_unbanned"{% endif %} data-label="SteamID админа">{{ admin.authid }}</td>
+        <tr class="opener">
+          <td data-label="Имя админа">{{ admin.user }}</td>
+          <td data-label="SteamID админа">{{ admin.authid }}</td>
         </tr>
         <tr class="admin-detail-row">
-          <td colspan="7">
+          <td colspan="2">
             <div class="opener">
               {% if admin.ingame %}
               <div class="admin-detail-head">

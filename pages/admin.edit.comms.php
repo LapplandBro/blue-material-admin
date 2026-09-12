@@ -205,14 +205,14 @@ if(!$res)
 $theme->assign('ban_name', $res['name']);
 $theme->assign('ban_reason', $res['reason']);
 $theme->assign('ban_authid', trim($res['authid']));
-$theme->assign('customreason', ((isset($GLOBALS['config']['bans.customreasons'])&&$GLOBALS['config']['bans.customreasons']!="")?unserialize($GLOBALS['config']['bans.customreasons']):false));
+$theme->assign('customreason', sb_unserialize_array(isset($GLOBALS['config']['bans.customreasons']) ? $GLOBALS['config']['bans.customreasons'] : ''));
 
 if (function_exists('sb_ui_v2_fragment')) {
 	echo sb_ui_v2_fragment('admin_comms_edit.twig', array(
 		'ban_name' => $res['name'],
 		'ban_reason' => $res['reason'],
 		'ban_authid' => trim($res['authid']),
-		'customreason' => ((isset($GLOBALS['config']['bans.customreasons']) && $GLOBALS['config']['bans.customreasons'] != "") ? unserialize($GLOBALS['config']['bans.customreasons']) : false),
+		'customreason' => sb_unserialize_array(isset($GLOBALS['config']['bans.customreasons']) ? $GLOBALS['config']['bans.customreasons'] : ''),
 	));
 }
 ?>

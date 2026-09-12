@@ -7,9 +7,14 @@
 	window.$id = function (id) {
 		return typeof id === 'string' ? document.getElementById(id) : id;
 	};
-	window.$ = window.$id;
 
 	window.ShowBox = function (title, msg, color, redirect, noclose) {
+		if (document.readyState === 'loading') {
+			document.addEventListener('DOMContentLoaded', function () {
+				window.ShowBox(title, msg, color, redirect, noclose);
+			});
+			return;
+		}
 		title = title || 'Сообщение';
 		msg = (msg == null) ? '' : String(msg);
 		var type = 'info';
@@ -35,10 +40,19 @@
 
 	document.addEventListener('DOMContentLoaded', function () {
 		document.addEventListener('keydown', function (e) {
-			if (e.key === 'Enter' && typeof window.sbInstallEnter === 'function') {
-				e.preventDefault();
-				window.sbInstallEnter();
-			}
+			if (e.key !== 'Enter' || typeof window.sbInstallEnter !== 'function')
+				return;
+			var t = e.target;
+			if (!t)
+				return;
+			var tag = (t.tagName || '').toUpperCase();
+			if (tag === 'TEXTAREA')
+				return;
+			var typ = (t.type || '').toLowerCase();
+			if ((tag === 'BUTTON' || tag === 'INPUT') && typ === 'button')
+				return;
+			e.preventDefault();
+			window.sbInstallEnter();
 		});
 	});
 })(window, document);

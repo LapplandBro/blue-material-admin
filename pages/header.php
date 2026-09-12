@@ -368,7 +368,7 @@ $seo_jsonld = array(
 		)
 	)
 );
-$theme->assign('seo_jsonld', json_encode($seo_jsonld, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+$theme->assign('seo_jsonld', json_encode($seo_jsonld, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT));
 
 // Cache-busting для собственных CSS темы (иначе правки видны только через 7 дней кэша).
 // Берём максимум mtime по всем нашим CSS — правка ЛЮБОГО файла сбрасывает кэш.

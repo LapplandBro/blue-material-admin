@@ -80,7 +80,9 @@
 .servers-col-chevron { width: 1.6rem; }
 
 .servers-row { cursor: pointer; }
-.servers-toggle:hover .servers-col { background: rgba(30, 144, 255, 0.06); }
+@media (hover: hover) and (pointer: fine) {
+  .servers-toggle:hover { background: rgba(30, 144, 255, 0.06); }
+}
 
 .servers-td-mod,
 .servers-td-ico,
@@ -125,12 +127,6 @@
   transform: rotate(180deg);
 }
 
-.servers-detail-row > .servers-detail-cell {
-  padding: 0;
-  border-bottom-width: 0;
-  background: transparent;
-  line-height: 0;
-}
 .servers-detail-row .servers-detail {
   line-height: normal;
 }
@@ -188,12 +184,15 @@
   box-shadow: none;
 }
 .servers-actions .btn-accent,
-.servers-actions .btn-accent:hover,
-.servers-actions .btn-accent:focus,
-.servers-actions .btn-accent:focus-visible,
-.servers-actions .btn-accent:active {
+.servers-actions .btn-accent:hover:not(:disabled):not([disabled]),
+.servers-actions .btn-accent:active:not(:disabled):not([disabled]),
+.servers-actions .btn-accent:focus:not(:focus-visible) {
   background-image: none;
   box-shadow: none;
+  transform: none;
+}
+.servers-actions .btn-accent:focus-visible {
+  background-image: none;
   transform: none;
 }
 
@@ -201,6 +200,9 @@
   display: none;
   padding: 1.35rem 0.5rem;
   text-align: center;
+}
+.servers-players-col:has(.servers-players-table tr) > .servers-empty {
+  display: none !important;
 }
 .servers-empty-text { margin: 0; color: var(--muted); }
 .servers-empty-table {
@@ -326,12 +328,10 @@
     border-bottom: 1px solid var(--border-hairline);
   }
 
-  .servers-toggle:hover {
-    background: rgba(30, 144, 255, 0.06);
-  }
-
-  .servers-toggle:hover .servers-col {
-    background: transparent;
+  @media (hover: hover) and (pointer: fine) {
+    .servers-toggle:hover .servers-col {
+      background: transparent;
+    }
   }
 
   .servers-icons {

@@ -1,0 +1,101 @@
+<section class="admin-manage-section">
+  <h3 class="admin-manage-section-title">{{ title }} <span class="admin-manage-count">{{ count }}</span></h3>
+  <div class="table-responsive table-cards-wrap">
+    <table class="admin-manage-table groups-table table-cards">
+      <colgroup>
+        <col class="groups-col-name">
+        <col class="groups-col-num">
+        <col class="groups-col-actions">
+      </colgroup>
+      <thead>
+        <tr>
+          <th class="groups-th-name">Группа</th>
+          <th class="groups-th-num">{{ count_label }}</th>
+          <th class="groups-th-actions">Действия</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for group in groups %}
+        {% set gid = attribute(group, id_field) %}
+        <tr id="gid_{{ gid }}" class="opener admin-manage-row">
+          <td class="groups-td-name" data-label="Группа"><span class="admin-manage-name">{{ group.name }}</span></td>
+          <td class="groups-td-num" data-label="{{ count_label }}">{% if type == 'server' %}{{ group.servers|default([])|length }}{% else %}{{ counts[loop.index0] }}{% endif %}</td>
+          <td class="groups-td-actions" data-label="Действия" onclick="event.stopPropagation();">
+            <span class="admin-actions">
+            {% if permission_editgroup %}
+            <a class="admin-action" href="index.php?p=admin&amp;c=groups&amp;o=edit&amp;type={{ type }}&amp;id={{ gid }}">Изменить</a>
+            {% endif %}
+            {% if permission_deletegroup %}
+            <a class="admin-action admin-action--danger" href="#" onclick="RemoveGroup({{ gid }}, '{{ group.name|e('js') }}', '{{ type }}'); return false;">Удалить</a>
+            {% endif %}
+            </span>
+          </td>
+        </tr>
+        <tr class="admin-detail-row">
+          <td colspan="3">
+            <div class="opener">
+              <div class="admin-detail admin-detail--group">
+                <div class="admin-facts">
+                  {% if type != 'server' %}
+                  <div class="admin-fact">
+                    <span class="admin-fact-label">Права</span>
+                    <span class="admin-fact-value admin-fact-flags">{{ group.permissions|raw }}</span>
+                  </div>
+                  <div class="admin-fact">
+                    <span class="admin-fact-label">Кто в группе</span>
+                    <span class="admin-fact-value">
+                      {% if members[loop.index0] %}
+                        {% for member in members[loop.index0] %}
+                          {% if permission_editadmin %}<a href="index.php?p=admin&amp;c=admins&amp;o=editgroup&amp;id={{ member.aid }}">{{ member.user }}</a>{% else %}{{ member.user }}{% endif %}{% if not loop.last %}, {% endif %}
+                        {% endfor %}
+                      {% else %}
+                        <span class="admin-muted">Никого</span>
+                      {% endif %}
+                    </span>
+                  </div>
+                  {% endif %}
+                  {% if type == 'srv' %}
+                  <div class="admin-fact">
+                    <span class="admin-fact-label">Переопределения</span>
+                    <span class="admin-fact-value">
+                      {% if overrides[loop.index0] %}
+                        {% for override in overrides[loop.index0] %}
+                          {% if override.access == "allow" %}разрешён{% else %}запрещён{% endif %}
+                          {% if override.type == "command" %}команда{% else %}группа команд{% endif %}
+                          <strong>{{ override.name }}</strong>{% if not loop.last %}; {% endif %}
+                        {% endfor %}
+                      {% else %}
+                        <span class="admin-muted">Нет</span>
+                      {% endif %}
+                    </span>
+                  </div>
+                  {% endif %}
+                  {% if type == 'server' %}
+                  <div class="admin-fact admin-fact--stack">
+                    <span class="admin-fact-label">Серверы в группе</span>
+                    {% if group.servers %}
+                    <div class="admin-server-chips">
+                      {% for server in group.servers %}
+                      <span class="admin-server-chip" id="servername_{{ gid }}_{{ server.server_id }}" title="sid {{ server.server_id }}">Загрузка…</span>
+                      <script type="text/javascript">xajax_ServerHostProperty({{ server.server_id }}, "servername_{{ gid }}_{{ server.server_id }}", "innerHTML", 48);</script>
+                      {% endfor %}
+                    </div>
+                    {% else %}
+                    <span class="admin-muted">Пусто</span>
+                    {% endif %}
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="3" class="parsec-muted" data-label="">{{ empty_text }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>

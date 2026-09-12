@@ -69,11 +69,23 @@
   </div>
   <div class="form-actions">
     {% if edit_server %}
-    <button type="submit" class="btn btn-accent" id="aserver" onclick="process_edit_server();">{{ submit_text }}</button>
+    <button type="button" class="btn btn-accent" id="aserver" onclick="if (typeof sbBusy === 'function' &amp;&amp; sbBusy(this)) return; process_edit_server();">{{ submit_text }}</button>
     {% else %}
-    <button type="button" class="btn btn-accent" id="aserver" onclick="process_add_server();">{{ submit_text }}</button>
+    <button type="button" class="btn btn-accent" id="aserver" onclick="if (typeof sbBusy === 'function' &amp;&amp; sbBusy(this)) return; process_add_server();">{{ submit_text }}</button>
     {% endif %}
     <button type="button" class="btn btn-outline-secondary" id="aback" onclick="sbGo('index.php?p=admin&amp;c=servers')">Назад</button>
   </div>
 </div>
+{% if edit_server %}
+<script>
+(function () {
+  var f = document.forms.editserver;
+  if (!f) return;
+  f.onsubmit = function () {
+    process_edit_server();
+    return false;
+  };
+})();
+</script>
+{% endif %}
 {% endif %}

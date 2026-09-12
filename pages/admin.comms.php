@@ -25,7 +25,7 @@
 //
 // *************************************************************************
 
-global $userbank, $theme;
+global $userbank;
 if(!defined("IN_SB")){echo "Ошибка доступа!";die();}
 
 if (!isset($userbank) || !is_object($userbank)) {
@@ -43,7 +43,7 @@ if(isset($_GET["rebanid"]))
 {
 	echo '<script type="text/javascript">xajax_PrepareBlockFromBan("'.(int)$_GET["blockfromban"].'");</script>';
 }elseif((isset($_GET['action']) && $_GET['action'] == "pasteBan") && isset($_GET['pName']) && is_string($_GET['pName']) && isset($_GET['sid'])) {
-	echo "<script type=\"text/javascript\">setTimeout(\"ShowBox('Загрузка..','<i>Подождите!</i>', 'blue', '', false, 5000);\", 800);xajax_PastePlayerData('".(int)$_GET['sid']."', '".htmlspecialchars(addslashes($_GET['pName']), ENT_QUOTES, 'UTF-8')."');</script>";
+	echo "<script type=\"text/javascript\">setTimeout(function(){ ShowBox('Загрузка..','Подождите!', 'blue', '', false, 5000); }, 800);xajax_PastePlayerData('".(int)$_GET['sid']."', '".htmlspecialchars(addslashes($_GET['pName']), ENT_QUOTES, 'UTF-8')."');</script>";
 }
 
 echo '<div id="admin-page-content">';
@@ -53,7 +53,7 @@ echo '<div id="admin-page-content">';
 		if (is_array($crRaw))
 			$customreason = $crRaw;
 		elseif (is_string($crRaw) && $crRaw !== '') {
-			$crUn = @unserialize($crRaw);
+			$crUn = sb_unserialize_array($crRaw);
 			$customreason = is_array($crUn) ? $crUn : false;
 		} else
 			$customreason = false;
@@ -111,8 +111,10 @@ function ProcessBan()
 		$('reason.msg').setStyle('display', 'none');
 	}
 
-	if(err)
+	if(err) {
+		if (typeof sbIdleLast === 'function') sbIdleLast();
 		return 0;
+	}
 
 	xajax_AddBlock($('nickname').value,
 				 $('type').value,

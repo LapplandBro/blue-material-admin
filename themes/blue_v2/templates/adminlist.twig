@@ -58,12 +58,13 @@
               <div id="serverwindow_{{ server.sid }}"></div>
             </div>
 
-            <div id="adminpanel_{{ server.sid }}" class="opener adminlist-body" style="visibility: hidden; zoom: 1; opacity: 0; height: 0px;">
+            <div id="adminpanel_{{ server.sid }}" class="opener adminlist-body">
               <div class="adminlist-admins">
                 {% for admin in server.adminlist %}
+                {% set steam_url = admin.authid ? 'https://steamcommunity.com/profiles/' ~ admin.authid : '' %}
                 <article class="adminlist-admin">
-                  {% if admin.authid %}
-                  <a class="adminlist-avatar-link" href="https://steamcommunity.com/profiles/{{ admin.authid }}" target="_blank" rel="noopener noreferrer">
+                  {% if steam_url %}
+                  <a class="adminlist-avatar-link" href="{{ steam_url }}" target="_blank" rel="noopener noreferrer">
                     <img class="adminlist-avatar" src="{{ admin.avatar }}" alt="">
                   </a>
                   {% else %}
@@ -73,8 +74,8 @@
                   {% endif %}
                   <div class="adminlist-admin-main">
                     <div class="adminlist-admin-top">
-                      {% if admin.authid %}
-                      <a class="adminlist-nick" href="https://steamcommunity.com/profiles/{{ admin.authid }}" target="_blank" rel="noopener noreferrer">{{ admin.user }}</a>
+                      {% if steam_url %}
+                      <a class="adminlist-nick" href="{{ steam_url }}" target="_blank" rel="noopener noreferrer">{{ admin.user }}</a>
                       {% else %}
                       <span class="adminlist-nick">{{ admin.user }}</span>
                       {% endif %}
@@ -86,8 +87,8 @@
                       {% else %}
                       <span class="adminlist-chip adminlist-chip-muted">свои права</span>
                       {% endif %}
-                      {% if admin.authid %}
-                      <a class="adminlist-contact" href="https://steamcommunity.com/profiles/{{ admin.authid }}" target="_blank" rel="noopener noreferrer" title="Steam">
+                      {% if steam_url %}
+                      <a class="adminlist-contact" href="{{ steam_url }}" target="_blank" rel="noopener noreferrer" title="Steam">
                         <svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 0 0-10 9.3l5.4 2.2a2.7 2.7 0 0 1 3.8-1.9l4.2-3.1a3.2 3.2 0 1 1 1.2 1.5l-4.1 3a2.7 2.7 0 0 1-2.7 3.4 2.7 2.7 0 0 1-2.6-2l-3.8-1.5A10 10 0 1 0 12 2z"/></svg>
                         Steam
                       </a>

@@ -354,8 +354,10 @@
                     {% endif %}
                     {% if view_comments %}
                       <a class="commslist-add" href="{{ ban.addcomment_link }}">Добавить комментарий…</a>
-                    {% else %}
+                    {% elseif logged_in %}
                       <div class="commslist-add">Нет доступа</div>
+                    {% else %}
+                      <div class="commslist-add">Войдите, чтобы комментировать</div>
                     {% endif %}
                   </div>
                 </aside>
@@ -365,7 +367,7 @@
         </tr>
         {% else %}
         <tr>
-          <td class="commslist-empty" colspan="{{ ban_colspan }}" data-label="">Блокировок нет.</td>
+          <td class="commslist-empty" colspan="{{ ban_colspan }}" data-label="">{% if search_text %}По запросу ничего нет. <a href="index.php?p=commslist">Сбросить поиск</a>{% else %}Блокировок нет.{% endif %}</td>
         </tr>
         {% endfor %}
       </tbody>

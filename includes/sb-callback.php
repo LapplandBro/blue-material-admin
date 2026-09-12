@@ -484,7 +484,7 @@ function AddGroup($name, $type, $bitmask, $srvflags)
 	if($error > 0)
 		return $objResponse;
 
-	$bitmask = function_exists('sb_strip_nonowner_web_flags') ? sb_strip_nonowner_web_flags((int)$bitmask) : ((int)$bitmask & ~ADMIN_OWNER);
+	$bitmask = function_exists('sb_clamp_web_flags_to_actor') ? sb_clamp_web_flags_to_actor((int)$bitmask) : ((int)$bitmask & ~ADMIN_OWNER);
 
 	$query = $GLOBALS['db']->GetRow("SELECT MAX(gid) AS next_gid FROM `" . DB_PREFIX . "_groups`");
 	if($type == "1")
@@ -501,6 +501,8 @@ function AddGroup($name, $type, $bitmask, $srvflags)
 			$srvflags = substr($srvflags, 0, strlen($srvflags) - strlen($immunity)-1);
 		}
 		$immunity = (isset($immunity) && $immunity>0) ? $immunity : 0;
+		if (function_exists('sb_clamp_srv_flags_to_actor'))
+			$srvflags = sb_clamp_srv_flags_to_actor($srvflags, $immunity);
 		$add_group = $GLOBALS['db']->Prepare("INSERT INTO ".DB_PREFIX."_srvgroups(immunity,flags,name,groups_immune)
 					VALUES (?,?,?,?)");
 		$GLOBALS['db']->Execute($add_group,array($immunity, $srvflags, $name, " "));
@@ -967,7 +969,13 @@ function AddServer($ip, $port, $rcon, $rcon2, $mod, $enabled, $group, $group_nam
 function UpdateGroupPermissions($gid)
 {
 	$objResponse = new xajaxResponse();
-	global $userbank;
+	global $userbank, $username;
+	if(!$userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_GROUP|ADMIN_EDIT_GROUPS))
+	{
+		$objResponse->redirect("index.php?p=login&m=no_access", 0);
+		new CSystemLog("w", "Ошибка доступа", $username . " запрашивал форму прав группы, не имея на это прав.");
+		return $objResponse;
+	}
 	$gid = (int)$gid;
 	if($gid == 1)
 	{
@@ -999,7 +1007,13 @@ function UpdateGroupPermissions($gid)
 function UpdateAdminPermissions($type, $value)
 {
 	$objResponse = new xajaxResponse();
-	global $userbank;
+	global $userbank, $username;
+	if(!$userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_ADMINS|ADMIN_EDIT_ADMINS))
+	{
+		$objResponse->redirect("index.php?p=login&m=no_access", 0);
+		new CSystemLog("w", "Ошибка доступа", $username . " запрашивал форму прав админа, не имея на это прав.");
+		return $objResponse;
+	}
 	$type = (int)$type;
 	if($type == 1)
 	{
@@ -1595,7 +1609,7 @@ function AddAdmin($mask, $srv_mask, $a_name, $a_steam, $a_email, $a_password, $a
 	$a_email = RemoveCode($a_email);
 	$a_servername = ($a_servername=="0" ? null : RemoveCode($a_servername));
 	$a_webname = RemoveCode($a_webname);
-	$mask = function_exists('sb_strip_nonowner_web_flags') ? sb_strip_nonowner_web_flags((int)$mask) : ((int)$mask & ~ADMIN_OWNER);
+	$mask = function_exists('sb_clamp_web_flags_to_actor') ? sb_clamp_web_flags_to_actor((int)$mask) : ((int)$mask & ~ADMIN_OWNER);
 
 	$error=0;
 	
@@ -1916,6 +1930,8 @@ function AddAdmin($mask, $srv_mask, $a_name, $a_steam, $a_email, $a_password, $a
 	
 	// Avoid negative immunity
 	$immunity = ($immunity>0) ? $immunity : 0;
+	if (function_exists('sb_clamp_srv_flags_to_actor'))
+		$srv_mask = sb_clamp_srv_flags_to_actor($srv_mask, $immunity);
 	
 	// Handle Webpermissions
 	// Chose to create a new webgroup
@@ -1936,6 +1952,12 @@ function AddAdmin($mask, $srv_mask, $a_name, $a_steam, $a_email, $a_password, $a
 		{
 			$objResponse->redirect("index.php?p=login&m=no_access", 0);
 			$log = new CSystemLog("w", "Ошибка доступа", $username . " пытался назначить OWNER веб-группу #$web_group.");
+			return $objResponse;
+		}
+		if(!$userbank->HasAccess(ADMIN_OWNER) && function_exists('sb_web_group_flags_within_actor') && !sb_web_group_flags_within_actor($web_group))
+		{
+			$objResponse->redirect("index.php?p=login&m=no_access", 0);
+			$log = new CSystemLog("w", "Ошибка доступа", $username . " пытался назначить веб-группу #$web_group шире своих прав.");
 			return $objResponse;
 		}
 	}
@@ -2076,12 +2098,10 @@ function ServerHostPlayers($sid, $type="servers", $obId="", $tplsid="", $open=""
 					."el.title=".json_encode($mapBase).";})();"
 				);
 				if($info['Players'] == 0) {
-					$objResponse->addScript("$('sinfo_$sid').setStyle('display', 'none');");
-					$objResponse->addScript("$('noplayer_$sid').setStyle('display', 'block');");
-					$objResponse->addScript("if($('serverwindow_$sid'))$('serverwindow_$sid').setStyle('height', 'auto');");
+					$objResponse->addScript("sbSetDisplay('sinfo_$sid', false);sbSetDisplay('noplayer_$sid', true);");
+					$objResponse->addScript("(function(){var w=document.getElementById('serverwindow_$sid');if(w)w.style.height='auto';})();");
 				} else {
-					$objResponse->addScript("$('sinfo_$sid').setStyle('display', 'block');");
-					$objResponse->addScript("$('noplayer_$sid').setStyle('display', 'none');");
+					$objResponse->addScript("sbSetDisplay('sinfo_$sid', true);sbSetDisplay('noplayer_$sid', false);");
 					$playercount = 0;
 					if(!defined('IN_HOME')) {
 						$players = $sinfo->GetPlayers();
@@ -2132,10 +2152,8 @@ function ServerHostPlayers($sid, $type="servers", $obId="", $tplsid="", $open=""
 			$objResponse->addAssign("map_$sid", "innerHTML", "Н/Д");
 			if(!$inHome) {
 				$connect = "onclick = \"document.location = 'steam://connect/" .  $res['ip'] . ":" . $res['port'] . "'\"";
-				$objResponse->addScript("$('sinfo_$sid').setStyle('display', 'none');");
-				$objResponse->addScript("$('noplayer_$sid').setStyle('display', 'block');");
-				$objResponse->addScript("if($('serverwindow_$sid'))$('serverwindow_$sid').setStyle('height', 'auto');");
-				$objResponse->addScript("if($('sid_$sid'))$('sid_$sid').setStyle('color', '#adadad');");
+				$objResponse->addScript("sbSetDisplay('sinfo_$sid', false);sbSetDisplay('noplayer_$sid', true);");
+				$objResponse->addScript("(function(){var w=document.getElementById('serverwindow_$sid');if(w)w.style.height='auto';var s=document.getElementById('sid_$sid');if(s)s.style.color='#adadad';})();");
 			}
 		}
 		// BUG FIX: $tplsid/$open used to be plain array-position indexes, and were passed
@@ -2207,16 +2225,26 @@ function ServerHostProperty($sid, $obId, $obProp, $trunchostname)
 function ServerHostPlayers_list($sid, $type="servers", $obId="")
 {
 	$objResponse = new xajaxResponse();
+	if (function_exists('sb_rate_limit_hit') && sb_rate_limit_hit('server_host_players', 24, 60))
+		return $objResponse;
 	require INCLUDES_PATH.'/CServerControl.php';
 
-	$sids = explode(";", $sid, -1);
-	if(count($sids) < 1)
+	$sids = explode(";", (string)$sid);
+	$clean = array();
+	foreach ($sids as $one) {
+		$one = (int)$one;
+		if ($one > 0)
+			$clean[] = $one;
+		if (count($clean) >= 20)
+			break;
+	}
+	if(count($clean) < 1)
 		return $objResponse;
 
 	$ret = "";
-	for($i=0;$i<count($sids);$i++)
+	for($i=0;$i<count($clean);$i++)
 	{
-		$sid = (int)$sids[$i];
+		$sid = $clean[$i];
 
 		$res = $GLOBALS['db']->GetRow("SELECT sid, ip, port FROM ".DB_PREFIX."_servers WHERE sid = $sid");
 		if(empty($res[1]) || empty($res[2]))
@@ -2279,7 +2307,7 @@ function ServerPlayers($sid)
 	$objResponse->addAssign("player_detail_$sid", "innerHTML", $html);
 	//$objResponse->addScript("document.getElementById('player_detail_$sid').innerHTML = 'hi';");
 	$objResponse->addScript("setTimeout('xajax_ServerPlayers($sid)', 5000);");
-	$objResponse->addScript("$('opener_$sid').setProperty('onclick', '');");
+	$objResponse->addScript("(function(){var o=document.getElementById('opener_$sid');if(o)o.onclick=null;})();");
 	return $objResponse;
 }
 
@@ -2838,7 +2866,9 @@ function EditAdminPerms($aid, $web_flags, $srv_flags)
 	if(empty($aid))
 		return;
 	$aid = (int)$aid;
-	$web_flags = (int)$web_flags;
+	$web_flags = function_exists('sb_clamp_web_flags_to_actor')
+		? sb_clamp_web_flags_to_actor($web_flags)
+		: ((int)$web_flags & ~ADMIN_OWNER);
 
 	$objResponse = new xajaxResponse();
 	global $userbank, $username;
@@ -2898,6 +2928,8 @@ function EditAdminPerms($aid, $web_flags, $srv_flags)
 		$srv_flags = substr($srv_flags, 0, strlen($srv_flags) - strlen($immunity)-1);
 	}
 	$immunity = ($immunity>0) ? $immunity : 0;
+	if (function_exists('sb_clamp_srv_flags_to_actor'))
+		$srv_flags = sb_clamp_srv_flags_to_actor($srv_flags, $immunity);
 	// Update server stuff
 	$GLOBALS['db']->Execute("UPDATE `".DB_PREFIX."_admins` SET `srv_flags` = ?, `immunity` = ? WHERE `aid` = ?", array($srv_flags, $immunity, $aid));
 
@@ -2944,7 +2976,9 @@ function EditGroup($gid, $web_flags, $srv_flags, $type, $name, $overrides, $newO
 	
 	$gid = (int)$gid;
 	$name = RemoveCode($name);
-	$web_flags = (int)$web_flags;
+	$web_flags = function_exists('sb_clamp_web_flags_to_actor')
+		? sb_clamp_web_flags_to_actor($web_flags)
+		: ((int)$web_flags & ~ADMIN_OWNER);
 
 	// Не-OWNER не может выдать ADMIN_OWNER группе и не может править группу, где OWNER уже есть.
 	if(!$userbank->HasAccess(ADMIN_OWNER) && ($web_flags & ADMIN_OWNER))
@@ -2986,6 +3020,8 @@ function EditGroup($gid, $web_flags, $srv_flags, $type, $name, $overrides, $newO
 			$srv_flags = substr($srv_flags, 0, strlen($srv_flags) - strlen($immunity)-1);
 		}
 		$immunity = ($immunity>0) ? $immunity : 0;
+		if (function_exists('sb_clamp_srv_flags_to_actor'))
+			$srv_flags = sb_clamp_srv_flags_to_actor($srv_flags, $immunity);
 
 		// Update server stuff
 		$GLOBALS['db']->Execute("UPDATE `".DB_PREFIX."_srvgroups` SET `flags` = ?, `name` = ?, `immunity` = ? WHERE `id` = $gid", array($srv_flags, $name, $immunity));
@@ -3241,6 +3277,19 @@ function AddComment($bid, $ctype, $ctext, $page)
 	
 	$bid = (int)$bid;
 	$page = (int)$page;
+
+	$typeTable = array(
+		'B' => array(DB_PREFIX.'_bans', 'bid'),
+		'C' => array(DB_PREFIX.'_comms', 'bid'),
+		'S' => array(DB_PREFIX.'_submissions', 'subid'),
+		'P' => array(DB_PREFIX.'_protests', 'pid'),
+	);
+	if(!isset($typeTable[$ctype])
+		|| !$GLOBALS['db']->GetOne("SELECT 1 FROM `".$typeTable[$ctype][0]."` WHERE `".$typeTable[$ctype][1]."` = ?", array($bid)))
+	{
+		$objResponse->addScript("ShowBox('Ошибка', 'Цель комментария не найдена.', 'red');");
+		return $objResponse;
+	}
 	
 	$pagelink = "";
 	if($page != -1)
@@ -3291,6 +3340,18 @@ function EditComment($cid, $ctype, $ctext, $page)
 
 	$cid = (int)$cid;
 	$page = (int)$page;
+	$owner = $GLOBALS['db']->GetOne("SELECT aid FROM `".DB_PREFIX."_comments` WHERE cid = ?", array($cid));
+	if($owner === false || $owner === null)
+	{
+		$objResponse->addScript("ShowBox('Ошибка', 'Комментарий не найден.', 'red');");
+		return $objResponse;
+	}
+	if((int)$owner !== (int)$userbank->GetAid() && !$userbank->HasAccess(ADMIN_OWNER))
+	{
+		$objResponse->redirect("index.php?p=login&m=no_access", 0);
+		new CSystemLog("w", "Ошибка доступа", $username . " пытался изменить чужой комментарий №".$cid.".");
+		return $objResponse;
+	}
 	
 	$pagelink = "";
 	if($page != -1)
@@ -3376,6 +3437,50 @@ function Maintenance($type) {
     switch($type) {
         case "themecache": {
             ShowBox_ajx("Недоступно", "Очистка кеша шаблона больше не используется.", "blue", $objResponse, "", true);
+            break;
+        }
+
+        case "twigprecompile": {
+            if (!function_exists('sb_ui_v2_twig_precompile_all')) {
+                ShowBox_ajx("Ошибка", "Функция предкомпиляции шаблонов недоступна.", "red", $objResponse, "", true);
+                break;
+            }
+            $res = sb_ui_v2_twig_precompile_all();
+            $ok = isset($res['ok']) ? (int)$res['ok'] : 0;
+            $fail = isset($res['fail']) ? (int)$res['fail'] : 0;
+            $cdir = isset($res['dir']) ? (string)$res['dir'] : '';
+            $errs = (isset($res['errors']) && is_array($res['errors'])) ? $res['errors'] : array();
+            $errHtml = '';
+            if (!empty($errs)) {
+                $safeErr = array();
+                foreach ($errs as $em)
+                    $safeErr[] = htmlspecialchars((string)$em, ENT_QUOTES, 'UTF-8');
+                $errHtml = '<br>' . implode('<br>', $safeErr);
+            }
+            if ($ok === 0 && $fail > 0) {
+                ShowBox_ajx("Ошибка", "Не удалось скомпилировать шаблоны Twig." . $errHtml, "red", $objResponse, "", true);
+                break;
+            }
+            $msg = "Скомпилировано шаблонов: <b>" . $ok . "</b>";
+            if ($fail > 0)
+                $msg .= ", ошибок: <b>" . $fail . "</b>";
+            if ($cdir !== '')
+                $msg .= ".<br>Каталог кеша: <code>" . htmlspecialchars($cdir, ENT_QUOTES, 'UTF-8') . "</code>";
+            $msg .= $errHtml;
+            new CSystemLog("m", "Обслуживание системы", $username . " предкомпилировал шаблоны Twig (ok=" . $ok . ", fail=" . $fail . ").");
+            ShowBox_ajx("Успех", $msg, "green", $objResponse, "", true);
+            break;
+        }
+
+        case "twigcache": {
+            if (!function_exists('sb_ui_v2_twig_cache_clear')) {
+                ShowBox_ajx("Ошибка", "Функция очистки кеша шаблонов недоступна.", "red", $objResponse, "", true);
+                break;
+            }
+            $res = sb_ui_v2_twig_cache_clear();
+            $removed = is_array($res) && isset($res['removed']) ? (int)$res['removed'] : 0;
+            new CSystemLog("m", "Обслуживание системы", $username . " очистил кеш Twig (удалено файлов: " . $removed . ").");
+            ShowBox_ajx("Успех", "Кеш скомпилированных шаблонов Twig очищен (удалено файлов: <b>" . $removed . "</b>).", "green", $objResponse, "", true);
             break;
         }
         
@@ -3642,7 +3747,7 @@ function Maintenance($type) {
             if (empty($bad)) {
                 ShowBox_ajx(
                     "Права на папки",
-                    "Всё в порядке: PHP может писать в <code>demos/</code>, <code>images/</code>, <code>images/maps/</code>, <code>images/games/</code>, <code>data/</code>, корень сайта и <code>config.php</code>.",
+                    "Всё в порядке: PHP может писать в <code>demos/</code>, <code>images/</code>, <code>images/maps/</code>, <code>images/games/</code>, <code>data/</code>, <code>cache/twig_predcompiled/</code>, корень сайта и <code>config.php</code>.",
                     "green",
                     $objResponse,
                     "",

@@ -79,13 +79,10 @@ if(!$demo)
   die('Demo not found.');
 }
 
-if((!in_array($demo['filename'], scandir(SB_DEMOS)) || !file_exists(SB_DEMOS . "/" . $demo['filename'])) && $type != "U")
-{
-  die('File not found.');
-}
-
 if($type != "U"){
-$demo['filename'] = basename($demo['filename']);
+$demo['filename'] = sb_demo_filename_safe($demo['filename']);
+if ($demo['filename'] === '' || !is_file(SB_DEMOS . '/' . $demo['filename']))
+	die('File not found.');
 header('Content-Type: application/octet-stream');
 header('Content-Transfer-Encoding: Binary');
 header('Content-Disposition: ' . sb_content_disposition_attachment($demo['origname']));

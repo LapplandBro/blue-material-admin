@@ -210,9 +210,65 @@ body.install-v2 {
   color: #ddeeff;
   border-color: #1a2d50;
 }
-#messages-main .btn-primary {
+.install-v2 .btn {
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+}
+.install-v2 .btn-primary {
   background: #1e90ff;
   border-color: #1e90ff;
+  color: #fff;
+}
+.install-v2 .btn-primary:hover,
+.install-v2 .btn-primary:focus {
+  background: #1576d6;
+  border-color: #1576d6;
+  color: #fff;
+}
+.install-v2 .btn-info {
+  background: #1565c0;
+  border-color: #1565c0;
+  color: #fff;
+}
+.install-v2 .btn-info:hover,
+.install-v2 .btn-info:focus {
+  background: #0d47a1;
+  border-color: #0d47a1;
+  color: #fff;
+}
+.install-v2 .btn.bgm-red,
+.install-v2 a.btn.bgm-red {
+  background: #c62828 !important;
+  border-color: #c62828;
+  color: #fff;
+}
+.install-v2 .btn.bgm-red:hover,
+.install-v2 .btn.bgm-red:focus,
+.install-v2 a.btn.bgm-red:hover,
+.install-v2 a.btn.bgm-red:focus {
+  background: #a31f1f !important;
+  border-color: #a31f1f;
+  color: #fff;
+}
+.install-v2 .btn:disabled,
+.install-v2 .btn[disabled] {
+  opacity: 0.55;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+#messages-main .bi-info-circle {
+  cursor: help;
+  vertical-align: -0.1em;
+}
+#messages-main .ms-menu .lv-small .bi {
+  margin-right: 0.2rem;
+}
+.install-sql-errors {
+  margin: 0.5rem 0 1rem;
+  padding-left: 1.25rem;
+  color: #ff8a80;
+}
+.install-sql-errors li {
+  margin: 0.25rem 0;
 }
 .col-sm-12 { width: 100%; }
 .col-sm-6 { width: 50%; float: left; }
@@ -239,13 +295,50 @@ body.install-v2 {
   accent-color: #1e90ff;
 }
 
-.sweet-alert {
+/* SweetAlert 1 — тёмная тема установщика */
+body.install-v2 .sweet-overlay {
+  background: rgba(4, 8, 20, 0.72) !important;
+}
+body.install-v2 .sweet-alert {
   background-color: #0c1528 !important;
   color: #ddeeff !important;
+  border: 1px solid #1a2d50 !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45) !important;
 }
-.sweet-alert h2 { color: #e8f0ff !important; }
-.sweet-alert p { color: #c8d8f0 !important; }
-.sweet-overlay { background: rgba(0, 0, 0, 0.65); }
+body.install-v2 .sweet-alert h2 {
+  color: #e8f0ff !important;
+}
+body.install-v2 .sweet-alert p,
+body.install-v2 .sweet-alert .sweet-alert-body {
+  color: #c8d8f0 !important;
+}
+body.install-v2 .sweet-alert .content,
+body.install-v2 .sweet-alert .sweet-alert-body {
+  background: transparent !important;
+  color: #c8d8f0 !important;
+}
+body.install-v2 .sweet-alert button.confirm {
+  background: #1e90ff !important;
+  border: 1px solid #1576d6 !important;
+  color: #fff !important;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+body.install-v2 .sweet-alert button.confirm:hover,
+body.install-v2 .sweet-alert button.confirm:focus {
+  background: #1576d6 !important;
+  border-color: #1576d6 !important;
+}
+body.install-v2 .sweet-alert button.cancel {
+  background: rgba(16, 29, 53, 0.9) !important;
+  color: #ddeeff !important;
+  border: 1px solid #1a2d50 !important;
+}
+body.install-v2 .sweet-alert .icon.success {
+  border-color: #3dd68c !important;
+}
+body.install-v2 .sweet-alert .icon.success .line {
+  background-color: #3dd68c !important;
+}
 
 @media (max-width: 900px) {
   .install-shell,

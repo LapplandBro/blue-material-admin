@@ -21,17 +21,29 @@
   </div>
 </div>
 <script>
-$E('html').onkeydown = function(event){
-	var event = new Event(event);
-	if (event.key == 'enter') SendRcon();
-};
+(function () {
+	var cmdEl = document.getElementById('cmd');
+	if (!cmdEl) return;
+	cmdEl.addEventListener('keydown', function (e) {
+		if (e.key !== 'Enter' || e.shiftKey) return;
+		e.preventDefault();
+		if (this.disabled || this.value === 'Выполняю…') return;
+		SendRcon();
+	});
+})();
 
 function SendRcon()
 {
-	xajax_SendRcon('{{ id }}', $('cmd').value, true);
-	$('cmd').value = 'Выполняю…';
-	$('cmd').disabled = 'true';
-	$('rcon_btn').disabled = 'true';
+	var cmd = $('cmd');
+	var btn = $('rcon_btn');
+	if (!cmd || cmd.disabled) return;
+	if (cmd.value === 'Выполняю…') return;
+	if (typeof sbBusy === 'function' && sbBusy(btn)) return;
+	var val = cmd.value;
+	cmd.disabled = true;
+	if (btn) btn.disabled = true;
+	cmd.value = 'Выполняю…';
+	xajax_SendRcon('{{ id }}', val, true);
 }
 
 var scroll = {

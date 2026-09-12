@@ -30,7 +30,7 @@
     </div>
   </div>
   <div class="form-actions">
-    <button type="button" class="btn btn-accent" id="agroup" onclick="ProcessGroup();">Сохранить</button>
+    <button type="button" class="btn btn-accent" id="agroup" onclick="if (typeof sbBusy === 'function' &amp;&amp; sbBusy(this)) return; ProcessGroup();">Сохранить</button>
     <button type="button" class="btn btn-outline-secondary" id="aback" onclick="sbAdminBack(0, 'index.php?p=admin&amp;c=groups')">Назад</button>
   </div>
 </div>

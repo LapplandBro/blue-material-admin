@@ -1,26 +1,37 @@
 <?php
 	if(!defined("IN_SB")){echo "You should not be here. Only follow links!";die();}
 	$errors = 0;
-	$warnings = 0;
 
 	require(ROOT . "../includes/adodb/adodb.inc.php");
 	include_once(ROOT . "../includes/adodb/adodb-errorhandler.inc.php");
 	$server = "mysqli://" . $_POST['username'] . ":" . $_POST['password'] . "@" . $_POST['server'] . ":" . $_POST['port'] . "/" . $_POST['database'];
 	$db = ADONewConnection($server);
-	$db->Execute("SET NAMES `utf8`");
-	
-	$file = file_get_contents(INCLUDES_PATH . "/struc.sql");
-	$file = str_replace("{prefix}", $_POST['prefix'], $file);
-	$querys = explode(";", $file);
-	foreach($querys AS $q)
-	{
-		if(strlen($q) > 2)
+	$sqlErrors = array();
+	if (!$db) {
+		$errors++;
+		$sqlErrors[] = 'Нет соединения с сервером баз данных.';
+	} else {
+		$db->Execute("SET NAMES `utf8`");
+		$file = file_get_contents(INCLUDES_PATH . "/struc.sql");
+		$file = str_replace("{prefix}", $_POST['prefix'], $file);
+		$querys = explode(";", $file);
+		foreach($querys AS $q)
 		{
-			$res = $db->Execute(stripslashes($q) . ";");
-			if(!$res)
-				$errors++;
-		}	
-	}	
+			if(strlen($q) > 2)
+			{
+				$res = $db->Execute(stripslashes($q) . ";");
+				if(!$res)
+				{
+					$errors++;
+					$msg = method_exists($db, 'ErrorMsg') ? $db->ErrorMsg() : 'execute failed';
+					$snippet = trim($q);
+					if (strlen($snippet) > 120)
+						$snippet = substr($snippet, 0, 117) . '...';
+					$sqlErrors[] = $msg . ' — ' . $snippet;
+				}
+			}
+		}
+	}
 ?>
 	
 
@@ -35,7 +46,7 @@
 					<div class="lv-avatar bgm-orange pull-left">1</div>
 					<div class="media-body">
 						<div class="lv-title"><del>Шаг: Лицензия</del></div>
-						<div class="lv-small"><i class="zmdi zmdi-timer-off zmdi-hc-fw c-red"></i> <del>Предыдущий шаг</del></div>
+						<div class="lv-small"><i class="bi bi-x-circle c-red"></i> <del>Предыдущий шаг</del></div>
 					</div>
 				</div>
 
@@ -43,15 +54,15 @@
 					<div class="lv-avatar bgm-orange pull-left">2</div>
 					<div class="media-body">
 						<div class="lv-title"><del>Шаг: База данных</del></div>
-						<div class="lv-small"><i class="zmdi zmdi-timer-off zmdi-hc-fw c-red"></i> <del>Предыдущий шаг</del></del></div>
+						<div class="lv-small"><i class="bi bi-x-circle c-red"></i> <del>Предыдущий шаг</del></div>
 					</div>
 				</div>
 
 				<div class="lv-item media">
 					<div class="lv-avatar bgm-orange pull-left">3</div>
 					<div class="media-body">
-						<div class="lv-title"><del>Шаг: Системные требования</div>
-						<div class="lv-small"><i class="zmdi zmdi-timer-off zmdi-hc-fw c-blue"></i> <del>Предыдущий шаг</del></div>
+						<div class="lv-title"><del>Шаг: Системные требования</del></div>
+						<div class="lv-small"><i class="bi bi-x-circle c-red"></i> <del>Предыдущий шаг</del></div>
 					</div>
 				</div>
 
@@ -59,7 +70,7 @@
 					<div class="lv-avatar bgm-red pull-left">4</div>
 					<div class="media-body">
 						<div class="lv-title">Шаг: Создание таблиц</div>
-						<div class="lv-small"><i class="zmdi zmdi-badge-check zmdi-hc-fw c-green"></i> Текущий шаг</div>
+						<div class="lv-small"><i class="bi bi-check-circle c-green"></i> Текущий шаг</div>
 					</div>
 				</div>
 
@@ -67,7 +78,7 @@
 					<div class="lv-avatar bgm-orange pull-left">5</div>
 					<div class="media-body">
 						<div class="lv-title">Шаг: Установка</div>
-						<div class="lv-small"><i class="zmdi zmdi-time zmdi-hc-fw c-blue"></i> Следующий шаг</div>
+						<div class="lv-small"><i class="bi bi-clock c-blue"></i> Следующий шаг</div>
 					</div>
 				</div>
 			</div>
@@ -82,7 +93,7 @@
 				</div>
 
 				<div class="lv-body p-15">
-					На этой странице будет происходишь установка данных в базу данных.
+					На этой странице создаются таблицы базы данных.
 				</div>
 				
 				<div class="lv-header-alt clearfix">
@@ -95,11 +106,16 @@
 					<div class="col-sm-12">
 						<?php if($errors > 0){
 							?>
-							<script>setTimeout("ShowBox('Ошибка', 'Ошибка создания структуры базы данных. Пожалуйста, прочитайте сообщения выше, чтобы исправить проблемы.', 'red', '', true);", 1200);</script>
+							<p class="c-red">Ошибка создания структуры базы данных:</p>
+							<ul class="install-sql-errors">
+								<?php foreach ($sqlErrors as $err): ?>
+									<li><?php echo htmlspecialchars($err, ENT_QUOTES, 'UTF-8'); ?></li>
+								<?php endforeach; ?>
+							</ul>
 							<?php
 						}else{
 							?>
-							<script>setTimeout("ShowBox('Успешно', 'Таблицы успешно созданы', 'green', '', true);", 1200);</script>
+							<p>Таблицы успешно созданы.</p>
 							<?php
 						}
 						?>
@@ -115,13 +131,11 @@
 							<input type="hidden" name="sb-wp-url" value="<?php echo $_POST['sb-wp-url']?>">
 						</form>
 					</div>
-					<br /><br />
 					<div class="p-10" align="center">
-						<button type="submit" onclick="next()" name="button" class="btn btn-primary waves-effect" id="button">Ok</button>
+						<button type="button" onclick="next()" name="button" class="btn btn-primary" id="button">ОК</button>
 					</div>
 				</div>
 			</div>
-			<br /><br />
 		</div>
 </div>
 

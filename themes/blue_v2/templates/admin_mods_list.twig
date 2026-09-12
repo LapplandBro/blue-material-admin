@@ -42,6 +42,10 @@
           </td>
           {% endif %}
         </tr>
+        {% else %}
+        <tr>
+          <td colspan="{% if permission_editmods or permission_deletemods %}5{% else %}4{% endif %}" class="parsec-muted" data-label="">Модов нет.</td>
+        </tr>
         {% endfor %}
       </tbody>
     </table>

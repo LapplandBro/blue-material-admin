@@ -56,10 +56,7 @@
     background 0.16s ease;
 }
 a.admin-hub-tile:hover,
-a.admin-hub-tile:focus,
-a.admin-hub-tile:focus-visible,
-.admin-hub-tile--with-extra:hover,
-.admin-hub-tile--with-extra:focus-within {
+.admin-hub-tile--with-extra:hover {
   transform: translateY(-3px);
   border-color: rgba(30, 144, 255, 0.42);
   background:
@@ -68,6 +65,18 @@ a.admin-hub-tile:focus-visible,
   box-shadow: var(--shadow-elevated);
   color: var(--text);
   text-decoration: none;
+}
+a.admin-hub-tile:focus-visible {
+  border-color: rgba(30, 144, 255, 0.42);
+  color: var(--text);
+  text-decoration: none;
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.admin-hub-tile--with-extra:focus-within {
+  border-color: rgba(30, 144, 255, 0.42);
+}
+a.admin-hub-tile:focus:not(:focus-visible) {
   outline: none;
 }
 .admin-hub-tile-head {
@@ -132,10 +141,15 @@ a.admin-hub-tile:focus-visible,
   color: inherit;
   text-decoration: none;
 }
-.admin-hub-tile-main:hover,
-.admin-hub-tile-main:focus {
+.admin-hub-tile-main:hover {
   color: inherit;
   text-decoration: none;
+}
+.admin-hub-tile-main:focus-visible {
+  color: inherit;
+  text-decoration: none;
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 .admin-hub-tile-extra {
   display: inline-flex;
@@ -153,12 +167,15 @@ a.admin-hub-tile:focus-visible,
   text-transform: uppercase;
   text-decoration: none;
 }
-.admin-hub-tile-extra:hover,
-.admin-hub-tile-extra:focus {
+.admin-hub-tile-extra:hover {
   color: #fff;
   background: var(--accent-soft);
   border-color: rgba(30, 144, 255, 0.45);
   text-decoration: none;
+}
+.admin-hub-tile-extra:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 .admin-hub-stats-wrap {
   margin-top: 0.35rem;
@@ -230,10 +247,7 @@ a.admin-hub-tile:focus-visible,
     transition: none;
   }
   a.admin-hub-tile:hover,
-  a.admin-hub-tile:focus,
-  a.admin-hub-tile:focus-visible,
-  .admin-hub-tile--with-extra:hover,
-  .admin-hub-tile--with-extra:focus-within {
+  .admin-hub-tile--with-extra:hover {
     transform: none;
   }
 }

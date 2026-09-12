@@ -58,10 +58,15 @@
   font-size: 0.82rem;
   font-weight: 650;
   text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 .admin-embed-tabs > li > a:hover {
   color: var(--text-heading);
   background: var(--accent-soft);
+}
+.admin-embed-tabs > li > a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 .admin-embed-tabs > li.active > a {
   color: #fff;
@@ -467,13 +472,6 @@
   gap: 0.5rem;
   max-width: 36rem;
 }
-.admin-embed-body .admin-actions {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: 0.3rem;
-  justify-content: flex-end;
-  align-items: center;
-}
 .admin-menu-table .admin-actions {
   white-space: nowrap;
 }
@@ -493,6 +491,7 @@
   text-decoration: none;
   cursor: pointer;
   font-family: inherit;
+  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
 }
 .admin-embed-body .admin-action:hover {
   color: var(--text-heading);
@@ -1282,6 +1281,93 @@
   font-size: 0.92rem;
   font-weight: 700;
 }
+
+.admin-groups .admin-manage-section {
+  padding: 0;
+}
+.admin-groups .admin-manage-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0.62rem 1.1rem;
+  color: var(--muted);
+  background: rgba(8, 15, 31, 0.28);
+  border-bottom: 1px solid var(--border-hairline);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.admin-groups .admin-manage-section-title .admin-manage-count {
+  margin-left: 0;
+}
+.admin-groups .table-responsive.table-cards-wrap {
+  margin: 0;
+  overflow: visible;
+}
+.admin-groups .groups-table {
+  table-layout: fixed;
+  width: 100%;
+}
+.admin-groups .groups-table > thead > tr > th,
+.admin-groups .groups-table > tbody > tr > td {
+  padding: 0.58rem 1.1rem;
+  vertical-align: middle;
+}
+.admin-groups .groups-th-name,
+.admin-groups .groups-td-name {
+  min-width: 0;
+  text-align: left;
+}
+.admin-groups .groups-td-name .admin-manage-name {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.admin-groups .groups-col-num,
+.admin-groups .groups-th-num,
+.admin-groups .groups-td-num {
+  width: 7.25rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+  color: var(--text-heading);
+  white-space: nowrap;
+}
+.admin-groups .groups-col-actions,
+.admin-groups .groups-th-actions,
+.admin-groups .groups-td-actions {
+  width: 13rem;
+  text-align: right;
+  white-space: nowrap;
+}
+.admin-groups .admin-actions {
+  flex-wrap: nowrap;
+}
+@media (max-width: 991.98px) {
+  .admin-groups .admin-manage-section {
+    padding: 0.15rem 0 0.2rem;
+  }
+  .admin-groups .admin-manage-section-title {
+    padding: 0.75rem 0.85rem 0.4rem;
+    background: transparent;
+    border-bottom: 0;
+    color: var(--text-heading);
+    font-size: 0.88rem;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+  .admin-groups .groups-table {
+    table-layout: auto;
+  }
+  .admin-groups .groups-td-name .admin-manage-name,
+  .admin-groups .groups-td-actions {
+    white-space: normal;
+  }
+}
 .admin-manage-table {
   width: 100%;
   color: var(--text);
@@ -1352,9 +1438,7 @@
   white-space: normal;
 }
 .admin-detail-row > td {
-  padding: 0;
   border-top: 0;
-  background: var(--bg-sidebar);
 }
 .admin-detail {
   display: grid;
@@ -1903,16 +1987,6 @@ div.opener5 > .admin-ticket {
 }
 /* --bs-md-max */
 @media (max-width: 767.98px) {
-  .admin-manage-head {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.65rem;
-  }
-  .admin-manage-tools {
-    width: 100%;
-    flex-wrap: wrap;
-    gap: 0.35rem;
-  }
   .admin-embed-body .form-horizontal .form-group {
     grid-template-columns: 1fr;
   }
@@ -1941,21 +2015,12 @@ div.opener5 > .admin-ticket {
   }
   .admin-search-split { grid-template-columns: 1fr; }
   .perms-immunity { grid-template-columns: 1fr; }
-  .perms-section--grid { grid-template-columns: 1fr; }
   .perms-row {
     grid-template-columns: 1fr auto;
   }
   .perms-row-cmds { grid-column: 1; }
   .perms-row input[type="checkbox"] { grid-row: 1 / span 2; }
 }
-/* --bs-sm-max */
-@media (max-width: 575.98px) {
-  .admin-manage-tools .btn {
-    flex: 1 1 auto;
-    min-width: 0;
-  }
-}
-
 /* Ensure modals and server frames use theme background (fix white frames on ban modal) */
 .modal-content,
 .modal-body,

@@ -451,7 +451,7 @@
         </tr>
         {% else %}
         <tr>
-          <td class="banlist-empty" colspan="{{ ban_colspan }}" data-label="">Банов нет.</td>
+          <td class="banlist-empty" colspan="{{ ban_colspan }}" data-label="">{% if search_text %}По запросу ничего нет. <a href="index.php?p=banlist">Сбросить поиск</a>{% else %}Банов нет.{% endif %}</td>
         </tr>
         {% endfor %}
       </tbody>
@@ -461,7 +461,7 @@
   {% if general_unban or can_delete or can_export %}
   <div class="banlist-foot">
     {% if general_unban or can_delete %}
-    <select class="form-select banlist-bulk" name="bulk_action" id="bulk_action" onchange="BulkEdit(this,'{{ admin_postkey }}');">
+    <select class="form-select banlist-bulk" name="bulk_action" id="bulk_action" onchange="var n=0,i=0,el;while((el=document.getElementById('chkb_'+i))){if(el.checked)n++;i++;}if(!n){this.selectedIndex=0;return;}BulkEdit(this,'{{ admin_postkey }}');">
       <option value="-1">Выберите</option>
       {% if general_unban %}<option value="U">Разбан</option>{% endif %}
       {% if can_delete %}<option value="D">Удалить</option>{% endif %}

@@ -118,6 +118,7 @@
   transition: transform 0.2s ease;
 }
 .adminlist-toggle.active .adminlist-chevron,
+.adminlist-toggle.is-open .adminlist-chevron,
 .adminlist-server.open .adminlist-chevron {
   transform: rotate(180deg);
 }
@@ -126,6 +127,10 @@
   overflow: hidden;
   background: var(--bg-sidebar);
   border-top: 1px solid var(--border-hairline);
+}
+.adminlist-body.is-open {
+  visibility: visible;
+  opacity: 1;
 }
 .adminlist-admins {
   display: grid;

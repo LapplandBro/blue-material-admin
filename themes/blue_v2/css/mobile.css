@@ -251,21 +251,24 @@
 
   .mobile-tabbar-item.tab-tier-2,
   .mobile-tabbar-item.tab-tier-3,
-  .mobile-tabbar-item.tab-tier-4,
-  .mobile-tabbar-item.tab-tier-5 {
+  .mobile-tabbar-item.tab-tier-4 {
     display: none;
   }
 
-  @media (min-width: 576px) {
-    .mobile-tabbar-item.tab-tier-2,
+  @media (min-width: 360px) {
     .mobile-tabbar-item.tab-tier-4 {
       display: flex;
     }
   }
 
+  @media (min-width: 576px) {
+    .mobile-tabbar-item.tab-tier-2 {
+      display: flex;
+    }
+  }
+
   @media (min-width: 768px) {
-    .mobile-tabbar-item.tab-tier-3,
-    .mobile-tabbar-item.tab-tier-5 {
+    .mobile-tabbar-item.tab-tier-3 {
       display: flex;
     }
   }
@@ -1002,15 +1005,6 @@
 
   .servers-head .servers-sub {
     font-size: 0.78rem;
-  }
-
-  .dash-stats {
-    grid-template-columns: 1fr !important;
-  }
-
-  .dash-feeds,
-  .dash-main {
-    grid-template-columns: 1fr !important;
   }
 
   .modal-dialog {

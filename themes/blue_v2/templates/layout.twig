@@ -48,17 +48,17 @@
   <link href="{{ asset_base }}themes/blue_v2/vendor/sweetalert/sweet-alert.css" rel="stylesheet">
   <link href="{{ asset_base }}themes/blue_v2/css/rubik.css" rel="stylesheet">
   <link href="{{ asset_base }}themes/blue_v2/css/blue.css?v={{ css_ver }}" rel="stylesheet">
-  <script src="{{ asset_base }}scripts/mootools.js"></script>
-  <script src="{{ asset_base }}scripts/sourcebans.js?v={{ sb_js_ver }}"></script>
-  {{ xajax_js|raw }}
-  <script>window.SB_CSRF={{ sb_csrf|default('')|json_encode|raw }};window.SB_SESSION={{ sb_session|default({})|json_encode|raw }};</script>
   {% block extra_head %}{% endblock %}
   <link href="{{ asset_base }}themes/blue_v2/css/mobile.css?v={{ css_ver }}" rel="stylesheet">
   <link href="{{ asset_base }}themes/blue_v2/css/wide.css?v={{ css_ver }}" rel="stylesheet">
   <script>try{var _mq=window.matchMedia('(max-width: 991.98px)');var _k=_mq.matches?'sb-ui-sidebar-mobile':'sb-ui-sidebar-desktop';var _s=localStorage.getItem(_k);if(_mq.matches){if(_s!=='on')document.documentElement.classList.add('sidebar-off');}else{if(_s==='off')document.documentElement.classList.add('sidebar-off');else document.documentElement.classList.remove('sidebar-off');}}catch(e){}</script>
+  <script src="{{ asset_base }}scripts/mootools.js"></script>
+  <script src="{{ asset_base }}scripts/sourcebans.js?v={{ sb_js_ver }}"></script>
+  {{ xajax_js|raw }}
+  <script>window.SB_CSRF={{ sb_csrf|default('')|json_encode(15)|raw }};window.SB_SESSION={{ sb_session|default({})|json_encode(15)|raw }};</script>
 </head>
 <body class="blue-v2">
-<div class="page-loader" id="page-loader">
+<div class="page-loader" id="page-loader" hidden>
   <div class="preloader pls-blue">
     <svg class="pl-circular" viewBox="25 25 50 50" aria-hidden="true">
       <circle class="plc-path" cx="50" cy="50" r="20"></circle>
@@ -197,7 +197,7 @@
     <footer class="app-footer">
       <div class="app-footer-inner">
         <div class="app-footer-copy">
-          <strong>BLUE ADMIN</strong>{% if sb_version %} · {{ sb_version }}{% endif %}
+          <strong>{{ brand_primary|default('Blue Admin') }}</strong>{% if sb_version %} · {{ sb_version }}{% endif %}
           <p>Свободное ПО под <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank" rel="noopener noreferrer">GNU GPLv3</a>. Форк <a href="https://github.com/sbpp/sourcebans-pp" target="_blank" rel="noopener noreferrer">SourceBans++</a> / <a href="https://github.com/GameConnect/sourcebansv1" target="_blank" rel="noopener noreferrer">SourceBans</a>.</p>
           <p class="app-footer-author">Автор сборки: <a href="https://github.com/LapplandBro/blue-material-admin" target="_blank" rel="noopener noreferrer">LapplandBro</a></p>
           <p>Идея оформления: <a href="https://hlmod.net/threads/alpha-material-admin-refork-na-osnove-sb-1-5-4-7-bootstrap-3.36382/" target="_blank" rel="noopener noreferrer">Material Admin (HLMod)</a> · <a href="https://github.com/CrazyHackGUT" target="_blank" rel="noopener noreferrer">Kruzya</a>. Самостоятельный форк — живёт отдельно от остальных сборок.</p>
@@ -261,29 +261,52 @@
     if (href.indexOf('#^') !== -1) return false;
     return true;
   }
+  function isSamePathQuery(a) {
+    try {
+      var u = new URL(a.href, window.location.href);
+      return u.origin === window.location.origin
+        && u.pathname === window.location.pathname
+        && u.search === window.location.search;
+    } catch (err) {
+      return false;
+    }
+  }
+  function relHasExternal(a) {
+    var rel = (a.getAttribute('rel') || '').toLowerCase().split(/\s+/);
+    return rel.indexOf('external') !== -1;
+  }
+  function isAjaxForm(form) {
+    var action = (form.getAttribute('action') || '').trim();
+    if (!action || action === '#' || action.toLowerCase().indexOf('javascript:') === 0) return true;
+    var onsubmit = form.getAttribute('onsubmit') || '';
+    if (/return\s+false/i.test(onsubmit) || /xajax/i.test(onsubmit) || /DoLogin/i.test(onsubmit)) return true;
+    return false;
+  }
   document.addEventListener('click', function (e) {
     var a = e.target;
     while (a && a.tagName !== 'A') a = a.parentNode;
     if (!a || !a.href || a.target === '_blank') return;
+    if (a.hasAttribute('download') || relHasExternal(a)) return;
     if ((a.className || '').indexOf('js-player-menu') !== -1) return;
     var href = a.getAttribute('href') || '';
-    if (!isNavHref(href)) return;
+    if (!isNavHref(href) || isSamePathQuery(a)) return;
     if ((a.getAttribute('onclick') || '').indexOf('SwapPane') !== -1) return;
     if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     showLoader();
   }, true);
-  document.addEventListener('submit', function () { showLoader(); }, true);
+  document.addEventListener('submit', function (e) {
+    var form = e.target;
+    if (!form || form.tagName !== 'FORM' || isAjaxForm(form)) return;
+    showBar();
+  }, true);
   window.addEventListener('pageshow', hideLoader);
-  showLoader();
-  if (document.readyState === 'complete')
-    window.setTimeout(hideLoader, 400);
-  else
-    window.addEventListener('load', function () { window.setTimeout(hideLoader, 400); });
+  window.addEventListener('pagehide', hideLoader);
   window.setTimeout(hideLoader, 12000);
 
   var trigger = document.getElementById('menu-trigger');
   var backdrop = document.getElementById('sidebar-backdrop');
   var mqDrawer = window.matchMedia('(max-width: 991.98px)');
+  var backdropHideTimer = 0;
 
   function sidebarOff() {
     return document.documentElement.classList.contains('sidebar-off');
@@ -297,14 +320,21 @@
     var off = sidebarOff();
     if (trigger) trigger.setAttribute('aria-expanded', off ? 'false' : 'true');
     if (backdrop) {
+      if (backdropHideTimer) {
+        window.clearTimeout(backdropHideTimer);
+        backdropHideTimer = 0;
+      }
       if (drawerMode() && !off) {
         backdrop.removeAttribute('hidden');
         backdrop.setAttribute('aria-hidden', 'false');
         document.body.classList.add('sidebar-drawer-open');
       } else {
-        backdrop.setAttribute('hidden', 'hidden');
         backdrop.setAttribute('aria-hidden', 'true');
         document.body.classList.remove('sidebar-drawer-open');
+        backdropHideTimer = window.setTimeout(function () {
+          backdrop.setAttribute('hidden', 'hidden');
+          backdropHideTimer = 0;
+        }, 240);
       }
     }
   }
@@ -332,11 +362,11 @@
 
   function tabbarVisibleSlots() {
     var slots = ['home', 'banlist', 'commslist', 'servers'];
-    if (window.matchMedia('(min-width: 576px)').matches) {
-      slots.push('adminlist');
+    if (window.matchMedia('(min-width: 360px)').matches) {
       slots.push('account');
       slots.push('login');
     }
+    if (window.matchMedia('(min-width: 576px)').matches) slots.push('adminlist');
     if (window.matchMedia('(min-width: 768px)').matches) slots.push('admin');
     return slots;
   }
@@ -344,7 +374,7 @@
   function syncTabbarSidebar() {
     var root = document.documentElement;
     var inDrawer = drawerMode();
-    var hasMore = inDrawer && window.matchMedia('(min-width: 768px)').matches;
+    var hasMore = inDrawer;
     root.classList.toggle('tabbar-has-more', hasMore);
     if (!inDrawer) {
       document.querySelectorAll('.nav-link--in-tabbar').forEach(function (el) {
@@ -368,11 +398,9 @@
 
   if (trigger) {
     syncSidebarUi();
-    syncTabbarSidebar();
     trigger.addEventListener('click', function () { setSidebar(!sidebarOff()); });
-  } else {
-    syncTabbarSidebar();
   }
+  syncTabbarSidebar();
   var tabMenu = document.getElementById('mobile-tabbar-menu');
   if (tabMenu) {
     tabMenu.addEventListener('click', function () { setSidebar(false); });
@@ -383,19 +411,13 @@
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape' && drawerMode() && !sidebarOff()) setSidebar(true);
   });
-  if (mqDrawer.addEventListener) {
-    mqDrawer.addEventListener('change', function () {
-      applySidebarForViewport();
-      syncSidebarUi();
-      syncTabbarSidebar();
-    });
-  } else if (mqDrawer.addListener) {
-    mqDrawer.addListener(function () {
-      applySidebarForViewport();
-      syncSidebarUi();
-      syncTabbarSidebar();
-    });
+  function onDrawerChange() {
+    applySidebarForViewport();
+    syncSidebarUi();
+    syncTabbarSidebar();
   }
+  if (mqDrawer.addEventListener) mqDrawer.addEventListener('change', onDrawerChange);
+  else if (mqDrawer.addListener) mqDrawer.addListener(onDrawerChange);
   window.addEventListener('resize', function () {
     syncSidebarUi();
     syncTabbarSidebar();
@@ -404,11 +426,14 @@
 </script>
 <script>
 (function () {
-  var items = {{ page_notices|default([])|json_encode|raw }};
+  var items = {{ page_notices|default([])|json_encode(15)|raw }};
   if (!items || !items.length) return;
   var hosts = {};
   function hostFor(place) {
     place = place || 'top-right';
+    if (place === 'top-left' && !document.documentElement.classList.contains('sidebar-off')) {
+      place = 'top-right';
+    }
     if (hosts[place]) return hosts[place];
     var box = document.createElement('div');
     box.className = 'sb-toasts sb-toasts--' + place;
@@ -441,7 +466,7 @@
       el.appendChild(x);
       hostFor(item.place).appendChild(el);
       window.setTimeout(function () { el.classList.add('is-on'); }, 20);
-      window.setTimeout(function () { hide(el); }, item.ms || 4000);
+      window.setTimeout(function () { hide(el); }, item.ms || 8000);
     }, wait);
   }
   var i;

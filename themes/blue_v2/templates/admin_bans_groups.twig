@@ -27,7 +27,7 @@
     </div>
   </div>
   <div class="form-actions">
-    <button type="button" class="btn btn-accent" id="agban" onclick="ProcessGroupBan();">Забанить группу</button>
+    <button type="button" class="btn btn-accent" id="agban" onclick="if (typeof sbBusy === 'function' &amp;&amp; sbBusy(this)) return; ProcessGroupBan();">Забанить группу</button>
     <button type="button" class="btn btn-outline-secondary" id="aback" onclick="sbAdminBack(0, 'index.php?p=admin&amp;c=bans')">Назад</button>
   </div>
   {% else %}
@@ -53,7 +53,7 @@
   </div>
   <script type="text/javascript">$('tickswitch').value = 0;xajax_GetGroups('{{ list_steam_groups }}');</script>
   <div class="form-actions">
-    <button type="button" class="btn btn-accent" id="gban" onclick="CheckGroupBan();">Забанить группу</button>
+    <button type="button" class="btn btn-accent" id="gban" onclick="if (typeof sbBusy === 'function' &amp;&amp; sbBusy(this)) return; CheckGroupBan();">Забанить группу</button>
     <button type="button" class="btn btn-outline-secondary" id="aback" onclick="sbAdminBack(0, 'index.php?p=admin&amp;c=bans')">Назад</button>
   </div>
   {% endif %}

@@ -36,12 +36,16 @@ $servers = array();
 global $userbank;
 function setPostKey()
 {
-	if(isset($_SERVER['REMOTE_IP']))
-		$_SESSION['banlist_postkey'] = md5($_SERVER['REMOTE_IP'].time().rand(0,100000));
-	else
-		$_SESSION['banlist_postkey'] = md5(time().rand(0,100000));
+	if (function_exists('sb_ensure_list_postkey')) {
+		unset($_SESSION['banlist_postkey']);
+		sb_ensure_list_postkey();
+		return;
+	}
+	$_SESSION['banlist_postkey'] = md5(uniqid((string)mt_rand(), true));
 }
-if (!isset($_SESSION['banlist_postkey']) || strlen($_SESSION['banlist_postkey']) < 4)
+if (function_exists('sb_ensure_list_postkey'))
+	sb_ensure_list_postkey();
+elseif (!isset($_SESSION['banlist_postkey']) || strlen($_SESSION['banlist_postkey']) < 4)
 	setPostKey();
 
 $page = 1;
@@ -603,19 +607,23 @@ while (!$res->EOF)
 	else
 		$data['recidivism_link'] = false;
 
+	$jsPlayer = function_exists('sb_json_js') ? sb_json_js((string)$data['player']) : json_encode((string)$data['player'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+	$jsKey = function_exists('sb_json_js') ? sb_json_js((string)$_SESSION['banlist_postkey']) : json_encode((string)$_SESSION['banlist_postkey'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+	$jsPage = function_exists('sb_json_js') ? sb_json_js((string)$pagelink) : json_encode((string)$pagelink, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+	$jsBid = (int)$res->fields['ban_id'];
 	switch($data['type'])
 	{
 		case 2:
-			$data['unban_link'] = CreateLinkR('Снять гаг',"#","", "_self", false, "UnGag('".$res->fields['ban_id']."', '".$_SESSION['banlist_postkey']."', '".$pagelink."', '".StripQuotes($data['player'])."', 1);return false;");
+			$data['unban_link'] = CreateLinkR('Снять гаг',"#","", "_self", false, "UnGag(".$jsBid.", ".$jsKey.", ".$jsPage.", ".$jsPlayer.", 1);return false;");
 			break;
 		case 1:
-			$data['unban_link'] = CreateLinkR('Снять мут',"#","", "_self", false, "UnMute('".$res->fields['ban_id']."', '".$_SESSION['banlist_postkey']."', '".$pagelink."', '".StripQuotes($data['player'])."', 1);return false;");
+			$data['unban_link'] = CreateLinkR('Снять мут',"#","", "_self", false, "UnMute(".$jsBid.", ".$jsKey.", ".$jsPage.", ".$jsPlayer.", 1);return false;");
 			break;
 		default:
 			break;
 	}
 
-	$data['delete_link'] = CreateLinkR('Удалить',"#","", "_self", false, "RemoveBlock('".$res->fields['ban_id']."', '".$_SESSION['banlist_postkey']."', '".$pagelink."', '".StripQuotes($data['player'])."', 0);return false;");
+	$data['delete_link'] = CreateLinkR('Удалить',"#","", "_self", false, "RemoveBlock(".$jsBid.", ".$jsKey.", ".$jsPage.", ".$jsPlayer.", 0);return false;");
 
 	$data['server_id'] = $res->fields['ban_server'];
 

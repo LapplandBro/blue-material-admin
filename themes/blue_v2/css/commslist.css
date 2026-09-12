@@ -90,6 +90,7 @@
   font-weight: 700;
   padding: 0 0.85rem;
   cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
 }
 .commslist-search-go:hover { color: #fff; background: var(--accent-soft); }
 
@@ -225,10 +226,10 @@
 
 @media (min-width: 992px) {
   .commslist-row-perm {
-    border-left: 3px solid var(--danger);
+    box-shadow: inset 3px 0 0 var(--danger);
   }
   .commslist-row-unbanned {
-    border-left: 3px solid var(--ok);
+    box-shadow: inset 3px 0 0 var(--ok);
   }
 }
 
@@ -317,8 +318,6 @@
 }
 
 .commslist-detail > td {
-  padding: 0;
-  background: var(--bg-sidebar);
   border-color: var(--border-hairline);
 }
 .commslist-table .opener { overflow: hidden; }

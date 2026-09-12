@@ -89,6 +89,7 @@ INSERT INTO `{prefix}_settings` (`setting`, `value`) VALUES
 ('page.footer.allow_show_data', '0'),
 ('feature.old_serverside', '0'),
 ('feature.map_autofetch', '1'),
+('config.twig.precompile', '0'),
 ('admin.warns', '1'),
 ('admin.warns.max', '3'),
 ('demoEnabled', '1'),

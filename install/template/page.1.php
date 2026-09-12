@@ -13,7 +13,7 @@
 				<div class="lv-avatar bgm-red pull-left">1</div>
 				<div class="media-body">
 					<div class="lv-title">Шаг: Лицензия</div>
-					<div class="lv-small"><i class="zmdi zmdi-badge-check zmdi-hc-fw c-green"></i> Текущий шаг</div>
+					<div class="lv-small"><i class="bi bi-check-circle c-green"></i> Текущий шаг</div>
 				</div>
 			</div>
 
@@ -21,7 +21,7 @@
 				<div class="lv-avatar bgm-orange pull-left">2</div>
 				<div class="media-body">
 					<div class="lv-title">Шаг: База данных</div>
-					<div class="lv-small"><i class="zmdi zmdi-time zmdi-hc-fw c-blue"></i> Следующий шаг</div>
+					<div class="lv-small"><i class="bi bi-clock c-blue"></i> Следующий шаг</div>
 				</div>
 			</div>
 
@@ -29,7 +29,7 @@
 				<div class="lv-avatar bgm-orange pull-left">3</div>
 				<div class="media-body">
 					<div class="lv-title">Шаг: Системные требования</div>
-					<div class="lv-small"><i class="zmdi zmdi-time zmdi-hc-fw c-blue"></i> Следующий шаг</div>
+					<div class="lv-small"><i class="bi bi-clock c-blue"></i> Следующий шаг</div>
 				</div>
 			</div>
 
@@ -37,7 +37,7 @@
 				<div class="lv-avatar bgm-orange pull-left">4</div>
 				<div class="media-body">
 					<div class="lv-title">Шаг: Создание таблиц</div>
-					<div class="lv-small"><i class="zmdi zmdi-time zmdi-hc-fw c-blue"></i> Следующий шаг</div>
+					<div class="lv-small"><i class="bi bi-clock c-blue"></i> Следующий шаг</div>
 				</div>
 			</div>
 
@@ -45,7 +45,7 @@
 				<div class="lv-avatar bgm-orange pull-left">5</div>
 				<div class="media-body">
 					<div class="lv-title">Шаг: Установка</div>
-					<div class="lv-small"><i class="zmdi zmdi-time zmdi-hc-fw c-blue"></i> Следующий шаг</div>
+					<div class="lv-small"><i class="bi bi-clock c-blue"></i> Следующий шаг</div>
 				</div>
 			</div>
 		</div>
@@ -113,7 +113,7 @@ Vendors — свои лицензии (MIT / BSD / LGPL / GPL). Подробно
 					</div>
 
 					<div class="col-sm-6" align="right">
-						<button onclick="checkAccept()" class="btn btn-primary waves-effect" id="button" name="button">Принимаю</button>
+						<button type="button" onclick="checkAccept()" class="btn btn-primary" id="button" name="button">Принимаю</button>
 					</div>
 				</div>
 			</div>

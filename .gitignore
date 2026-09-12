@@ -11,6 +11,10 @@ demos/*
 !demos/.gitkeep
 !demos/.htaccess
 
+# Twig compiled templates (keep .gitkeep; cache/.htaccess is tracked)
+/cache/twig_predcompiled/**
+!/cache/twig_predcompiled/.gitkeep
+
 # OS / IDE
 .DS_Store
 Thumbs.db

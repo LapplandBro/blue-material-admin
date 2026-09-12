@@ -169,7 +169,7 @@ $req_FS['Тема Blue V2 (themes/blue_v2)'] = [
 					<div class="lv-avatar bgm-orange pull-left">1</div>
 					<div class="media-body">
 						<div class="lv-title"><del>Шаг: Лицензия</del></div>
-						<div class="lv-small"><i class="zmdi zmdi-timer-off zmdi-hc-fw c-red"></i> <del>Предыдущий шаг</del></div>
+						<div class="lv-small"><i class="bi bi-x-circle c-red"></i> <del>Предыдущий шаг</del></div>
 					</div>
 				</div>
 
@@ -177,7 +177,7 @@ $req_FS['Тема Blue V2 (themes/blue_v2)'] = [
 					<div class="lv-avatar bgm-orange pull-left">2</div>
 					<div class="media-body">
 						<div class="lv-title"><del>Шаг: База данных</del></div>
-						<div class="lv-small"><i class="zmdi zmdi-timer-off zmdi-hc-fw c-red"></i> <del>Предыдущий шаг</del></div>
+						<div class="lv-small"><i class="bi bi-x-circle c-red"></i> <del>Предыдущий шаг</del></div>
 					</div>
 				</div>
 
@@ -185,7 +185,7 @@ $req_FS['Тема Blue V2 (themes/blue_v2)'] = [
 					<div class="lv-avatar bgm-red pull-left">3</div>
 					<div class="media-body">
 						<div class="lv-title">Шаг: Системные требования</div>
-						<div class="lv-small"><i class="zmdi zmdi-badge-check zmdi-hc-fw c-green"></i> Текущий шаг</div>
+						<div class="lv-small"><i class="bi bi-check-circle c-green"></i> Текущий шаг</div>
 					</div>
 				</div>
 
@@ -193,7 +193,7 @@ $req_FS['Тема Blue V2 (themes/blue_v2)'] = [
 					<div class="lv-avatar bgm-orange pull-left">4</div>
 					<div class="media-body">
 						<div class="lv-title">Шаг: Создание таблиц</div>
-						<div class="lv-small"><i class="zmdi zmdi-time zmdi-hc-fw c-blue"></i> Следующий шаг</div>
+						<div class="lv-small"><i class="bi bi-clock c-blue"></i> Следующий шаг</div>
 					</div>
 				</div>
 
@@ -201,7 +201,7 @@ $req_FS['Тема Blue V2 (themes/blue_v2)'] = [
 					<div class="lv-avatar bgm-orange pull-left">5</div>
 					<div class="media-body">
 						<div class="lv-title">Шаг: Установка</div>
-						<div class="lv-small"><i class="zmdi zmdi-time zmdi-hc-fw c-blue"></i> Следующий шаг</div>
+						<div class="lv-small"><i class="bi bi-clock c-blue"></i> Следующий шаг</div>
 					</div>
 				</div>
 			</div>
@@ -315,8 +315,8 @@ $req_FS['Тема Blue V2 (themes/blue_v2)'] = [
 					</div>
 					&nbsp;
 					<div class="p-10" align="center">
-						<button onclick="next()" class="btn btn-primary waves-effect" name="button">Далее</button>
-						<button onclick="$id('sendback').submit();" class="btn btn-info waves-effect" name="button">Перепроверить</button>
+						<button type="button" onclick="next()" class="btn btn-primary" name="button">Далее</button>
+						<button type="button" onclick="$id('sendback').submit();" class="btn btn-info" name="button">Перепроверить</button>
 					</div>
 					<input type="hidden" name="postd" value="1">
 				</div>
@@ -326,13 +326,11 @@ $req_FS['Тема Blue V2 (themes/blue_v2)'] = [
 </div>
 
 <script type="text/javascript">
-setTimeout(function () {
 <?php if ($errors > 0): ?>
-	ShowBox('Ошибки', 'Есть ошибки, из-за которых панель не установится. Устраните их и нажмите «Перепроверить».', 'red', '', true);
+ShowBox('Ошибки', 'Есть ошибки, из-за которых панель не установится. Устраните их и нажмите «Перепроверить».', 'red', '', true);
 <?php elseif ($warnings > 0): ?>
-	ShowBox('Предупреждения', 'Есть предупреждения. Установка возможна, но часть функций может не работать.', 'blue', '', true);
+ShowBox('Предупреждения', 'Есть предупреждения. Установка возможна, но часть функций может не работать.', 'blue', '', true);
 <?php endif; ?>
-}, 400);
 function next() {
 	var errors = <?php echo (int)$errors; ?>;
 	if (errors > 0)

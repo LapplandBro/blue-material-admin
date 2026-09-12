@@ -45,6 +45,10 @@
             </span>
           </td>
         </tr>
+        {% else %}
+        <tr>
+          <td colspan="5" class="parsec-muted" data-label="">Серверов нет.</td>
+        </tr>
         {% endfor %}
       </tbody>
     </table>

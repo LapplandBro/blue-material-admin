@@ -47,6 +47,9 @@ ErrorDocument 504 /errors/504.html
 <IfModule mod_rewrite.c>
 	RewriteEngine On
 
+	# Не отдавать .git, даже если каталог попал на прод.
+	RewriteRule (^|/)\.git - [F,L]
+
 	# Прокинуть Authorization в PHP (иначе CGI/Apache часто глотает Bearer).
 	RewriteCond %{HTTP:Authorization} .
 	RewriteRule ^ - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]

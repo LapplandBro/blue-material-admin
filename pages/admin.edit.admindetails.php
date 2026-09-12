@@ -75,6 +75,10 @@ if (isset($_POST['reset_totp']) && function_exists('sb_totp_disable')) {
 // Form submitted?
 if(isset($_POST['adminname']))
 {
+	$csrf = isset($_POST['sb_csrf']) ? $_POST['sb_csrf'] : '';
+	if(!function_exists('sb_csrf_validate') || !sb_csrf_validate($csrf))
+		sb_csrf_fail_page(true);
+
 	$a_name = RemoveCode($_POST['adminname']);
 	$a_steam = trim(RemoveCode($_POST['steam']));
 	$a_email = trim(RemoveCode($_POST['email']));
@@ -100,7 +104,7 @@ if(isset($_POST['adminname']))
 			$errorScript .= "$('period.msg').setStyle('display', 'block');";
 		}
 	}
-	if ($_POST['permaadmin'] == "true")
+	if (isset($_POST['permaadmin']) && $_POST['permaadmin'] == "true")
         $a_period = true;
 	// ADM TIME //
 	
@@ -209,12 +213,15 @@ if(isset($_POST['adminname']))
 	// Only validate passwords, if admin has access to edit it at all
 	if($userbank->HasAccess(ADMIN_OWNER) || $_GET['id'] == $userbank->GetAid())
 	{
-		// Don't change the password, if not set
 		if(!empty($_POST['password']))
 		{
 			$pw_changed = true;
-			// DID type a password, so he wants to change it.
-			// Password too short?
+			if($editing_self && !$userbank->verify_password(isset($_POST['current_password']) ? (string)$_POST['current_password'] : '', (int)$userbank->GetAid()))
+			{
+				$error++;
+				$errorScript .= "$('password.msg').innerHTML = 'Введите текущий пароль.';";
+				$errorScript .= "$('password.msg').setStyle('display', 'block');";
+			}
 			if(strlen($_POST['password']) < MIN_PASS_LENGTH)
 			{
 				$error++;
@@ -296,7 +303,18 @@ if(isset($_POST['adminname']))
 									WHERE `aid` = ?", array($userbank->hash_password($_POST['password']), $_GET['id']));
 		}
 		
-		// ADM TIME //
+		// Срок админки — не self-service: только OWNER либо EDIT_ADMINS над чужим аккаунтом.
+		$can_set_period = $userbank->HasAccess(ADMIN_OWNER)
+			|| (!$editing_self
+				&& $userbank->HasAccess(ADMIN_EDIT_ADMINS)
+				&& function_exists('sb_can_manage_admin')
+				&& sb_can_manage_admin((int)$_GET['id']));
+		if($a_period && !$can_set_period)
+		{
+			$a_period = false;
+			new CSystemLog("w", "Попытка взлома", $userbank->GetProperty("user")
+				. " пытался изменить срок админки aid=" . (int)$_GET['id'] . " без прав.");
+		}
 		if($a_period)
 		{
 			if($_POST['permaadmin'] == 'true') {
@@ -450,6 +468,9 @@ $theme->assign('a_spass', $a_serverpass);
 $theme->assign('totp_enabled_admin', function_exists('sb_totp_is_enabled') && sb_totp_is_enabled((int)$_GET['id']));
 $theme->assign('totp_admin_msg', $totp_admin_msg);
 $theme->assign('can_reset_totp', $userbank->HasAccess(ADMIN_OWNER) || ($userbank->HasAccess(ADMIN_EDIT_ADMINS) && function_exists('sb_can_manage_admin') && sb_can_manage_admin((int)$_GET['id'])));
+$theme->assign('editing_self', $editing_self);
+$theme->assign('can_set_period', $userbank->HasAccess(ADMIN_OWNER)
+	|| (!$editing_self && $userbank->HasAccess(ADMIN_EDIT_ADMINS) && function_exists('sb_can_manage_admin') && sb_can_manage_admin((int)$_GET['id'])));
 $theme->assign('sb_csrf', function_exists('sb_csrf_token') ? sb_csrf_token() : '');
 
 sb_ui_v2_theme_fragment('admin_edit_admins_details.twig');

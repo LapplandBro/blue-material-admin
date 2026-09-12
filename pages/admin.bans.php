@@ -25,7 +25,7 @@
 //
 // *************************************************************************
 
-global $userbank, $theme;
+global $userbank;
 if(!defined("IN_SB")){echo "Ошибка доступа!";die();}
 
 if (!isset($userbank) || !is_object($userbank)) {
@@ -35,12 +35,6 @@ if (!isset($userbank) || !is_object($userbank)) {
 if(isset($GLOBALS['IN_ADMIN']) && !defined('CUR_AID'))
 	define('CUR_AID', $userbank->GetAid());
 
-if (!isset($theme) || !is_object($theme) || !method_exists($theme, 'assign')) {
-	$theme = new class {
-		public function assign($k, $v) {}
-	};
-}
-
 if (!isset($dateformat) || $dateformat === '')
 	$dateformat = !empty($GLOBALS['config']['config.dateformat']) ? $GLOBALS['config']['config.dateformat'] : 'm-d-y H:i';
 
@@ -49,6 +43,9 @@ if (!isset($dateformat) || $dateformat === '')
 // bans. The "permission_import" flag further below is only used for hiding the UI, not enforced here.
 if(isset($_POST['action']) && $_POST['action'] == "importBans" && $userbank->HasAccess(ADMIN_OWNER|ADMIN_BAN_IMPORT))
 {
+	$csrf = isset($_POST['sb_csrf']) ? $_POST['sb_csrf'] : '';
+	if (!function_exists('sb_csrf_validate') || !sb_csrf_validate($csrf))
+		sb_csrf_fail_page(true);
 	$tmp = (isset($_FILES['importFile']) && isset($_FILES['importFile']['tmp_name']))
 		? (string)$_FILES['importFile']['tmp_name']
 		: '';
@@ -122,7 +119,7 @@ if(isset($_GET["rebanid"]))
 	echo '<script type="text/javascript">xajax_PrepareReban("'.(int)$_GET["rebanid"].'");</script>';
 }
 if((isset($_GET['action']) && $_GET['action'] == "pasteBan") && isset($_GET['pName']) && is_string($_GET['pName']) && isset($_GET['sid'])) {
-	echo "<script type=\"text/javascript\">setTimeout(\"ShowBox('Загрузка..','<i>Ждите!</i>', 'blue', '', false, 5000);\", 800);xajax_PastePlayerData('".(int)$_GET['sid']."', '".htmlspecialchars(addslashes($_GET['pName']), ENT_QUOTES, 'UTF-8')."');</script>";
+	echo "<script type=\"text/javascript\">setTimeout(function(){ ShowBox('Загрузка..','Ждите!', 'blue', '', false, 5000); }, 800);xajax_PastePlayerData('".(int)$_GET['sid']."', '".htmlspecialchars(addslashes($_GET['pName']), ENT_QUOTES, 'UTF-8')."');</script>";
 }
 
 echo '<div id="admin-page-content">';
@@ -132,7 +129,7 @@ echo '<div id="admin-page-content">';
 		if (is_array($crRaw))
 			$customreason = $crRaw;
 		elseif (is_string($crRaw) && $crRaw !== '') {
-			$crUn = @unserialize($crRaw);
+			$crUn = sb_unserialize_array($crRaw);
 			$customreason = is_array($crUn) ? $crUn : false;
 		} else
 			$customreason = false;
@@ -299,11 +296,6 @@ echo '<div id="admin-page-content">';
 			$GLOBALS['db']->Execute("UPDATE ".DB_PREFIX."_protests SET archiv = '2' WHERE bid IN($ids) limit $cnt");
 		}
 
-		$theme->assign('permission_protests', $userbank->HasAccess(ADMIN_OWNER|ADMIN_BAN_PROTESTS));
-		$theme->assign('permission_editban', 	$userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_ALL_BANS|ADMIN_EDIT_GROUP_BANS|ADMIN_EDIT_OWN_BANS));
-		$theme->assign('protest_nav', $page_nav);
-		$theme->assign('protest_list', $protest_list);
-		$theme->assign('protest_count', $page_count-(isset($cnt)?$cnt:0));
 		sb_admin_echo_twig_fragment('admin_bans_protests.twig', array(
 			'permission_protests' => $userbank->HasAccess(ADMIN_OWNER|ADMIN_BAN_PROTESTS),
 			'permission_editban' => $userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_ALL_BANS|ADMIN_EDIT_GROUP_BANS|ADMIN_EDIT_OWN_BANS),
@@ -470,11 +462,6 @@ echo '<div id="admin-page-content">';
 
 		}
 
-		$theme->assign('permission_protests', $userbank->HasAccess(ADMIN_OWNER|ADMIN_BAN_PROTESTS));
-		$theme->assign('permission_editban', 	$userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_ALL_BANS|ADMIN_EDIT_GROUP_BANS|ADMIN_EDIT_OWN_BANS));
-		$theme->assign('aprotest_nav', $page_nav);
-		$theme->assign('protest_list_archiv', $protest_list_archiv);
-		$theme->assign('protest_count_archiv', $page_count);
 		sb_admin_echo_twig_fragment('admin_bans_protests_archiv.twig', array(
 			'permission_protests' => $userbank->HasAccess(ADMIN_OWNER|ADMIN_BAN_PROTESTS),
 			'permission_editban' => $userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_ALL_BANS|ADMIN_EDIT_GROUP_BANS|ADMIN_EDIT_OWN_BANS),
@@ -547,9 +534,6 @@ echo '<div id="admin-page-content">';
                 $page_nav .= '</select>';
             }
             
-			$theme->assign('permissions_submissions', $userbank->HasAccess(ADMIN_OWNER|ADMIN_BAN_SUBMISSIONS));
-			$theme->assign('permissions_editsub', $userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_ALL_BANS|ADMIN_EDIT_GROUP_BANS|ADMIN_EDIT_OWN_BANS));
-			$theme->assign('submission_count', $page_count);
 			$submission_list = array();
 			foreach($submissions AS $sub)
 			{
@@ -635,8 +619,6 @@ echo '<div id="admin-page-content">';
 
 			    array_push($submission_list, $sub);
 			}
-			$theme->assign('submission_nav', $page_nav);
-			$theme->assign('submission_list', $submission_list);
 			sb_admin_echo_twig_fragment('admin_bans_submissions.twig', array(
 				'permissions_submissions' => $userbank->HasAccess(ADMIN_OWNER|ADMIN_BAN_SUBMISSIONS),
 				'permissions_editsub' => $userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_ALL_BANS|ADMIN_EDIT_GROUP_BANS|ADMIN_EDIT_OWN_BANS),
@@ -697,9 +679,6 @@ echo '<div id="admin-page-content">';
                 $page_nav .= '</select>';
             }
             
-			$theme->assign('permissions_submissions', $userbank->HasAccess(ADMIN_OWNER|ADMIN_BAN_SUBMISSIONS));
-			$theme->assign('permissions_editsub', $userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_ALL_BANS|ADMIN_EDIT_GROUP_BANS|ADMIN_EDIT_OWN_BANS));
-			$theme->assign('submission_count_archiv', $page_count);
 			$submission_list_archiv = array();
 			foreach($submissionsarchiv AS $sub)
 			{
@@ -787,8 +766,6 @@ echo '<div id="admin-page-content">';
 
 			    array_push($submission_list_archiv, $sub);
 			}
-            $theme->assign('asubmission_nav', $page_nav);
-			$theme->assign('submission_list_archiv', $submission_list_archiv);
 			sb_admin_echo_twig_fragment('admin_bans_submissions_archiv.twig', array(
 				'permissions_submissions' => $userbank->HasAccess(ADMIN_OWNER|ADMIN_BAN_SUBMISSIONS),
 				'permissions_editsub' => $userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_ALL_BANS|ADMIN_EDIT_GROUP_BANS|ADMIN_EDIT_OWN_BANS),
@@ -823,6 +800,9 @@ echo '<div id="admin-page-content">';
 <script type="text/javascript">
 var did = 0;
 var dname = "";
+function banFormIdle() {
+	if (typeof sbIdleLast === 'function') sbIdleLast();
+}
 function demo(id, name)
 {
 	$('demo.msg').setHTML("<b>" + name + "</b>");
@@ -891,8 +871,10 @@ function ProcessBan()
 		$('reason.msg').setStyle('display', 'none');
 	}
 
-	if(err)
+	if(err) {
+		banFormIdle();
 		return 0;
+	}
 
 	xajax_AddBan($('nickname').value,
 				 $('type').value,
@@ -911,6 +893,7 @@ function ProcessGroupBan()
 	{
 		$('groupurl.msg').setHTML('Введите ссылку на группу, которую баните');
 		$('groupurl.msg').setStyle('display', 'block');
+		banFormIdle();
 	}else
 	{
 		$('groupurl.msg').setHTML('');
@@ -920,17 +903,19 @@ function ProcessGroupBan()
 }
 function CheckGroupBan()
 {
-	var last = 0;
-	for(var i=0;$('chkb_' + i);i++)
-	{
-		if($('chkb_' + i).checked == true)
+	var last = 0, ids = [];
+	for (var i = 0; $('chkb_' + i); i++) {
+		if ($('chkb_' + i).checked) {
 			last = $('chkb_' + i).value;
+			ids.push(last);
+		}
 	}
-	for(var i=0;$('chkb_' + i);i++)
-	{
-		if($('chkb_' + i).checked == true)
-			xajax_GroupBan($('chkb_' + i).value, "yes", "yes", $('groupreason').value, last);
+	if (!ids.length) {
+		banFormIdle();
+		return;
 	}
+	for (var i = 0; i < ids.length; i++)
+		xajax_GroupBan(ids[i], "yes", "yes", $('groupreason').value, last);
 }
 </script>
 </div>

@@ -116,7 +116,7 @@
         </tr>
         <tr class="banlist-detail-row">
           <td colspan="4" class="banlist-detail-cell">
-            <div class="opener" style="visibility: hidden; zoom: 1; opacity: 0;">
+            <div class="opener">
               <div class="admin-log-detail">
                 <div class="admin-log-detail-col">
                   <div class="parsec-muted">Детали</div>
@@ -133,6 +133,10 @@
               </div>
             </div>
           </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="4" class="parsec-muted" data-label="">Записей нет.</td>
         </tr>
         {% endfor %}
       </tbody>

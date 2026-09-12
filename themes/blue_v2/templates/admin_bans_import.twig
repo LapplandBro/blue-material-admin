@@ -11,6 +11,7 @@
   </header>
   <form action="" method="post" enctype="multipart/form-data">
     <input type="hidden" name="action" value="importBans">
+    {% if sb_csrf %}<input type="hidden" name="sb_csrf" value="{{ sb_csrf }}">{% endif %}
     <div class="form-grid">
       <div class="form-field form-field--full">
         <label class="form-label" for="importFile">Файл</label>
@@ -21,10 +22,10 @@
       <div class="form-field form-field--full">
         <label class="form-label" for="friendsname">Получить имена</label>
         <div class="form-check">
-          <input type="checkbox" class="form-check-input" name="friendsname" id="friendsname">
-          <label class="form-check-label" for="friendsname">Включить запрос ников из Steam</label>
+          <input type="checkbox" class="form-check-input" name="friendsname" id="friendsname"{% if not extreq %} disabled title="нужен Steam API ключ"{% endif %}>
+          <label class="form-check-label" for="friendsname">{% if not extreq %}нужен Steam API ключ{% else %}Включить запрос ников из Steam{% endif %}</label>
         </div>
-        <p class="form-help">Работает с banned_users.cfg.</p>
+        <p class="form-help">{% if not extreq %}Ники из Steam недоступны без API ключа.{% else %}Работает с banned_users.cfg.{% endif %}</p>
       </div>
     </div>
     <div class="form-actions">
@@ -32,9 +33,4 @@
     </div>
   </form>
 </div>
-{% if not extreq %}
-<script type="text/javascript">
-  if ($('friendsname')) $('friendsname').disabled = true;
-</script>
-{% endif %}
 {% endif %}

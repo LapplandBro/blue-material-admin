@@ -41,9 +41,9 @@
       </tr>
       {% else %}
       <tr class="d-none" aria-hidden="true">
-        <td class="form-search-pick" data-label=""><input id="ip_" name="search_type" type="radio" value="radiobutton"></td>
+        <td class="form-search-pick" data-label=""><input id="ip_hidden" name="search_type_hidden" type="radio" value="radiobutton" tabindex="-1"></td>
         <td class="form-search-crit" data-label=""></td>
-        <td data-label="Ввод"><input type="hidden" id="ip" value=""></td>
+        <td data-label="Ввод"><input type="hidden" id="ip" value=""><input type="radio" id="ip_" class="d-none" tabindex="-1" aria-hidden="true"></td>
       </tr>
       {% endif %}
       <tr>
@@ -149,9 +149,9 @@
       </tr>
       {% else %}
       <tr class="d-none" aria-hidden="true">
-        <td class="form-search-pick" data-label=""><input id="admin" name="search_type" type="radio" value="radiobutton"></td>
+        <td class="form-search-pick" data-label=""><input id="admin_hidden" name="search_type_hidden" type="radio" value="radiobutton" tabindex="-1"></td>
         <td class="form-search-crit" data-label=""></td>
-        <td data-label="Ввод"><select id="ban_admin"><option value=""></option></select></td>
+        <td data-label="Ввод"><select id="ban_admin"><option value=""></option></select><input type="radio" id="admin" class="d-none" tabindex="-1" aria-hidden="true"></td>
       </tr>
       {% endif %}
       <tr>
@@ -176,9 +176,9 @@
       </tr>
       {% else %}
       <tr class="d-none" aria-hidden="true">
-        <td class="form-search-pick" data-label=""><input id="comment_" name="search_type" type="radio" value="radiobutton"></td>
+        <td class="form-search-pick" data-label=""><input id="comment_hidden" name="search_type_hidden" type="radio" value="radiobutton" tabindex="-1"></td>
         <td class="form-search-crit" data-label=""></td>
-        <td data-label="Ввод"><input type="hidden" id="ban_comment" value=""></td>
+        <td data-label="Ввод"><input type="hidden" id="ban_comment" value=""><input type="radio" id="comment_" class="d-none" tabindex="-1" aria-hidden="true"></td>
       </tr>
       {% endif %}
     </tbody>

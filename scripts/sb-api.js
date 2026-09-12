@@ -19,6 +19,15 @@
 			alert(msg);
 		if (document.body)
 			document.body.style.cursor = 'default';
+		if (typeof sbIdleLast === 'function')
+			sbIdleLast();
+		window._sbLoginBusy = false;
+		var loginBtn = document.getElementById('alogin');
+		if (loginBtn) {
+			loginBtn.disabled = false;
+			if (loginBtn.tagName === 'BUTTON' && loginBtn.getAttribute('data-sb-login-label') !== '1')
+				loginBtn.textContent = 'Войти';
+		}
 		var cmd = document.getElementById('cmd');
 		if (cmd) {
 			cmd.disabled = false;
@@ -128,14 +137,40 @@
 					s.src = String(cmd.data);
 					document.getElementsByTagName('head')[0].appendChild(s);
 				}
-			} catch (e) {
-				if (window.console && console.error)
-					console.error('sb-api', cmd.n, cmd.t || cmd.p, e);
-			}
+			} catch (e) {}
+		}
+	}
+
+	var inflight = {};
+	var waitCount = 0;
+
+	function waitDelta(n) {
+		waitCount += n;
+		if (waitCount < 0)
+			waitCount = 0;
+		var root = document.documentElement;
+		if (!root || !root.classList)
+			return;
+		if (waitCount)
+			root.classList.add('sb-ajax-wait');
+		else {
+			root.classList.remove('sb-ajax-wait');
+			if (document.body)
+				document.body.style.cursor = 'default';
 		}
 	}
 
 	function send(action, args) {
+		var key;
+		try {
+			key = String(action) + JSON.stringify(args || []);
+		} catch (e) {
+			key = String(action);
+		}
+		if (inflight[key])
+			return false;
+		inflight[key] = 1;
+
 		var uri = window.SB_AJAX_URI || 'index.php';
 		var payload = { action: action, args: args || [], csrf: csrfToken() };
 		var body = JSON.stringify(payload);
@@ -145,24 +180,34 @@
 		};
 		if (payload.csrf)
 			headers['X-SB-CSRF'] = payload.csrf;
-		if (document.body)
-			document.body.style.cursor = 'wait';
+		waitDelta(1);
+
+		function finished() {
+			if (!inflight[key])
+				return;
+			delete inflight[key];
+			waitDelta(-1);
+		}
 
 		function onText(status, text) {
-			var data;
 			try {
-				data = JSON.parse(text);
-			} catch (e) {
-				failBox('Сервер вернул не JSON (HTTP ' + status + ')', text);
-				return;
+				var data;
+				try {
+					data = JSON.parse(text);
+				} catch (e) {
+					failBox('Сервер вернул не JSON (HTTP ' + status + ')', text);
+					return;
+				}
+				if (!data || typeof data !== 'object') {
+					failBox('Пустой ответ', text);
+					return;
+				}
+				if (data.ok === false && (!data.cmds || !data.cmds.length) && data.error)
+					failBox(data.error, '');
+				applyCmds(data);
+			} finally {
+				finished();
 			}
-			if (!data || typeof data !== 'object') {
-				failBox('Пустой ответ', text);
-				return;
-			}
-			if (data.ok === false && (!data.cmds || !data.cmds.length) && data.error)
-				failBox(data.error, '');
-			applyCmds(data);
 		}
 
 		if (typeof fetch === 'function') {
@@ -177,6 +222,7 @@
 				});
 			}).catch(function () {
 				failBox('Сеть: запрос не удался', '');
+				finished();
 			});
 			return true;
 		}
@@ -197,6 +243,7 @@
 			xhr.send(body);
 		} catch (e) {
 			failBox('Сеть: запрос не удался', String(e && e.message ? e.message : e));
+			finished();
 			return false;
 		}
 		return true;

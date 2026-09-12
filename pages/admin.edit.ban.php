@@ -260,15 +260,21 @@ if(isset($_POST['name']))
 				
 		if(!empty($_POST['dname']) and !$demo_linker)
 		{
+			$didSafe = sb_demo_filename_safe(isset($_POST['did']) ? $_POST['did'] : '');
+			if ($didSafe === '') {
+				$sbBanEditFail('Недопустимое имя файла демо.');
+				return;
+			}
 			$demoid = $GLOBALS['db']->GetRow("SELECT filename FROM `" . DB_PREFIX . "_demos` WHERE demid = ?", array((int)$_GET['id']));
-			@unlink(SB_DEMOS."/".$demoid['filename']);
+			if (!empty($demoid['filename']))
+				sb_unlink_demo($demoid['filename']);
 			$edit = $GLOBALS['db']->Execute("REPLACE INTO ".DB_PREFIX."_demos
 											(`demid`, `demtype`, `filename`, `origname`)
 											VALUES
 											(?,
 											'b',
 											?,
-											?)", array((int)$_GET['id'], $_POST['did'], $_POST['dname']));
+											?)", array((int)$_GET['id'], $didSafe, $_POST['dname']));
 			$res['dname'] = RemoveCode($_POST['dname']);
 		}
 		
@@ -326,7 +332,7 @@ if (!empty($GLOBALS['config']['bans.customreasons'])) {
 	if (is_array($rawReasons)) {
 		$customReasons = $rawReasons;
 	} else {
-		$decoded = @unserialize((string)$rawReasons);
+		$decoded = sb_unserialize_array((string)$rawReasons);
 		$customReasons = is_array($decoded) ? $decoded : false;
 	}
 }

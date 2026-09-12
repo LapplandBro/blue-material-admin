@@ -63,7 +63,7 @@
     </div>
   </div>
   <div class="form-actions">
-    <button type="button" class="btn btn-accent" id="aban" onclick="ConvertSteamID_3to2('steam');ProcessBan();">Добавить блокировку</button>
+    <button type="button" class="btn btn-accent" id="aban" onclick="if (typeof sbBusy === 'function' &amp;&amp; sbBusy(this)) return; ConvertSteamID_3to2('steam');ProcessBan();">Добавить блокировку</button>
     <button type="button" class="btn btn-outline-secondary" id="aback" onclick="sbGo('index.php?p=admin')">Назад</button>
   </div>
 </div>

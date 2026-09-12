@@ -290,30 +290,189 @@ function sb_ui_v2_autoload()
 	return $ok;
 }
 
+function sb_ui_v2_twig_root()
+{
+	return rtrim(str_replace('\\', '/', defined('ROOT') ? ROOT : dirname(__DIR__) . '/'), '/') . '/';
+}
+
+function sb_ui_v2_twig_precompile_enabled()
+{
+	if (empty($GLOBALS['config']) || !is_array($GLOBALS['config']))
+		return false;
+	if (!isset($GLOBALS['config']['config.twig.precompile']))
+		return false;
+	return (string)$GLOBALS['config']['config.twig.precompile'] === '1';
+}
+
+function sb_ui_v2_twig_cache_dir()
+{
+	return sb_ui_v2_twig_root() . 'cache/twig_predcompiled';
+}
+
+function sb_ui_v2_twig_cache_ensure()
+{
+	$dir = sb_ui_v2_twig_cache_dir();
+	if (!is_dir($dir)) {
+		if (!@mkdir($dir, 0755, true) && !is_dir($dir))
+			return false;
+	}
+	return is_writable($dir);
+}
+
 /**
  * @return \Twig\Environment|null
  */
 function sb_ui_v2_twig()
 {
 	static $twig = null;
-	if ($twig instanceof \Twig\Environment)
+	static $cacheKey = null;
+	static $loggedUnwritable = false;
+
+	$cacheDir = sb_ui_v2_twig_cache_dir();
+	$enabled = sb_ui_v2_twig_precompile_enabled();
+	$forceCache = !empty($GLOBALS['_sb_ui_v2_twig_force_cache']);
+	$wantCache = $enabled || $forceCache;
+	$writable = $wantCache ? sb_ui_v2_twig_cache_ensure() : false;
+	if ($enabled && !$writable && !$loggedUnwritable) {
+		$loggedUnwritable = true;
+		@error_log('Blue V2 Twig cache: каталог недоступен для записи (' . $cacheDir . ')');
+	}
+	$useCache = $wantCache && $writable;
+	$key = $useCache ? $cacheDir : '';
+
+	if ($twig instanceof \Twig\Environment && $cacheKey === $key)
 		return $twig;
+
+	$twig = null;
+	$cacheKey = null;
 	if (!sb_ui_v2_autoload())
 		return null;
-	$root = rtrim(str_replace('\\', '/', defined('ROOT') ? ROOT : dirname(__DIR__) . '/'), '/') . '/';
+	$root = sb_ui_v2_twig_root();
 	try {
-		$loader = new \Twig\Loader\FilesystemLoader($root . 'themes/blue_v2/templates');
-		$twig = new \Twig\Environment($loader, array(
-			'cache' => false,
+		$opts = array(
+			'cache' => $useCache ? $cacheDir : false,
 			'autoescape' => 'html',
 			'strict_variables' => false,
-		));
+		);
+		if ($useCache)
+			$opts['auto_reload'] = true;
+		$loader = new \Twig\Loader\FilesystemLoader($root . 'themes/blue_v2/templates');
+		$twig = new \Twig\Environment($loader, $opts);
+		$cacheKey = $key;
 	} catch (Throwable $e) {
 		$GLOBALS['sb_ui_v2_twig_error'] = $e->getMessage();
 		@error_log('Blue V2 Twig bootstrap: ' . $e->getMessage());
 		return null;
 	}
 	return $twig;
+}
+
+/**
+ * @return array{ok:int,fail:int,dir:string,errors:array}
+ */
+function sb_ui_v2_twig_precompile_all()
+{
+	$dir = sb_ui_v2_twig_cache_dir();
+	$out = array(
+		'ok' => 0,
+		'fail' => 0,
+		'dir' => $dir,
+		'errors' => array(),
+	);
+	if (!sb_ui_v2_twig_cache_ensure()) {
+		$out['fail'] = 1;
+		$out['errors'][] = 'Каталог кеша недоступен для записи: ' . $dir;
+		return $out;
+	}
+
+	$GLOBALS['_sb_ui_v2_twig_force_cache'] = true;
+	$twig = sb_ui_v2_twig();
+	unset($GLOBALS['_sb_ui_v2_twig_force_cache']);
+	if (!$twig) {
+		$out['fail'] = 1;
+		$err = isset($GLOBALS['sb_ui_v2_twig_error']) ? (string)$GLOBALS['sb_ui_v2_twig_error'] : '';
+		$out['errors'][] = $err !== '' ? $err : 'Twig не загружен.';
+		return $out;
+	}
+
+	$tplDir = rtrim(str_replace('\\', '/', sb_ui_v2_twig_root() . 'themes/blue_v2/templates'), '/');
+	if (!is_dir($tplDir)) {
+		$out['fail'] = 1;
+		$out['errors'][] = 'Каталог шаблонов не найден: ' . $tplDir;
+		return $out;
+	}
+
+	$names = array();
+	try {
+		$it = new RecursiveIteratorIterator(
+			new RecursiveDirectoryIterator($tplDir, FilesystemIterator::SKIP_DOTS)
+		);
+		foreach ($it as $file) {
+			if (!$file->isFile())
+				continue;
+			$name = $file->getFilename();
+			if (strlen($name) < 6 || substr($name, -5) !== '.twig')
+				continue;
+			$full = str_replace('\\', '/', $file->getPathname());
+			if (!is_readable($full))
+				continue;
+			$rel = substr($full, strlen($tplDir) + 1);
+			if ($rel === false || $rel === '')
+				continue;
+			$names[] = str_replace('\\', '/', $rel);
+		}
+	} catch (Throwable $e) {
+		$out['fail'] = 1;
+		$out['errors'][] = $e->getMessage();
+		return $out;
+	}
+
+	sort($names);
+	foreach ($names as $rel) {
+		try {
+			$twig->load($rel);
+			$out['ok']++;
+		} catch (Throwable $e) {
+			$out['fail']++;
+			if (count($out['errors']) < 10)
+				$out['errors'][] = $rel . ': ' . $e->getMessage();
+		}
+	}
+	return $out;
+}
+
+/**
+ * @return array{ok:bool,removed:int,dir:string}
+ */
+function sb_ui_v2_twig_cache_clear()
+{
+	$dir = sb_ui_v2_twig_cache_dir();
+	$removed = 0;
+	if (!is_dir($dir))
+		return array('ok' => true, 'removed' => 0, 'dir' => $dir);
+
+	$keep = array('.htaccess' => true, '.gitkeep' => true);
+	try {
+		$it = new RecursiveIteratorIterator(
+			new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS),
+			RecursiveIteratorIterator::CHILD_FIRST
+		);
+		foreach ($it as $file) {
+			$name = $file->getFilename();
+			if (isset($keep[$name]))
+				continue;
+			$path = $file->getPathname();
+			if ($file->isDir()) {
+				@rmdir($path);
+				continue;
+			}
+			if (@unlink($path))
+				$removed++;
+		}
+	} catch (Throwable $e) {
+		return array('ok' => false, 'removed' => $removed, 'dir' => $dir);
+	}
+	return array('ok' => true, 'removed' => $removed, 'dir' => $dir);
 }
 
 function sb_ui_v2_base_href()
@@ -463,12 +622,14 @@ function sb_ui_v2_render($template, array $vars)
 	sb_ui_v2_apply_seo_vars($vars);
 
 	$flash = '';
+	if (function_exists('sb_consume_script_footer'))
+		$flash .= (string)sb_consume_script_footer();
 	if (function_exists('sb_ui_flash_script'))
 		$flash .= (string)sb_ui_flash_script();
 	if (function_exists('sb_list_action_flash_script'))
 		$flash .= (string)sb_list_action_flash_script();
 	if ($flash !== '')
-		$vars['extra_js'] .= $flash;
+		$vars['extra_js'] = (isset($vars['extra_js']) ? (string)$vars['extra_js'] : '') . $flash;
 	try {
 		echo $twig->render($template, $vars);
 	} catch (Throwable $e) {
