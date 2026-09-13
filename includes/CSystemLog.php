@@ -44,11 +44,7 @@ class CSystemLog {
 			$this->type = $tpe;
 			$this->title = $ttl;
 			$this->msg = $mg;
-			// if (!$HideDebug && ((isset($_GET['debug']) && $_GET['debug'] == 1) || defined("DEVELOPER_MODE")))
-			// {
-				// echo "CSystemLog: " . $mg;
-			// }
-			
+
 			if( !$userbank )
 				return false;
 			

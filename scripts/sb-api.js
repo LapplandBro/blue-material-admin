@@ -167,9 +167,9 @@
 		} catch (e) {
 			key = String(action);
 		}
-		if (inflight[key])
+		if (inflight[key] && (Date.now() - inflight[key]) < 8000)
 			return false;
-		inflight[key] = 1;
+		inflight[key] = Date.now();
 
 		var uri = window.SB_AJAX_URI || 'index.php';
 		var payload = { action: action, args: args || [], csrf: csrfToken() };

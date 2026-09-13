@@ -29,8 +29,6 @@ if(!defined("IN_SB")){echo "Ошибка доступа!";die();}
 RewritePageTitle("Вход администратора");
 
 global $userbank, $theme;
-//$submenu = array( array( "title" => 'Забыл пароль?', "url" => 'index.php?p=lostpassword' ) );
-//SubMenu( $submenu );
 if(isset($_GET['m']) && $_GET['m'] == "no_access")
 	echo "<script>setTimeout(\"ShowBox('Ошибка - Нет доступа', 'У вас нет доступа к этой странице.<br />Войдите в аккаунт.', 'red', '', false);\", 1200);</script>";
 if(isset($_GET['m']) && $_GET['m'] == "overreach")

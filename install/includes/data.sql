@@ -55,6 +55,7 @@ INSERT INTO `{prefix}_settings` (`setting`, `value`) VALUES
 ('config.summertime', '0'),
 ('config.enablegroupbanning', '0'),
 ('config.enablefriendsbanning', '0'),
+('config.fetchbannicks', '0'),
 ('config.enableadminrehashing', '1'),
 ('config.modgroup', '0'),
 ('protest.emailonlyinvolved', '0'),

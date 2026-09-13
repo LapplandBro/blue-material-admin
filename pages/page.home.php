@@ -45,7 +45,6 @@ $blcount = 0;
 while (!$res->EOF)
 {
 	$info = array();
-	//$info['date'] = SBDate($dateformat,$res->fields[1]);
 	$info['date'] = SBDate($GLOBALS['config']['config.dateformat_ver2'],$res->fields[1]);
 	$info['name'] = stripslashes($res->fields[0]);
 	$info['short_name'] = trunc($info['name'], 40, false);
@@ -93,7 +92,6 @@ while (!$res->EOF)
 	$info['perm'] = ($blen === 0 && !$inactive);
 	$info['temp'] = ($blen !== 0 && !$inactive);
 	$info['name'] = stripslashes($res->fields[3]);
-	//$info['created'] = SBDate($dateformat,$res->fields['created']);
 	$info['created'] = SBDate($GLOBALS['config']['config.dateformat_ver2'],$res->fields['created']);
 	$info['created_info'] = SBDate("Выдано ".$GLOBALS['config']['config.dateformat'],$res->fields['created']);
 	$info['length'] = function_exists('sb_punish_length_label')
@@ -182,7 +180,6 @@ while (!$res->EOF)
 	$info['perm'] = ($clen === 0 && !$inactive);
 	$info['temp'] = ($clen !== 0 && !$inactive);
 	$info['name'] = stripslashes($res->fields[3]);
-	//$info['created'] = SBDate($dateformat,$res->fields['created']);
 	$info['created'] = SBDate($GLOBALS['config']['config.dateformat_ver2'],$res->fields['created']);
 	$info['created_info'] = SBDate("Выдано ".$GLOBALS['config']['config.dateformat'],$res->fields['created']);
 	$info['length'] = function_exists('sb_punish_length_label')

@@ -1,34 +1,20 @@
-# Ветка `php-8.3` — PHP 8.3.22
+# Ветка php-8.3
 
-Отдельная ветка репозитория [blue-material-admin](https://github.com/LapplandBro/blue-material-admin).  
-Ветка **`main`** по-прежнему рассчитана на **PHP 7.1.33**. Сюда — только если на хостинге PHP **8.3.x** (проверено под **8.3.22**).
+Эта ветка — для хостинга на **PHP 8.3** (подойдёт и 8.2). Если сайт ещё крутится на **PHP 7.1**, не бери её: там ветка [`main`](https://github.com/LapplandBro/blue-material-admin/tree/main).
 
-## Что изменено относительно `main`
+Интерфейс здесь один: **Blue V2** (Twig и Bootstrap 5). Старой светлой темы в этой ветке нет.
 
-| Компонент | Изменение |
-|-----------|-----------|
-| **ADOdb** | Патч: `each()` → `foreach`, `get_magic_quotes_gpc` с `function_exists` |
-| **Smarty 2.6** | На ветке `php-8.3` удалён; UI только Twig (Blue V2) |
-| **xajax** | `get_magic_quotes_gpc` только через `function_exists` (CSRF не тронут) |
-| **SourceQuery** | Замена вендорки на **xPaw PHP-Source-Query 6.0.0** (min PHP 8.2) |
-| **CServerControl** | Загрузка без `bootstrap.php`, API панели прежний |
-| **App** | Сигнатуры optional-before-required; `utf8_*` → `mb_convert_encoding`; `strftime` → `date` где нужно |
+## Что нужно
 
-## Требования
+- PHP 8.2 или новее, лучше 8.3  
+- Расширения: mysqli, mbstring, json, openssl, curl, bcmath, xml  
+- Для опроса игровых серверов — 64-битный PHP или расширение gmp  
+- ЧПУ как обычно: Apache `mod_rewrite` / `AllowOverride`
 
-- PHP **≥ 8.2** (ветка целится на **8.3.22**)
-- Расширения: `mysqli`, `mbstring`, `json`, `openssl`, `curl`, `bcmath`, `xml`
-- Для SourceQuery: **64-bit PHP** или `gmp`
-- Apache `mod_rewrite` / `AllowOverride` для ЧПУ (как на `main`)
+## Как переехать с main
 
-## Установка / обновление
+1. Скачай код именно с `php-8.3`.  
+2. Не затирай `config.php` и `data/`.  
+3. Это смена версии PHP, а не «просто накатить файлы» на семёрку. SourceQuery 6 на PHP 7 не встанет.
 
-1. Бери код с ветки `php-8.3` (не с `main`).
-2. Не затирай `config.php` / `data/`.
-3. Если раньше стоял `main` на 7.1 — это **смена runtime**, не «просто обновить файлы» на том же PHP.
-
-## Не делать
-
-- Не мержить эту ветку в `main` без отдельного решения (ломает 7.1).
-- Не ставить SourceQuery 6 на PHP 7.x.
-- Не отключать CSRF в xajax.
+Ветки `php-8.3` и `main` специально не сливаются: у них разный runtime.

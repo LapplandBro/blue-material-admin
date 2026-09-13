@@ -1135,18 +1135,14 @@ function update_web()
 	}
 	
 	if(document.getElementById('webg').value == "c"){
-		//var height = 390;
 		var block_p = "block";
 	}else if(document.getElementById('webg').value == "n"){
-		//var height = 410;
 		var block_p = "block";
 	}else
 	{
 		$('webperm').setHTML('');
-		//var height = 1;
 		var block_p = "none";
 	}
-	//Shrink('webperm', 1000, height);
 	$('webperm').setStyle('display', block_p);
 	
 	if(document.getElementById('webg').value == "c" || document.getElementById('webg').value == "n")
@@ -1204,13 +1200,11 @@ function ProcessAddAdmin()
     var serverg = document.getElementById('serverg').value;
   	if(serverg == "-3")
   	{
-  		//serverg = "c";
   		srvMask = "";
   	}
     var webg = document.getElementById('webg').value;
   	if(webg == "-3")
   	{
-  		//webg = "c";
   		Mask = 0;
   	}
 	
@@ -1705,9 +1699,17 @@ function sbSessionExpired(msg) {
 
 /** Применить CSRF + таймеры сессии после PingSession / загрузки. */
 function sbSessionApply(meta) {
+	if (window.SB_SESSION)
+		window.SB_SESSION._extending = false;
+	if (sbSessionExtend._watch)
+		clearTimeout(sbSessionExtend._watch);
 	if (!meta || meta.ok === false) {
 		if (meta && meta.expired)
 			sbSessionExpired();
+		else if (window.SB_SESSION && window.SB_SESSION._lastChance)
+			sbSessionExpired();
+		else
+			sbSessionDialogIdle();
 		return;
 	}
 	if (window.SB_SESSION && window.SB_SESSION._expired)
@@ -1732,65 +1734,126 @@ function sbSessionApply(meta) {
 	window.SB_SESSION._localDeadline = Date.now() + (Math.max(0, Number(meta.expires_in) || 0) * 1000);
 	window.SB_SESSION._warned = false;
 	window.SB_SESSION._expired = false;
+	window.SB_SESSION._lastChance = false;
+	sbSessionDialogClose();
 	sbSessionSchedule();
 }
 
-function sbSessionExtend() {
-	if (window.SB_SESSION && window.SB_SESSION._expired) {
+function sbSessionDialogClose() {
+	var ids = ["sb-session-dialog", "sb-session-overlay"];
+	for (var i = 0; i < ids.length; i++) {
+		var el = document.getElementById(ids[i]);
+		if (el && el.parentNode)
+			el.parentNode.removeChild(el);
+	}
+}
+
+function sbSessionDialogIdle() {
+	var btn = document.getElementById("sb-session-extend");
+	if (btn) {
+		btn.disabled = false;
+		btn.textContent = "Продлить";
+	}
+}
+
+function sbSessionExtend(opts) {
+	opts = opts || {};
+	window.SB_SESSION = window.SB_SESSION || {};
+	if (window.SB_SESSION._expired && !opts.lastChance) {
 		sbSessionExpired();
 		return;
 	}
-	if (window.SB_SESSION && window.SB_SESSION._localDeadline && window.SB_SESSION._localDeadline <= Date.now()) {
-		sbSessionExpired();
-		return;
+	window.SB_SESSION._extending = true;
+	window.SB_SESSION._lastChance = !!opts.lastChance;
+	if (sbSessionExtend._watch)
+		clearTimeout(sbSessionExtend._watch);
+	sbSessionExtend._watch = setTimeout(function () {
+		if (!window.SB_SESSION || !window.SB_SESSION._extending)
+			return;
+		window.SB_SESSION._extending = false;
+		sbSessionDialogIdle();
+		if (window.SB_SESSION._lastChance)
+			sbSessionExpired();
+	}, 12000);
+	var btn = document.getElementById("sb-session-extend");
+	if (btn && !opts.silent) {
+		btn.disabled = true;
+		btn.textContent = "Продляем…";
 	}
-	if (typeof xajax_PingSession === "function") {
+	var pinged = false;
+	if (window.sbApi && typeof window.sbApi.call === "function")
+		pinged = !!window.sbApi.call("PingSession", []);
+	else if (typeof xajax_PingSession === "function") {
 		xajax_PingSession();
-		return;
+		pinged = true;
 	}
-	if (window.sbApi && typeof window.sbApi.call === "function") {
-		window.sbApi.call("PingSession", []);
-		return;
+	if (!pinged) {
+		window.SB_SESSION._extending = false;
+		if (sbSessionExtend._watch)
+			clearTimeout(sbSessionExtend._watch);
+		if (opts.lastChance)
+			sbSessionExpired();
+		else if (!opts.silent)
+			window.location.reload();
+		else
+			sbSessionDialogIdle();
 	}
-	window.location.reload();
 }
 
 function sbSessionWarn() {
 	if (window.SB_SESSION && window.SB_SESSION._expired)
 		return;
-	if (window.SB_SESSION && window.SB_SESSION._localDeadline && window.SB_SESSION._localDeadline <= Date.now()) {
-		sbSessionExpired();
-		return;
-	}
-	if (window.SB_SESSION && window.SB_SESSION._warned)
+	if (document.getElementById("sb-session-dialog"))
 		return;
 	if (window.SB_SESSION)
 		window.SB_SESSION._warned = true;
-	var msg = "Сеанс формы скоро завершится. Нажмите «Продлить», чтобы сохранить возможность отправлять формы без перезагрузки.";
-	if (typeof swal === "function") {
-		swal({
-			title: "Сессия истекает",
-			text: msg,
-			type: "warning",
-			html: true,
-			confirmButtonText: "Продлить",
-			confirmButtonClass: "btn-accent",
-			showConfirmButton: true,
-			showCancelButton: true,
-			cancelButtonText: "Позже",
-			allowOutsideClick: true
-		}, function (isConfirm) {
-			if (isConfirm)
-				sbSessionExtend();
-			else if (window.SB_SESSION)
-				window.SB_SESSION._warned = false;
-		});
-		return;
-	}
-	if (window.confirm(msg + "\n\nПродлить сейчас?"))
-		sbSessionExtend();
-	else if (window.SB_SESSION)
-		window.SB_SESSION._warned = false;
+
+	var ov = document.createElement("div");
+	ov.id = "sb-session-overlay";
+	var box = document.createElement("div");
+	box.id = "sb-session-dialog";
+	box.setAttribute("role", "dialog");
+	box.setAttribute("aria-labelledby", "sb-session-title");
+
+	var ico = document.createElement("div");
+	ico.className = "sb-sess-ico";
+	ico.setAttribute("aria-hidden", "true");
+	ico.textContent = "!";
+	var title = document.createElement("h2");
+	title.className = "sb-sess-title";
+	title.id = "sb-session-title";
+	title.textContent = "Сессия истекает";
+	var text = document.createElement("p");
+	text.className = "sb-sess-text";
+	text.textContent = "Сеанс формы скоро завершится. Нажмите «Продлить», чтобы сохранить возможность отправлять формы без перезагрузки.";
+	var actions = document.createElement("div");
+	actions.className = "sb-sess-actions";
+	var later = document.createElement("button");
+	later.type = "button";
+	later.className = "sb-sess-later";
+	later.textContent = "Позже";
+	later.onclick = function () {
+		sbSessionDialogClose();
+		if (window.SB_SESSION)
+			window.SB_SESSION._warned = false;
+	};
+	var extend = document.createElement("button");
+	extend.type = "button";
+	extend.id = "sb-session-extend";
+	extend.className = "sb-sess-extend";
+	extend.textContent = "Продлить";
+	extend.onclick = function () {
+		sbSessionExtend({ fromDialog: true });
+	};
+	actions.appendChild(later);
+	actions.appendChild(extend);
+	box.appendChild(ico);
+	box.appendChild(title);
+	box.appendChild(text);
+	box.appendChild(actions);
+	document.body.appendChild(ov);
+	document.body.appendChild(box);
+	extend.focus();
 }
 
 function sbSessionSchedule() {
@@ -1813,12 +1876,14 @@ function sbSessionSchedule() {
 	var untilPing = Math.max(60000, (Number(s.ttl) || 1440) * 1000 / 3);
 
 	if (remaining <= 0) {
-		sbSessionExpired();
+		sbSessionExtend({ lastChance: true, silent: true });
 		return;
 	}
 
 	sbSessionSchedule._expire = setTimeout(function () {
-		sbSessionExpired();
+		if (window.SB_SESSION && window.SB_SESSION._extending)
+			return;
+		sbSessionExtend({ lastChance: true, silent: !!document.getElementById("sb-session-dialog") });
 	}, remaining);
 
 	var untilWarn = remaining - warnBefore;
@@ -1830,15 +1895,14 @@ function sbSessionSchedule() {
 		}, untilWarn);
 	}
 
-	// Тихий keepalive только до окна предупреждения — иначе «Продлить» бессмысленно.
-	if (remaining > warnBefore) {
-		var pingIn = Math.min(untilPing, remaining - warnBefore);
+	if (untilWarn > 8000) {
+		var pingIn = Math.min(untilPing, untilWarn - 5000);
 		sbSessionSchedule._ping = setTimeout(function () {
 			if (document.hidden)
 				sbSessionSchedule();
 			else
-				sbSessionExtend();
-		}, pingIn);
+				sbSessionExtend({ silent: true });
+		}, Math.max(5000, pingIn));
 	}
 }
 
@@ -2174,21 +2238,6 @@ function IsNumeric(sText)
 
 function ButtonOver(el)
 {
-	/* Коммент
-	if($(el))
-	{
-		if($(el).hasClass('btn'))
-		{
-			$(el).removeClass('btn');
-			$(el).addClass('btnhvr');
-		}
-		else
-		{
-			$(el).removeClass('btnhvr');
-			$(el).addClass('btn');
-		}
-	}
-	*/ 
 }
 
 function ClearLogs()
@@ -2230,19 +2279,6 @@ function UpdateGroupPermissionCheckBoxes()
 		$('type.msg').setHTML('Ждите...');
 		$('type.msg').setStyle('display', 'block');
 	}
-	/*if(document.getElementById('grouptype').value == 1)
-	{
-		var height = 285;
-	}else if(document.getElementById('grouptype').value == 2)
-	{
-		var height = 435;
-	}else
-	{
-		$('type.msg').setStyle('display', 'none');
-		var height = 2;
-	}
-	Shrink('perms', 1000, height);
-	*/
 	if(document.getElementById('grouptype').value != 3 && document.getElementById('grouptype').value != 0)
 		setTimeout("xajax_UpdateGroupPermissions(document.getElementById('grouptype').value)",1000);
 }
@@ -2307,7 +2343,6 @@ function ShowRehashBox_pay(servers, title, msg, color, redir, card)
 	{
 		ShowBox(title, msg, color, 'index.php?p=account', false);
 		$('dialog-control').setStyle('display', 'none');
-		//xajax_RehashAdmins_pay(servers, card, 0);
 	}else{
 		msg = msg + '<br /><hr /><i>Обновление данных администратора и группы по всем связанным серверам...</i><div id="rehashDiv" name="rehashDiv" width="100%"></div>';
 		ShowBox(title, msg, color, '', false);
@@ -2483,13 +2518,122 @@ function BulkEdit(action, bankey)
 	}
 }
 
+function sbMassBanUi(title) {
+	title = title || 'Массовый бан';
+	if (!document.getElementById('ban_progress_overlay')) {
+		var overlay = document.createElement('div');
+		overlay.id = 'ban_progress_overlay';
+		document.body.appendChild(overlay);
+	}
+	var box = document.getElementById('ban_progress');
+	if (!box) {
+		box = document.createElement('div');
+		box.id = 'ban_progress';
+		box.innerHTML =
+			'<div id="ban_progress_title" class="ban-title"></div>' +
+			'<div id="ban_progress_group" class="ban-sub">Подготовка…</div>' +
+			'<div id="ban_progress_meta" class="ban-sub">Инициализация…</div>' +
+			'<div class="ban-bar-wrap"><div id="ban_progress_bar" class="ban-bar"></div></div>' +
+			'<div class="ban-status"><span id="ban_progress_err">Ошибок: 0</span><span id="ban_progress_pct">0%</span></div>';
+		document.body.appendChild(box);
+	}
+	var t = document.getElementById('ban_progress_title');
+	if (t) t.textContent = title;
+}
+
+function sbMassBanProgress(opts) {
+	opts = opts || {};
+	var g = document.getElementById('ban_progress_group');
+	var m = document.getElementById('ban_progress_meta');
+	var e = document.getElementById('ban_progress_err');
+	var p = document.getElementById('ban_progress_pct');
+	var b = document.getElementById('ban_progress_bar');
+	if (g && opts.line1 != null) g.textContent = String(opts.line1);
+	if (m && opts.line2 != null) m.textContent = String(opts.line2);
+	if (e) e.textContent = 'Ошибок: ' + (opts.errors != null ? opts.errors : 0);
+	if (p) p.textContent = opts.label != null ? String(opts.label) : ((opts.percent != null ? opts.percent : 0) + '%');
+	if (b) b.style.width = Math.max(0, Math.min(100, Number(opts.percent) || 0)) + '%';
+}
+
+function sbMassBanClear() {
+	var ids = ['ban_progress', 'ban_progress_overlay', 'ban_result', 'ban_result_overlay'];
+	for (var i = 0; i < ids.length; i++) {
+		var el = document.getElementById(ids[i]);
+		if (el && el.parentNode) el.parentNode.removeChild(el);
+	}
+}
+
+function sbMassBanDone(opts) {
+	opts = opts || {};
+	var progress = document.getElementById('ban_progress');
+	var progressOv = document.getElementById('ban_progress_overlay');
+	if (progress && progress.parentNode) progress.parentNode.removeChild(progress);
+	if (progressOv && progressOv.parentNode) progressOv.parentNode.removeChild(progressOv);
+	if (document.getElementById('ban_result')) document.getElementById('ban_result').parentNode.removeChild(document.getElementById('ban_result'));
+	if (document.getElementById('ban_result_overlay')) document.getElementById('ban_result_overlay').parentNode.removeChild(document.getElementById('ban_result_overlay'));
+
+	var overlay = document.createElement('div');
+	overlay.id = 'ban_result_overlay';
+	var box = document.createElement('div');
+	box.id = 'ban_result';
+
+	var title = document.createElement('div');
+	title.className = 'br-title';
+	title.textContent = opts.title || 'Готово';
+	var sub = document.createElement('div');
+	sub.className = 'br-group';
+	sub.textContent = opts.subtitle || '';
+	var stats = document.createElement('div');
+	stats.className = 'br-stats';
+	function card(num, lbl) {
+		var c = document.createElement('div');
+		c.className = 'br-card';
+		var n = document.createElement('div');
+		n.className = 'br-num';
+		n.textContent = String(num);
+		var l = document.createElement('div');
+		l.className = 'br-lbl';
+		l.textContent = lbl;
+		c.appendChild(n);
+		c.appendChild(l);
+		return c;
+	}
+	stats.appendChild(card(opts.banned != null ? opts.banned : 0, 'Забанено'));
+	stats.appendChild(card(opts.errors != null ? opts.errors : 0, 'Ошибок'));
+	stats.appendChild(card(opts.total != null ? opts.total : 0, 'Обработано'));
+	var time = document.createElement('div');
+	time.className = 'br-time';
+	time.textContent = 'Время выполнения: ' + (opts.time || '0 сек');
+	var actions = document.createElement('div');
+	actions.className = 'br-actions';
+	var reload = document.createElement('button');
+	reload.type = 'button';
+	reload.className = 'br-btn';
+	reload.textContent = 'Обновить страницу';
+	reload.onclick = function () { location.reload(); };
+	var close = document.createElement('button');
+	close.type = 'button';
+	close.className = 'br-btn';
+	close.textContent = 'Закрыть';
+	close.onclick = function () { sbMassBanClear(); };
+	actions.appendChild(reload);
+	actions.appendChild(close);
+	box.appendChild(title);
+	box.appendChild(sub);
+	box.appendChild(stats);
+	box.appendChild(time);
+	box.appendChild(actions);
+	document.body.appendChild(overlay);
+	document.body.appendChild(box);
+}
+
 function BanFriendsProcess(fid, name)
 {
 	var checkUp = confirm("Вы уверены, что хотите забанить всех друзей игрока '"+name+"'?");
 	if(checkUp == false)
 		return;
-	ShowBox("Бан друзей "+name, "Баним всех друзей игрока '"+name+"'.<br />Ждите...<br />Это может занять очень много времени — зависит от количества друзей.", 'blue', '', true);
-	$('dialog-control').setStyle('display', 'none');
+	if (typeof sbMassBanUi === 'function')
+		sbMassBanUi('Блокировка друзей');
 	xajax_BanFriends(fid, name);
 }
 

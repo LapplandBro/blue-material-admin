@@ -321,6 +321,7 @@ else
 			$groupban = (isset($_POST['enable_groupbanning']) && $_POST['enable_groupbanning'] == "on" ? 1 : 0);
 			
 			$friendsban = (isset($_POST['enable_friendsbanning']) && $_POST['enable_friendsbanning'] == "on" ? 1 : 0);
+			$fetchnicks = (isset($_POST['enable_fetchnicks']) && $_POST['enable_fetchnicks'] == "on" ? 1 : 0);
 			
 			$adminrehash = (isset($_POST['enable_adminrehashing']) && $_POST['enable_adminrehashing'] == "on" ? 1 : 0);
 			
@@ -340,6 +341,7 @@ else
 											(" . (int)$kickit . ", 'config.enablekickit'),
 											(" . (int)$groupban . ", 'config.enablegroupbanning'),
 											(" . (int)$friendsban . ", 'config.enablefriendsbanning'),
+											(" . (int)$fetchnicks . ", 'config.fetchbannicks'),
 											(" . (int)$_POST['moder_group_st'] . ", 'config.modgroup'),
 											(" . (int)$admininfos . ", 'config.enableadmininfos'),
 											(" . (int)$alladmininfos . ", 'config.changeadmininfos'),
@@ -637,6 +639,7 @@ else
 	setChecked('banlist_hideplayerips', <?php echo $sbCfgInt('banlist.hideplayerips'); ?>);
 	setChecked('enable_groupbanning', <?php echo $sbCfgInt('config.enablegroupbanning'); ?>);
 	setChecked('enable_friendsbanning', <?php echo $sbCfgInt('config.enablefriendsbanning'); ?>);
+	setChecked('enable_fetchnicks', <?php echo $sbCfgInt('config.fetchbannicks'); ?>);
 	setChecked('enable_admininfo', <?php echo $sbCfgInt('config.enableadmininfos', 1); ?>);
 	setChecked('allow_admininfo', <?php echo $sbCfgInt('config.changeadmininfos', 1); ?>);
 	setChecked('enable_adminrehashing', <?php echo $sbCfgInt('config.enableadminrehashing', 1); ?>);

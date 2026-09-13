@@ -128,7 +128,6 @@ $requirements = [
 ];
 
 // Наполняем "Требования ФС"...
-// $gendirdata = function($dirname, $dirpath, $required, $recommended, $display, &$name, $is_warning = false) {
 if (!is_dir('../data')) {
   @mkdir('../data', 0755, true);
   if (is_dir('../data') && !file_exists('../data/.htaccess'))

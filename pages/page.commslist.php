@@ -497,7 +497,6 @@ while (!$res->EOF)
 			break;
 	}
 
-	//$data['ban_date'] = SBDate($dateformat,$res->fields['ban_created']);
 	$data['ban_date'] = SBDate($GLOBALS['config']['config.dateformat'],$res->fields['ban_created']);
 	$data['ban_date_info'] = SBDate($GLOBALS['config']['config.dateformat_ver2'],$res->fields['ban_created']);
 	$data['player'] = addslashes($res->fields['player_name']);
@@ -636,7 +635,6 @@ while (!$res->EOF)
 		$modicon = $res->fields['mod_icon'];
 	}
 
-	//$data['mod_icon'] = '<img src="images/games/' .$modicon . '" alt="MOD" border="0" align="absmiddle" />&nbsp;' . $data['type_icon'];
 	$data['mod_icon'] = sb_game_icon_html($modicon, 'Игра', 22) . '&nbsp;';
 	
 	$data['type_icon_p'] = $data['type_icon'];
@@ -678,7 +676,6 @@ while (!$res->EOF)
 				$cdata = array();
 				$cdata['morecom'] = ($morecom==1?true:false);
 				if($commentres->fields['aid'] == $userbank->GetAid() || $userbank->HasAccess(ADMIN_OWNER)) {
-					//$cdata['editcomlink'] = CreateLinkR('<img src=\'images/edit.gif\' border=\'0\' alt=\'\' style=\'vertical-align:middle\' />','index.php?p=commslist&comment='.$data['ban_id'].'&ctype=C&cid='.$commentres->fields['cid'].$pagelink,'Edit Comment');
 					$cdata['editcomlink'] = CreateLinkR('Редактировать','index.php?p=commslist&comment='.$data['ban_id'].'&ctype=C&cid='.$commentres->fields['cid'].$pagelink);
 					if($userbank->HasAccess(ADMIN_OWNER)) {
 						$cdata['delcomlink'] = "<a href=\"#\" class=\"tip\" target=\"_self\" onclick=\"RemoveComment(".$commentres->fields['cid'].",'C',".(isset($_GET["page"])?$_GET["page"]:-1).");\">Удалить</a>";
@@ -722,7 +719,6 @@ while (!$res->EOF)
 	$data['counts'] = $delimiter.$mutes.$gags;
 
 	$data['ub_reason'] = (isset($data['ub_reason'])?$data['ub_reason']:"");
- 	//$data['banlength'] = $data['ban_length'] . " " .  $data['ub_reason'];
  	$data['banlength'] = $data['ban_length'];
 
 	// UI status for length badges (same idea as banlist)

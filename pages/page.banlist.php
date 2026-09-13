@@ -578,15 +578,6 @@ while (!$res->EOF)
 				$data['removedby'] = $removedby[0];
 		}
 	}
-// Don't need this stuff.
-// Uncomment below if the modifications above cause issues
-//	else
-//	{
-//		$data['unbanned'] = false;
-//		$data['class'] = "listtable_1";
-//		$data['ub_reason'] = "";
-//	}
-
 	$data['layer_id'] = 'layer_'.$res->fields['ban_id'];
 	if($data['type'] == "0")
 		$alrdybnd = $GLOBALS['db']->Execute("SELECT count(bid) as count FROM `".DB_PREFIX."_bans` WHERE authid = '".$data['steamid']."' AND (length = 0 OR ends > UNIX_TIMESTAMP()) AND RemovedBy IS NULL AND type = '0';");
@@ -739,13 +730,11 @@ while (!$res->EOF)
 	}
 
 
-	//$data['addcomment'] = CreateLinkR('<img src="images/details.gif" border="0" alt="" style="vertical-align:middle" /> Add Comment','index.php?p=banlist&comment='.$data['ban_id'].'&ctype=B'.$pagelink);
 	$data['addcomment_link'] = sb_url_query('banlist', 'comment='.$data['ban_id'].'&ctype=B'.$pagelink);
 	//-----------------------------------
 
 	$data['ub_reason'] = (isset($data['ub_reason'])?$data['ub_reason']:"");
  	$data['banlength'] = $data['ban_length'];
- 	//$data['banlength'] = $data['ban_length'] . " " .  $data['ub_reason'];
 
 	// UI status for banlist badges (avoid string-compare quirks in legacy templates).
 	if (!empty($data['unbanned'])) {

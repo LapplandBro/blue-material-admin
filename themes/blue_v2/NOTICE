@@ -1,13 +1,9 @@
-themes/blue_v2 — original UI shell (Twig + Bootstrap 5)
-=======================================================
+themes/blue_v2 — оболочка панели (Twig + Bootstrap 5)
+=====================================================
 
-License: GNU GPLv3 with the application (see ../../LICENSE and ../../NOTICE).
+Лицензия: GNU GPLv3 вместе с приложением (см. ../../LICENSE и ../../NOTICE).
 
-This shell is original to the Blue Material Admin fork. It is **not** a
-copy of Material Admin layout CSS/JS (no app.min.*, ma-*, fg-line, Waves).
+Это единственная тема сборки. Сторонние пакеты в vendor/ — на своих лицензиях.
 
-The *idea* of a Material-style SourceBans panel is credited in ../../NOTICE
-(HLMod thread + Kruzya / SB-MaterialAdmin). This CSS/Twig is a new
-implementation and lives independently of those projects.
-
-Vendors in themes/blue_v2/vendor/ keep their own licenses (MIT / GPL, etc.).
+Идея «материальной» SourceBans-панели кредитуется в ../../NOTICE (HLMod / Kruzya).
+CSS и Twig здесь — своя реализация.

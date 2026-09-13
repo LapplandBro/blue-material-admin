@@ -48,8 +48,8 @@ CC BY-NC-SA layout CSS. The live shell is original Blue V2 (see §3).
 License: GNU GPLv3 together with the application
 See:     themes/blue_v2/NOTICE
 
-Twig templates and blue.css are original to this fork (Bootstrap 5.3).
-Not derived from Material Admin `app.min.*` / ma-* layout.
+Twig templates and CSS are original to this fork (Bootstrap 5.3).
+This is the only theme the panel ships.
 
 
 4) Third-party libraries

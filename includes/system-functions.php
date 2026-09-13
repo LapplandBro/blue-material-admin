@@ -1364,15 +1364,7 @@ function SmFlagsToSb($flagstring, $head=true)
 
 	if($head)
 		$string .= "</ul>";
-	//if(($mask & SM_DEF_IMMUNITY) != 0)
-	//{
-	//	$flagstring .="&bull; Default immunity<br />";
-	//}
-	//if(($mask & SM_GLOBAL_IMMUNITY) != 0)
-	//{
-	//	$flagstring .="&bull; Global immunity<br />";
-	//}
-	
+
 	return $string;
 
 }
@@ -1536,29 +1528,6 @@ function StripQuotes($str)
 	return $str;
 }
 
-/*function CreateRedBox($title, $content)
-{
-	$text = '<div id="msg-red-debug" style="">
-	<i><img class="sb-ico" src="images/icons/warning.svg" width="18" height="18" alt="Внимание" /></i>
-	<b>' . $title .'</b>
-	<br />
-	' . $content . '</i>
-</div>';
-
-	echo $text;
-}
-function CreateGreenBox($title, $contnet)
-{
-	$text = '<div id="msg-green-dbg" style="">
-	<i><img src="./images/yay.png" alt="Yay!" /></i>
-	<b>' . $title .'</b>
-	<br />
-	' . $contnet . '</i>
-</div>';
-
-	echo $text;
-}
-*/
 function CreateRedBox($title, $content)
 {
 	$title = (string)$title;

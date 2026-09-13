@@ -118,7 +118,6 @@ class CServerRcon
 
     public function sendCommand($command)
     {
-        //$command = '"'.trim(str_replace(' ','" "', $command)).'"';
         // Harden against RCON command injection: a single RCON packet must contain
         // exactly one command. Embedded NUL/CR/LF bytes could otherwise be abused
         // by a caller that forwards unsanitized user input to terminate the current

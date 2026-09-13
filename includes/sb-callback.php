@@ -36,6 +36,7 @@ if (function_exists('sb_session_start')) {
 require_once('SbAjax.php');
 include_once('system-functions.php');
 include_once('user-functions.php');
+include_once('sb-massban.php');
 $sbAjax = new SbAjax();
 $sbAjax->setRequestURI(defined('SB_AJAX_URI') ? SB_AJAX_URI : './index.php');
 $xajax = $sbAjax;
@@ -55,47 +56,8 @@ global $userbank;
 $username = $userbank->GetProperty("user");
 
 function InstallMOD($modfolder, $status = 0) {
-    global $userbank;
-    
     $objResponse = new xajaxResponse();
     $objResponse->addAlert("Выключено. Находится в стадии разработки");
-    return $objResponse;
-    
-    /* TODO: Добавить загрузку данных из репозитория */
-    $mapformat = str_replace('{%folder%}', $GameData['folder'], $RepoData['mapformat']);
-    $PathIcon = sprintf('%s/%s', SB_ICON_LOCATION, $GameData['icon']);
-    $PathMaps = sprintf('%s/%s', SB_MAP_LOCATION, $mapformat);
-    
-    if ($status == 0) {
-        /* Build install dialog */
-        $objResponse->addAssign("install_log", "innerHTML", "[".SBDate($GLOBALS['config']['config.dateformat'], time())."] Загрузка файлов с зеркала...");
-        $objResponse->addAssign("install_current", "innerHTML", "Загрузка файлов с зеркала");
-        $objResponse->addScript('xajax_InstallMOD("'.$modfolder.'", 1);');
-    } else if ($status == 1) {
-        /* Download files */
-        file_put_contents($PathIcon, sprintf('%s%s%s', $RepoData['mirror'], $RepoData['icons_dir'], $GameData['icon']));
-        file_put_contents($PathMaps, sprintf('%s%s%s', $RepoData['mirror'], $RepoData['maps_dir'], $mapformat));
-        
-        $objResponse->addAppend("install_log", "innerHTML", "<br />[".SBDate($GLOBALS['config']['config.dateformat'], time())."] Распаковка архива");
-        $objResponse->addAssign("install_current", "innerHTML", "Распаковка архива");
-        
-        $objResponse->addScript('xajax_InstallMOD("'.$modfolder.'", 2);');
-    } else if ($status == 2) {
-        /* Decompress maps dir */
-        decompress_tar($PathMaps, SB_MAP_LOCATION.'/'.$GameData['folder'].'/');
-        
-        $objResponse->addAppend("install_log", "innerHTML", "<br />[".SBDate($GLOBALS['config']['config.dateformat'], time())."] Удаление временных файлов");
-        $objResponse->addAssign("install_current", "innerHTML", "Удаление временных файлов");
-        
-        $objResponse->addScript('xajax_InstallMOD("'.$modfolder.'", 3);');
-    } else if ($status == 3) {
-        /* Insert to DB */
-        $GLOBALS['db']->Execute(sprintf("INSERT INTO `%s_mods` (`name`, `icon`, `modfolder`, `steam_universe`, `enabled`) VALUES (%s, %s, %s, %d, 1);", DB_PREFIX, $GLOBALS['db']->qstr($GameData['name']), $GLOBALS['db']->qstr($GameData['icon']), $GLOBALS['db']->qstr($GameData['folder']), (int) $GameData['steamcode']));
-    
-        $objResponse->addAppend("install_log", "innerHTML", "<br />[".SBDate($GLOBALS['config']['config.dateformat'], time())."] Завершено.");
-        $objResponse->addAssign("install_current", "innerHTML", "Установка завершена.");
-    }
-    
     return $objResponse;
 }
 
@@ -163,7 +125,7 @@ function PingSession()
 {
 	$objResponse = new xajaxResponse();
 	if (function_exists('sb_rate_limit_hit') && sb_rate_limit_hit('ping_session', 30, 60)) {
-		$objResponse->addScript('if(typeof sbSessionApply==="function")sbSessionApply({ok:false,rate:1});');
+		$objResponse->addScriptCall('sbSessionApply', array('ok' => false, 'rate' => 1));
 		return $objResponse;
 	}
 	if (function_exists('sb_session_start'))
@@ -171,31 +133,18 @@ function PingSession()
 	elseif (session_status() !== PHP_SESSION_ACTIVE)
 		@session_start();
 
-	$ttl = function_exists('sb_session_ttl') ? sb_session_ttl() : 1440;
-	$last = isset($_SESSION['sb_last_active']) ? (int)$_SESSION['sb_last_active'] : time();
-	$expiresIn = max(0, $last + $ttl - time());
-	if ($expiresIn <= 0) {
-		$json = function_exists('sb_ajax_json_encode')
-			? sb_ajax_json_encode(array('ok' => false, 'expired' => true))
-			: json_encode(array('ok' => false, 'expired' => true));
-		$objResponse->addScript('if(typeof sbSessionApply==="function")sbSessionApply(' . $json . ');');
-		return $objResponse;
-	}
-
 	if (function_exists('sb_session_touch'))
 		sb_session_touch();
+
 	$meta = function_exists('sb_session_client_meta') ? sb_session_client_meta() : array(
-		'ttl' => $ttl,
-		'expires_in' => $expiresIn,
+		'ttl' => function_exists('sb_session_ttl') ? sb_session_ttl() : 1440,
+		'expires_in' => function_exists('sb_session_ttl') ? sb_session_ttl() : 1440,
 		'warn_before' => 180,
 		'server_now' => time(),
 		'csrf' => function_exists('sb_csrf_token') ? sb_csrf_token() : '',
 	);
 	$meta['ok'] = true;
-	$json = function_exists('sb_ajax_json_encode')
-		? sb_ajax_json_encode($meta)
-		: json_encode($meta);
-	$objResponse->addScript('if(typeof sbSessionApply==="function")sbSessionApply(' . $json . ');');
+	$objResponse->addScriptCall('sbSessionApply', $meta);
 	return $objResponse;
 }
 
@@ -1725,18 +1674,6 @@ function AddAdmin($mask, $srv_mask, $a_name, $a_steam, $a_email, $a_password, $a
 		{
 			$objResponse->addAssign("email.msg", "innerHTML", "");
 			$objResponse->addScript("$('email.msg').setStyle('display', 'none');");
-		/*	if(!validate_email($a_email))
-			{
-				$error++;
-				$objResponse->addAssign("email.msg", "innerHTML", "Please enter a valid email address.");
-				$objResponse->addScript("$('email.msg').setStyle('display', 'block');");
-			}
-			else
-			{
-				$objResponse->addAssign("email.msg", "innerHTML", "");
-				$objResponse->addScript("$('email.msg').setStyle('display', 'none');");
-
-			}*/
 		}
 	}
 	
@@ -2064,7 +2001,6 @@ function ServerHostPlayers($sid, $type="servers", $obId="", $tplsid="", $open=""
 	
 	$sid = (int)$sid;
 
-	//$res = $GLOBALS['db']->GetRow("SELECT sid, ip, port FROM ".DB_PREFIX."_servers WHERE sid = $sid");
 	$res = $GLOBALS['db']->GetRow("SELECT se.sid, se.ip, se.port, se.modid, md.modfolder FROM ".DB_PREFIX."_servers se LEFT JOIN ".DB_PREFIX."_mods md ON md.mid=se.modid WHERE se.sid = $sid");
 	if(empty($res[1]) || empty($res[2]))
 		return $objResponse;
@@ -3976,408 +3912,6 @@ function RehashAdmins($server, $do=0, $redir='')
 	return $objResponse;
 }
 
-function GroupBan($groupuri, $isgrpurl="no", $queue="no", $reason="", $last="")
-{
-	$objResponse = new xajaxResponse();
-	
-	// Проверки доступа и конфигурации
-	if(!$GLOBALS['config']['config.enablegroupbanning'] || !$GLOBALS['userbank']->HasAccess(ADMIN_OWNER|ADMIN_ADD_BAN)) {
-		if(!$GLOBALS['config']['config.enablegroupbanning']) return $objResponse;
-		
-		$objResponse->redirect("index.php?p=login&m=no_access", 0);
-		new CSystemLog("w", "Ошибка доступа", $GLOBALS['username'] . " пытался забанить группу '".htmlspecialchars(addslashes(trim($groupuri)))."', не имея на это прав.");
-		return $objResponse;
-	}
-	
-	// Извлечение имени группы (urldecode нужен для кириллических/Unicode URL вида %D0%A0%D1%83...)
-	$grpname = ($isgrpurl=="yes") ? $groupuri : urldecode(basename(parse_url($groupuri, PHP_URL_PATH)));
-	// Убираем трейлинг-слеш на случай https://steamcommunity.com/groups/name/
-	$grpname = rtrim($grpname, '/');
-	
-	if(empty($grpname)) {
-		$objResponse->addAssign("groupurl.msg", "innerHTML", "Ошибка преобразования URL группы.");
-		$objResponse->addScript("$('groupurl.msg').setStyle('display', 'block');");
-		return $objResponse;
-	}
-	
-	$objResponse->addScript("$('groupurl.msg').setStyle('display', 'none'); $('dialog-control').setStyle('display', 'none');");
-	
-	// Создание прогресс-бара (deep-blue оформление, без изменения логики)
-	$objResponse->addScript("
-		if (!document.getElementById('ban_ui_styles')) {
-			var styleTag = document.createElement('style');
-			styleTag.id = 'ban_ui_styles';
-			styleTag.textContent =
-				'#ban_progress_overlay{position:fixed;inset:0;background:rgba(3,8,18,.72);backdrop-filter:blur(2px);z-index:9998;}' +
-				'#ban_progress{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:420px;max-width:92vw;background:#0c1528;border:1px solid #1a2d50;border-radius:12px;padding:18px 18px 14px;box-shadow:0 14px 34px rgba(0,0,0,.48);color:#ddeeff;font-family:Arial,sans-serif;z-index:9999;}' +
-				'#ban_progress .ban-title{font-size:15px;font-weight:700;color:#e8f0ff;margin:0 0 10px;}' +
-				'#ban_progress .ban-sub{font-size:13px;color:#8eb4dc;margin:0 0 8px;line-height:1.45;}' +
-				'#ban_progress .ban-bar-wrap{width:100%;height:14px;background:#0a1225;border:1px solid #1a2d50;border-radius:999px;overflow:hidden;margin:10px 0 8px;}' +
-				'#ban_progress .ban-bar{width:0%;height:100%;background:linear-gradient(90deg,#1e90ff 0%,#4ea8ff 65%,#7cc1ff 100%);transition:width .18s ease;}' +
-				'#ban_progress .ban-status{display:flex;justify-content:space-between;gap:10px;font-size:12px;color:#7ea8d4;}' +
-				'#ban_result_overlay{position:fixed;inset:0;background:rgba(3,8,18,.72);backdrop-filter:blur(2px);z-index:9999;}' +
-				'#ban_result{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:560px;max-width:94vw;background:#0c1528;border:1px solid #1a2d50;border-radius:14px;box-shadow:0 16px 40px rgba(0,0,0,.55);color:#ddeeff;padding:20px;z-index:10000;font-family:Arial,sans-serif;}' +
-				'#ban_result .br-title{font-size:20px;font-weight:700;color:#bfe0ff;margin:0 0 8px;text-align:center;}' +
-				'#ban_result .br-group{font-size:13px;color:#8eb4dc;background:#0f1f38;border:1px solid #1a2d50;padding:8px 10px;border-radius:8px;text-align:center;margin-bottom:14px;}' +
-				'#ban_result .br-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px;}' +
-				'#ban_result .br-card{background:#0f1f38;border:1px solid #1a2d50;border-radius:10px;padding:12px;text-align:center;}' +
-				'#ban_result .br-num{font-size:24px;font-weight:700;color:#dcecff;line-height:1.1;}' +
-				'#ban_result .br-lbl{font-size:12px;color:#7ea8d4;margin-top:4px;}' +
-				'#ban_result .br-time{background:#0f1f38;border:1px solid #1a2d50;border-radius:8px;padding:10px;text-align:center;color:#8eb4dc;font-size:13px;margin-bottom:14px;}' +
-				'#ban_result .br-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}' +
-				'#ban_result .br-btn{border:1px solid #1a4a7a;background:#16314a;color:#dcecff;padding:10px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;}' +
-				'#ban_result .br-btn:hover{background:#1d3f60;color:#ecf5ff;}';
-			document.head.appendChild(styleTag);
-		}
-
-		if (!document.getElementById('ban_progress_overlay')) {
-			var overlayDiv = document.createElement('div');
-			overlayDiv.id = 'ban_progress_overlay';
-			document.body.appendChild(overlayDiv);
-		}
-
-		if (!document.getElementById('ban_progress')) {
-			var progressDiv = document.createElement('div');
-			progressDiv.id = 'ban_progress';
-			progressDiv.innerHTML =
-				'<div class=\"ban-title\">Блокировка участников группы</div>' +
-				'<div id=\"ban_progress_group\" class=\"ban-sub\">Подготовка...</div>' +
-				'<div id=\"ban_progress_meta\" class=\"ban-sub\">Инициализация...</div>' +
-				'<div class=\"ban-bar-wrap\"><div id=\"ban_progress_bar\" class=\"ban-bar\"></div></div>' +
-				'<div class=\"ban-status\"><span id=\"ban_progress_err\">Ошибок: 0</span><span id=\"ban_progress_pct\">0%</span></div>';
-			document.body.appendChild(progressDiv);
-		}
-	");
-	
-	// Инициализация состояния.
-	// page_members хранит только ТЕКУЩУЮ страницу Steam (не всё сразу).
-	// Для группы 2500+ уч. loadGroupMembers делал 50 file_get_contents подряд —
-	// веб-сервер убивал запрос по таймауту -> HTTP 500.
-	// Теперь каждый xajax-вызов делает максимум 1 HTTP-запрос к Steam.
-	$_SESSION['group_ban_state'] = [
-	    'grpname'         => $grpname,
-	    'queue'           => $queue,
-	    'reason'          => $reason,
-	    'last'            => $last,
-	    'steam_page'      => 1,
-	    'page_members'    => [],
-	    'page_offset'     => 0,
-	    'processed_count' => 0,
-	    'error_count'     => 0,
-	    'start_time'      => time(),
-	    'banned_steamids' => [],
-	    'cache_loaded'    => false,
-	];
-	
-	$objResponse->addScriptCall("xajax_BanMemberOfGroup");
-	return $objResponse;
-}
-
-function BanMemberOfGroup()
-{
-	set_time_limit(30); // Достаточно для 1 HTTP-запроса к Steam + 1 INSERT
-	$objResponse = new xajaxResponse();
-
-	if (!$GLOBALS['config']['config.enablegroupbanning'] || !isset($_SESSION['group_ban_state'])) {
-		$objResponse->addScript("
-			if (document.getElementById('ban_progress')) document.getElementById('ban_progress').remove();
-			if (document.getElementById('ban_progress_overlay')) document.getElementById('ban_progress_overlay').remove();
-			ShowBox('Ошибка', 'Процесс бана группы не инициализирован или завершён.', 'red', '', true);
-		");
-		return $objResponse;
-	}
-
-	// Проверка доступа
-	if (!$GLOBALS['userbank']->HasAccess(ADMIN_OWNER|ADMIN_ADD_BAN)) {
-		$objResponse->redirect("index.php?p=login&m=no_access", 0);
-		new CSystemLog("w", "Ошибка доступа", $GLOBALS['username'] . " пытался забанить группу '".$_SESSION['group_ban_state']['grpname']."', не имея на это прав.");
-		unset($_SESSION['group_ban_state']);
-		return $objResponse;
-	}
-
-	$state = &$_SESSION['group_ban_state'];
-
-	// Один раз грузим кэш уже забаненных из БД (не HTTP — быстро)
-	if (!$state['cache_loaded']) {
-		$state['banned_steamids'] = getBannedSteamIds();
-		$state['cache_loaded'] = true;
-	}
-
-	// Если текущая страница закончилась — грузим следующую страницу Steam.
-	// Один file_get_contents per xajax-вызов — в таймаут не попадаем.
-	if ($state['page_offset'] >= count($state['page_members'])) {
-		$new_members = loadGroupPage($state['grpname'], $state['steam_page']);
-
-		if (empty($new_members)) {
-			// Страниц больше нет — завершаем
-			finishBanning($objResponse, $state);
-			unset($_SESSION['group_ban_state']);
-			return $objResponse;
-		}
-
-		$state['page_members'] = $new_members;
-		$state['page_offset']  = 0;
-		$state['steam_page']++;
-	}
-
-	// Обрабатываем одного участника с текущей позиции
-	$member = $state['page_members'][$state['page_offset']];
-	if (!processMember($member, $state)) {
-		$state['error_count']++;
-	}
-	$state['page_offset']++;
-	$state['processed_count']++;
-
-	// Обновляем прогресс и запускаем следующую итерацию
-	updateProgress($objResponse, $state);
-	$objResponse->addScriptCall("setTimeout", "xajax_BanMemberOfGroup()", 25);
-
-	return $objResponse;
-}
-
-// Вспомогательные функции для оптимизации
-
-// Загружает ОДНУ страницу участников группы Steam.
-// Вызывается по одному разу за xajax-запрос — не блокирует веб-сервер.
-function loadGroupPage($grpname, $page) {
-	// User-Agent обязателен: без него Steam отдаёт 403
-	$ctx = stream_context_create([
-		'http' => [
-			'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-			'timeout'    => 15,
-		],
-	]);
-
-	$page_url = "https://steamcommunity.com/groups/" . rawurlencode($grpname) . "/members" . ($page > 1 ? "?p={$page}" : "");
-	$raw = @file_get_contents($page_url, false, $ctx);
-	if (!$raw) return [];
-
-	$doc = new DOMDocument();
-	// Принудительно UTF-8 — иначе DOMDocument ломает кириллику/китайский
-	@$doc->loadHTML('<?xml encoding="utf-8" ?>' . $raw);
-
-	$members = [];
-	foreach ($doc->getElementsByTagName('a') as $tag) {
-		$href = $tag->getAttribute('href');
-		if ((strpos($href, 'https://steamcommunity.com/id/') === 0
-			|| strpos($href, 'https://steamcommunity.com/profiles/') === 0)
-			&& $tag->hasChildNodes()
-			&& $tag->childNodes->length == 1
-			&& $tag->childNodes->item(0)->nodeValue != ""
-		) {
-			$members[] = [
-				'href' => $href,
-				'name' => $tag->childNodes->item(0)->nodeValue,
-			];
-		}
-	}
-
-	return $members;
-}
-
-function getBannedSteamIds() {
-	$bans = $GLOBALS['db']->GetAll(
-		"SELECT CAST(CAST(MID(authid,9,1) AS UNSIGNED) + CAST('76561197960265728' AS UNSIGNED) + CAST(MID(authid,11,10) AS UNSIGNED) * 2 AS CHAR) AS community_id " .
-		"FROM " . DB_PREFIX . "_bans " .
-		"WHERE RemoveType IS NULL AND type = 0 AND authid LIKE 'STEAM\\_%'"
-	);
-	if (!is_array($bans))
-		return array();
-	$ids = array();
-	foreach ($bans as $ban) {
-		if (isset($ban['community_id']) && $ban['community_id'] !== '' && $ban['community_id'] !== null)
-			$ids[] = (string)$ban['community_id'];
-	}
-	return $ids;
-}
-
-function processMember($member, &$state) {
-    $url_parts = explode("/", parse_url($member['href'], PHP_URL_PATH));
-    $profile_id = $url_parts[2];
-    
-    $steamid = null;
-    $community_id = null;
-    
-    if(strpos($member['href'], 'https://steamcommunity.com/id/') === 0) {
-        // Custom ID - получаем friend ID
-        $friend_id = GetFriendIDFromCommunityID($profile_id);
-        if(!$friend_id) return false;
-        
-        $community_id = $friend_id; // Для custom ID community_id = friend_id
-        $steamid = FriendIDToSteamID($friend_id);
-    } else {
-        // Обычный friend ID
-        $community_id = $profile_id;
-        $steamid = FriendIDToSteamID($profile_id);
-    }
-    
-    if (!$steamid) return false;
-
-    // Проверяем, не забанен ли уже (строковое сравнение — MySQL может вернуть int или string)
-    if (in_array((string)$community_id, $state['banned_steamids'])) {
-        return true; // Уже забанен — считаем успехом
-    }
-
-    // Дополнительная проверка в базе данных (на случай если кэш устарел)
-    $existing_ban = $GLOBALS['db']->GetRow("SELECT bid FROM ".DB_PREFIX."_bans WHERE authid = ? AND RemoveType IS NULL AND type = 0", [$steamid]);
-    if ($existing_ban) {
-        // Добавляем в кэш для будущих проверок
-        $state['banned_steamids'][] = (string)$community_id;
-        return true;
-    }
-
-    // Защита: не баним собственных администраторов веб-панели
-    $admin_check = $GLOBALS['db']->GetRow("SELECT aid FROM ".DB_PREFIX."_admins WHERE authid = ? LIMIT 1", [$steamid]);
-    if ($admin_check) {
-        return true; // Пропускаем молча (считаем "успехом" чтобы не ломать счётчик)
-    }
-
-    // Выполняем бан
-    $pre = $GLOBALS['db']->Prepare("INSERT INTO ".DB_PREFIX."_bans(created,type,ip,authid,name,ends,length,reason,aid,adminIp) VALUES (UNIX_TIMESTAMP(),?,?,?,?,UNIX_TIMESTAMP(),?,?,?,?)");
-
-    // utf8_encode() НЕЛЬЗЯ использовать — оно ломает UTF-8 строки из DOMDocument (двойное кодирование).
-    // sanitizeForMysql() убирает 4-байтовые символы (эмодзи и спец.символы), которые не влезают в utf8 (не utf8mb4).
-    $name = sanitizeForMysql($member['name']);
-    // Дополнительно: если после очистки строка всё ещё битая — fallback
-    if (!mb_check_encoding($name, 'UTF-8') || $name === '') {
-        $name = 'UNKNOWN NICKNAME';
-    }
-
-    $reason = "Steam Community Group Ban (" . $state['grpname'] . ") " . $state['reason'];
-
-    $success = $GLOBALS['db']->Execute($pre, [0, "", $steamid, $name, 0, $reason, $GLOBALS['userbank']->GetAid(), $_SERVER['REMOTE_ADDR']]);
-
-    // Если всё равно ошибка кодировки (1366) — повторяем с нейтральным именем
-    if (!$success && $GLOBALS['db']->ErrorNo() == 1366) {
-        $success = $GLOBALS['db']->Execute($pre, [0, "", $steamid, "UNKNOWN NICKNAME", 0, $reason, $GLOBALS['userbank']->GetAid(), $_SERVER['REMOTE_ADDR']]);
-    }
-
-    // Если бан успешен, добавляем в кэш
-    if ($success) {
-        $state['banned_steamids'][] = (string)$community_id;
-    }
-
-    return $success;
-}
-function updateProgress($objResponse, $state) {
-	// total_members неизвестен заранее (грузим постранично), показываем счётчик + страницу
-	$grpname_js   = json_encode($state['grpname'], JSON_UNESCAPED_UNICODE);
-	$steam_page   = (int)$state['steam_page'] - 1; // steam_page уже инкрементирован после загрузки
-	$processed    = (int)$state['processed_count'];
-	$error_count  = (int)$state['error_count'];
-
-	$objResponse->addScript("
-		var grpName = ".$grpname_js.";
-		if (document.getElementById('ban_progress_group')) {
-			document.getElementById('ban_progress_group').textContent = 'Группа: ' + grpName;
-		}
-		if (document.getElementById('ban_progress_meta')) {
-			document.getElementById('ban_progress_meta').textContent = 'Обработано: {$processed} участников (стр. {$steam_page})';
-		}
-		if (document.getElementById('ban_progress_bar')) {
-			// Анимируем полосу — пульсирует пока идёт обработка (total неизвестен)
-			var pct = ({$processed} % 100);
-			document.getElementById('ban_progress_bar').style.width = pct + '%';
-		}
-		if (document.getElementById('ban_progress_err')) {
-			document.getElementById('ban_progress_err').textContent = 'Ошибок: {$error_count}';
-		}
-		if (document.getElementById('ban_progress_pct')) {
-			document.getElementById('ban_progress_pct').textContent = '{$processed} участников';
-		}
-	");
-}
-
-function finishBanning($objResponse, $state) {
-	$objResponse->addScript("
-		if (document.getElementById('ban_progress')) document.getElementById('ban_progress').remove();
-		if (document.getElementById('ban_progress_overlay')) document.getElementById('ban_progress_overlay').remove();
-	");
-
-	$total_processed = (int)$state['processed_count'];
-	$banned_count    = $total_processed - (int)$state['error_count'];
-	$elapsed_time    = time() - $state['start_time'];
-	$time_str        = formatTime($elapsed_time);
-	$grpname_js      = json_encode($state['grpname'], JSON_UNESCAPED_UNICODE);
-	$time_str_js     = json_encode($time_str, JSON_UNESCAPED_UNICODE);
-
-	// Создание итогового окна
-	$objResponse->addScript("
-		var grpName     = ".$grpname_js.";
-		var timeStr     = ".$time_str_js.";
-		var bannedCount = ".$banned_count.";
-		var errorCount  = ".(int)$state['error_count'].";
-		var totalCount  = ".$total_processed.";
-
-		if (document.getElementById('ban_result_overlay')) document.getElementById('ban_result_overlay').remove();
-		if (document.getElementById('ban_result')) document.getElementById('ban_result').remove();
-
-		var overlay = document.createElement('div');
-		overlay.id = 'ban_result_overlay';
-
-		var resultDiv = document.createElement('div');
-		resultDiv.id = 'ban_result';
-		resultDiv.innerHTML =
-			'<div class=\"br-title\">Группа успешно забанена</div>' +
-			'<div class=\"br-group\">Группа: ' + grpName + '</div>' +
-			'<div class=\"br-stats\">' +
-				'<div class=\"br-card\"><div class=\"br-num\">' + bannedCount + '</div><div class=\"br-lbl\">Забанено</div></div>' +
-				'<div class=\"br-card\"><div class=\"br-num\">' + errorCount + '</div><div class=\"br-lbl\">Ошибок</div></div>' +
-				'<div class=\"br-card\"><div class=\"br-num\">' + totalCount + '</div><div class=\"br-lbl\">Обработано</div></div>' +
-			'</div>' +
-			'<div class=\"br-time\">Время выполнения: ' + timeStr + '</div>' +
-			'<div class=\"br-actions\">' +
-				'<button class=\"br-btn\" onclick=\"location.reload();\">Обновить страницу</button>' +
-				'<button class=\"br-btn\" onclick=\"document.getElementById(\\'ban_result\\').remove(); document.getElementById(\\'ban_result_overlay\\').remove();\">Закрыть</button>' +
-			'</div>';
-
-		document.body.appendChild(overlay);
-		document.body.appendChild(resultDiv);
-	");
-
-	// Обработка очереди и логирование
-	if ($state['queue'] == "yes") {
-		$objResponse->addScript("$('steamGroupStatus').setStyle('display', 'block');");
-		$objResponse->addAppend("steamGroupStatus", "innerHTML", "<p>Забанено {$banned_count} из {$total_processed} участников группы '{$state['grpname']}'. <br/>Ошибок: {$state['error_count']}.</p>");
-
-		if ($state['grpname'] == $state['last']) {
-			$objResponse->addScript("setTimeout(function() { location.reload(); }, 8000);");
-			$objResponse->addScript("$('dialog-control').setStyle('display', 'block');");
-		}
-	} else {
-		$objResponse->addScript("$('dialog-control').setStyle('display', 'block');");
-	}
-
-	new CSystemLog("m", "Группа забанена", "Забанено {$banned_count} из {$total_processed} обработанных участников группы '{$state['grpname']}'.<br>Ошибок: {$state['error_count']}. Время: {$time_str}");
-}
-
-function formatTime($seconds) {
-	$minutes = floor($seconds / 60);
-	$seconds = $seconds % 60;
-	return $minutes > 0 ? "{$minutes} мин {$seconds} сек" : "{$seconds} сек";
-}
-
-function sanitizeForMysql($string) {
-    // Удаляем 4-байтовые UTF-8 символы (эмодзи и специальные символы)
-    return preg_replace('/[\x{10000}-\x{10FFFF}]/u', '', $string);
-}
-
-function hasProblematicChars($string) {
-    // Проверяем наличие 4-байтовых UTF-8 символов (эмодзи, математические символы и т.д.)
-    if (preg_match('/[\x{10000}-\x{10FFFF}]/u', $string)) {
-        return true;
-    }
-    // Проверяем другие проблемные символы
-    if (preg_match('/[\x{1D400}-\x{1D7FF}]/u', $string)) { // Mathematical symbols
-        return true;
-    }
-    // Проверяем символы которые могут вызвать проблемы с кодировкой
-    if (!mb_check_encoding($string, 'UTF-8')) {
-        return true;
-    }
-	return false;
-}
-
 function GetGroups($friendid)
 {
 	$objResponse = new SbJsonResponse();
@@ -4445,142 +3979,6 @@ function GetGroups($friendid)
 
 	$objResponse->addScript("var t=document.getElementById('steamGroupsText');if(t)t.style.display='none';");
 	$objResponse->addScript("var g=document.getElementById('steamGroups');if(g)g.style.display='block';");
-	return $objResponse;
-}
-
-function BanFriends($friendid, $name)
-{
-	set_time_limit(0);
-	$objResponse = new xajaxResponse();
-	if($GLOBALS['config']['config.enablefriendsbanning']==0 || !is_numeric($friendid))
-		return $objResponse;
-	global $userbank, $username;
-	if(!$userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_BAN))
-	{
-		$objResponse->redirect("index.php?p=login&m=no_access", 0);
-		return $objResponse;
-	}
-	$bans = $GLOBALS['db']->GetAll(
-		"SELECT CAST(CAST(MID(authid,9,1) AS UNSIGNED) + CAST('76561197960265728' AS UNSIGNED) + CAST(MID(authid,11,10) AS UNSIGNED) * 2 AS CHAR) AS community_id " .
-		"FROM " . DB_PREFIX . "_bans " .
-		"WHERE RemoveType IS NULL AND type = 0 AND authid LIKE 'STEAM\\_%'"
-	);
-	$already = [];
-	foreach($bans as $ban) {
-		$already[] = (string)$ban["community_id"];
-	}
-	$doc = new DOMDocument();
-	$ctx = stream_context_create([
-		'http' => [
-			'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-			'timeout'    => 15,
-		],
-	]);
-	$result = get_headers("https://steamcommunity.com/profiles/".$friendid."/", 1);
-	$raw = @file_get_contents(($result["Location"]!=""?$result["Location"]:"https://steamcommunity.com/profiles/".$friendid."/")."friends", false, $ctx);
-	@$doc->loadHTML('<?xml encoding="utf-8" ?>' . $raw);
-	$divs = $doc->getElementsByTagName('div');
-	$friends = array();
-	foreach ($divs as $div) {
-		$class = $div->getAttribute('class');
-		if (strpos($class, 'friend_block_v2') !== false) {
-			// Ссылка на профиль
-			$profile_url = '';
-			$links = $div->getElementsByTagName('a');
-			foreach ($links as $a) {
-				$href = $a->getAttribute('href');
-				if (strpos($href, 'steamcommunity.com/profiles/') !== false || strpos($href, 'steamcommunity.com/id/') !== false) {
-					$profile_url = $href;
-					break;
-				}
-			}
-			// Имя друга
-			$name = '';
-			$contentDivs = $div->getElementsByTagName('div');
-			foreach ($contentDivs as $cdiv) {
-				if ($cdiv->getAttribute('class') === 'friend_block_content') {
-					$name = trim($cdiv->nodeValue);
-					break;
-				}
-			}
-			if ($profile_url) {
-				$friends[] = array('url' => $profile_url, 'name' => $name);
-			}
-		}
-	}
-
-	$total = 0;
-	$bannedbefore = 0;
-	$error = 0;
-
-	if (empty($friends)) {
-		$objResponse->addScript("ShowBox('Ошибка выборки друзей', 'Не удалось найти друзей в профиле STEAM. Возможно, Steam изменил структуру страницы или у пользователя нет друзей.', 'red', 'index.php?p=banlist', true);");
-		$objResponse->addScript("$('dialog-control').setStyle('display', 'block');");
-		return $objResponse;
-	}
-
-	foreach ($friends as $friend) {
-		$total++;
-		if (empty($friend['url'])) {
-			$error++;
-			continue;
-		}
-		$url = parse_url($friend['url'], PHP_URL_PATH);
-		$url = explode("/", $url);
-		if (!isset($url[2])) {
-			$error++;
-			continue;
-		}
-		if (in_array((string)$url[2], $already)) {
-			$bannedbefore++;
-			continue;
-		}
-		if (strpos($friend['url'], "steamcommunity.com/id/") !== false) {
-			// we don't have the friendid as this player is using a custom id :S need to get the friendid
-			if ($tfriend = GetFriendIDFromCommunityID($url[2])) {
-				if (in_array((string)$tfriend, $already)) {
-					$bannedbefore++;
-					continue;
-				}
-				$cust = $url[2];
-				$steamid = FriendIDToSteamID($tfriend);
-				$urltag = $tfriend;
-			} else {
-				$error++;
-				continue;
-			}
-		} else {
-			// just a normal friendid profile =)
-			$cust = NULL;
-			$steamid = FriendIDToSteamID($url[2]);
-			$urltag = $url[2];
-		}
-		// Sanitize name: убираем 4-байтовые символы (эмодзи и т.п.) — не влезают в utf8 (не utf8mb4)
-		// str_replace "&#13;" убирает CR-символы которые Steam иногда вставляет
-		$friendName = sanitizeForMysql(trim(str_replace("&#13;", "", $friend['name'])));
-		if (!mb_check_encoding($friendName, 'UTF-8') || $friendName === '') {
-			$friendName = 'UNKNOWN NICKNAME';
-		}
-
-		$banReason = "Steam Community Friend Ban (" . $friendName . ")";
-
-		$pre = $GLOBALS['db']->Prepare("INSERT INTO ".DB_PREFIX."_bans(created,type,ip,authid,name,ends,length,reason,aid,adminIp) VALUES (UNIX_TIMESTAMP(),?,?,?,?,UNIX_TIMESTAMP(),?,?,?,?)");
-		$success = $GLOBALS['db']->Execute($pre, array(0, "", $steamid, $friendName, 0, $banReason, $userbank->GetAid(), $_SERVER['REMOTE_ADDR']));
-
-		// Fallback на случай если sanitizeForMysql не уберёг от 1366 (битые байты из DOMDocument)
-		if (!$success && $GLOBALS['db']->ErrorNo() == 1366) {
-			$GLOBALS['db']->Execute($pre, array(0, "", $steamid, 'UNKNOWN NICKNAME', 0, $banReason, $userbank->GetAid(), $_SERVER['REMOTE_ADDR']));
-		}
-
-	}
-
-	if($total==0) {
-		$objResponse->addScript("ShowBox('Ошибка выборки друзей', 'Ошибка выборки друзей из профиля STEAM. Возможно его профиль скрыт, или у него нет друзей!', 'red', 'index.php?p=banlist', true);");
-		$objResponse->addScript("$('dialog-control').setStyle('display', 'block');");
-		return $objResponse;
-	}
-	$objResponse->addScript("ShowBox('Друзья были забанены', 'Забанено ".($total-$bannedbefore-$error)." из ".$total." друзей у ".htmlspecialchars($name).".<br>".$bannedbefore." были забанены до этого.<br>И ".$error." ошибок.', 'green', 'index.php?p=banlist', true);");
-	$objResponse->addScript("$('dialog-control').setStyle('display', 'block');");
 	return $objResponse;
 }
 

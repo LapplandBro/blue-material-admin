@@ -1858,8 +1858,20 @@ code, kbd, samp {
   background: rgba(8, 15, 31, 0.5) !important;
   color: var(--text-heading) !important;
 }
+.blue-v2 .sweet-alert p:has(> button) {
+  display: flex !important;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.55rem;
+  max-height: none !important;
+  overflow: visible !important;
+  margin: 0.75rem 0 0 !important;
+}
 .blue-v2 .sweet-alert button {
   float: none !important;
+  position: relative;
+  z-index: 5;
   width: auto !important;
   min-width: 7.5rem;
   border-radius: var(--radius-sm) !important;
@@ -1867,12 +1879,14 @@ code, kbd, samp {
   font-size: 0.84rem !important;
   font-weight: 700 !important;
   box-shadow: none !important;
-  margin: 0.55rem 0.3rem 0 !important;
+  margin: 0 !important;
+  pointer-events: auto !important;
 }
 .blue-v2 .sweet-alert[data-has-cancel-button="false"] button.cancel,
 .blue-v2 .sweet-alert[data-has-confirm-button="false"] button.confirm {
   display: none !important;
 }
+.blue-v2 .sweet-alert[data-has-cancel-button="true"] button.cancel,
 .blue-v2 .sweet-alert[data-has-confirm-button="true"] button.confirm {
   display: inline-block !important;
 }
@@ -2013,6 +2027,217 @@ code, kbd, samp {
 }
 .sb-pane-enter {
   animation: sbPaneEnter var(--sb-motion) var(--sb-ease);
+}
+
+#ban_progress_overlay,
+#ban_result_overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 8, 18, 0.72);
+  backdrop-filter: blur(2px);
+  z-index: 9998;
+}
+#ban_result_overlay { z-index: 9999; }
+#ban_progress,
+#ban_result {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 26rem;
+  max-width: 92vw;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.15rem 1.15rem 0.9rem;
+  box-shadow: var(--shadow-elevated);
+  color: var(--text);
+  font-family: var(--font-sans);
+  z-index: 9999;
+}
+#ban_result {
+  width: 34rem;
+  max-width: 94vw;
+  padding: 1.25rem;
+  z-index: 10000;
+}
+#ban_progress .ban-title,
+#ban_result .br-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-heading);
+  margin: 0 0 0.6rem;
+}
+#ban_result .br-title { font-size: 1.2rem; text-align: center; }
+#ban_progress .ban-sub,
+#ban_result .br-group {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin: 0 0 0.5rem;
+  line-height: 1.45;
+}
+#ban_result .br-group {
+  background: var(--bg-card-alt);
+  border: 1px solid var(--border);
+  padding: 0.5rem 0.65rem;
+  border-radius: var(--radius-sm);
+  text-align: center;
+  margin-bottom: 0.85rem;
+}
+#ban_progress .ban-bar-wrap {
+  width: 100%;
+  height: 0.75rem;
+  background: var(--bg-sidebar);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+  margin: 0.65rem 0 0.5rem;
+}
+#ban_progress .ban-bar {
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent) 0%, var(--accent-hover) 70%);
+  transition: width 0.2s var(--sb-ease);
+}
+#ban_progress .ban-status {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.65rem;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+#ban_result .br-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.65rem;
+  margin-bottom: 0.75rem;
+}
+#ban_result .br-card {
+  background: var(--bg-card-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 0.75rem;
+  text-align: center;
+}
+#ban_result .br-num {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-heading);
+  line-height: 1.1;
+}
+#ban_result .br-lbl {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-top: 0.25rem;
+}
+#ban_result .br-time {
+  background: var(--bg-card-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.65rem;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin-bottom: 0.85rem;
+}
+#ban_result .br-actions {
+  display: flex;
+  gap: 0.65rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+#ban_result .br-btn {
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text);
+  padding: 0.6rem 1rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+#ban_result .br-btn:hover {
+  background: var(--accent-soft);
+  color: var(--text-heading);
+}
+
+#sb-session-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 8, 18, 0.72);
+  backdrop-filter: blur(2px);
+  z-index: 5100;
+}
+#sb-session-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 26rem;
+  max-width: calc(100vw - 2rem);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.35rem 1.25rem 1.15rem;
+  box-shadow: var(--shadow-elevated);
+  color: var(--text);
+  font-family: var(--font-sans);
+  z-index: 5101;
+  text-align: center;
+}
+#sb-session-dialog .sb-sess-ico {
+  width: 3.25rem;
+  height: 3.25rem;
+  margin: 0 auto 0.75rem;
+  border: 3px solid var(--warn);
+  border-radius: 50%;
+  color: var(--warn);
+  font-size: 1.65rem;
+  font-weight: 800;
+  line-height: 3.05rem;
+}
+#sb-session-dialog .sb-sess-title {
+  margin: 0 0 0.55rem;
+  color: var(--text-heading);
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+#sb-session-dialog .sb-sess-text {
+  margin: 0 0 1rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+#sb-session-dialog .sb-sess-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.55rem;
+}
+#sb-session-dialog .sb-sess-actions button {
+  min-width: 7.5rem;
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 1.2rem;
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+#sb-session-dialog .sb-sess-later {
+  background: var(--bg-elevated);
+  color: var(--text);
+  border: 1px solid var(--border-hairline);
+}
+#sb-session-dialog .sb-sess-extend {
+  background: var(--accent);
+  color: #fff;
+  border: 1px solid #1576d6;
+}
+#sb-session-dialog .sb-sess-extend:hover {
+  background: var(--accent-hover);
+}
+#sb-session-dialog .sb-sess-extend:disabled {
+  opacity: 0.55;
+  cursor: wait;
 }
 
 @media (max-width: 991.98px) {

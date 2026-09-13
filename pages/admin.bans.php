@@ -914,8 +914,7 @@ function CheckGroupBan()
 		banFormIdle();
 		return;
 	}
-	for (var i = 0; i < ids.length; i++)
-		xajax_GroupBan(ids[i], "yes", "yes", $('groupreason').value, last);
+	xajax_GroupBan(ids.join(','), "yes", "yes", $('groupreason').value, last);
 }
 </script>
 </div>
