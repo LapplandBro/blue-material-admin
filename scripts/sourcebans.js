@@ -849,6 +849,42 @@ function RemoveGroup(id, name, type)
 	xajax_RemoveGroup(id, type);
 }
 
+function sbDeleteAdmin(btn, ev)
+{
+	ev = ev || window.event;
+	if (ev) {
+		if (ev.stopPropagation)
+			ev.stopPropagation();
+		ev.cancelBubble = true;
+		if (ev.preventDefault)
+			ev.preventDefault();
+	}
+	if (!btn)
+		return false;
+	var id = parseInt(btn.getAttribute("data-aid"), 10);
+	var name = btn.getAttribute("data-name") || "";
+	var warn = btn.getAttribute("data-warn") || "";
+	if (!id)
+		return false;
+	if (warn && !confirm(warn))
+		return false;
+	RemoveAdmin(id, name);
+	return false;
+}
+
+function sbRemoveAdminRow(aid)
+{
+	aid = String(aid == null ? "" : aid);
+	if (!aid)
+		return;
+	var ids = ["aid_" + aid, "aid_" + aid + "_detail"], i, el;
+	for (i = 0; i < ids.length; i++) {
+		el = document.getElementById(ids[i]);
+		if (el && el.parentNode)
+			el.parentNode.removeChild(el);
+	}
+}
+
 function RemoveAdmin(id, name)
 {
 	var noPerm = confirm("Вы уверены, что хотите удалить '" + name +"'?");

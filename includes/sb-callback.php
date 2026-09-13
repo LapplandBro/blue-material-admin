@@ -764,7 +764,7 @@ function RemoveAdmin($aid)
  	}
 
 	$query = $GLOBALS['db']->GetRow("SELECT count(aid) AS cnt FROM `" . DB_PREFIX . "_admins`");
-	$objResponse->addScript("SlideUp('aid_$aid');");
+	$objResponse->addScript("if(typeof sbRemoveAdminRow==='function')sbRemoveAdminRow(" . (int)$aid . ");");
 	$objResponse->addScript("$('admincount').setHTML('" . $query['cnt'] . "');");
 	// Абсолютный URL обязателен: относительный admin/admins с /admin/admins → /admin/admin/admins → «главная».
 	$adminsPath = function_exists('sb_url') ? sb_url('admin', array('c' => 'admins')) : 'index.php?p=admin&c=admins';

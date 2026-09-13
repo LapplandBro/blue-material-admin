@@ -31,7 +31,7 @@
       </thead>
       <tbody>
         {% for admin in admins|default([]) %}
-        <tr class="opener admin-manage-row">
+        <tr class="opener admin-manage-row" id="aid_{{ admin.aid }}">
           <td data-label="Имя">
             <span class="admin-manage-name">{{ admin.user }}</span>
             <span class="admin-manage-chip" title="Иммунитет">{{ admin.immunity }}</span>
@@ -40,7 +40,7 @@
           <td data-label="Веб-группа">{{ admin.web_group }}</td>
           <td class="text-end" data-label="Срок">{{ admin.expired_text|raw }}</td>
         </tr>
-        <tr class="admin-detail-row">
+        <tr class="admin-detail-row" id="aid_{{ admin.aid }}_detail">
           <td colspan="4">
             <div class="opener">
               <div class="admin-detail">
@@ -120,7 +120,7 @@
                     <a href="index.php?p=admin&amp;c=admins&amp;o=warnings&amp;id={{ admin.aid }}">Предупр. ({{ admin.warnings }}/{{ maxWarnings }})</a>
                     {% endif %}
                     {% if permission_deleteadmin %}
-                    <a class="admin-aside-danger" href="#" onclick="{{ admin.del_link_d|raw }}; return false;">Удалить</a>
+                    <button type="button" class="admin-aside-danger" data-aid="{{ admin.aid }}" data-name="{{ admin.user|e('html_attr') }}"{% if admin.del_warn %} data-warn="{{ admin.del_warn|e('html_attr') }}"{% endif %} onclick="return sbDeleteAdmin(this, event);">Удалить</button>
                     {% endif %}
                   </nav>
                   {% endif %}

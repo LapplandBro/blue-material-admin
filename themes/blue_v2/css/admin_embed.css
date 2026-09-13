@@ -1543,22 +1543,32 @@
   flex-direction: column;
   gap: 0.12rem;
 }
-.admin-aside-links a {
+.admin-aside-links a,
+.admin-aside-links button {
   display: block;
+  width: 100%;
+  margin: 0;
   padding: 0.32rem 0.55rem;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-hairline);
   color: var(--text);
+  font: inherit;
   font-size: 0.82rem;
   font-weight: 650;
+  text-align: left;
   text-decoration: none;
   background: rgba(8, 15, 31, 0.45);
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
 }
-.admin-aside-links a:hover {
+.admin-aside-links a:hover,
+.admin-aside-links button:hover {
   background: var(--accent-soft);
   color: var(--accent-hover);
 }
-.admin-aside-links a.admin-aside-danger { color: #ff8aa0; }
+.admin-aside-links a.admin-aside-danger,
+.admin-aside-links button.admin-aside-danger { color: #ff8aa0; }
 .admin-muted { color: var(--muted); }
 .admin-row-muted td { opacity: 0.55; }
 
