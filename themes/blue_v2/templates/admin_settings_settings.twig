@@ -214,7 +214,13 @@ document.getElementById('smtp_enabled').onclick = function() {
 };
 document.getElementById('smtp_enabled').onclick();
 function runMaintenance() {
-  var mv = document.getElementById('maintenance').value;
+  var sel = document.getElementById('maintenance');
+  var btn = document.getElementById('amaintenance');
+  if (!sel || !btn) return;
+  if (typeof sbBusy === 'function' && sbBusy(btn)) return;
+  var mv = sel.value;
+  var opt = sel.options[sel.selectedIndex];
+  var label = opt ? String(opt.textContent || opt.text || mv).replace(/\s+/g, ' ').trim() : mv;
   var msgs = {
     bansexpired: 'Будут безвозвратно удалены все истёкшие баны. Продолжить?',
     commsexpired: 'Будут безвозвратно удалены все истёкшие блокировки чата. Продолжить?',
@@ -226,7 +232,26 @@ function runMaintenance() {
     demosclean: 'Все загруженные демки и медиафайлы пользователей будут безвозвратно удалены с диска. Продолжить?',
     warningsexpired: 'Будут безвозвратно удалены все истёкшие предупреждения. Продолжить?'
   };
-  if (msgs[mv] && !confirm(msgs[mv])) return;
-  xajax_Maintenance(mv);
+  if (msgs[mv] && !confirm(msgs[mv])) {
+    if (typeof sbIdle === 'function') sbIdle(btn);
+    return;
+  }
+  if (!btn.getAttribute('data-sb-label'))
+    btn.setAttribute('data-sb-label', 'Выполнить');
+  btn.textContent = 'Выполняется…';
+  sel.disabled = true;
+  if (sel._sbWrap) {
+    var sbtn = sel._sbWrap.querySelector('.sb-select-btn');
+    if (sbtn) sbtn.disabled = true;
+  }
+  var safe = String(label).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  if (typeof ShowBoxWait === 'function') {
+    ShowBoxWait('Обслуживание системы',
+      '<div class="sb-wait-line"><span class="sb-wait-spin" aria-hidden="true"></span><span>Выполняется: <b>' + safe + '</b>. Подождите, операция может занять несколько секунд. Не закрывайте страницу.</span></div>');
+  }
+  if (typeof xajax_Maintenance === 'function')
+    xajax_Maintenance(mv);
+  else if (typeof ShowBox === 'function')
+    ShowBox('Ошибка', 'AJAX не загрузился. Обновите страницу (Ctrl+F5).', 'red', '', true);
 }
 </script>

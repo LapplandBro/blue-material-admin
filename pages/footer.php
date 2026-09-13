@@ -194,11 +194,6 @@ window.addEvent('domready', function(){
 
 <?php if(is_object($GLOBALS['log'])) $GLOBALS['log']->WriteLogEntries(); ?>
 	
-<!--[if lt IE 7]>
-<script defer  src="./scripts/pngfix.js"></script>
-<![endif]-->
-
-
 <?php
 $sf = function_exists('sb_consume_script_footer') ? sb_consume_script_footer() : '';
 if ($sf !== '')

@@ -1202,11 +1202,14 @@ div.opener5 {
 }
 .sb-select-btn {
   position: relative;
-  display: flex;
-  align-items: center;
+  display: block;
   width: 100%;
+  min-width: 0;
   margin: 0;
+  overflow: hidden;
   text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   cursor: pointer;
   appearance: none;
   -webkit-appearance: none;
@@ -1233,17 +1236,32 @@ div.opener5 {
   opacity: 0.45;
   cursor: not-allowed;
 }
+.sb-select-catch {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 4990;
+  background: transparent;
+}
+.sb-select-catch.is-on {
+  display: block;
+}
 .sb-select-menu {
   position: absolute;
   z-index: 1080;
   left: 0;
-  right: 0;
+  right: auto;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   top: calc(100% + 0.28rem);
   margin: 0;
   padding: 0.28rem 0;
   list-style: none;
   max-height: min(16rem, 55vh);
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   background: rgba(12, 22, 42, 0.98);
   border: 1px solid var(--border-hairline);
   border-radius: var(--radius-sm);
@@ -1252,7 +1270,7 @@ div.opener5 {
   visibility: hidden;
   pointer-events: none;
   transform: translateY(-0.4rem);
-  transform-origin: top center;
+  transform-origin: top left;
   transition: opacity 0.08s ease, transform 0.08s ease, visibility 0.08s ease;
 }
 .sb-select.is-open .sb-select-menu {
@@ -1266,7 +1284,7 @@ div.opener5 {
   top: auto;
   bottom: calc(100% + 0.28rem);
   transform: translateY(0.4rem);
-  transform-origin: bottom center;
+  transform-origin: bottom left;
 }
 .sb-select--drop-up.is-open .sb-select-menu {
   transform: translateY(0);
@@ -1282,6 +1300,7 @@ div.opener5 {
 .sb-select-item {
   display: block;
   width: 100%;
+  box-sizing: border-box;
   margin: 0;
   padding: 0.42rem 0.85rem;
   border: 0;
@@ -1290,6 +1309,7 @@ div.opener5 {
   font: inherit;
   font-size: 0.86rem;
   text-align: left;
+  overflow-wrap: anywhere;
   cursor: pointer;
 }
 .sb-select-item:hover,
@@ -1881,6 +1901,7 @@ code, kbd, samp {
   box-shadow: none !important;
   margin: 0 !important;
   pointer-events: auto !important;
+  transition: background-color 0.22s ease, border-color 0.22s ease, color 0.22s ease, box-shadow 0.22s ease;
 }
 .blue-v2 .sweet-alert[data-has-cancel-button="false"] button.cancel,
 .blue-v2 .sweet-alert[data-has-confirm-button="false"] button.confirm {
@@ -1900,9 +1921,48 @@ code, kbd, samp {
   border-color: var(--accent-hover) !important;
 }
 .blue-v2 .sweet-alert button.cancel {
-  background: rgba(16, 29, 53, 0.9) !important;
+  background: rgba(12, 21, 40, 0.45) !important;
+  color: var(--muted) !important;
+  border: 1px solid var(--border) !important;
+}
+.blue-v2 .sweet-alert button.cancel:hover,
+.blue-v2 .sweet-alert button.cancel:active {
+  color: var(--text-heading) !important;
+  background: rgba(30, 144, 255, 0.1) !important;
+  border-color: rgba(30, 144, 255, 0.4) !important;
+}
+.blue-v2 .sweet-alert button.cancel:focus-visible {
+  outline: 2px solid var(--accent-hover);
+  outline-offset: 2px;
+}
+.blue-v2 .sweet-alert.sweet-alert-wait {
+  pointer-events: auto;
+}
+.blue-v2 .sweet-alert.sweet-alert-wait button.confirm,
+.blue-v2 .sweet-alert.sweet-alert-wait button.cancel,
+.blue-v2 .sweet-alert.sweet-alert-wait p:has(> button) {
+  display: none !important;
+}
+.blue-v2 .sweet-alert .sb-wait-line {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0.75rem;
+  max-width: 22rem;
+  margin: 0.15rem auto 0;
+  text-align: left;
+  line-height: 1.45;
   color: var(--text) !important;
-  border: 1px solid var(--border-hairline) !important;
+}
+.blue-v2 .sweet-alert .sb-wait-spin {
+  flex: 0 0 auto;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-top: 0.18rem;
+  border: 2px solid rgba(78, 168, 255, 0.22);
+  border-top-color: rgba(78, 168, 255, 0.95);
+  border-radius: 50%;
+  animation: sbOrbitScan 0.8s linear infinite;
 }
 .blue-v2 .sb-modal-lead {
   margin: 0 0 0.35rem !important;
@@ -1957,10 +2017,16 @@ code, kbd, samp {
   color: #ddeeff !important;
 }
 .blue-v2 .sweet-alert .dialog-control-inline {
-  display: block !important;
-  margin-top: 10px;
+  display: inline-flex !important;
+  align-items: center;
+  margin: 0 !important;
+  padding: 0;
   text-align: center;
-  font-size: 0.82rem;
+  font-size: inherit;
+}
+.blue-v2 .sweet-alert .dialog-control-inline input.btn,
+.blue-v2 .sweet-alert .dialog-control-inline button {
+  min-width: 7.5rem;
 }
 .blue-v2 .sweet-alert .icon {
   margin-left: auto !important;

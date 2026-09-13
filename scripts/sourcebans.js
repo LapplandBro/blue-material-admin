@@ -67,6 +67,21 @@ function sbIdle(el) {
 	el.disabled = false;
 	if (el.removeAttribute)
 		el.removeAttribute('data-sb-busy');
+	var lab = el.getAttribute && el.getAttribute('data-sb-label');
+	if (lab) {
+		el.textContent = lab;
+		el.removeAttribute('data-sb-label');
+	}
+	if (el.id === 'amaintenance') {
+		var sel = document.getElementById('maintenance');
+		if (sel) {
+			sel.disabled = false;
+			if (sel._sbWrap) {
+				var sbtn = sel._sbWrap.querySelector('.sb-select-btn');
+				if (sbtn) sbtn.disabled = false;
+			}
+		}
+	}
 }
 
 function sbIdleLast() {
@@ -630,6 +645,8 @@ function InitAccordion(opener, element, container, num)
 			return this.start(obj);
 		},
 		display: function (index) {
+			if (skipAcc)
+				return this;
 			index = ($type(index) == 'element') ? this.elements.indexOf(index) : index;
 			if ((this.timer && this.options.wait) || (index === this.previous && !this.options.alwaysHide))
 				return this;
@@ -643,6 +660,24 @@ function InitAccordion(opener, element, container, num)
 			return this.start(obj);
 		}
 	});
+
+	var skipAcc = false;
+	if (wrap.addEventListener) {
+		wrap.addEventListener('click', function (e) {
+			skipAcc = false;
+			var t = e.target;
+			if (!t) return;
+			if (t.nodeType === 3) t = t.parentNode;
+			if (!t) return;
+			var tag = (t.nodeName || '').toUpperCase();
+			if (tag === 'INPUT' || tag === 'A' || tag === 'BUTTON' || tag === 'SELECT' || tag === 'TEXTAREA' || tag === 'LABEL')
+				skipAcc = true;
+			else if (t.closest && t.closest('input, a, button, select, textarea, label, .banlist-td-check, .banlist-check-hit, .commslist-td-check'))
+				skipAcc = true;
+			if (skipAcc)
+				window.setTimeout(function () { skipAcc = false; }, 0);
+		}, true);
+	}
 
 	accordion = new ExtendedAccordion(togglers, panels, {
 		opacity: false,
@@ -1936,8 +1971,19 @@ function sbSessionSchedule() {
 	});
 })();
 
+function ShowBoxWait(title, msg)
+{
+	ShowBox._wait = true;
+	ShowBox(title, msg, "blue", "", true);
+}
+
 function ShowBox(title, msg, color, redir, noclose, timer)
 {
+	var waiting = !!ShowBox._wait;
+	ShowBox._wait = false;
+	if (!waiting && typeof sbIdleLast === "function")
+		sbIdleLast();
+
 	var type = "info";
 	if (color == "red")
 		type = "warning";
@@ -1975,12 +2021,12 @@ function ShowBox(title, msg, color, redir, noclose, timer)
 		title: title || "",
 		text: "\u00a0",
 		type: type,
-		allowOutsideClick: true,
+		allowOutsideClick: !waiting,
 		confirmButtonText: "ОК",
-		showConfirmButton: true,
+		showConfirmButton: !waiting,
 		showCancelButton: false,
 		closeOnConfirm: true,
-		containerClass: hasSrvFrame ? "sweet-alert-srv" : ""
+		containerClass: ((hasSrvFrame ? "sweet-alert-srv" : "") + (waiting ? " sweet-alert-wait" : "")).replace(/^\s+/, "")
 	};
 	if (timer)
 		opts.timer = timer;
@@ -1997,19 +2043,45 @@ function ShowBox(title, msg, color, redir, noclose, timer)
 		return null;
 	}
 
+	function ensureDialogControl(box) {
+		var ctrl = document.getElementById("dialog-control");
+		if (!ctrl) {
+			ctrl = document.createElement("span");
+			ctrl.id = "dialog-control";
+		}
+		if (!box)
+			return ctrl;
+		var ok = box.querySelector("button.confirm");
+		var row = ok && ok.parentNode ? ok.parentNode : box;
+		if (ctrl.parentNode !== row)
+			row.insertBefore(ctrl, ok || null);
+		return ctrl;
+	}
+
 	function mountBox() {
 		var box = document.querySelector(".sweet-alert");
 		if (!box)
 			return;
 
-		box.setAttribute("data-has-confirm-button", "true");
-		box.setAttribute("data-has-cancel-button", "false");
 		var ok = box.querySelector("button.confirm");
-		if (ok)
-			ok.style.display = "inline-block";
 		var cancel = box.querySelector("button.cancel");
-		if (cancel)
-			cancel.style.display = "none";
+		var ctrl = ensureDialogControl(box);
+		var hasCustom = !waiting && !!(ctrl && ctrl.querySelector("input, button"));
+
+		if (waiting)
+			box.classList.add("sweet-alert-wait");
+		else
+			box.classList.remove("sweet-alert-wait");
+
+		box.setAttribute("data-has-confirm-button", (waiting || hasCustom) ? "false" : "true");
+		box.setAttribute("data-has-cancel-button", hasCustom ? "true" : "false");
+		if (ok)
+			ok.style.display = (waiting || hasCustom) ? "none" : "inline-block";
+		if (cancel) {
+			cancel.style.display = hasCustom ? "inline-block" : "none";
+			if (hasCustom)
+				cancel.textContent = "Отмена";
+		}
 
 		var pane = contentP(box);
 		var extra = box.querySelector(".sweet-alert-body");
@@ -2041,10 +2113,11 @@ function ShowBox(title, msg, color, redir, noclose, timer)
 			}
 		}
 
-		var ctrl = box.querySelector("#dialog-control");
-		if (ctrl && ctrl.innerHTML && ctrl.innerHTML.replace(/\s+/g, "") !== "") {
+		if (hasCustom) {
 			ctrl.className = "dialog-control-inline";
-			ctrl.style.display = "block";
+			ctrl.style.display = "";
+		} else if (ctrl) {
+			ctrl.style.display = "none";
 		}
 
 		var ifr = box.querySelector("#srvkicker");
@@ -2071,6 +2144,7 @@ function ShowBox(title, msg, color, redir, noclose, timer)
 		requestAnimationFrame(mountGen);
 	else
 		setTimeout(mountGen, 0);
+	setTimeout(mountGen, 0);
 
 	// Auto-redirect only for simple notices (not server-sync modals — they redirect themselves).
 	// Same path+query (типично settings#^N после POST) — location= не перезагружает страницу,
@@ -2471,43 +2545,57 @@ document.onmouseup=new Function("dragapproved=false");
 
 function TickSelectAll()
 {
-	for(var i=0;$('chkb_' + i);i++)
-	{
-		if($('tickswitch').value==0){
-			$('chkb_' + i).checked = true;
-		}else{
-			$('chkb_' + i).checked = false;
-		}
-	}
-	if($('tickswitch').value==0) {
-		$('tickswitch').value=1;
-		$('tickswitch').setProperty('title','Снять все');
+	var i, sw = $('tickswitch');
+	var selectAll = !sw || String(sw.value) !== '1';
+	for (i = 0; $('chkb_' + i); i++)
+		$('chkb_' + i).checked = selectAll;
+	if (!sw)
+		return;
+	sw.value = selectAll ? 1 : 0;
+	if (sw.setProperty)
+		sw.setProperty('title', selectAll ? 'Снять все' : 'Выбрать все');
+	else
+		sw.title = selectAll ? 'Снять все' : 'Выбрать все';
+	if ($('tickswitchlink')) {
 		$('tickswitchlink').addClass('alert-success');
-		$('tickswitchlink').innerHTML = 'Все баны на текущей странице были выделены.';
-		$('tickswitchlink_1').innerHTML = 'Выбрать все баны на текущей странице.';
-		$('tickswitchlink').style.display = 'block';
-		setTimeout("$('tickswitchlink').style.display = 'none';", 2500);
-	} else {
-		$('tickswitch').value=0;
-		$('tickswitch').setProperty('title','Выбрать все');
-		$('tickswitchlink').addClass('alert-success');
-		$('tickswitchlink').innerHTML = 'Выделение банов на текущей странице снято.';
-		$('tickswitchlink_1').innerHTML = 'Снять выделение банов на текущей странице.';
+		$('tickswitchlink').innerHTML = selectAll
+			? 'Все баны на текущей странице были выделены.'
+			: 'Выделение банов на текущей странице снято.';
 		$('tickswitchlink').style.display = 'block';
 		setTimeout("$('tickswitchlink').style.display = 'none';", 2500);
 	}
+	if ($('tickswitchlink_1'))
+		$('tickswitchlink_1').innerHTML = selectAll
+			? 'Выбрать все баны на текущей странице.'
+			: 'Снять выделение банов на текущей странице.';
+}
+
+function BanlistBulkAction(sel, bankey)
+{
+	var n = 0, i = 0;
+	for (i = 0; $('chkb_' + i); i++) {
+		if ($('chkb_' + i).checked) n++;
+	}
+	if (!n) {
+		sel.selectedIndex = 0;
+		if (typeof ShowBox === 'function')
+			ShowBox('Ничего не выбрано', 'Отметьте игроков галочками в списке, затем выберите «Удалить» или «Разбан».', 'blue', '', true);
+		return;
+	}
+	BulkEdit(sel, bankey);
+	sel.selectedIndex = 0;
 }
 
 function BulkEdit(action, bankey)
 {
-	option = action.options[action.selectedIndex].value
-	ids = new Array();
-	for(var i=0;$('chkb_' + i);i++)
-	{
-		if($('chkb_' + i).checked===true)
+	var option = action.options[action.selectedIndex].value;
+	var ids = [];
+	var i;
+	for (i = 0; $('chkb_' + i); i++) {
+		if ($('chkb_' + i).checked === true)
 			ids.push($('chkb_' + i).value);
 	}
-	switch(option)
+	switch (option)
 	{
 		case "U":
 			UnbanBan(ids, bankey, "", "Разбанить всех", "1", "true");

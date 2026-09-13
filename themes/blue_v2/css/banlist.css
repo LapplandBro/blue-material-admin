@@ -1,4 +1,5 @@
 .banlist-panel { overflow: hidden; }
+.banlist-panel:has(.sb-select.is-open) { overflow: visible; }
 
 .banlist-chrome {
   display: flex;
@@ -188,6 +189,16 @@
 .banlist-table > tbody > tr > td:last-child { padding-right: 1.1rem; }
 .banlist-th-check,
 .banlist-td-check { width: 2.4rem; padding-left: 1.1rem; }
+.banlist-check-hit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.75rem;
+  min-height: 1.75rem;
+  margin: 0;
+  cursor: pointer;
+}
+.banlist-check-hit .form-check-input { pointer-events: auto; }
 .banlist-th-mod,
 .banlist-td-mod {
   width: 3.2rem;

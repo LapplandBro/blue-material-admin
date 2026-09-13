@@ -8,6 +8,27 @@
 		return typeof id === 'string' ? document.getElementById(id) : id;
 	};
 
+	/* Переход только по своему origin: javascript:/data:/чужой хост отбрасываем,
+	   даже если адрес пришёл из поля установщика. */
+	function safeRedirect(url) {
+		var raw = (url == null) ? '' : String(url);
+		if (raw === '')
+			return null;
+		var probe = raw.replace(/[\u0000-\u0020\u00a0\u2028\u2029]/g, '').toLowerCase();
+		if (/^(javascript|vbscript|livescript|data):/.test(probe))
+			return null;
+		if (typeof window.URL !== 'function')
+			return /^[a-z0-9+.-]*:/.test(probe) ? null : raw;
+		try {
+			var u = new window.URL(raw, window.location.href);
+			if (u.protocol !== window.location.protocol || u.host !== window.location.host)
+				return null;
+			return u.href;
+		} catch (e) {
+			return null;
+		}
+	}
+
 	window.ShowBox = function (title, msg, color, redirect, noclose) {
 		if (document.readyState === 'loading') {
 			document.addEventListener('DOMContentLoaded', function () {
@@ -15,14 +36,20 @@
 			});
 			return;
 		}
-		title = title || 'Сообщение';
+		title = (title == null || title === '') ? 'Сообщение' : String(title);
 		msg = (msg == null) ? '' : String(msg);
 		var type = 'info';
 		if (color === 'red') type = 'error';
 		else if (color === 'green') type = 'success';
-		var plain = msg.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '');
+		/* Диалог всегда текстовый (html: false), но сначала убираем содержимое
+		   script/style, чтобы код не показывался как «сообщение установщика». */
+		var plain = msg
+			.replace(/<\s*(script|style)\b[\s\S]*?<\s*\/\s*\1\s*>/gi, '')
+			.replace(/<br\s*\/?>/gi, '\n')
+			.replace(/<[^>]*>/g, '');
+		var target = safeRedirect(redirect);
 		function afterClose() {
-			if (redirect && !noclose) window.location = redirect;
+			if (target && !noclose) window.location.href = target;
 		}
 		if (typeof window.swal === 'function') {
 			window.swal({

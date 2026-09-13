@@ -581,6 +581,7 @@ function sb_ui_v2_render($template, array $vars)
 		'asset_base' => sb_ui_v2_base_href(),
 		'xajax_js' => sb_ui_v2_xajax_js(),
 		'sb_js_ver' => (string)(@filemtime((defined('ROOT') ? ROOT : '') . 'scripts/sourcebans.js') ?: time()),
+		'mt_js_ver' => (string)(@filemtime((defined('ROOT') ? ROOT : '') . 'scripts/mootools.js') ?: time()),
 		'css_ver' => (string)max(
 			(int)(@filemtime((defined('ROOT') ? ROOT : '') . 'themes/blue_v2/css/blue.css') ?: time()),
 			(int)(@filemtime((defined('ROOT') ? ROOT : '') . 'themes/blue_v2/css/mobile.css') ?: 0),
