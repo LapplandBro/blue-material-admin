@@ -28,9 +28,14 @@
 .admin-hub-section {
   margin-bottom: 1.25rem;
 }
+.admin-hub,
+.admin-hub-section,
+.admin-hub-grid {
+  width: 100%;
+}
 .admin-hub-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(214px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 214px), 1fr));
   gap: 0.7rem;
   align-items: stretch;
 }
@@ -184,7 +189,7 @@ a.admin-hub-tile:focus:not(:focus-visible) {
 }
 .admin-hub-stats {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 128px), 1fr));
   gap: 0.55rem;
 }
 .admin-hub-stat {
