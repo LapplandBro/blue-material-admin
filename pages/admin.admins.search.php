@@ -32,6 +32,8 @@ global $userbank, $theme;
 $server_list = $GLOBALS['db']->Execute("SELECT sid, ip, port FROM `" . DB_PREFIX . "_servers` WHERE enabled = 1");
 $servers = array();
 $serverscript = "<script type=\"text/javascript\">";
+if (is_object($server_list))
+{
 while (!$server_list->EOF)
 {
 	$info = array();
@@ -42,11 +44,14 @@ while (!$server_list->EOF)
 	array_push($servers,$info);
 	$server_list->MoveNext();
 }
+}
 $serverscript .= "</script>";
 
 //webgrouplist
 $webgroup_list = $GLOBALS['db']->Execute("SELECT gid, name FROM ". DB_PREFIX ."_groups WHERE type = '1'");
 $webgroups = array();
+if (is_object($webgroup_list))
+{
 while (!$webgroup_list->EOF)
 {
 	$data = array();
@@ -56,10 +61,13 @@ while (!$webgroup_list->EOF)
 	array_push($webgroups,$data);
 	$webgroup_list->MoveNext();
 }
+}
 
 //serveradmingrouplist
 $srvadmgroup_list = $GLOBALS['db']->Execute("SELECT name FROM ". DB_PREFIX ."_srvgroups ORDER BY name ASC");
 $srvadmgroups = array();
+if (is_object($srvadmgroup_list))
+{
 while (!$srvadmgroup_list->EOF)
 {
 	$data = array();
@@ -68,10 +76,13 @@ while (!$srvadmgroup_list->EOF)
 	array_push($srvadmgroups,$data);
 	$srvadmgroup_list->MoveNext();
 }
+}
 
 //servergroup
 $srvgroup_list = $GLOBALS['db']->Execute("SELECT gid, name FROM " . DB_PREFIX . "_groups WHERE type = '3'");
 $srvgroups = array();
+if (is_object($srvgroup_list))
+{
 while (!$srvgroup_list->EOF)
 {
 	$data = array();
@@ -80,6 +91,7 @@ while (!$srvgroup_list->EOF)
 	
 	array_push($srvgroups,$data);
 	$srvgroup_list->MoveNext();
+}
 }
 
 //webpermissions
@@ -154,7 +166,7 @@ foreach($serverflag AS $flag)
 	array_push($serverflags, $data);
 }
 
-if($_GET['showexpiredadmins'] == 'true') {
+if(isset($_GET['showexpiredadmins']) && $_GET['showexpiredadmins'] == 'true') {
 	$plus_adm = "1";
 }else {
 	$plus_adm = "";
@@ -170,5 +182,7 @@ $theme->assign('admwebflag_list', $webflags);
 $theme->assign('admsrvflag_list', $serverflags);
 $theme->assign('can_editadmin', $userbank->HasAccess(ADMIN_EDIT_ADMINS|ADMIN_OWNER));
 
-$theme->display('box_admin_admins_search.tpl');
+if (function_exists('sb_ui_v2_enabled') && sb_ui_v2_enabled())
+	return;
+
 ?>

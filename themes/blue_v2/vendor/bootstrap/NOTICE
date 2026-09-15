@@ -1,0 +1,4 @@
+Bootstrap 5.3.3 — MIT
+https://github.com/twbs/bootstrap/tree/v5.3.3
+
+Vendored so v2 does not depend on jsDelivr (often blocked).

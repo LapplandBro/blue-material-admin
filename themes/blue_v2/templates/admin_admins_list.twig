@@ -1,0 +1,147 @@
+{% if not permission_listadmin %}
+<div class="form-page">
+  <p class="form-flash form-flash--err">Нет доступа к списку администраторов.</p>
+</div>
+{% else %}
+<div class="admin-manage">
+  <header class="admin-manage-head">
+    <div>
+      <p class="form-page-kicker">Админка</p>
+      <h2 class="admin-manage-title">{% if show_expired_admins %}Истёкшие админы{% else %}Админы{% endif %} <span class="admin-manage-count" id="admincount">{{ admin_count }}</span></h2>
+      <p class="form-page-lead">Клик по строке — карточка. {{ admin_nav_p|raw }}</p>
+    </div>
+    <div class="admin-manage-tools" id="banlist-nav">
+      <a class="btn btn-outline-secondary btn-sm" href="{{ btn_href }}">{% if show_expired_admins %}Действующие{% else %}Истёкшие{% endif %}</a>
+      {% if btn_rem %}{{ btn_rem|raw }}{% endif %}
+      {{ admin_nav|raw }}
+    </div>
+  </header>
+
+  {% include 'admin_admins_search.twig' %}
+
+  <div class="table-responsive table-cards-wrap" id="banlist">
+    <table class="admin-manage-table table-cards">
+      <thead>
+        <tr>
+          <th>Имя</th>
+          <th>Серверная группа</th>
+          <th>Веб-группа</th>
+          <th class="text-end">Срок</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for admin in admins|default([]) %}
+        <tr class="opener admin-manage-row">
+          <td data-label="Имя">
+            <span class="admin-manage-name">{{ admin.user }}</span>
+            <span class="admin-manage-chip" title="Иммунитет">{{ admin.immunity }}</span>
+          </td>
+          <td data-label="Серверная группа">{{ admin.server_group }}</td>
+          <td data-label="Веб-группа">{{ admin.web_group }}</td>
+          <td class="text-end" data-label="Срок">{{ admin.expired_text|raw }}</td>
+        </tr>
+        <tr class="admin-detail-row">
+          <td colspan="4">
+            <div class="opener">
+              <div class="admin-detail">
+                <div class="admin-facts">
+                  <div class="admin-fact">
+                    <span class="admin-fact-label">Steam</span>
+                    <span class="admin-fact-value">
+                      {{ admin.steam_id_amd }}
+                      · <a href="http://steamcommunity.com/profiles/{{ admin.communityid_profile }}" target="_blank" rel="noopener">профиль</a>
+                    </span>
+                  </div>
+                  <div class="admin-fact">
+                    <span class="admin-fact-label">Discord</span>
+                    <span class="admin-fact-value">{{ admin.sk_profile|raw }}</span>
+                  </div>
+                  <div class="admin-fact">
+                    <span class="admin-fact-label">E-mail</span>
+                    <span class="admin-fact-value">{{ admin.email_profile }} {% if admin.email_profile %}(<a href="mailto:{{ admin.email_profile }}">написать</a>){% endif %}</span>
+                  </div>
+                  <div class="admin-fact">
+                    <span class="admin-fact-label">VK</span>
+                    <span class="admin-fact-value">{{ admin.vk_profile|raw }}</span>
+                  </div>
+                  <div class="admin-fact">
+                    <span class="admin-fact-label">Комментарий</span>
+                    <span class="admin-fact-value">{{ admin.comment_profile }}</span>
+                  </div>
+                  <div class="admin-fact">
+                    <span class="admin-fact-label">Доступ</span>
+                    <span class="admin-fact-value">{{ admin.expired_cv|raw }}</span>
+                  </div>
+                  <div class="admin-fact">
+                    <span class="admin-fact-label">Последний визит</span>
+                    <span class="admin-fact-value">{{ admin.lastvisit }}</span>
+                  </div>
+                  <div class="admin-fact">
+                    <span class="admin-fact-label">Баны без демо</span>
+                    <span class="admin-fact-value">{{ admin.bancount }} · <a href="index.php?p=banlist&amp;advSearch={{ admin.aid }}&amp;advType=admin">найти</a></span>
+                  </div>
+                  <div class="admin-fact">
+                    <span class="admin-fact-label">Баны с демо</span>
+                    <span class="admin-fact-value">{{ admin.nodemocount }} · <a href="index.php?p=banlist&amp;advSearch={{ admin.aid }}&amp;advType=nodemo">найти</a></span>
+                  </div>
+                  <div class="admin-fact">
+                    <span class="admin-fact-label">Муты / гаги</span>
+                    <span class="admin-fact-value">{{ admin.commscount }} · <a href="index.php?p=commslist&amp;advSearch={{ admin.aid }}&amp;advType=admin">найти</a></span>
+                  </div>
+                  <div class="admin-fact">
+                    <span class="admin-fact-label">Серверные права</span>
+                    <span class="admin-fact-value admin-fact-flags">{{ admin.server_flag_string|raw }}</span>
+                  </div>
+                  <div class="admin-fact">
+                    <span class="admin-fact-label">Веб-права</span>
+                    <span class="admin-fact-value admin-fact-flags">{{ admin.web_flag_string|raw }}</span>
+                  </div>
+                  <div class="admin-fact">
+                    <span class="admin-fact-label">Support-List</span>
+                    <span class="admin-fact-value">
+                      <label class="form-check">
+                        <input class="form-check-input" type="checkbox" id="add_support_{{ admin.aid }}" name="add_support_{{ admin.aid }}" tabindex="9" onclick="xajax_AddSupport({{ admin.aid }});">
+                        <span class="form-check-label">В список авторов рефорка</span>
+                      </label>
+                    </span>
+                  </div>
+                </div>
+                <aside class="admin-aside">
+                  {% if admin.avatar %}
+                  <img class="admin-aside-avatar" src="{{ admin.avatar }}" alt="">
+                  {% endif %}
+                  {% if permission_editadmin %}
+                  <nav class="admin-aside-links">
+                    <a href="index.php?p=admin&amp;c=admins&amp;o=editdetails&amp;id={{ admin.aid }}">Детали</a>
+                    <a href="index.php?p=admin&amp;c=admins&amp;o=editpermissions&amp;id={{ admin.aid }}">Привилегии</a>
+                    <a href="index.php?p=admin&amp;c=admins&amp;o=editservers&amp;id={{ admin.aid }}">Сервер</a>
+                    <a href="index.php?p=admin&amp;c=admins&amp;o=editgroup&amp;id={{ admin.aid }}">Группа</a>
+                    {% if allow_warnings %}
+                    <a href="index.php?p=admin&amp;c=admins&amp;o=warnings&amp;id={{ admin.aid }}">Предупр. ({{ admin.warnings }}/{{ maxWarnings }})</a>
+                    {% endif %}
+                    {% if permission_deleteadmin %}
+                    <a class="admin-aside-danger" href="#" onclick="{{ admin.del_link_d|raw }}; return false;">Удалить</a>
+                    {% endif %}
+                  </nav>
+                  {% endif %}
+                </aside>
+              </div>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="4" class="parsec-muted" data-label="">Админов нет.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+<script type="text/javascript">
+  {% for kek in checked_if|default([]) %}
+  $("add_support_{{ kek.kid }}").checked = 1;
+  {% endfor %}
+</script>
+<script type="text/javascript">InitAccordion('tr.opener', 'div.opener', 'content');</script>
+{% endif %}

@@ -147,7 +147,7 @@ class LightOpenID
         }
         return !!gethostbynamel($server);
     }
-    protected function request_curl($url, $method='GET', $params=array(), $update_claimed_id)
+    protected function request_curl($url, $update_claimed_id, $method='GET', $params=array())
     {
         $params = http_build_query($params, '', '&');
         $curl = curl_init($url . ($method == 'GET' && $params ? '?' . $params : ''));
@@ -247,7 +247,7 @@ class LightOpenID
         }
         return $headers;
     }
-    protected function request_streams($url, $method='GET', $params=array(), $update_claimed_id)
+    protected function request_streams($url, $update_claimed_id, $method='GET', $params=array())
     {
         if(!$this->hostExists($url)) {
             throw new ErrorException("Could not connect to $url.", 404);
@@ -333,9 +333,9 @@ class LightOpenID
         if (function_exists('curl_init')
             && (!in_array('https', stream_get_wrappers()) || !ini_get('safe_mode') && !ini_get('open_basedir'))
         ) {
-            return $this->request_curl($url, $method, $params, $update_claimed_id);
+            return $this->request_curl($url, $update_claimed_id, $method, $params);
         }
-        return $this->request_streams($url, $method, $params, $update_claimed_id);
+        return $this->request_streams($url, $update_claimed_id, $method, $params);
     }
     protected function build_url($url, $parts)
     {

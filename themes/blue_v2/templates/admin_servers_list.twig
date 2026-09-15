@@ -1,0 +1,66 @@
+{% if not permission_list %}
+<div class="form-page">
+  <p class="form-flash form-flash--err">Нет доступа к списку серверов.</p>
+</div>
+{% else %}
+<div class="panel">
+  <header class="form-page-head">
+    <p class="form-page-kicker">Админка</p>
+    <h2 class="form-page-title">Серверы</h2>
+    <p class="form-page-lead">{{ server_count }} шт. · статус подтягивается с игровых машин</p>
+  </header>
+  {% if permission_config %}
+  <p class="form-note">Конфиг SourceMod (<code>databases.cfg</code>) — <a href="index.php?p=admin&amp;c=servers&amp;o=dbsetup">открыть по паролю</a></p>
+  {% endif %}
+  <div class="table-responsive table-cards-wrap">
+    <table class="table table-v2 table-cards admin-servers-table">
+      <thead>
+        <tr>
+          <th class="text-center" style="width:6%;">ID</th>
+          <th>Сервер</th>
+          <th class="text-end" style="width:12%;">Игроки</th>
+          <th class="text-center" style="width:8%;">Мод</th>
+          <th class="text-end" style="width:28%;">Действия</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for server in server_list|default([]) %}
+        <script>xajax_ServerHostPlayers({{ server.sid }});</script>
+        <tr id="sid_{{ server.sid }}" class="banlist-row list-compact-row admin-server-row{% if server.enabled == 0 %} admin-row--off{% endif %}"{% if server.enabled == 0 %} title="Отключён"{% endif %}>
+          <td class="text-center admin-server-td-id" data-label="ID">{{ server.sid }}</td>
+          <td class="admin-server-td-host" id="host_{{ server.sid }}" data-label="Сервер"><span class="text-muted">Загрузка…</span></td>
+          <td class="text-end admin-server-td-players" id="players_{{ server.sid }}" data-label="Игроки"><span class="text-muted">—</span></td>
+          <td class="text-center admin-server-td-mod" data-label="Мод">{{ server.icon_html|raw }}</td>
+          <td class="text-end admin-server-td-actions" data-label="Действия">
+            <span class="admin-actions">
+              {% if server.rcon_access %}
+              <a class="btn btn-sm btn-outline-secondary" href="index.php?p=admin&amp;c=servers&amp;o=rcon&amp;id={{ server.sid }}">RCON</a>
+              {% endif %}
+              {% if permission_editserver %}
+              <a class="btn btn-sm btn-outline-secondary" href="index.php?p=admin&amp;c=servers&amp;o=edit&amp;id={{ server.sid }}">Изменить</a>
+              {% endif %}
+              {% if pemission_delserver %}
+              <a class="btn btn-sm btn-outline-danger" href="#" onclick="RemoveServer({{ server.sid }}, '{{ server.ip|e('js') }}:{{ server.port|e('js') }}'); return false;">Удалить</a>
+              {% endif %}
+            </span>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="5" class="parsec-muted" data-label="">Серверов нет.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if permission_addserver %}
+  <div class="admin-panel-foot">
+    <button type="button" class="btn btn-outline-secondary" id="upload" onclick="childWindow=open('pages/admin.uploadmapimg.php','upload','resizable=yes,scrollbars=yes,width=520,height=420');">Загрузить картинку карты</button>
+    <div id="mapimg1.msg" class="form-note" style="display:none;">
+      <strong id="mapimg.msg"></strong>
+      <span>Успешно загружено</span>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endif %}

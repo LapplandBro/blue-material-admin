@@ -1,5 +1,5 @@
-﻿# HTTP error pages (deep blue)
+﻿# Страницы ошибок
 
-Standalone HTML for Apache ErrorDocument. Home link is `/` (same host).
+Обычный HTML для Apache `ErrorDocument`: 404, 401 и остальные. Ссылка «на главную» ведёт на `/` того же сайта.
 
-Configured from root `.htaccess` as `/errors/404.html` etc.
+В корневом `.htaccess` они подключены как `/errors/404.html` и так далее.

@@ -41,20 +41,18 @@ $theme->assign('THEME_VERSION', theme_version);
 $theme->assign('THEME_LINK', theme_link);
 $theme->assign('SB_VERSION', SB_VERSION);
 
-$theme->assign('show_gendata',      ($GLOBALS['config']['page.footer.allow_show_data'] == "1"));
-$theme->assign('gendata_queries',   $GLOBALS['db']->Queries);
-$theme->assign('gendata_time',      round($totaltime, 2));
+$theme->assign('show_gendata',      false);
+$theme->assign('gendata_queries',   0);
+$theme->assign('gendata_time',      0);
 
 $theme->assign('splash_screen',     ($GLOBALS['config']['theme.splashscreen'] == "1"));
 
 // Cache-busting для собственных JS/CSS темы (браузеры кэшируют их на 7 дней).
-$asset_ver = @filemtime(dirname(__FILE__) . '/../themes/new_box/js/functions.js');
+$asset_ver = @filemtime(dirname(__FILE__) . '/../themes/blue_v2/css/blue.css');
 if ($asset_ver === false) {
 	$asset_ver = defined('SB_VERSION') ? SB_VERSION : '1';
 }
 $theme->assign('asset_ver', $asset_ver);
-
-$theme->display('page_footer.tpl');
 
 if(isset($_GET['p']))
 	$_SESSION['p'] = $_GET['p'];
@@ -196,24 +194,14 @@ window.addEvent('domready', function(){
 
 <?php if(is_object($GLOBALS['log'])) $GLOBALS['log']->WriteLogEntries(); ?>
 	
-<!--[if lt IE 7]>
-<script defer  src="./scripts/pngfix.js"></script>
-<![endif]-->
-
-
-<?php // Cookie "ScriptFooter" пишется на сервере через PushScriptToExecuteAfterLoadPage()/
-      // AddScriptWithReload() и выводится здесь как есть, как JavaScript. Проверены все текущие
-      // места вызова (admin.menu.php, admin.menu.edit.php) - все передают только жёстко заданные
-      // строки через безопасный generateMsgBoxJS(), пользовательский ввод туда не попадает.
-      // Если в будущем появится новый вызов с пользовательскими данными - его нужно будет
-      // экранировать (json_encode/addslashes) ПЕРЕД передачей в PushScriptToExecuteAfterLoadPage(). ?>
-<?php if (isset($_COOKIE['ScriptFooter'])) { ?>
-    <script>
-        <?php echo $_COOKIE['ScriptFooter']; ?>
-    </script>
 <?php
-    setcookie("ScriptFooter", "", time());
-    } ?>
+$sf = function_exists('sb_consume_script_footer') ? sb_consume_script_footer() : '';
+if ($sf !== '')
+	echo $sf;
+elseif (isset($_COOKIE['ScriptFooter'])) {
+	setcookie('ScriptFooter', '', time() - 86400, '/');
+}
+?>
 
 </body>
 </html>

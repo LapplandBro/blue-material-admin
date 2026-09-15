@@ -26,6 +26,8 @@
 // *************************************************************************
 
 global $userbank;
+if (defined('INCLUDES_PATH') && is_readable(INCLUDES_PATH . '/CTabsMenu.php'))
+	require_once INCLUDES_PATH . '/CTabsMenu.php';
 
 $adminC = isset($_GET['c']) ? trim((string)$_GET['c']) : '';
 $adminKnown = array(
@@ -105,8 +107,8 @@ else
 			if(isset($_GET['advSearch']))
 			{
 				// Escape the value, but strip the leading and trailing quote
-				$value = substr($GLOBALS['db']->qstr($_GET['advSearch'], get_magic_quotes_gpc()), 1, -1);
-				$type = $_GET['advType'];
+				$value = substr($GLOBALS['db']->qstr($_GET['advSearch'], false), 1, -1);
+				$type = isset($_GET['advType']) ? (string)$_GET['advType'] : '';
 				switch($type)
 				{
 					case "name":
@@ -179,19 +181,23 @@ else
 				}
 				$advSearchString = "&advSearch=".$_GET['advSearch']."&advType=".$_GET['advType'];
 			}
-			if($_GET['showexpiredadmins'] == 'true') {
+			if(isset($_GET['showexpiredadmins']) && $_GET['showexpiredadmins'] == 'true') {
 				$where2 = " AND (ADM.expired < ".time()." AND ADM.expired <> 0)";
 			}
 			else {
 				$where2 = " AND (ADM.expired > ".time()." OR ADM.expired = 0)";
 			}
 			$admins = $GLOBALS['db']->GetAll("SELECT * FROM `" . DB_PREFIX . "_admins` AS ADM".$join." WHERE ADM.aid > 0".$where2."".$where." ORDER BY user LIMIT " . intval(($page-1) * $AdminsPerPage) . "," . intval($AdminsPerPage));
+			if (!is_array($admins))
+				$admins = array();
 			// quick fix for the server search showing admins mulitple times.
 			if(isset($_GET['advSearch']) && isset($_GET['advType']) && $_GET['advType'] == 'server') {
 
 				$aadm = array();
 				$num = 0;
 				foreach($admins as $aadmin) {
+					if(!is_array($aadmin) || !isset($aadmin['aid']))
+						continue;
 					if(!in_array($aadmin['aid'], $aadm))
 						$aadm[] = $aadmin['aid'];
 					else 
@@ -201,7 +207,7 @@ else
 			}
 			
 			$query = $GLOBALS['db']->GetRow("SELECT COUNT(ADM.aid) AS cnt FROM `" . DB_PREFIX . "_admins` AS ADM".$join." WHERE ADM.aid > 0".$where2."".$where);
-			$admin_count = $query['cnt'];
+			$admin_count = (is_array($query) && isset($query['cnt'])) ? $query['cnt'] : 0;
 			include TEMPLATES_PATH . "/admin.admins.php";
 			RewritePageTitle("Управление админами");
 		}
@@ -399,7 +405,7 @@ else
 			: (ADMIN_OWNER|ADMIN_ADD_BAN|ADMIN_EDIT_OWN_BANS|ADMIN_EDIT_ALL_BANS|ADMIN_EDIT_GROUP_BANS) );
 
 		$recTabMenu = new CTabsMenu();
-		$recTabMenu->addMenuItem("Поиск", 0);
+		$recTabMenu->addMenuItem("Поиск", 0, "", sb_url('admin', array('c' => 'recidivism')), true);
 		$recTabMenu->addMenuItem("Баны", 1, "", sb_url('banlist'), true);
 		$recTabMenu->addMenuItem("Муты", 2, "", sb_url('commslist'), true);
 		$recTabMenu->addMenuItem("Связанные", 3, "", sb_url('admin', array('c' => 'parsec')), true);
@@ -421,7 +427,7 @@ else
 			: (ADMIN_OWNER|ADMIN_ADD_BAN|ADMIN_EDIT_OWN_BANS|ADMIN_EDIT_ALL_BANS|ADMIN_EDIT_GROUP_BANS) );
 
 		$parsecTabMenu = new CTabsMenu();
-		$parsecTabMenu->addMenuItem("Поиск", 0);
+		$parsecTabMenu->addMenuItem("Поиск", 0, "", sb_url('admin', array('c' => 'parsec')), true);
 		$parsecTabMenu->addMenuItem("История", 1, "", sb_url('admin', array('c' => 'recidivism')), true);
 		$parsecTabMenu->addMenuItem("Баны", 2, "", sb_url('banlist'), true);
 		$parsecTabMenu->outputMenu();
@@ -447,8 +453,10 @@ else
 			// ====================[ ADMIN SIDE MENU END ] ===================	
 			
 			$mod_list = $GLOBALS['db']->GetAll("SELECT * FROM `" . DB_PREFIX . "_mods` WHERE mid > 0 ORDER BY name ASC") ;
+			if (!is_array($mod_list))
+				$mod_list = array();
 			$query = $GLOBALS['db']->GetRow("SELECT COUNT(mid) AS cnt FROM `" . DB_PREFIX . "_mods`") ;
-			$mod_count = $query['cnt'];
+			$mod_count = (is_array($query) && isset($query['cnt'])) ? $query['cnt'] : 0;
 			include TEMPLATES_PATH . "/admin.mods.php";
 			RewritePageTitle("Управление МОДами");	
 		}
@@ -476,6 +484,7 @@ else
 			if($userbank->HasAccess(ADMIN_OWNER|ADMIN_WEB_SETTINGS ) )
 			{
 				$settingsTabMenu->addMenuItem("Главные настройки",0);
+				$settingsTabMenu->addMenuItem("SEO",4);
 				$settingsTabMenu->addMenuItem("Опции",3);
 			}
 			$settingsTabMenu->addMenuItem("Уведомления", 1);
@@ -508,10 +517,10 @@ else
 	// ###################[ Settings ]##################################################################
 	{
 		CheckAdminAccess( ADMIN_OWNER );	
-		if($_GET['o'] == 'edit')
+		if(isset($_GET['o']) && $_GET['o'] == 'edit')
 		{
 			$banTabMenu = new CTabsMenu();
-			$banTabMenu->addMenuItem("Назад", 0,"", "javascript:history.go(-1);", true);
+			$banTabMenu->addMenuItem("Назад", 0,"", "index.php?p=admin&c=menu", true);
 			$banTabMenu->outputMenu();			
 			
 			include TEMPLATES_PATH . "/admin.menu.edit.php";
@@ -533,4 +542,5 @@ else
 	}
 	
 }
-echo '</div></div></div>';
+// Legacy sandwich: CTabsMenu/item_admin_tabs used to leave three <div> open.
+// wrap.twig already opens #admin-page-wrap / .admin-embed-body. Live UI is Blue V2 only.

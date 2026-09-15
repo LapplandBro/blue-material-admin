@@ -35,15 +35,21 @@ $sid = (int)$_GET['id'];
 $access = $userbank->HasAccess(ADMIN_OWNER);
 if (!$access) {
 	$servers = $GLOBALS['db']->GetAll("SELECT `server_id`, `srv_group_id` FROM ".DB_PREFIX."_admins_servers_groups WHERE admin_id = ". (int)$userbank->GetAid());
+	if (!is_array($servers))
+		$servers = array();
 	foreach ($servers as $server) {
+		if (!is_array($server))
+			continue;
 		if ((int)$server['server_id'] == $sid) {
 			$access = true;
 			break;
 		}
 		if ($server['srv_group_id'] > 0) {
 			$servers_in_group = $GLOBALS['db']->GetAll("SELECT `server_id` FROM ".DB_PREFIX."_servers_groups WHERE group_id = ". (int)$server['srv_group_id']);
+			if (!is_array($servers_in_group))
+				$servers_in_group = array();
 			foreach ($servers_in_group as $servig) {
-				if ((int)$servig['server_id'] == $sid) {
+				if (is_array($servig) && (int)$servig['server_id'] == $sid) {
 					$access = true;
 					break 2;
 				}
@@ -54,10 +60,9 @@ if (!$access) {
 
 $theme->assign('id', $sid);
 $theme->assign('permission_rcon', ($access && ($userbank->HasAccess(ADMIN_OWNER) || $userbank->HasAccess(SM_RCON . SM_ROOT))));
-$theme->left_delimiter = '-{';
-$theme->right_delimiter = '}-';
-
-$theme->display('page_admin_servers_rcon.tpl');
-
-$theme->left_delimiter = '{';
-$theme->right_delimiter = '}';
+echo '<div id="admin-page-content">';
+echo '<div id="0" class="admin-pane is-on">';
+$_f = sb_ui_v2_theme_fragment('admin_servers_rcon.twig');
+if (is_string($_f) && $_f !== '') echo $_f;
+echo '</div>';
+echo '</div>';

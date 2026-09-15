@@ -1,0 +1,102 @@
+<div class="form-page admin-form admin-servers-db">
+  <header class="form-page-head">
+    <p class="form-page-kicker">Админка · серверы</p>
+    <h2 class="form-page-title">Конфиг БД SourceMod</h2>
+    <p class="form-page-lead">Фрагмент для <code>databases.cfg</code> на игровом сервере. Содержит пароль MySQL — доступ только после пароля из <code>config.php</code>.</p>
+  </header>
+
+  {% if flash_err %}
+  <p class="form-flash form-flash--err" role="alert">{{ flash_err }}</p>
+  {% endif %}
+
+  {% if not unlocked %}
+  <section class="dbcfg-panel dbcfg-panel--lock" aria-labelledby="dbcfg-lock-title">
+    <div class="dbcfg-panel__head">
+      <h3 class="dbcfg-panel__title" id="dbcfg-lock-title">Просмотр защищён</h3>
+      <div class="dbcfg-badges">
+        <span class="dbcfg-badge dbcfg-badge--lock">Закрыто</span>
+        {% if not password_configured %}
+        <span class="dbcfg-badge dbcfg-badge--warn">Пароль не задан</span>
+        {% else %}
+        <span class="dbcfg-badge dbcfg-badge--ok-soft">Готово к вводу</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <dl class="dbcfg-meta">
+      <div class="dbcfg-meta__row">
+        <dt>Файл</dt>
+        <dd><code>databases.cfg</code></dd>
+      </div>
+      <div class="dbcfg-meta__row">
+        <dt>Путь на сервере</dt>
+        <dd><code>/[mod]/addons/sourcemod/configs/databases.cfg</code></dd>
+      </div>
+    </dl>
+
+    {% if not password_configured %}
+    <p class="dbcfg-panel__hint">Задайте константу <code>SB_DBCFG_VIEW_PASSWORD</code> в <code>config.php</code> (отдельный пароль, не пароль аккаунта и не PARSEC). Без неё конфиг открыть нельзя.</p>
+    {% else %}
+    <p class="dbcfg-panel__hint">Введите пароль просмотра. Каждый успешный просмотр пишется в системный лог.</p>
+    {% endif %}
+
+    <form method="post" action="{{ form_action }}" class="dbcfg-lock__form" autocomplete="off">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <input type="hidden" name="dbcfg_unlock" value="1">
+      <div class="form-field form-field--full">
+        <label class="form-label" for="dbcfg_password">Пароль просмотра</label>
+        <div class="dbcfg-unlock-row">
+          <input type="password" class="form-control" id="dbcfg_password" name="dbcfg_password" autocomplete="off" placeholder="пароль из config.php"{% if not password_configured %} disabled{% endif %}{% if password_configured %} autofocus{% endif %}>
+          <button type="submit" class="btn btn-accent"{% if not password_configured %} disabled{% endif %}>Показать конфиг</button>
+        </div>
+      </div>
+    </form>
+  </section>
+  {% else %}
+  <section class="dbcfg-panel dbcfg-panel--open" aria-labelledby="dbcfg-open-title">
+    <div class="dbcfg-panel__head">
+      <h3 class="dbcfg-panel__title" id="dbcfg-open-title">databases.cfg</h3>
+      <div class="dbcfg-badges">
+        <span class="dbcfg-badge dbcfg-badge--ok">Открыто</span>
+        <button type="button" class="btn btn-sm btn-outline-secondary" id="dbcfg_copy" data-target="dbcfg_conf">Копировать</button>
+      </div>
+    </div>
+    <p class="dbcfg-panel__hint">Скопируйте блок целиком в файл на игровом сервере. После ухода со страницы конфиг снова скроется.</p>
+    <div class="dbcfg-conf-wrap">
+      <textarea class="form-control dbcfg-conf" id="dbcfg_conf" rows="22" readonly spellcheck="false">{{ conf }}</textarea>
+    </div>
+  </section>
+  {% endif %}
+
+  <div class="form-actions">
+    <a class="btn btn-outline-secondary" href="{{ back_url }}">Назад к серверам</a>
+    {% if unlocked %}
+    <a class="btn btn-outline-secondary" href="{{ form_action }}">Скрыть конфиг</a>
+    {% endif %}
+  </div>
+</div>
+{% if unlocked %}
+<script>
+(function () {
+  var btn = document.getElementById('dbcfg_copy');
+  var ta = document.getElementById('dbcfg_conf');
+  if (!btn || !ta) return;
+  var label = btn.textContent;
+  btn.addEventListener('click', function () {
+    var done = function () {
+      btn.textContent = 'Скопировано';
+      window.setTimeout(function () { btn.textContent = label; }, 1600);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(ta.value).then(done).catch(function () {
+        ta.select();
+        try { document.execCommand('copy'); done(); } catch (e) {}
+      });
+    } else {
+      ta.select();
+      try { document.execCommand('copy'); done(); } catch (e) {}
+    }
+  });
+})();
+</script>
+{% endif %}

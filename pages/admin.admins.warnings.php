@@ -1,6 +1,6 @@
 <?php
 if(!defined("IN_SB")){echo "Ошибка доступа!";die();}
-global $userbank;
+global $userbank, $theme;
 
 // БАГ-ФИКС: раньше здесь не было проверки существования администратора вообще - при переходе
 // по ссылке со старым/несуществующим ID (например, админ был удалён) страница молча показывала
@@ -13,6 +13,8 @@ if(!isset($_GET['id']) || !$userbank->GetProperty("user", (int)$_GET['id']))
 }
 
 $warnings = $GLOBALS['db']->GetAll("SELECT `id`, `reason`, `expires`, `user` AS `from` FROM `" . DB_PREFIX . "_warns` INNER JOIN `" . DB_PREFIX . "_admins` ON `" . DB_PREFIX . "_warns`.`afrom` = `" . DB_PREFIX . "_admins`.`aid` WHERE `arecipient` = " . (int) $_GET['id'] . ";");
+if (!is_array($warnings))
+	$warnings = array();
 foreach ($warnings as &$warning) {
 	$expires = (int) $warning['expires'];
 	if ($expires > time()) {
@@ -32,4 +34,9 @@ $theme->assign('count', count($warnings));
 $theme->assign('myId', $userbank->GetAid());
 $theme->assign('thisId', (int) $_GET['id']);
 
-$theme->display('page_admin_admins_warnings.tpl');
+echo '<div id="admin-page-content">';
+echo '<div id="0" class="admin-pane is-on">';
+$_f = sb_ui_v2_theme_fragment('admin_admins_warnings.twig');
+if (is_string($_f) && $_f !== '') echo $_f;
+echo '</div>';
+echo '</div>';

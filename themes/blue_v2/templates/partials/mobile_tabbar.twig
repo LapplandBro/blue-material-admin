@@ -1,0 +1,50 @@
+{% set na = nav_active|default('') %}
+{% set tab_home = na == '' or na == 'home' or na == 'default' %}
+{% set tab_bans = na == 'banlist' or na == 'ui_v2' or na == 'search_bans' %}
+{% set tab_comms = na == 'commslist' or na == 'search_comm' %}
+{% set tab_servers = na == 'servers' %}
+{% set tab_admins = na == 'adminlist' %}
+{% set tab_admin = na == 'admin' %}
+{% set tab_account = na == 'account' or na == 'login' or na == 'login2fa' %}
+{% set tab_submit = na == 'submit' or na == 'protest' %}
+<nav class="mobile-tabbar" id="mobile-tabbar" aria-label="Быстрая навигация">
+  <a class="mobile-tabbar-item tab-tier-1{% if tab_home %} is-active{% endif %}" href="index.php?p=home"{% if tab_home %} aria-current="page"{% endif %}>
+    <i class="bi bi-house-door-fill mobile-tabbar-ico" aria-hidden="true"></i>
+    <span class="mobile-tabbar-label">Главная</span>
+  </a>
+  <a class="mobile-tabbar-item tab-tier-1{% if tab_bans %} is-active{% endif %}" href="index.php?p=banlist"{% if tab_bans %} aria-current="page"{% endif %}>
+    <i class="bi bi-shield-x mobile-tabbar-ico" aria-hidden="true"></i>
+    <span class="mobile-tabbar-label">Баны</span>
+  </a>
+  <a class="mobile-tabbar-item tab-tier-1{% if tab_comms %} is-active{% endif %}" href="index.php?p=commslist"{% if tab_comms %} aria-current="page"{% endif %}>
+    <i class="bi bi-mic-mute-fill mobile-tabbar-ico" aria-hidden="true"></i>
+    <span class="mobile-tabbar-label">Муты</span>
+  </a>
+  <a class="mobile-tabbar-item tab-tier-1{% if tab_servers %} is-active{% endif %}" href="index.php?p=servers"{% if tab_servers %} aria-current="page"{% endif %}>
+    <i class="bi bi-hdd-stack-fill mobile-tabbar-ico" aria-hidden="true"></i>
+    <span class="mobile-tabbar-label">Серверы</span>
+  </a>
+  <a class="mobile-tabbar-item tab-tier-2{% if tab_admins %} is-active{% endif %}" href="index.php?p=adminlist"{% if tab_admins %} aria-current="page"{% endif %}>
+    <i class="bi bi-people-fill mobile-tabbar-ico" aria-hidden="true"></i>
+    <span class="mobile-tabbar-label">Админы</span>
+  </a>
+  <a class="mobile-tabbar-item tab-tier-3{% if tab_admin %} is-active{% endif %}" href="index.php?p=admin"{% if tab_admin %} aria-current="page"{% endif %}>
+    <i class="bi bi-gear-fill mobile-tabbar-ico" aria-hidden="true"></i>
+    <span class="mobile-tabbar-label">Админка</span>
+  </a>
+  {% if logged_in %}
+  <a class="mobile-tabbar-item tab-tier-4{% if tab_account %} is-active{% endif %}" href="index.php?p=account"{% if tab_account %} aria-current="page"{% endif %}>
+    <i class="bi bi-person-fill mobile-tabbar-ico" aria-hidden="true"></i>
+    <span class="mobile-tabbar-label">Кабинет</span>
+  </a>
+  {% else %}
+  <a class="mobile-tabbar-item tab-tier-4{% if tab_account %} is-active{% endif %}" href="{{ login_url }}"{% if tab_account %} aria-current="page"{% endif %}>
+    <i class="bi bi-box-arrow-in-right mobile-tabbar-ico" aria-hidden="true"></i>
+    <span class="mobile-tabbar-label">Вход</span>
+  </a>
+  {% endif %}
+  <button type="button" class="mobile-tabbar-item tab-tier-5 mobile-tabbar-item--menu{% if tab_submit %} is-active{% endif %}" id="mobile-tabbar-menu" aria-label="Полное меню">
+    <i class="bi bi-grid-fill mobile-tabbar-ico" aria-hidden="true"></i>
+    <span class="mobile-tabbar-label">Ещё</span>
+  </button>
+</nav>

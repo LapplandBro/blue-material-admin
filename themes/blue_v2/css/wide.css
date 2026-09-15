@@ -1,0 +1,228 @@
+/* Blue V2 — large / ultrawide displays (2K, 4K, 8K)
+ *
+ * Breakpoint map (extends mobile.css Bootstrap tiers).
+ * CRITICAL: @media must use literal px (991.98px, 767.98px, 575.98px, 576px,
+ * 768px, 992px, 1400px, …). NEVER use CSS custom properties inside @media —
+ * browsers resolve them unreliably. :root tokens are for docs/JS only.
+ *
+ *   Tier    min-width   Notes
+ *   ----    ---------   -----
+ *   xxl     1400px      Bootstrap xxl; layout/sidebar scale-up
+ *   2K      1920px      Full HD+ content density
+ *   QHD     2560px      1440p / ultrawide
+ *   UWQHD   3440px      21:9 ultrawide
+ *   4K      3840px      4K layout cap
+ *
+ * Mobile/tablet down breakpoints: see mobile.css (--bs-sm-max … --bs-xl-max).
+ */
+
+@media (min-width: 1400px) {
+  :root {
+    --sidebar-width: 284px;
+    --layout-max: min(96vw, 1720px);
+  }
+
+  body.blue-v2 {
+    font-size: 13.5px;
+  }
+
+  .topbar {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .app-shell {
+    max-width: calc(var(--layout-max) + var(--sidebar-width));
+    margin-inline: auto;
+    width: 100%;
+  }
+
+  html.sidebar-off .app-shell {
+    max-width: var(--layout-max);
+  }
+
+  .app-content {
+    padding: 1.05rem 1.45rem 1.15rem;
+  }
+
+  .app-footer {
+    font-size: 0.84rem;
+    padding: 0.95rem 1.45rem 1.15rem;
+  }
+
+  .cookie-notice-inner {
+    max-width: 46rem;
+    padding: 0.75rem 1rem;
+  }
+
+  .app-footer-nav {
+    max-width: 52rem;
+  }
+
+  .panel,
+  .form-page,
+  .admin-page-content {
+    border-radius: var(--radius-md);
+  }
+
+  .admin-hub-grid {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 0.85rem;
+  }
+
+  .admin-hub-stats {
+    grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
+  }
+}
+
+@media (min-width: 1920px) {
+  :root {
+    --sidebar-width: 296px;
+    --layout-max: min(94vw, 2100px);
+  }
+
+  body.blue-v2 {
+    font-size: 14px;
+  }
+
+  .app-content {
+    padding: 1.15rem 1.65rem 1.15rem;
+  }
+
+  .cookie-notice-inner {
+    max-width: 48rem;
+  }
+
+  .banlist-chrome,
+  .commslist-chrome,
+  .servers-head {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+
+  .servers-list-head,
+  .servers-toggle {
+    grid-template-columns: 2.6rem 2.6rem 2.6rem minmax(0, 1fr) 6rem 20% 1.75rem;
+  }
+
+  .banlist-facts,
+  .commslist-facts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 2rem;
+  }
+
+  .banlist-detail,
+  .commslist-detail-grid {
+    padding: 1rem 1.35rem 1.15rem;
+    gap: 1.15rem 2rem;
+  }
+
+  .dash-stats {
+    gap: 0.85rem;
+  }
+
+  .admin-hub-grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+  }
+
+  .dash-feeds--2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dash-feeds--3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .dash-feed-list {
+    max-height: 22rem;
+    overflow-y: auto;
+  }
+}
+
+@media (min-width: 2560px) {
+  :root {
+    --sidebar-width: 308px;
+    --layout-max: min(92vw, 2480px);
+  }
+
+  body.blue-v2 {
+    font-size: 14.5px;
+  }
+
+  .topbar {
+    min-height: 56px;
+  }
+
+  .servers-list-head,
+  .servers-toggle {
+    grid-template-columns: 2.75rem 2.75rem 2.75rem minmax(0, 1fr) 6.5rem 18% 1.85rem;
+  }
+
+  .banlist-facts,
+  .commslist-facts {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: 2.25rem;
+  }
+
+  .banlist-detail,
+  .commslist-detail-grid {
+    grid-template-columns: minmax(0, 1fr) 18rem;
+  }
+
+  .dash-stats {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .dash-prose table {
+    font-size: 0.88rem;
+  }
+}
+
+@media (min-width: 3440px) {
+  :root {
+    --layout-max: min(90vw, 2880px);
+  }
+
+  body.blue-v2 {
+    font-size: 15px;
+  }
+}
+
+@media (min-width: 3840px) {
+  :root {
+    --sidebar-width: 320px;
+    --layout-max: min(88vw, 3360px);
+  }
+
+  body.blue-v2 {
+    font-size: 15.5px;
+  }
+
+  .servers-list-head,
+  .servers-toggle {
+    grid-template-columns: 2.85rem 2.85rem 2.85rem minmax(0, 1fr) 7rem 16% 2rem;
+  }
+
+  .banlist-facts,
+  .commslist-facts {
+    column-gap: 2.75rem;
+  }
+
+  .app-content {
+    padding: 1.35rem 2rem 1.25rem;
+  }
+
+  .app-footer {
+    font-size: 0.9rem;
+    padding: 1.05rem 2rem 1.35rem;
+  }
+
+  .topbar {
+    min-height: 58px;
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+}

@@ -101,11 +101,13 @@ if (isset($_POST['upload']))
 	}
 }
 
-$theme->assign("title", "Загрузить иконку");
-$theme->assign("message", $message);
-$theme->assign("input_name", "icon_file");
-$theme->assign("form_name", "iconup");
-$theme->assign("formats", "GIF, PNG или JPG");
-$theme->assign("sb_csrf", function_exists('sb_csrf_token') ? sb_csrf_token() : '');
+$uploadVars = array(
+	"title" => "Загрузить иконку",
+	"message" => $message,
+	"input_name" => "icon_file",
+	"form_name" => "iconup",
+	"formats" => "GIF, PNG или JPG",
+	"sb_csrf" => function_exists('sb_csrf_token') ? sb_csrf_token() : '',
+);
 
-$theme->display('page_uploadfile.tpl');
+echo sb_ui_v2_fragment('uploadfile.twig', $uploadVars);

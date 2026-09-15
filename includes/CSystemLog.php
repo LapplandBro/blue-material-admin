@@ -44,11 +44,7 @@ class CSystemLog {
 			$this->type = $tpe;
 			$this->title = $ttl;
 			$this->msg = $mg;
-			// if (!$HideDebug && ((isset($_GET['debug']) && $_GET['debug'] == 1) || defined("DEVELOPER_MODE")))
-			// {
-				// echo "CSystemLog: " . $mg;
-			// }
-			
+
 			if( !$userbank )
 				return false;
 			
@@ -56,7 +52,7 @@ class CSystemLog {
 			$this->host = $_SERVER['REMOTE_ADDR'];
 			$this->created = time(); 
 			$this->parent_function = $this->_getCaller();
-			$this->query = $this->SanitizeSensitive(isset($_SERVER['QUERY_STRING'])?$_SERVER['QUERY_STRING']:'');
+			$this->query = $this->SanitizeQuery(isset($_SERVER['QUERY_STRING'])?$_SERVER['QUERY_STRING']:'');
 			$this->title = $this->SanitizeSensitive($this->title);
 			$this->msg = $this->SanitizeSensitive($this->msg);
 			if(isset($done) && $done == true)
@@ -74,7 +70,7 @@ class CSystemLog {
 		$item['host'] = $_SERVER['REMOTE_ADDR'];
 		$item['created'] = time(); 
 		$item['parent_function'] = $this->_getCaller();
-		$item['query'] = $this->SanitizeSensitive(isset($_SERVER['QUERY_STRING'])?$_SERVER['QUERY_STRING']:'');
+		$item['query'] = $this->SanitizeQuery(isset($_SERVER['QUERY_STRING'])?$_SERVER['QUERY_STRING']:'');
 		
 		array_push($this->log_list, $item);
 	}
@@ -110,14 +106,52 @@ class CSystemLog {
 	
 	function _getCaller()
 	{
-		$bt = debug_backtrace();
-	
-		$functions = "";
+		$bt = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
+		$root = defined('ROOT') ? str_replace('\\', '/', rtrim((string)ROOT, '/\\')) : '';
+		$lines = array();
 		$count = count($bt);
-		for ($idx = 2; $idx<$count; $idx++)
-			if ($bt[$idx]['function'] != "sbError")
-				$functions .= "<b>". ($count-$idx) . "</b>: " . str_replace(ROOT, "/", $bt[$idx]['file']) . "::".$bt[$idx]['function']."(".$this->FormatArguments(isset($bt[$idx]['args'])?$bt[$idx]['args']:array(), $bt[$idx]['function']).") - " . $bt[$idx]['line'] . "<br />\n";
-		return $this->SanitizeSensitive($functions);
+		$limit = min($count, 12);
+		for ($idx = 2; $idx < $limit; $idx++) {
+			if (!empty($bt[$idx]['function']) && $bt[$idx]['function'] === 'sbError')
+				continue;
+			$file = isset($bt[$idx]['file']) ? str_replace('\\', '/', (string)$bt[$idx]['file']) : '';
+			if ($root !== '' && $file !== '' && strncmp($file, $root, strlen($root)) === 0)
+				$file = substr($file, strlen($root));
+			$fn = isset($bt[$idx]['function']) ? (string)$bt[$idx]['function'] : '?';
+			$line = isset($bt[$idx]['line']) ? (int)$bt[$idx]['line'] : 0;
+			$lines[] = ($count - $idx) . ': ' . $file . '::' . $fn . '() - ' . $line;
+		}
+		if ($lines === []) {
+			$file = isset($_SERVER['SCRIPT_FILENAME']) ? str_replace('\\', '/', (string)$_SERVER['SCRIPT_FILENAME']) : '';
+			if ($root !== '' && $file !== '' && strncmp($file, $root, strlen($root)) === 0)
+				$file = ltrim(substr($file, strlen($root)), '/');
+			elseif ($file !== '')
+				$file = basename($file);
+			if ($file === '')
+				$file = isset($_SERVER['SCRIPT_NAME']) ? basename((string)$_SERVER['SCRIPT_NAME']) : 'unknown';
+			$lines[] = '1: ' . $file . '::{main}()';
+		}
+		return implode("\n", $lines);
+	}
+
+	/**
+	 * QUERY_STRING для лога: без OpenID-дампа Steam и без секретов.
+	 */
+	function SanitizeQuery($qs)
+	{
+		$qs = $this->SanitizeSensitive((string)$qs);
+		if ($qs === '')
+			return $qs;
+		$decoded = urldecode(str_replace('&amp;', '&', $qs));
+		if (stripos($decoded, 'openid.') !== false || stripos($decoded, 'openid_') !== false) {
+			$mode = '';
+			if (preg_match('/openid[._]mode=([^&]+)/i', $decoded, $m))
+				$mode = preg_replace('/[^a-z0-9_\-]/i', '', (string)$m[1]);
+			return $mode !== '' ? ('Steam OpenID (' . $mode . ')') : 'Steam OpenID';
+		}
+		if (strlen($qs) > 400)
+			return substr($qs, 0, 400) . '…';
+		return $qs;
 	}
 
 	/**
@@ -235,4 +269,15 @@ class CSystemLog {
 		}
 		return str_replace(", ]", "]", $result."]");
 	}
+}
+
+/** HTML-стек из старых записей лога → обычный многострочный текст. */
+function sb_log_plain_stack($html)
+{
+	$s = str_replace(array("\r\n", "\r"), "\n", (string)$html);
+	$s = preg_replace('/<br\s*\/?>/i', "\n", $s);
+	$s = html_entity_decode(strip_tags($s), ENT_QUOTES, 'UTF-8');
+	$s = preg_replace("/[ \t]+/", ' ', $s);
+	$s = preg_replace("/\n{3,}/", "\n\n", $s);
+	return trim($s);
 }

@@ -62,6 +62,7 @@ class ADODB_mysqli extends ADOConnection {
 	var $optionFlags = array(array(MYSQLI_READ_DEFAULT_GROUP,0));
 	var $arrayClass = 'ADORecordSet_array_mysqli';
 	var $multiQuery = false;
+	var $databaseName = ''; // obsolete alias of $database; declare for PHP 8.2+
 
 	function __construct()
 	{
@@ -90,6 +91,11 @@ class ADODB_mysqli extends ADOConnection {
 	{
 		if(!extension_loaded("mysqli")) {
 			return null;
+		}
+		// PHP 8.1+ defaults to MYSQLI_REPORT_ERROR|STRICT and throws mysqli_sql_exception.
+		// ADOdb expects false returns + ErrorMsg(); restore pre-8.1 behaviour (ADOdb #755).
+		if (function_exists('mysqli_report')) {
+			mysqli_report(MYSQLI_REPORT_OFF);
 		}
 		$this->_connectionID = @mysqli_init();
 
@@ -884,6 +890,7 @@ class ADORecordSet_mysqli extends ADORecordSet{
 
 	var $databaseType = "mysqli";
 	var $canSeek = true;
+	var $adodbFetchMode; // declare for PHP 8.2+ (was dynamic)
 
 	function __construct($queryID, $mode = false)
 	{

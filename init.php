@@ -59,16 +59,16 @@ if (!defined('MAX_GAMEICON_SIZE_BYTES'))
 	define('MAX_GAMEICON_SIZE_BYTES', 2 * 1024 * 1024);
 
 define('SB_THEMES', ROOT . 'themes/');
-define('SB_THEMES_COMPILE', ROOT . 'themes_c/');
 
 define('IN_SB', true);
 define('SB_AID', isset($_COOKIE['aid'])?$_COOKIE['aid']:null);
-define('XAJAX_REQUEST_URI', './index.php');
+define('SB_AJAX_URI', './index.php');
+define('XAJAX_REQUEST_URI', SB_AJAX_URI);
 
 include_once(INCLUDES_PATH . "/CSystemLog.php");
 include_once(INCLUDES_PATH . "/CUserManager.php");
 include_once(INCLUDES_PATH . "/CUI.php");
-include_once("themes/new_box/theme.conf.php");
+include_once("themes/blue_v2/theme.conf.php");
 // ---------------------------------------------------
 //  Fix some $_SERVER vars
 // ---------------------------------------------------
@@ -90,9 +90,10 @@ if(trim($_SERVER['PHP_SELF']) == '') $_SERVER['PHP_SELF'] = preg_replace("/(\?.*
  */
 function sb_is_local_host()
 {
-	$host = isset($_SERVER['HTTP_HOST']) ? strtolower((string)$_SERVER['HTTP_HOST']) : '';
-	$host = preg_replace('/:\d+$/', '', $host);
-	return ($host === 'localhost' || $host === '127.0.0.1' || $host === '::1');
+	$ip = isset($_SERVER['REMOTE_ADDR']) ? (string)$_SERVER['REMOTE_ADDR'] : '';
+	if ($ip === '::ffff:127.0.0.1')
+		$ip = '127.0.0.1';
+	return ($ip === '127.0.0.1' || $ip === '::1');
 }
 
 if (!file_exists(ROOT . '/config.php')) {
@@ -111,7 +112,7 @@ if (!@include_once(ROOT . '/config.php')) {
 	die();
 }
 
-// Папка install на боевом хосте после установки — блок. На localhost/127.0.0.1 пропускаем.
+// Папка install на боевом хосте после установки — блок. С локального IP (127.0.0.1 / ::1) пропускаем.
 if (!defined('DEVELOPER_MODE') && !defined('IS_UPDATE') && file_exists(ROOT . '/install')) {
 	if (!sb_is_local_host()) {
 		echo 'Из соображений безопасности удалите директорию /install/ с сервера перед работой с системой.';
@@ -124,7 +125,7 @@ if (!defined('DEVELOPER_MODE') && !defined('IS_UPDATE') && file_exists(ROOT . '/
 // ---------------------------------------------------
 
 if(!defined('SB_VERSION')){
-	define('SB_VERSION', '2.0.6');
+	define('SB_VERSION', '2.1.0');
 }
 define('LOGIN_COOKIE_LIFETIME', (60*60*24*7)*2);
 define('COOKIE_PATH', '/');
@@ -239,8 +240,11 @@ function sb_verify_web_session($aid, $cookie, $storedHash = null)
  */
 function sb_session_start()
 {
-	if (session_status() === PHP_SESSION_ACTIVE)
+	if (session_status() === PHP_SESSION_ACTIVE) {
+		if (function_exists('sb_session_touch'))
+			sb_session_touch();
 		return;
+	}
 
 	$secure = defined('COOKIE_SECURE') ? COOKIE_SECURE : ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (!empty($_SERVER['SERVER_PORT']) && (int)$_SERVER['SERVER_PORT'] === 443));
 	$domain = defined('COOKIE_DOMAIN') ? COOKIE_DOMAIN : '';
@@ -259,6 +263,44 @@ function sb_session_start()
 		session_set_cookie_params(0, '/; samesite=Lax', $domain, $secure, true);
 	}
 	session_start();
+	if (function_exists('sb_session_touch'))
+		sb_session_touch();
+}
+
+/** TTL PHP-сессии (секунды) — от него зависит жизнь CSRF в $_SESSION. */
+function sb_session_ttl()
+{
+	$ttl = (int)ini_get('session.gc_maxlifetime');
+	if ($ttl < 120)
+		$ttl = 1440;
+	return $ttl;
+}
+
+/** Продлевает активность сессии и гарантирует CSRF-токен. */
+function sb_session_touch()
+{
+	if (session_status() !== PHP_SESSION_ACTIVE)
+		return;
+	$_SESSION['sb_last_active'] = time();
+	if (function_exists('sb_csrf_token'))
+		sb_csrf_token();
+}
+
+/** Метаданные сессии для JS-предупреждения / keepalive. */
+function sb_session_client_meta()
+{
+	$ttl = sb_session_ttl();
+	$last = isset($_SESSION['sb_last_active']) ? (int)$_SESSION['sb_last_active'] : time();
+	$expiresIn = max(0, $last + $ttl - time());
+	// Предупреждать за ~15% TTL, но не раньше 60с и не позже 5 мин.
+	$warnBefore = (int)max(60, min(300, (int)round($ttl * 0.15)));
+	return array(
+		'ttl' => $ttl,
+		'expires_in' => $expiresIn,
+		'warn_before' => $warnBefore,
+		'server_now' => time(),
+		'csrf' => function_exists('sb_csrf_token') ? sb_csrf_token() : '',
+	);
 }
 
 /**
@@ -275,8 +317,7 @@ function sb_send_security_headers()
 	header('Permissions-Policy: geolocation=(), microphone=(), camera=(), payment=(), usb=()');
 	header('Cross-Origin-Opener-Policy: same-origin-allow-popups');
 	header('Cross-Origin-Resource-Policy: same-site');
-	// CSP: сайт исторически опирается на inline JS/CSS (xajax, MooTools, Summernote) —
-	// поэтому unsafe-inline/unsafe-eval необходимы, иначе админка развалится.
+	// CSP: inline JS/CSS (админка, MooTools) — unsafe-inline/unsafe-eval.
 	header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: http:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'self'; base-uri 'self'; form-action 'self'; object-src 'none'");
 }
 
@@ -294,7 +335,7 @@ function sb_get_site_host()
 }
 
 /**
- * CSRF для xajax / форм.
+ * CSRF для AJAX / форм.
  */
 function sb_csrf_token()
 {
@@ -436,7 +477,7 @@ if(defined("SB_MEM"))
 // случаях ошибки логируются, но не выводятся в браузер.
 ini_set('display_errors', defined('DEVELOPER_MODE') ? 1 : 0);
 ini_set('log_errors', 1);
-// E_DEPRECATED глушим всегда: старый Smarty 2.x орёт на PHP 8.2+ (dynamic properties),
+// E_DEPRECATED глушим всегда: легаси PHP на 8.2+ (dynamic properties и т.п.),
 // а полезные баги (Warning/Error) в debug всё равно видны.
 error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED & ~E_STRICT);
 
@@ -530,10 +571,14 @@ require_once(INCLUDES_PATH . '/sb-totp.php');
 sb_totp_migrate_schema();
 
 $debug = $GLOBALS['db']->Execute("SELECT value FROM `".DB_PREFIX."_settings` WHERE setting = 'config.debug';");
-if($debug->fields['value']=="1") {
-	define("DEVELOPER_MODE", true);
+// Legacy UI toggles removed — force-off leftover DB flags. Manual
+// define('DEVELOPER_MODE', true) in config.php still works for local work.
+foreach (array('config.debug', 'config.summertime', 'page.footer.allow_show_data') as $legacyOff) {
+	$row = $GLOBALS['db']->GetOne("SELECT value FROM `".DB_PREFIX."_settings` WHERE setting = ".$GLOBALS['db']->qstr($legacyOff));
+	if ($row === '1' || $row === 1)
+		@$GLOBALS['db']->Execute("REPLACE INTO `".DB_PREFIX."_settings` (`value`, `setting`) VALUES ('0', ".$GLOBALS['db']->qstr($legacyOff).")");
 }
-// Перепроверяем вывод ошибок теперь, когда DEVELOPER_MODE мог быть включён через настройки в БД.
+unset($debug, $legacyOff, $row);
 ini_set('display_errors', defined('DEVELOPER_MODE') ? 1 : 0);
 
 // ---------------------------------------------------
@@ -648,7 +693,7 @@ if(version_compare(PHP_VERSION, "5") != -1)
     $abbrarray = timezone_abbreviations_list();
     foreach ($abbrarray as $abbr) {
         foreach ($abbr as $city) {
-            if ($city['offset'] == $offset && $city['dst'] == $GLOBALS['config']['config.summertime']) {
+            if ($city['offset'] == $offset && empty($city['dst'])) {
                 date_default_timezone_set($city['timezone_id']);
                 break 2;
             }
@@ -674,32 +719,27 @@ else
 
 
 // ---------------------------------------------------
-// Setup our templater
+// Setup our templater (assign-bag; live UI is Twig / Blue V2)
 // ---------------------------------------------------
-require(INCLUDES_PATH . '/smarty/Smarty.class.php');
+require_once INCLUDES_PATH . '/CThemeBag.php';
 
 global $theme, $userbank;
 
-define('SB_THEME', 'new_box');
+define('SB_THEME', 'blue_v2');
 
 if(!@file_exists(SB_THEMES . SB_THEME . "/theme.conf.php"))
 	die("<b>Ошибка шаблона</b>: Шаблон повреждён. Отсутствует файл <b>theme.conf.php</b>.");
 
-if(!@is_writable(SB_THEMES_COMPILE))
-	die("<b>Ошибка шаблона</b>: Папка <b>".SB_THEMES_COMPILE."</b> не перезаписываемая! Установите права 777 на папку через FTP-клиент.");
+$theme = new CThemeBag();
 
-$theme = new Smarty();
-$theme->error_reporting 	= 	E_ALL & ~E_NOTICE & ~E_DEPRECATED & ~E_STRICT;
-$theme->use_sub_dirs 		= 	false;
-$theme->compile_id			= 	SB_THEME;
-$theme->caching 			= 	false;
-$theme->template_dir 		= 	SB_THEMES . SB_THEME;
-$theme->compile_dir 		= 	SB_THEMES_COMPILE;
-
-if ((isset($_GET['debug']) && $_GET['debug'] == 1) || defined("DEVELOPER_MODE") )
-{
-	$theme->force_compile = true;
-}
+if (is_readable(INCLUDES_PATH . '/CTabsMenu.php'))
+	require_once INCLUDES_PATH . '/CTabsMenu.php';
+if (is_readable(INCLUDES_PATH . '/theme_v2.php'))
+	require_once INCLUDES_PATH . '/theme_v2.php';
+if (is_readable(INCLUDES_PATH . '/seo.inc.php'))
+	require_once INCLUDES_PATH . '/seo.inc.php';
+if (function_exists('sb_ui_v2_boot'))
+	sb_ui_v2_boot();
 
 // ---------------------------------------------------
 // Setup our user manager
@@ -717,3 +757,66 @@ $userbank = new CUserManager($l, $p);
 if (!defined('IS_UPDATE') && !defined('IN_INSTALL') && php_sapi_name() !== 'cli') {
 	sb_send_security_headers();
 }
+
+/**
+ * Пути, которые PHP должен уметь писать (аплоады, SEO, config).
+ * @return array[] {path, label}
+ */
+function sb_fs_permission_targets()
+{
+	$root = defined('ROOT') ? ROOT : (dirname(__FILE__) . DIRECTORY_SEPARATOR);
+	$root = rtrim(str_replace('\\', '/', $root), '/') . '/';
+	$targets = array(
+		array('path' => $root . 'demos', 'label' => 'demos/'),
+		array('path' => $root . 'images', 'label' => 'images/'),
+		array('path' => $root . 'images/maps', 'label' => 'images/maps/'),
+		array('path' => $root . 'images/games', 'label' => 'images/games/'),
+		array('path' => $root . 'data', 'label' => 'data/'),
+		array('path' => rtrim($root, '/'), 'label' => 'корень сайта (sitemap / robots)'),
+	);
+	$cfg = $root . 'config.php';
+	if (is_file($cfg))
+		$targets[] = array('path' => $cfg, 'label' => 'config.php');
+	if (function_exists('sb_ui_v2_twig_cache_dir')) {
+		$targets[] = array('path' => sb_ui_v2_twig_cache_dir(), 'label' => 'cache/twig_predcompiled/');
+	} elseif (is_dir($root . 'cache/twig_predcompiled') || is_dir($root . 'cache')) {
+		$targets[] = array('path' => is_dir($root . 'cache/twig_predcompiled') ? $root . 'cache/twig_predcompiled' : $root . 'cache', 'label' => 'cache/twig_predcompiled/');
+	}
+	return $targets;
+}
+
+/** @param string $path */
+function sb_fs_path_writable($path)
+{
+	$path = (string)$path;
+	if ($path === '')
+		return false;
+	if (is_file($path))
+		return is_writable($path);
+	if (is_dir($path))
+		return is_writable($path);
+	$parent = dirname($path);
+	return is_dir($parent) && is_writable($parent);
+}
+
+/**
+ * Список меток путей без прав на запись.
+ * @return string[]
+ */
+function sb_fs_permission_problems()
+{
+	$bad = array();
+	$seen = array();
+	foreach (sb_fs_permission_targets() as $t) {
+		$path = isset($t['path']) ? (string)$t['path'] : '';
+		$label = isset($t['label']) ? (string)$t['label'] : $path;
+		if ($path === '' || isset($seen[$label]))
+			continue;
+		if (!sb_fs_path_writable($path)) {
+			$seen[$label] = true;
+			$bad[] = $label;
+		}
+	}
+	return $bad;
+}
+

@@ -1,0 +1,69 @@
+<form action="" method="post">
+  <div class="form-page admin-form" id="add-group">
+    <header class="form-page-head">
+      <p class="form-page-kicker">Редактирование</p>
+      <h2 class="form-page-title">Детали блокировки</h2>
+      <p class="form-page-lead">Ник, SteamID, тип, причина и срок. Сохранение пишет запись в лог.</p>
+    </header>
+    <input type="hidden" name="insert_type" value="add">
+    <div class="form-grid" id="group.details">
+      <div class="form-field form-field--full">
+        <label class="form-label" for="name">Ник</label>
+        <input type="text" class="form-control" id="name" name="name" value="{{ ban_name }}" placeholder="Ник игрока">
+        <div id="name.msg" class="msg-err badentry"></div>
+      </div>
+      <div class="form-field form-field--full">
+        <label class="form-label" for="steam">Steam ID</label>
+        <input type="text" class="form-control" id="steam" name="steam" tabindex="2" value="{{ ban_authid }}" placeholder="STEAM_0:… или ссылка">
+        <div id="steam.msg" class="msg-err badentry"></div>
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="type">Тип блокировки</label>
+        <select class="form-select" id="type" name="type" tabindex="2">
+          <option value="1">Микрофон</option>
+          <option value="2">Чат</option>
+          <option value="3">Чат и микро</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="listReason">Причина</label>
+        <select class="form-select" id="listReason" name="listReason" tabindex="4" onchange="changeReason(this[this.selectedIndex].value);">
+          <option value="" selected> — Выберите причину — </option>
+          <optgroup label="Нарушение">
+            <option value="Непристойные язык">Непристойные язык</option>
+            <option value="Оскорбление игроков">Оскорбление игроков</option>
+            <option value="Оскорбление админов">Оскорбление админов</option>
+            <option value="Неприемлемый язык">Неприемлемый язык</option>
+            <option value="Торговля">Торговля</option>
+            <option value="Спам в чат/микро">Спам</option>
+            <option value="Реклама">Реклама</option>
+          </optgroup>
+          {% if customreason %}
+          <optgroup label="Свои">
+            {% for creason in customreason %}
+            <option value="{{ creason }}">{{ creason }}</option>
+            {% endfor %}
+          </optgroup>
+          {% endif %}
+          <option value="other">Своя</option>
+        </select>
+        <div id="dreason" style="display:none;">
+          <textarea class="form-control mt-2" tabindex="4" rows="4" id="txtReason" name="txtReason"></textarea>
+        </div>
+        <div id="reason.msg" class="msg-err badentry"></div>
+      </div>
+      <div class="form-field form-field--full">
+        <label class="form-label" for="banlength">Срок</label>
+        {% set length_named = true %}
+        {% include 'partials/ban_length.twig' %}
+        <div id="length.msg" class="msg-err badentry"></div>
+      </div>
+    </div>
+    <input type="hidden" name="did" id="did" value="">
+    <input type="hidden" name="dname" id="dname" value="">
+    <div class="form-actions">
+      <button type="submit" class="btn btn-accent" id="editban">Сохранить</button>
+      <button type="button" class="btn btn-outline-secondary" id="back" onclick="sbGo('index.php?p=admin&amp;c=comms')">Назад</button>
+    </div>
+  </div>
+</form>

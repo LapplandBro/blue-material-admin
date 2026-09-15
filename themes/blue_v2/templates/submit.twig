@@ -1,0 +1,94 @@
+{% extends 'layout.twig' %}
+{% block extra_head %}
+<link href="{{ asset_base }}themes/blue_v2/css/forms.css" rel="stylesheet">
+{% endblock %}
+{% block topbar_title %}
+<h1 class="h5 mb-0">Жалоба на игрока</h1>
+{% endblock %}
+{% block content %}
+<div class="panel form-page form-page--wide" id="submit-main">
+  <header class="form-page-head">
+    <p class="form-page-kicker">Жалоба</p>
+    <h1 class="form-page-title">Пожаловаться на игрока</h1>
+    {% if not page_blocked %}
+    <p class="form-page-lead">Заявка на бан игрока, нарушающего правила. Заполните поля и опишите ситуацию подробно — так заявку быстрее разберут.
+      Краткая инструкция по записи демо <a href="javascript:void(0)" onclick="ShowBox('Как записать Демку?', 'В тот момент, когда Вы наблюдаете за нужным игроком, нажмите <b>~</b> / <b>&grave;</b> / <b>Ё</b> на Вашей клавиатуре. В открывшуюся консоль введите <b>record [demoname]</b> и нажмите <b>Enter</b>. Также пропишите команду <b>status</b> для получения дополнительной информации о сервере. Чтобы остановить запись, введите <b>stop</b>. Файл демки будет лежать в папке <b>cstrike</b>.', 'red', '', true);">здесь</a>.
+    </p>
+    {% endif %}
+  </header>
+
+  {% if flash_html %}
+  <div class="form-flash {% if flash_type == 'success' %}form-flash--ok{% else %}form-flash--err{% endif %}" role="alert" id="{% if flash_type == 'success' %}msg-green-dbg{% else %}msg-red-debug{% endif %}">
+    <div class="form-flash-title">{{ flash_title }}</div>
+    <div class="form-flash-body">{{ flash_html|raw }}</div>
+  </div>
+  {% endif %}
+
+  {% if not page_blocked %}
+  <div class="form-page-split">
+  <form action="{{ form_action }}" method="post" enctype="multipart/form-data">
+    <input type="hidden" name="subban" value="1">
+    {% if sb_csrf %}<input type="hidden" name="sb_csrf" value="{{ sb_csrf }}" />{% endif %}
+    <div class="form-grid">
+      <div class="form-field">
+        <label class="form-label" for="SteamID">SteamID нарушителя</label>
+        <input type="text" class="form-control" id="SteamID" name="SteamID" value="{{ STEAMID }}" placeholder="STEAM_0:…">
+        <div class="form-help">Необязательно, если указан IP. Формат STEAM_0:X:Y.</div>
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="BanIP">IP нарушителя</label>
+        <input type="text" tabindex="1" class="form-control" id="BanIP" name="BanIP" value="{{ ban_ip }}" placeholder="Введите данные">
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="PlayerName">Никнейм нарушителя <span class="mandatory">*</span></label>
+        <input type="text" class="form-control" id="PlayerName" name="PlayerName" value="{{ player_name }}" placeholder="Введите данные">
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="SubmitName">Ваш ник</label>
+        <input type="text" class="form-control" id="SubmitName" name="SubmitName" value="{{ subplayer_name }}" placeholder="Введите данные">
+      </div>
+      <div class="form-field form-field--full">
+        <label class="form-label" for="BanReason">Комментарий <span class="mandatory">*</span></label>
+        <textarea class="form-control" id="BanReason" name="BanReason" rows="4" placeholder="Пожалуйста, пишите информативные комментарии. Комментарии типа 'читер' не рассматриваются">{{ ban_reason }}</textarea>
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="EmailAddr">Ваш Email <span class="mandatory">*</span></label>
+        <input type="text" class="form-control" id="EmailAddr" name="EmailAddr" value="{{ player_email }}" placeholder="Введите данные">
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="server">Сервер <span class="mandatory">*</span></label>
+        <select class="form-select" id="server" name="server">
+          <option value="-1">Выберите сервер</option>
+          {% for server in server_list %}
+          <option value="{{ server.sid }}" {% if server_selected == server.sid %}selected{% endif %}>{{ server.HostName }}</option>
+          {% endfor %}
+          <option value="0" {% if server_selected == 0 %}selected{% endif %}>Другой сервер, не представленный здесь</option>
+        </select>
+      </div>
+      <div class="form-field form-field--full">
+        <label class="form-label" for="demo_file">Загрузка демо</label>
+        <input type="file" class="form-control" id="demo_file" name="demo_file">
+        <div class="form-help">.dem, .zip, .rar, .7z, .bz2 или .gz, до 20 МБ.</div>
+      </div>
+      <div class="form-field form-field--captcha">
+        <label class="form-label" for="kapcha">Проверочный код <span class="mandatory">*</span></label>
+        <div class="form-captcha">
+          <img id="submit_captcha_img" src="includes/captcha/captcha.php?t={{ captcha_t }}" width="170" height="56" alt="Капча" />
+          <button type="button" class="btn btn-outline-secondary form-captcha-refresh" title="Обновить код" onclick="var i=document.getElementById('submit_captcha_img'); if(i) i.src='includes/captcha/captcha.php?t='+Date.now();">Обновить</button>
+          <input type="text" class="form-control" id="kapcha" name="kapcha" placeholder="Символы с картинки" required maxlength="8" autocomplete="off" />
+        </div>
+      </div>
+    </div>
+    <p class="form-note">Примечание: только форматы .dem, <a href="http://www.winzip.com" target="_blank" rel="noopener">.zip</a>, <a href="http://www.rarlab.com" target="_blank" rel="noopener">.rar</a>, <a href="http://www.7-zip.org" target="_blank" rel="noopener">.7z</a>, <a href="http://www.bzip.org" target="_blank" rel="noopener">.bz2</a> или <a href="http://www.gzip.org" target="_blank" rel="noopener">.gz</a>.</p>
+    <p class="form-legend"><span class="mandatory">*</span> = обязательные поля</p>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-accent" id="save" name="save" value="Отправить">Отправить</button>
+    </div>
+  </form>
+  <div class="form-aside">
+    Если игрок получает бан, его STEAMID или IP попадают в базу SourceBans. При подключении к серверу он будет блокироваться с уведомлением о бане.
+  </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

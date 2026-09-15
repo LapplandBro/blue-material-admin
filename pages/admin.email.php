@@ -65,6 +65,6 @@ $theme->assign('email_js', "CheckEmail('".$_GET['type']."', ".(int)$_GET['id']."
 
 <div id="admin-page-content">
 	<div id="1">
-		<?php $theme->display('page_admin_bans_email.tpl'); ?>
+		<?php sb_ui_v2_theme_fragment('admin_bans_email.twig'); ?>
 	</div>
 </div>

@@ -1,0 +1,1135 @@
+/* Blue V2 — unified mobile/tablet layer (load after page CSS)
+ *
+ * Breakpoint map (Bootstrap 5 aligned). @media must use literal px (vars in @media
+ * are unreliable in browsers). Tokens in :root (--bs-sm-max etc.) are for docs/JS only.
+ *
+ *   Tier   min-width   max-width (down)   :root token
+ *   ----   ---------   ----------------   -------------
+ *   xs     —           575.98px           --bs-sm-max
+ *   sm     576px       767.98px           --bs-md-max
+ *   md     768px       991.98px           --bs-lg-max
+ *   lg     992px       1199.98px          --bs-xl-max
+ *   xl     1200px      —                  --bs-xl
+ *   xxl    1400px+     —                  see wide.css
+ *
+ * Table-cards (<992px): wrap in .table-responsive.table-cards-wrap, table.table-cards,
+ * each data td needs data-label matching th text; empty labels use data-label="".
+ * Detail rows: banlist-detail-row, commslist-detail, admin-detail-row, servers-detail-row.
+ */
+:root {
+  --bs-sm: 576px;
+  --bs-md: 768px;
+  --bs-lg: 992px;
+  --bs-xl: 1200px;
+  --bs-xxl: 1400px;
+  --bs-sm-max: 575.98px;
+  --bs-md-max: 767.98px;
+  --bs-lg-max: 991.98px;
+  --bs-xl-max: 1199.98px;
+  --sidebar-drawer-width: min(var(--sidebar-width), 86vw);
+  --mobile-tabbar-height: 3.65rem;
+}
+
+/* --- Shell: drawer sidebar + backdrop (<992px) --- */
+.sidebar-backdrop {
+  display: none;
+}
+
+@media (max-width: 991.98px) {
+  .sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: var(--topbar-height) 0 var(--mobile-tabbar-height) 0;
+    z-index: 1035;
+    background: rgba(2, 8, 20, 0.62);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.24s ease, visibility 0.24s ease;
+  }
+
+  html:not(.sidebar-off) .sidebar-backdrop {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+
+  .app-shell {
+    flex-direction: row !important;
+    min-height: calc(100vh - var(--topbar-height));
+    min-height: calc(100dvh - var(--topbar-height));
+  }
+
+  .sidebar {
+    position: fixed !important;
+    top: var(--topbar-height);
+    left: 0;
+    bottom: var(--mobile-tabbar-height);
+    z-index: 1040;
+    flex: none !important;
+    width: var(--sidebar-drawer-width) !important;
+    max-width: none !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    margin-left: 0 !important;
+    transform: translateX(0);
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    border-right: 1px solid var(--border) !important;
+    border-bottom: 0 !important;
+    background: rgba(10, 18, 37, 0.96) !important;
+    box-shadow: 8px 0 32px rgba(0, 0, 0, 0.45);
+    transition: transform 0.28s ease, box-shadow 0.28s ease !important;
+  }
+
+  html.sidebar-off .sidebar {
+    transform: translateX(-100%);
+    box-shadow: none;
+    pointer-events: none !important;
+    visibility: hidden;
+  }
+
+  html:not(.sidebar-off) .sidebar {
+    visibility: visible;
+  }
+
+  .sidebar-nav {
+    flex-direction: column !important;
+    flex-wrap: nowrap !important;
+  }
+
+  .nav-group,
+  .nav-group + .nav-group {
+    flex: none !important;
+    width: 100%;
+    border-top: 1px solid rgba(61, 96, 127, 0.28) !important;
+    margin-top: 6px !important;
+    padding-top: 8px !important;
+  }
+
+  .nav-group:first-child {
+    border-top: 0 !important;
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+  }
+
+  .nav-v2 .nav-link {
+    min-height: 2.75rem;
+    padding-top: 0.55rem;
+    padding-bottom: 0.55rem;
+  }
+
+  .topbar {
+    flex-wrap: wrap;
+    gap: 0.35rem 0.5rem;
+    padding: 0.35rem 0.75rem !important;
+  }
+
+  .topbar-left {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .topbar-actions {
+    flex: 0 0 auto;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+
+  .menu-trigger {
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+  }
+
+  .topbar-btn {
+    min-height: 2.5rem;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  body.sidebar-drawer-open {
+    overflow: hidden;
+  }
+
+  .app-main {
+    padding-bottom: calc(var(--mobile-tabbar-height) + env(safe-area-inset-bottom, 0px));
+  }
+
+  html.cookie-notice-on .app-main {
+    padding-bottom: calc(var(--mobile-tabbar-height) + env(safe-area-inset-bottom, 0px) + var(--cookie-notice-shift, 0px));
+  }
+
+  .app-footer-nav {
+    display: none;
+  }
+
+  .menu-trigger {
+    margin-left: auto;
+  }
+
+  html.tabbar-has-more .menu-trigger {
+    display: none !important;
+  }
+
+  .nav-link--in-tabbar {
+    display: none !important;
+  }
+
+  .nav-group--tabbar-empty {
+    display: none !important;
+  }
+
+  html.tabbar-has-more .profile-menu {
+    display: none;
+  }
+}
+
+/* --- Bottom tab bar (<992px) --- */
+.mobile-tabbar {
+  display: none;
+}
+
+@media (max-width: 991.98px) {
+  body:has(#mobile-tabbar) .page-top {
+    right: 0.85rem;
+    bottom: calc(var(--mobile-tabbar-height, 3.65rem) + env(safe-area-inset-bottom, 0px) + 0.75rem + var(--cookie-notice-shift, 0px));
+  }
+
+  body:has(#mobile-tabbar) .cookie-notice {
+    bottom: calc(var(--mobile-tabbar-height, 3.65rem) + env(safe-area-inset-bottom, 0px));
+    padding: 0;
+  }
+
+  body:has(#mobile-tabbar) .cookie-notice-inner {
+    max-width: none;
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+  }
+
+  .cookie-notice-inner {
+    flex-wrap: wrap;
+    gap: 0.55rem 0.75rem;
+  }
+
+  .cookie-notice-ok {
+    margin-left: auto;
+  }
+
+  .mobile-tabbar {
+    display: flex;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1050;
+    align-items: stretch;
+    justify-content: space-around;
+    gap: 0;
+    min-height: var(--mobile-tabbar-height);
+    padding: 0.28rem 0.15rem calc(0.28rem + env(safe-area-inset-bottom, 0px));
+    background: rgba(6, 12, 26, 0.96);
+    border-top: 1px solid var(--border-hairline);
+    box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  .mobile-tabbar-item {
+    flex: 1 1 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.12rem;
+    min-width: 0;
+    min-height: 2.85rem;
+    padding: 0.2rem 0.15rem;
+    border-radius: var(--radius-sm);
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.62rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    line-height: 1.15;
+    transition: color 0.15s ease, background 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .mobile-tabbar-item:hover,
+  .mobile-tabbar-item:focus-visible {
+    color: var(--text-heading);
+    background: rgba(30, 144, 255, 0.08);
+    text-decoration: none;
+  }
+
+  .mobile-tabbar-item.is-active {
+    color: var(--accent-hover);
+    background: rgba(30, 144, 255, 0.12);
+  }
+
+  .mobile-tabbar-ico {
+    font-size: 1.15rem;
+    line-height: 1;
+  }
+
+  .mobile-tabbar-label {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .mobile-tabbar-item.tab-tier-2,
+  .mobile-tabbar-item.tab-tier-3,
+  .mobile-tabbar-item.tab-tier-4 {
+    display: none;
+  }
+
+  @media (min-width: 360px) {
+    .mobile-tabbar-item.tab-tier-4 {
+      display: flex;
+    }
+  }
+
+  @media (min-width: 576px) {
+    .mobile-tabbar-item.tab-tier-2 {
+      display: flex;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .mobile-tabbar-item.tab-tier-3 {
+      display: flex;
+    }
+  }
+
+  .mobile-tabbar-item--menu {
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  @media (max-width: 575.98px) {
+    .mobile-tabbar-item {
+      font-size: 0.58rem;
+      padding-inline: 0.08rem;
+    }
+
+    .mobile-tabbar-ico {
+      font-size: 1.05rem;
+    }
+  }
+}
+
+@media (max-width: 575.98px) {
+  .topbar-crumb,
+  .topbar-split {
+    display: none;
+  }
+
+  .app-content {
+    padding: 0.65rem 0.65rem 1rem !important;
+  }
+
+  .app-footer-inner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .app-footer-nav {
+    flex-wrap: wrap;
+    gap: 0.35rem 0.75rem;
+  }
+}
+
+/* --- Table → cards (<992px) --- */
+@media (max-width: 991.98px) {
+  .table-responsive.table-cards-wrap {
+    overflow-x: visible;
+    -webkit-overflow-scrolling: auto;
+  }
+
+  .table-cards {
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  .table-cards > thead {
+    display: none;
+  }
+
+  .table-cards > tbody {
+    display: block;
+  }
+
+  .table-cards > tbody > tr:not(.banlist-detail-row):not(.commslist-detail):not(.admin-detail-row):not(.servers-detail-row):not(.list-compact-row):not(.servers-row) {
+    display: block;
+    margin-bottom: 0.72rem;
+    border: 1px solid var(--border-hairline);
+    border-radius: var(--radius-sm);
+    background: rgba(8, 15, 31, 0.55);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+  }
+
+  .table-cards > tbody > tr:not(.banlist-detail-row):not(.commslist-detail):not(.admin-detail-row):not(.servers-detail-row):not(.list-compact-row):not(.servers-row) > td {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.55rem;
+    padding: 0.55rem 0.75rem;
+    border: 0;
+    border-bottom: 1px solid rgba(61, 96, 127, 0.22);
+    text-align: left !important;
+    width: 100% !important;
+    box-sizing: border-box;
+  }
+
+  .table-cards > tbody > tr:not(.banlist-detail-row):not(.commslist-detail):not(.admin-detail-row):not(.servers-detail-row):not(.list-compact-row) > td:last-child {
+    border-bottom: 0;
+  }
+
+  .table-cards > tbody > tr:not(.banlist-detail-row):not(.commslist-detail):not(.admin-detail-row):not(.servers-detail-row):not(.list-compact-row) > td::before {
+    content: attr(data-label);
+    flex: 0 0 38%;
+    max-width: 9.5rem;
+    color: var(--muted);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    line-height: 1.35;
+    padding-top: 0.12rem;
+  }
+
+  .table-cards > tbody > tr:not(.banlist-detail-row):not(.commslist-detail):not(.admin-detail-row):not(.servers-detail-row):not(.list-compact-row) > td[data-label=""]:only-child {
+    justify-content: center;
+    text-align: center;
+    border-bottom: 0;
+  }
+
+  .table-cards > tbody > tr:not(.banlist-detail-row):not(.commslist-detail):not(.admin-detail-row):not(.servers-detail-row):not(.list-compact-row) > td[data-label=""]::before,
+  .table-cards > tbody > tr:not(.banlist-detail-row):not(.commslist-detail):not(.admin-detail-row):not(.servers-detail-row):not(.list-compact-row) > td:not([data-label])::before {
+    display: none;
+  }
+
+  .table-cards > tbody > tr:not(.banlist-detail-row):not(.commslist-detail):not(.admin-detail-row):not(.servers-detail-row):not(.list-compact-row) > td[data-label=""] {
+    justify-content: flex-start;
+    border-bottom: 1px solid rgba(61, 96, 127, 0.22);
+  }
+
+  /* Accordion detail rows — no card chrome */
+  .table-cards > tbody > tr.banlist-detail-row,
+  .table-cards > tbody > tr.commslist-detail,
+  .table-cards > tbody > tr.admin-detail-row,
+  .table-cards > tbody > tr.servers-detail-row {
+    display: block;
+    margin: -0.55rem 0 0.72rem;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .table-cards > tbody > tr.banlist-detail-row > td,
+  .table-cards > tbody > tr.commslist-detail > td,
+  .table-cards > tbody > tr.admin-detail-row > td,
+  .table-cards > tbody > tr.servers-detail-row > td {
+    display: block;
+    padding: 0;
+    border: 0;
+  }
+
+  .table-cards > tbody > tr.banlist-detail-row > td::before,
+  .table-cards > tbody > tr.commslist-detail > td::before,
+  .table-cards > tbody > tr.admin-detail-row > td::before,
+  .table-cards > tbody > tr.servers-detail-row > td::before {
+    display: none;
+  }
+
+  /* Bootstrap .table-striped рисует ячейки через inset box-shadow — ломает
+     скругления кнопок и бейджей внутри flex-карточек. */
+  .table-cards > tbody > tr.list-compact-row > td,
+  .table-cards > tbody > tr.list-compact-row > th {
+    box-shadow: none !important;
+    --bs-table-accent-bg: transparent;
+    --bs-table-bg-type: initial;
+    --bs-table-color-type: initial;
+    --bs-table-striped-bg: transparent;
+  }
+
+  /* Banlist / commslist — одна строка (как adminlist); scoped via .list-compact-row */
+  .table-cards.banlist-table > tbody > tr.list-compact-row,
+  .table-cards.commslist-table > tbody > tr.list-compact-row,
+  .table-cards.admin-servers-table > tbody > tr.list-compact-row {
+    display: flex !important;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.35rem 0.45rem;
+    padding: 0.45rem 0.55rem 0.45rem 0.5rem;
+    margin-bottom: 0.32rem;
+    cursor: pointer;
+    border: 1px solid var(--border-hairline);
+    border-radius: var(--radius-sm);
+    background: rgba(8, 15, 31, 0.55);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .table-cards.banlist-table > tbody > tr.list-compact-row.banlist-row-perm::before,
+  .table-cards.commslist-table > tbody > tr.list-compact-row.commslist-row-perm::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--danger);
+    pointer-events: none;
+  }
+
+  .table-cards.banlist-table > tbody > tr.list-compact-row.banlist-row-unbanned::before,
+  .table-cards.commslist-table > tbody > tr.list-compact-row.commslist-row-unbanned::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--ok);
+    pointer-events: none;
+  }
+
+  /* Admin → servers: компактная строка вместо label/value карточки */
+  .table-cards.admin-servers-table > tbody > tr.list-compact-row {
+    flex-wrap: wrap;
+    align-items: center;
+    padding: 0.48rem 0.55rem 0.4rem;
+  }
+
+  .table-cards.admin-servers-table > tbody > tr.list-compact-row > td {
+    display: block !important;
+    flex: 0 0 auto;
+    width: auto !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    text-align: left !important;
+  }
+
+  .table-cards.admin-servers-table > tbody > tr.list-compact-row > td::before {
+    display: none !important;
+    content: none !important;
+  }
+
+  .table-cards.admin-servers-table > tbody > tr.list-compact-row > td.admin-server-td-id {
+    order: 0;
+    flex: 0 0 auto;
+    min-width: 1.35rem;
+    font-size: 0.62rem;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .table-cards.admin-servers-table > tbody > tr.list-compact-row > td.admin-server-td-mod {
+    order: 1;
+    flex: 0 0 1.35rem;
+  }
+
+  .table-cards.admin-servers-table > tbody > tr.list-compact-row > td.admin-server-td-mod .sb-ico,
+  .table-cards.admin-servers-table > tbody > tr.list-compact-row > td.admin-server-td-mod img {
+    width: 18px;
+    height: 18px;
+    max-width: 18px;
+    max-height: 18px;
+  }
+
+  .table-cards.admin-servers-table > tbody > tr.list-compact-row > td.admin-server-td-host {
+    order: 2;
+    flex: 1 1 0;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.76rem;
+    font-weight: 650;
+    color: var(--text-heading);
+  }
+
+  .table-cards.admin-servers-table > tbody > tr.list-compact-row > td.admin-server-td-players {
+    order: 3;
+    flex: 0 0 auto;
+    font-size: 0.66rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    padding: 0.06rem 0.38rem !important;
+    border-radius: 999px;
+    background: rgba(61, 214, 140, 0.12);
+    color: var(--ok);
+    text-align: center !important;
+    white-space: nowrap;
+  }
+
+  .table-cards.admin-servers-table > tbody > tr.list-compact-row > td.admin-server-td-actions {
+    order: 4;
+    flex: 1 1 100%;
+    padding-top: 0.38rem !important;
+    margin-top: 0.2rem;
+    border-top: 1px solid var(--border-hairline);
+  }
+
+  .table-cards.admin-servers-table .admin-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    width: 100%;
+    max-width: none;
+    justify-content: flex-start;
+  }
+
+  .table-cards.admin-servers-table .admin-actions .btn {
+    font-size: 0.68rem;
+    padding: 0.22rem 0.5rem;
+    min-height: 2rem;
+    line-height: 1.2;
+  }
+
+  .table-cards.banlist-table > tbody > tr.list-compact-row > td,
+  .table-cards.commslist-table > tbody > tr.list-compact-row > td {
+    display: block !important;
+    flex: 0 0 auto;
+    width: auto !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    text-align: left !important;
+  }
+
+  .table-cards.banlist-table > tbody > tr.list-compact-row > td::before,
+  .table-cards.commslist-table > tbody > tr.list-compact-row > td::before {
+    display: none !important;
+    content: none !important;
+  }
+
+  .table-cards.banlist-table > tbody > tr.list-compact-row > td.banlist-td-check {
+    flex: 0 0 2.2rem;
+  }
+  .table-cards.banlist-table .banlist-check-hit {
+    min-width: 2.2rem;
+    min-height: 2.2rem;
+  }
+
+  .table-cards.banlist-table > tbody > tr.list-compact-row > td.banlist-td-mod,
+  .table-cards.commslist-table > tbody > tr.list-compact-row > td.commslist-td-mod {
+    flex: 0 0 1.35rem;
+  }
+
+  .table-cards.banlist-table > tbody > tr.list-compact-row > td.banlist-td-mod .sb-ico,
+  .table-cards.banlist-table > tbody > tr.list-compact-row > td.banlist-td-mod img,
+  .table-cards.commslist-table > tbody > tr.list-compact-row > td.commslist-td-mod .sb-ico,
+  .table-cards.commslist-table > tbody > tr.list-compact-row > td.commslist-td-mod img {
+    width: 18px;
+    height: 18px;
+  }
+
+  .table-cards.banlist-table > tbody > tr.list-compact-row > td[data-label="Игрок"],
+  .table-cards.commslist-table > tbody > tr.list-compact-row > td[data-label="Игрок"] {
+    flex: 1 1 0;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .table-cards.banlist-table .banlist-player,
+  .table-cards.commslist-table .commslist-player {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    min-width: 0;
+  }
+
+  .table-cards.banlist-table .banlist-player-text,
+  .table-cards.commslist-table .commslist-player-text {
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .table-cards.banlist-table .banlist-player-text .player,
+  .table-cards.commslist-table .commslist-player-text .player {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.84rem;
+  }
+
+  .table-cards.banlist-table .banlist-player-text .steam,
+  .table-cards.commslist-table .commslist-player-text .steam {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.66rem;
+    line-height: 1.2;
+  }
+
+  .table-cards.banlist-table .banlist-meta,
+  .table-cards.commslist-table .commslist-meta,
+  .table-cards.banlist-table .list-row-edit,
+  .table-cards.commslist-table .list-row-edit {
+    display: none;
+  }
+
+  .table-cards.banlist-table > tbody > tr.list-compact-row > td.banlist-td-recid,
+  .table-cards.commslist-table > tbody > tr.list-compact-row > td.commslist-td-recid {
+    flex: 0 0 auto;
+    max-width: 3.6rem;
+    overflow: hidden;
+  }
+
+  .table-cards.banlist-table .banlist-recid-chip,
+  .table-cards.commslist-table .commslist-recid {
+    font-size: 0.62rem;
+    padding: 0.08rem 0.32rem;
+  }
+
+  .table-cards.banlist-table > tbody > tr.list-compact-row > td.banlist-td-admin,
+  .table-cards.commslist-table > tbody > tr.list-compact-row > td.commslist-td-admin {
+    flex: 0 1 4.2rem;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.68rem;
+    color: var(--muted);
+  }
+
+  .table-cards.banlist-table > tbody > tr.list-compact-row > td.banlist-td-date,
+  .table-cards.commslist-table > tbody > tr.list-compact-row > td.commslist-td-date {
+    flex: 0 0 auto;
+    font-size: 0.64rem;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .table-cards.banlist-table .banlist-date,
+  .table-cards.commslist-table .commslist-date {
+    font-size: inherit;
+  }
+
+  .table-cards.banlist-table > tbody > tr.list-compact-row > td.banlist-td-length,
+  .table-cards.commslist-table > tbody > tr.list-compact-row > td.commslist-td-length {
+    flex: 0 0 auto;
+    max-width: 5.2rem;
+    text-align: right !important;
+  }
+
+  .table-cards.banlist-table > tbody > tr.list-compact-row > td.banlist-td-length .badge,
+  .table-cards.commslist-table > tbody > tr.list-compact-row > td.commslist-td-length .badge {
+    font-size: 0.62rem;
+    padding: 0.1rem 0.35rem;
+    white-space: nowrap;
+  }
+
+  .table-cards.banlist-table > tbody > tr.list-compact-row::after,
+  .table-cards.commslist-table > tbody > tr.list-compact-row::after {
+    content: "";
+    flex: 0 0 0.55rem;
+    height: 0.55rem;
+    margin-left: 0.05rem;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: rotate(45deg);
+    color: var(--muted);
+    align-self: center;
+    opacity: 0.65;
+  }
+
+  .table-cards .admin-actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    max-width: none;
+    width: auto;
+  }
+
+  .table-cards .text-end {
+    text-align: right !important;
+  }
+
+  .admin-menu-table,
+  .voucher-table {
+    white-space: normal !important;
+  }
+
+  .admin-menu-table td,
+  .voucher-table td {
+    white-space: normal !important;
+  }
+
+  .admin-menu-table.table-cards > tbody > tr > td.admin-menu-icon-cell[data-label=""] {
+    justify-content: center;
+  }
+
+  #overrides.table-cards > tbody > tr > td > .form-select,
+  #overrides.table-cards > tbody > tr > td > .form-control {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  #steamGroupsTable {
+    width: 100% !important;
+    max-width: 100%;
+  }
+
+  #steamGroupsTable.table-cards > tbody > tr > td::before {
+    flex: 0 0 42%;
+  }
+
+  @media (max-width: 575.98px) {
+    .table-cards > tbody > tr:not(.banlist-detail-row):not(.commslist-detail):not(.admin-detail-row):not(.servers-detail-row):not(.list-compact-row):not(.servers-row) {
+      margin-bottom: 0.55rem;
+    }
+
+    .table-cards > tbody > tr:not(.banlist-detail-row):not(.commslist-detail):not(.admin-detail-row):not(.servers-detail-row):not(.list-compact-row):not(.servers-row) > td {
+      padding: 0.4rem 0.6rem;
+      gap: 0.4rem;
+    }
+
+    .table-cards > tbody > tr:not(.banlist-detail-row):not(.commslist-detail):not(.admin-detail-row):not(.servers-detail-row):not(.list-compact-row):not(.servers-row) > td::before {
+      flex: 0 0 34%;
+      max-width: 7.5rem;
+      font-size: 0.64rem;
+    }
+  }
+}
+
+/* --- Banlist / commslist detail: плотные строки --- */
+@media (max-width: 991.98px) {
+  .banlist-detail,
+  .commslist-detail-grid {
+    padding: 0.45rem 0.55rem 0.55rem;
+    gap: 0.45rem;
+  }
+
+  .banlist-facts,
+  .commslist-facts {
+    display: block;
+  }
+
+  .banlist-fact,
+  .commslist-fact {
+    display: grid;
+    grid-template-columns: minmax(4.8rem, 34%) minmax(0, 1fr);
+    gap: 0.35rem 0.5rem;
+    padding: 0.14rem 0;
+    align-items: baseline;
+  }
+
+  .banlist-fact-label,
+  .commslist-fact-label {
+    font-size: 0.62rem;
+    line-height: 1.2;
+  }
+
+  .banlist-fact-value,
+  .commslist-fact-value {
+    font-size: 0.78rem;
+    line-height: 1.25;
+  }
+
+  .banlist-fact-value.steam,
+  .commslist-fact-value.steam {
+    font-size: 0.72rem;
+  }
+
+  .banlist-actions,
+  .commslist-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.22rem;
+  }
+
+  .banlist-actions a,
+  .banlist-actions li > a,
+  .commslist-actions a,
+  .commslist-actions li > a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 1 auto;
+    min-width: 0;
+    min-height: 2.75rem;
+    padding: 0.35rem 0.55rem;
+    font-size: 0.72rem;
+  }
+
+  .banlist-aside-block,
+  .commslist-aside-block {
+    margin-top: 0.4rem;
+    padding-top: 0.4rem;
+  }
+
+  .table-cards.banlist-table > tbody > tr.banlist-detail-row,
+  .table-cards.commslist-table > tbody > tr.commslist-detail {
+    margin: -0.2rem 0 0.32rem;
+  }
+}
+
+/* --- List chrome: tablet (576–992px) --- */
+@media (max-width: 991.98px) {
+  .banlist-chrome,
+  .commslist-chrome {
+    padding: 0.75rem 0.85rem;
+  }
+
+  .banlist-row:focus-visible,
+  .commslist-row:focus-visible,
+  .servers-toggle:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+}
+
+@media (min-width: 576px) and (max-width: 991.98px) {
+  .banlist-chrome,
+  .commslist-chrome {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.55rem;
+  }
+
+  .banlist-chrome-tools,
+  .commslist-chrome-tools {
+    width: 100%;
+    margin-left: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45rem 0.65rem;
+  }
+
+  .banlist-search,
+  .commslist-search {
+    flex: 1 1 12rem;
+    min-width: 11rem;
+    max-width: 22rem;
+    width: auto;
+    border-radius: var(--radius-sm);
+  }
+
+  .banlist-search .form-control,
+  .commslist-search .form-control {
+    min-height: 2.35rem;
+  }
+
+  .banlist-pagesel,
+  .commslist-pagesel {
+    flex: 0 0 auto;
+    margin-left: auto;
+  }
+
+  .banlist-nav,
+  .commslist-nav {
+    flex: 1 1 100%;
+    justify-content: flex-end;
+  }
+}
+
+/* --- Admin embed mobile chrome --- */
+@media (max-width: 767.98px) {
+  .admin-manage-head,
+  .form-page-head {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch !important;
+    gap: 0.65rem;
+  }
+
+  .admin-manage-tools,
+  .form-page-head .actions,
+  .form-page-head ul.actions {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+
+  .admin-manage-tools .btn,
+  .form-page-head .actions .btn,
+  .form-page-head ul.actions a {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .admin-embed-tabs {
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+
+  .admin-embed-tabs > li > a {
+    padding: 0.45rem 0.65rem;
+    min-height: 2.5rem;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .sb-v2-breadcrumb-list {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .banlist-chrome,
+  .commslist-chrome {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.65rem;
+  }
+
+  .banlist-chrome-tools,
+  .commslist-chrome-tools,
+  .banlist-toolbar,
+  .commslist-toolbar {
+    width: 100%;
+    margin-left: 0 !important;
+    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.55rem;
+  }
+
+  .banlist-search,
+  .commslist-search {
+    flex: none;
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    border-radius: var(--radius-sm);
+  }
+
+  .banlist-search .form-control,
+  .commslist-search .form-control {
+    min-height: 2.5rem;
+    font-size: 16px;
+  }
+
+  .banlist-pagesel,
+  .commslist-pagesel,
+  .banlist-nav,
+  .commslist-nav {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+  }
+
+  .banlist-pagination,
+  .commslist-pagination {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .commslist-status {
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    justify-content: flex-start;
+  }
+
+  .servers-head .servers-sub {
+    font-size: 0.78rem;
+  }
+
+  .modal-dialog {
+    margin: 0.65rem;
+    max-width: calc(100vw - 1.3rem);
+  }
+
+  .player-act-modal .modal-dialog {
+    max-width: calc(100vw - 1.3rem);
+  }
+}
+
+/* --- Auth / account / upload --- */
+@media (max-width: 767.98px) {
+  .login-screen {
+    padding: 1rem 0.75rem;
+    align-items: flex-start;
+  }
+
+  .login-card,
+  .login-card.auth-card-wide {
+    max-width: none;
+    width: 100%;
+    padding: 1.15rem 1rem 1.25rem;
+  }
+
+  .totp-qr img,
+  .totp-qr canvas {
+    max-width: min(220px, 100%);
+    height: auto;
+  }
+
+  .recovery-codes {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  body.upload-page {
+    padding: 12px;
+    align-items: flex-start;
+  }
+
+  .upload-card {
+    max-width: none;
+    padding: 18px 16px;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .recovery-codes {
+    grid-template-columns: 1fr;
+  }
+
+  .form-page-split {
+    grid-template-columns: 1fr !important;
+  }
+
+  .form-search-table.table-cards > tbody > tr > td.form-search-pick {
+    justify-content: flex-start;
+  }
+
+  .form-search-table.table-cards > tbody > tr > td.form-search-pick::before {
+    content: "Выбор";
+  }
+}
+
+/* --- Reduced motion: drawer, tab bar, loaders --- */
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-backdrop {
+    transition: none;
+  }
+
+  .sidebar {
+    transition: none !important;
+  }
+
+  .mobile-tabbar-item {
+    transition: none;
+  }
+
+  .page-loader .preloader:after {
+    animation: none;
+  }
+
+  .page-progress.is-on {
+    animation: none;
+  }
+
+  .cookie-notice {
+    transition: none;
+    transform: none;
+  }
+}

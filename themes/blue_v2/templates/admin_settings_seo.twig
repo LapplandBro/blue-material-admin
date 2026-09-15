@@ -1,0 +1,81 @@
+<form action="index.php?p=admin&amp;c=settings" method="post" enctype="multipart/form-data" class="settings-seo-forms">
+  <input type="hidden" name="sb_csrf" value="{{ sb_csrf }}">
+  <input type="hidden" name="settingsGroup" value="seo">
+  <div class="form-page admin-form settings-page" id="group.seo">
+    <header class="form-page-head">
+      <p class="form-page-kicker">Настройки</p>
+      <h2 class="form-page-title">SEO оптимизация</h2>
+      <p class="form-page-lead">Open Graph, meta description, обложка для Discord/Telegram. Значения из БД перекрывают <code>SB_OG_*</code> в config.php.</p>
+    </header>
+
+    <h3 class="form-section-title">Open Graph / превью</h3>
+    <div class="form-grid">
+      <div class="form-field form-field--full">
+        <label class="form-label" for="seo_og_site_name">{% include 'partials/help_icon.twig' with { title: 'og:site_name', message: 'Имя сайта в превью ссылок. Пусто = взять из config.php или заголовка панели.' } %} Имя сайта (og:site_name)</label>
+        <input type="text" class="form-control" id="seo_og_site_name" name="seo_og_site_name" value="{{ seo_og_site_name }}" placeholder="{{ seo_resolved.og_site_name }}" maxlength="120">
+      </div>
+      <div class="form-field form-field--full">
+        <label class="form-label" for="seo_og_title">{% include 'partials/help_icon.twig' with { title: 'og:title', message: 'Заголовок превью (главная / шаринг). Рекомендуется 35–60 символов.' } %} Заголовок (og:title)</label>
+        <input type="text" class="form-control" id="seo_og_title" name="seo_og_title" value="{{ seo_og_title }}" placeholder="{{ seo_resolved.og_title }}" maxlength="120">
+      </div>
+      <div class="form-field form-field--full">
+        <label class="form-label" for="seo_og_description">{% include 'partials/help_icon.twig' with { title: 'og:description', message: 'Описание в превью Discord / Telegram / соцсетей.' } %} Описание (og:description)</label>
+        <textarea class="form-control" id="seo_og_description" name="seo_og_description" rows="3" maxlength="320" placeholder="{{ seo_resolved.og_description }}">{{ seo_og_description }}</textarea>
+      </div>
+      <div class="form-field form-field--full">
+        <label class="form-label" for="seo_meta_description">{% include 'partials/help_icon.twig' with { title: 'meta description', message: 'Дефолт для &lt;meta name=&quot;description&quot;&gt;, если у страницы нет своего текста. Пусто = использовать og:description.' } %} Meta description (дефолт)</label>
+        <textarea class="form-control" id="seo_meta_description" name="seo_meta_description" rows="2" maxlength="320" placeholder="{{ seo_resolved.meta_description }}">{{ seo_meta_description }}</textarea>
+      </div>
+      <div class="form-field form-field--full">
+        <label class="form-label" for="seo_og_image">{% include 'partials/help_icon.twig' with { title: 'og:image', message: 'Относительный путь от корня сайта или полный https:// URL. После загрузки файла обычно images/og-cover.jpg.' } %} Путь к обложке (og:image)</label>
+        <input type="text" class="form-control" id="seo_og_image" name="seo_og_image" value="{{ seo_og_image }}" placeholder="images/og-cover.jpg" maxlength="255">
+        {% if seo_preview_image %}
+        <p class="form-help settings-note">Сейчас: <a href="{{ seo_preview_image }}" target="_blank" rel="noopener">{{ seo_preview_image }}</a></p>
+        <div class="seo-og-preview"><img src="{{ seo_preview_image }}" alt="OG preview" width="320" height="168" loading="lazy"></div>
+        {% endif %}
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="seo_og_image_width">Ширина</label>
+        <input type="number" class="form-control" id="seo_og_image_width" name="seo_og_image_width" value="{{ seo_og_image_width }}" min="1" max="4096" placeholder="1200">
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="seo_og_image_height">Высота</label>
+        <input type="number" class="form-control" id="seo_og_image_height" name="seo_og_image_height" value="{{ seo_og_image_height }}" min="1" max="4096" placeholder="630">
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-accent" name="seo_save" value="1">Сохранить SEO</button>
+    </div>
+  </div>
+</form>
+
+<form action="index.php?p=admin&amp;c=settings" method="post" enctype="multipart/form-data">
+  <input type="hidden" name="sb_csrf" value="{{ sb_csrf }}">
+  <input type="hidden" name="settingsGroup" value="seo_upload">
+  <div class="form-page admin-form settings-page">
+    <h3 class="form-section-title">Обложка OG</h3>
+    <p class="form-note">JPEG / PNG / WebP, до 3 МБ. Файл сохранится как <code>images/og-cover.jpg</code> (рекомендуется 1200×630).</p>
+    <div class="form-grid">
+      <div class="form-field form-field--full">
+        <label class="form-label" for="seo_og_file">Загрузить обложку</label>
+        <input type="file" class="form-control" id="seo_og_file" name="seo_og_file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp">
+      </div>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-outline-secondary">Загрузить</button>
+    </div>
+  </div>
+</form>
+
+<form action="index.php?p=admin&amp;c=settings" method="post">
+  <input type="hidden" name="sb_csrf" value="{{ sb_csrf }}">
+  <input type="hidden" name="settingsGroup" value="seo_rebuild">
+  <div class="form-page admin-form settings-page">
+    <h3 class="form-section-title">sitemap.xml и robots.txt</h3>
+    <p class="form-note">Пересобрать файлы в корне сайта по <code>SB_WP_URL</code>. Существующая обложка <code>og-cover.jpg</code> не перезаписывается.</p>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-outline-secondary" name="seo_rebuild_files" value="1">Пересобрать sitemap и robots</button>
+    </div>
+  </div>
+</form>

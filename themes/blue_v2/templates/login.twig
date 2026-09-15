@@ -1,0 +1,58 @@
+{% extends 'layout.twig' %}
+{% block extra_head %}
+<link href="{{ asset_base }}themes/blue_v2/css/auth.css" rel="stylesheet">
+{% endblock %}
+{% block body %}
+<div class="login-screen">
+  <div class="panel login-card">
+    <a class="brand login-brand" href="index.php?p=home">
+      {% include 'partials/brand_icon.twig' %}
+      <span class="brand-text">BLUE <span>ADMIN</span></span>
+    </a>
+    <p class="login-kicker">Панель администратора</p>
+    <h1 class="login-title">Вход</h1>
+    {% if login_allowed and steam_allowed %}
+      <p class="login-lead">Логин/пароль или Steam.</p>
+    {% elseif steam_allowed %}
+      <p class="login-lead">Вход через Steam.</p>
+    {% else %}
+      <p class="login-lead">Вход по логину и паролю.</p>
+    {% endif %}
+    {% if flash %}
+      <div class="alert alert-danger">{{ flash }}</div>
+    {% endif %}
+    {% if login_allowed %}
+    <form onsubmit="{{ redir_js|raw }} return false;" action="#" method="post">
+      <div class="field">
+        <label class="form-label" for="loginUsername">Логин</label>
+        <input class="form-control" type="text" id="loginUsername" name="username" autocomplete="username" required>
+        <div id="loginUsername.msg" class="msg-err"></div>
+      </div>
+      <div class="field">
+        <label class="form-label" for="loginPassword">Пароль</label>
+        <input class="form-control" type="password" id="loginPassword" name="password" autocomplete="current-password">
+        <div id="loginPassword.msg" class="msg-err"></div>
+      </div>
+      <div class="form-check field-check">
+        <input class="form-check-input" type="checkbox" id="loginRememberMe" value="checked">
+        <label class="form-check-label" for="loginRememberMe">Запомнить</label>
+      </div>
+      <div class="login-actions">
+        <button type="submit" class="btn btn-accent" id="alogin">Войти</button>
+        <a class="btn btn-outline-secondary" href="{{ lost_url }}">Забыл пароль</a>
+      </div>
+    </form>
+    {% endif %}
+    {% if steam_allowed %}
+      <div class="login-actions login-actions-steam">
+        <a class="btn btn-outline-light login-steam" href="{{ steam_url }}"><i class="bi bi-steam" aria-hidden="true"></i> Войти через Steam</a>
+      </div>
+    {% endif %}
+    <p class="login-lead login-links">
+      <a href="{{ preview_url }}">Банлист</a>
+      · <a href="index.php?p=submit">Жалоба</a>
+      · <a href="index.php?p=protest">Апелляция</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

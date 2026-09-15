@@ -1,0 +1,61 @@
+<div class="panel">
+  <header class="form-page-head">
+    <p class="form-page-kicker">Админка</p>
+    <h2 class="form-page-title">Админы сервера</h2>
+    <p class="form-page-lead">{{ admin_count }} · клик по строке, если админ в игре</p>
+  </header>
+  <div class="table-responsive table-cards-wrap">
+    <table class="table table-v2 table-cards">
+      <thead>
+        <tr>
+          <th>Имя админа</th>
+          <th>SteamID админа</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for admin in admin_list|default([]) %}
+        {% if admin.user %}
+        <tr class="opener">
+          <td data-label="Имя админа">{{ admin.user }}</td>
+          <td data-label="SteamID админа">{{ admin.authid }}</td>
+        </tr>
+        <tr class="admin-detail-row">
+          <td colspan="2">
+            <div class="opener">
+              {% if admin.ingame %}
+              <div class="admin-detail-head">
+                <div class="admin-detail-title">Детали администратора</div>
+              </div>
+              <div class="table-responsive table-cards-wrap">
+              <table class="table table-v2 table-cards">
+                <thead>
+                  <tr>
+                    <th>Ник</th>
+                    <th>Steam ID</th>
+                    <th>IP</th>
+                    <th>Время</th>
+                    <th>Пинг</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td data-label="Ник">{{ admin.iname }}</td>
+                    <td data-label="Steam ID">{{ admin.authid }}</td>
+                    <td data-label="IP">{{ admin.iip }}</td>
+                    <td data-label="Время">{{ admin.itime }}</td>
+                    <td data-label="Пинг">{{ admin.iping }}</td>
+                  </tr>
+                </tbody>
+              </table>
+              </div>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endif %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+<script>InitAccordion('tr.opener', 'div.opener', 'admin-page-content');</script>

@@ -1,0 +1,51 @@
+{% if not permission_listgroups %}
+<div class="form-page">
+  <p class="form-flash form-flash--err">Нет доступа к списку групп.</p>
+</div>
+{% else %}
+<div id="groups-list" class="admin-manage admin-groups">
+  <header class="admin-manage-head">
+    <div>
+      <p class="form-page-kicker">Админка</p>
+      <h2 class="admin-manage-title">Группы</h2>
+      <p class="form-page-lead">Клик по строке — права и состав.</p>
+    </div>
+  </header>
+
+  {% include 'partials/groups_section.twig' with {
+    title: 'Веб-группы',
+    count: web_group_count,
+    groups: web_group_list,
+    id_field: 'gid',
+    type: 'web',
+    count_label: 'Админов',
+    empty_text: 'Веб-групп нет.',
+    counts: web_admins,
+    members: web_admins_list
+  } %}
+
+  {% include 'partials/groups_section.twig' with {
+    title: 'Серверные группы админов',
+    count: server_admin_group_count,
+    groups: server_group_list,
+    id_field: 'id',
+    type: 'srv',
+    count_label: 'Админов',
+    empty_text: 'Серверных групп нет.',
+    counts: server_admins,
+    members: server_admins_list,
+    overrides: server_overrides_list
+  } %}
+
+  {% include 'partials/groups_section.twig' with {
+    title: 'Группы серверов',
+    count: server_group_count,
+    groups: server_list,
+    id_field: 'gid',
+    type: 'server',
+    count_label: 'Серверов',
+    empty_text: 'Групп серверов нет.'
+  } %}
+</div>
+<script type="text/javascript">InitAccordion('tr.opener', 'div.opener', 'groups-list');</script>
+{% endif %}

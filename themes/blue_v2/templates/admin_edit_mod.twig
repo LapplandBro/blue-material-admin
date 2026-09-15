@@ -1,0 +1,42 @@
+<form action="" method="post">
+  <div class="form-page admin-form">
+    <header class="form-page-head">
+      <p class="form-page-kicker">Админка</p>
+      <h2 class="form-page-title">Мод</h2>
+      <p class="form-page-lead">Имя, папка и иконка</p>
+    </header>
+    <div class="form-grid">
+      <div class="form-field form-field--full">
+        <label class="form-label" for="name">{% include 'partials/help_icon.twig' with { title: 'Название мода', message: 'Введите имя для МОДа.' } %} Название мода</label>
+        <input type="text" class="form-control" id="name" name="name" tabindex="1" placeholder="Counter-Strike: Source" value="{{ name }}">
+        <p id="name.msg" class="msg-err"></p>
+      </div>
+      <div class="form-field form-field--full">
+        <label class="form-label" for="folder">{% include 'partials/help_icon.twig' with { title: 'Имя папки', message: 'Введите имя папки МОДа. Например, для Counter-Strike: Source папка будет cstrike' } %} Имя папки</label>
+        <input type="text" class="form-control" id="folder" name="folder" tabindex="1" placeholder="cstrike" value="{{ folder }}">
+        <p id="folder.msg" class="msg-err"></p>
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="steam_universe">{% include 'partials/help_icon.twig' with { title: 'Универсальный номер Steam', message: '(STEAM_X:Y:Z) Некоторые игры отображают steamid отличающийся от других. Введите первую цифру в SteamID (X) в зависимости от вашего мода. (По умолчанию: 0).' } %} Steam universe</label>
+        <input type="text" class="form-control" id="steam_universe" name="steam_universe" tabindex="1" placeholder="0" value="{{ steam_universe }}">
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="enabled">{% include 'partials/help_icon.twig' with { title: 'Активация МОДа', message: 'Выберите, чтобы включить этот МОД' } %} Активация</label>
+        <div class="form-check">
+          <input type="checkbox" class="form-check-input" name="enabled" id="enabled" value="on">
+          <label class="form-check-label" for="enabled">Включить мод</label>
+        </div>
+      </div>
+      <div class="form-field form-field--full">
+        <label class="form-label" for="upload">{% include 'partials/help_icon.twig' with { title: 'Upload Icon', message: 'Кликните тут, чтобы загрузить иконку МОДа.' } %} Загрузить иконку</label>
+        <button type="button" class="btn btn-outline-secondary" id="upload" onclick="childWindow=open('pages/admin.uploadicon.php','upload','resizable=yes,scrollbars=yes,width=520,height=420');">Загрузить иконку МОДа</button>
+        <p id="icon.msg" class="form-note">{% if mod_icon %}Загружено: <b>{{ mod_icon }}</b>{% endif %}</p>
+        <input type="hidden" id="icon_hid" name="icon_hid" value="{{ mod_icon }}">
+      </div>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-accent" id="amod">Сохранить</button>
+      <button type="button" class="btn btn-outline-secondary" id="aback" onclick="sbGo('index.php?p=admin&amp;c=mods')">Назад</button>
+    </div>
+  </div>
+</form>

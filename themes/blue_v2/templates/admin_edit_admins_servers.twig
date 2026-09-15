@@ -1,0 +1,45 @@
+<form action="" method="post">
+  <input type="hidden" name="sb_csrf" value="{{ sb_csrf }}">
+  <div class="form-page admin-form" id="admin-page-content">
+    <div id="add-group">
+      <header class="form-page-head">
+        <p class="form-page-kicker">Редактирование</p>
+        <h2 class="form-page-title">Доступ к серверам</h2>
+        <p class="form-page-lead">Где этот админ работает.</p>
+      </header>
+      <div class="form-checkboxes" id="group.details">
+        {% if row_count < 1 %}
+        <p class="form-page-lead">Нужно добавить сервер или группу серверов, прежде чем настроить доступ.</p>
+        {% else %}
+          {% for group in group_list %}
+          <label class="form-check" for="group_{{ group.gid }}">
+            <input class="form-check-input" type="checkbox" id="group_{{ group.gid }}" name="group[]" value="g{{ group.gid }}">
+            <span class="form-check-label">{{ group.name }} <i>(Группа сервера)</i></span>
+          </label>
+          {% endfor %}
+          {% for server in server_list %}
+          <label class="form-check" for="server_{{ server.sid }}">
+            <input class="form-check-input" type="checkbox" name="servers[]" id="server_{{ server.sid }}" value="s{{ server.sid }}">
+            <span class="form-check-label" id="server_host_{{ server.sid }}"><i>Получение имени сервера…</i></span>
+          </label>
+          {% endfor %}
+        {% endif %}
+      </div>
+      <div class="form-actions">
+        {% if row_count > 0 %}
+        <button type="submit" name="editadminserver" value="1" class="btn btn-accent" id="editadminserver">Сохранить</button>
+        {% endif %}
+        <button type="button" class="btn btn-outline-secondary" id="aback" onclick="sbGo('index.php?p=admin&amp;c=admins')">Назад</button>
+      </div>
+      <script>
+      {% for asrv in assigned_servers %}
+        if($('server_{{ asrv.server_id }}'))$('server_{{ asrv.server_id }}').checked = true;
+        if($('group_{{ asrv.srv_group_id }}'))$('group_{{ asrv.srv_group_id }}').checked = true;
+      {% endfor %}
+      {% for server in server_list %}
+        xajax_ServerHostPlayers({{ server.sid }}, "id", "server_host_{{ server.sid }}");
+      {% endfor %}
+      </script>
+    </div>
+  </div>
+</form>

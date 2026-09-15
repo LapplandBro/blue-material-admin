@@ -24,36 +24,49 @@
 //   Page: <http://www.sourcebans.net/> - <https://github.com/GameConnect/sourcebansv1>
 //
 // *************************************************************************
-?>
 
-<div class="tab-content p-0" id="admin-page-content">
-<?php
 if(!defined("IN_SB")){echo "Ошибка доступа!";die();}
-global $userbank, $ui;
+global $userbank, $ui, $theme;
 
 // Note: admin deletion (RemoveAdmin() in includes/sb-callback.php) already enforces
 // SB_PROTECTED_STEAMIDS, so no additional check is needed on this listing page.
 
+if (!isset($page) || (int)$page < 1)
+	$page = 1;
 if (isset($_GET['page']) && $_GET['page'] > 0)
-{
 	$page = intval($_GET['page']);
-}
+if (!isset($AdminsPerPage) || (int)$AdminsPerPage < 1)
+	$AdminsPerPage = defined('SB_BANS_PER_PAGE') ? max(1, (int)SB_BANS_PER_PAGE) : 30;
+if (!isset($admins) || !is_array($admins))
+	$admins = array();
+if (!isset($admin_count))
+	$admin_count = count($admins);
+if (!isset($dateformat) || $dateformat === '')
+	$dateformat = !empty($GLOBALS['config']['config.dateformat']) ? $GLOBALS['config']['config.dateformat'] : 'm-d-y H:i';
 
 $AdminsStart = intval(($page-1) * $AdminsPerPage);
 $AdminsEnd = intval($AdminsStart+$AdminsPerPage);
 if ($AdminsEnd > $admin_count) $AdminsEnd = $admin_count;
 
+if (!function_exists('SteamID2CommunityID')) {
 function SteamID2CommunityID($steamid) 
-{ 
-    $parts = explode(':', str_replace('STEAM_', '' ,$steamid)); 
-
-    return bcadd(bcadd('76561197960265728', $parts['1']), bcmul($parts['2'], '2')); 
+{
+	if (function_exists('GetCommunityIDFromSteamID2'))
+		return GetCommunityIDFromSteamID2($steamid);
+	$steamid = (string)$steamid;
+	$parts = explode(':', str_replace('STEAM_', '' ,$steamid));
+	if (!isset($parts[1], $parts[2]) || !function_exists('bcadd'))
+		return '';
+	return bcadd(bcadd('76561197960265728', (string)$parts[1]), bcmul((string)$parts[2], '2'));
+}
 } 
 
 // List Page
 $admin_list = array();
 foreach($admins AS $admin)
 {
+	if (!is_array($admin) || !isset($admin['aid']))
+		continue;
 	$admin['immunity'] = $userbank->GetProperty("srv_immunity", $admin['aid']);
 	$admin['web_group'] = $userbank->GetProperty("group_name", $admin['aid']);
 	$admin['server_group'] = $userbank->GetProperty("srv_groups", $admin['aid']);
@@ -92,41 +105,54 @@ foreach($admins AS $admin)
 	{
 		$admin['server_group'] = "Группа\индивид. права отсутствуют";
 	}
-	$num = $GLOBALS['db']->GetRow("SELECT count(authid) AS num FROM `" . DB_PREFIX . "_bans` WHERE aid = '".$admin['aid']."'");
-	$admin['bancount'] = $num['num'];
+	$admAuth = isset($admin['authid']) ? $admin['authid'] : null;
+	if (function_exists('sb_admin_issued_where')) {
+		list($issuedSql, $issuedParams) = sb_admin_issued_where((int)$admin['aid'], $admAuth);
+		list($issuedSqlB, $issuedParamsB) = sb_admin_issued_where((int)$admin['aid'], $admAuth, 'B');
+	} else {
+		$issuedSql = 'aid = ?';
+		$issuedParams = array((int)$admin['aid']);
+		$issuedSqlB = 'B.aid = ?';
+		$issuedParamsB = array((int)$admin['aid']);
+	}
+	$num = $GLOBALS['db']->GetRow("SELECT count(authid) AS num FROM `" . DB_PREFIX . "_bans` WHERE ".$issuedSql, $issuedParams);
+	$admin['bancount'] = (is_array($num) && isset($num['num'])) ? $num['num'] : 0;
 
-	$nodem = $GLOBALS['db']->GetRow("SELECT count(B.bid) AS num FROM `" . DB_PREFIX . "_bans` AS B WHERE aid = '".$admin['aid']."' AND NOT EXISTS (SELECT D.demid FROM `" . DB_PREFIX . "_demos` AS D WHERE D.demid = B.bid)");
+	$nodem = $GLOBALS['db']->GetRow("SELECT count(B.bid) AS num FROM `" . DB_PREFIX . "_bans` AS B WHERE ".$issuedSqlB." AND NOT EXISTS (SELECT D.demid FROM `" . DB_PREFIX . "_demos` AS D WHERE D.demid = B.bid)", $issuedParamsB);
 	$admin['aid'] = $admin['aid'];
-	$admin['nodemocount'] = $nodem['num'];
+	$admin['nodemocount'] = (is_array($nodem) && isset($nodem['num'])) ? $nodem['num'] : 0;
 
 	// Кол-во блокировок (чат/микрофон), выданных этим админом - для ссылки "найти" в списке админов.
-	$commsnum = $GLOBALS['db']->GetRow("SELECT count(bid) AS num FROM `" . DB_PREFIX . "_comms` WHERE aid = '".$admin['aid']."'");
-	$admin['commscount'] = $commsnum['num'];
+	$commsnum = $GLOBALS['db']->GetRow("SELECT count(bid) AS num FROM `" . DB_PREFIX . "_comms` WHERE ".$issuedSql, $issuedParams);
+	$admin['commscount'] = (is_array($commsnum) && isset($commsnum['num'])) ? $commsnum['num'] : 0;
 
 	$admin['name'] = stripslashes($admin['user']);
 	$admin['server_flag_string'] = SmFlagsToSb($userbank->GetProperty("srv_flags",$admin['aid']));
 	$admin['web_flag_string'] = BitToString($userbank->GetProperty("extraflags",$admin['aid']));
 	
 
-	if($admin['expired'] == 0) {
+	$expired = isset($admin['expired']) ? (int)$admin['expired'] : 0;
+	if($expired == 0) {
 		$admin['expired_text'] = 'Никогда';
 	}
-	elseif($admin['expired'] < time()) {
+	elseif($expired < time()) {
 		$admin['expired_text'] = 'Истёк';
 	}
 	else{
-		$admin['expired_text'] = 'Через&nbsp;'.round((($admin['expired'] - time()) / 86400),0).'&nbsp;дн.';
+		$admin['expired_text'] = 'Через&nbsp;'.round((($expired - time()) / 86400),0).'&nbsp;дн.';
 	}
-	if($admin['expired'] == 0) {
+	$nameJs = json_encode((string)$admin['user'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE);
+	$aidJs = (int)$admin['aid'];
+	if($expired == 0) {
 		$admin['expired_cv'] = 'Навсегда';
-		$admin['del_link_d'] = 'if(confirm(\'У этого админа Вечная админка.\nВы действительно хотите удалить его?\')) { RemoveAdmin('.$admin['aid'].', \''.$admin['user'].'\'); } return false;';
+		$admin['del_link_d'] = 'if(confirm("У этого админа Вечная админка.\\nВы действительно хотите удалить его?")) { RemoveAdmin('.$aidJs.', '.$nameJs.'); } return false;';
 	}
-	elseif($admin['expired'] < time()) {
+	elseif($expired < time()) {
 		$admin['expired_cv'] = 'Уже <b>Истек</b>';
-		$admin['del_link_d'] = 'RemoveAdmin('.$admin['aid'].', \''.$admin['user'].'\'); return false;';
+		$admin['del_link_d'] = 'RemoveAdmin('.$aidJs.', '.$nameJs.'); return false;';
 	} else {
-		$admin['expired_cv'] = date('До d.m.Y в <b>H:i</b>',$admin['expired']);
-		$admin['del_link_d'] = 'if(confirm(\'У этого админа не истёк срок админки.\nВы действительно хотите удалить его?\')) { RemoveAdmin('.$admin['aid'].', \''.$admin['user'].'\'); } return false;';
+		$admin['expired_cv'] = date('До d.m.Y в <b>H:i</b>',$expired);
+		$admin['del_link_d'] = 'if(confirm("У этого админа не истёк срок админки.\\nВы действительно хотите удалить его?")) { RemoveAdmin('.$aidJs.', '.$nameJs.'); } return false;';
 	}
 	
 	$lastvisit = $userbank->GetProperty("lastvisit", $admin['aid']);
@@ -140,9 +166,15 @@ foreach($admins AS $admin)
 	array_push($admin_list, $admin);
 }
 
+$expiredQ = (isset($_GET['showexpiredadmins']) && $_GET['showexpiredadmins'] == 'true') ? '&showexpiredadmins=true' : '';
+$adminsListBase = 'index.php?p=admin&c=admins';
+if (isset($_GET['advSearch']) && isset($_GET['advType']))
+	$adminsListBase .= '&advSearch=' . rawurlencode((string)$_GET['advSearch']) . '&advType=' . rawurlencode((string)$_GET['advType']);
+$adminsListBase .= $expiredQ;
+
 if ($page > 1)
 {
-	$prev = CreateLinkR('<i class="zmdi zmdi-chevron-left"></i>', sb_url_query('admin', 'c=admins&page=' . ($page-1) . $advSearchString . (isset($_GET['showexpiredadmins']) ? '&showexpiredadmins=true' : '')));
+	$prev = CreateLinkR('Назад', $adminsListBase . '&page=' . ($page-1));
 }
 else
 {
@@ -150,70 +182,61 @@ else
 }
 if ($AdminsEnd < $admin_count)
 {
-	$next = CreateLinkR('<i class="zmdi zmdi-chevron-right"></i>', sb_url_query('admin', 'c=admins&page=' . ($page+1) . $advSearchString . (isset($_GET['showexpiredadmins']) ? '&showexpiredadmins=true' : '')));
+	$next = CreateLinkR('Вперёд', $adminsListBase . '&page=' . ($page+1));
 }
 else
 	$next = "";
 
-//=================[ Start Layout ]==================================
-//$admin_nav = 'displaying&nbsp;'.$AdminsStart.'&nbsp;-&nbsp;'.$AdminsEnd.'&nbsp;of&nbsp;'.$admin_count.'&nbsp;results';
-
-$pages = ceil($admin_count/$AdminsPerPage);
+$admin_nav_p = '';
+$pages = ($AdminsPerPage > 0) ? ceil($admin_count/$AdminsPerPage) : 1;
 if($pages > 1) {
-	$advSearchJs = json_encode(isset($_GET['advSearch']) ? (string)$_GET['advSearch'] : '', JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
-	$advTypeJs = json_encode(isset($_GET['advType']) ? (string)$_GET['advType'] : '', JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
-	if (isset($_GET['showexpiredadmins']))
-		$admin_nav_p = ' / Страницы: <select class="form-control" onchange=\'sbGo("admin/admins?showexpiredadmins=true&page="+this.value);\' style="display: inline-block;width: 40px;" id="PageChanger">';
-	else
-		$admin_nav_p = ' / Страницы: <select class="form-control" onchange=\'changePage(this,"A",' . $advSearchJs . ',' . $advTypeJs . ');\' style="display: inline-block;width: 40px;">';
-	
+	$pageHrefJs = json_encode($adminsListBase, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+	$admin_nav_p = '<label class="v2-page-label">Страница <select class="form-select form-select-sm v2-page-select" id="PageChanger" onchange=\'window.location.href=' . $pageHrefJs . '+"&amp;page="+this.value;\'>';
 	for($i=1;$i<=$pages;$i++) {
-		if(isset($_GET["page"]) && $i==$_GET["page"]) {
-			$admin_nav_p .= '<option value="' . $i . '" selected="selected">' . $i . '</option>';
-			continue;
-		}
-		$admin_nav_p .= '<option value="' . $i . '">' . $i . '</option>';
+		$sel = (isset($_GET['page']) && (int)$_GET['page'] === $i) ? ' selected="selected"' : '';
+		if ($sel === '' && $i === (int)$page)
+			$sel = ' selected="selected"';
+		$admin_nav_p .= '<option value="' . $i . '"' . $sel . '>' . $i . '</option>';
 	}
-	$admin_nav_p .= '</select>&nbsp;';
+	$admin_nav_p .= '</select> <span class="v2-page-of">из ' . (int)$pages . '</span></label>';
 }
 
-$admin_nav = '<ul class="pagination">';
-	
-if (strlen($prev) > 0)
+$admin_nav = '';
+if (strlen($prev) > 0 || strlen($next) > 0)
 {
-	$admin_nav .= '<li>'.$prev.'</li>';
-}
-if (strlen($next) > 0)
-{
-	$admin_nav .= '<li>'.$next.'</li>';
+	$admin_nav = '<nav class="v2-page-arrows" aria-label="Страницы">';
+	if (strlen($prev) > 0)
+		$admin_nav .= $prev;
+	if (strlen($next) > 0)
+		$admin_nav .= $next;
+	$admin_nav .= '</nav>';
 }
 
-$admin_nav .= '</ul>&nbsp;';
-
-if(isset($_GET["showexpiredadmins"]) && $_GET["showexpiredadmins"] == "true") {
-	$btn_icon = "zmdi-alarm";
-	$btn_helpa = 'data-trigger="hover" data-toggle="tooltip" data-placement="top" data-original-title="Показать действующих администраторов" title=""';
-	$btn_href = sb_url('admin', array('c' => 'admins'));
-	$btn_rem = '<button type="button" onclick="removeExpiredAdmins()" class="btn bgm-bluegray btn-block waves-effect">Удалить всех истёкших админов</button>';
+$show_expired_admins = (isset($_GET['showexpiredadmins']) && $_GET['showexpiredadmins'] == 'true');
+if($show_expired_admins) {
+	$btn_href = 'index.php?p=admin&c=admins';
+	$btn_rem = '<button type="button" onclick="removeExpiredAdmins()" class="btn btn-outline-secondary btn-sm">Удалить всех истёкших админов</button>';
 } else{
-	$btn_icon = "zmdi-timer-off";
-	$btn_helpa = 'data-trigger="hover" data-toggle="tooltip" data-placement="top" data-original-title="Показать истекших администраторов" title=""';
-	$btn_href = sb_url('admin', array('c' => 'admins', 'showexpiredadmins' => 'true'));
+	$btn_href = 'index.php?p=admin&c=admins&showexpiredadmins=true';
 	$btn_rem = '';
 }
 
 $res = $GLOBALS['db']->Execute("SELECT aid FROM `".DB_PREFIX."_admins` WHERE `support` = '1'");
 $checked = array();
-while (!$res->EOF)
+if (is_object($res))
 {
-    $chek_in = array();
-	$chek_in['kid'] = $res->fields['aid'];
-	array_push($checked,$chek_in);
-	$res->MoveNext();
+	while (!$res->EOF)
+	{
+		$chek_in = array();
+		$chek_in['kid'] = $res->fields['aid'];
+		array_push($checked,$chek_in);
+		$res->MoveNext();
+	}
 }
 
 
-echo '<div id="0" style="display:none;">';
+echo '<div id="admin-page-content">';
+echo '<div id="0" class="admin-pane is-on">';
 	$theme->assign('checked_if', $checked);
 	$theme->assign('permission_listadmin', $userbank->HasAccess(ADMIN_OWNER|ADMIN_LIST_ADMINS));
 	$theme->assign('permission_editadmin', $userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_ADMINS));
@@ -222,13 +245,14 @@ echo '<div id="0" style="display:none;">';
 	$theme->assign('admin_nav', $admin_nav);
 	$theme->assign('admin_nav_p', $admin_nav_p);
 	$theme->assign('admins', $admin_list);
-	$theme->assign('btn_helpa', $btn_helpa);
 	$theme->assign('btn_rem', $btn_rem);
 	$theme->assign('btn_href', $btn_href);
-	$theme->assign('btn_icon', $btn_icon);
-	$theme->assign('allow_warnings', ($GLOBALS['config']['admin.warns'] == "1"));
-	$theme->assign('maxWarnings', $GLOBALS['config']['admin.warns.max']);
-	$theme->display('page_admin_admins_list.tpl');
+	$theme->assign('show_expired_admins', $show_expired_admins);
+	$theme->assign('allow_warnings', (isset($GLOBALS['config']['admin.warns']) && $GLOBALS['config']['admin.warns'] == "1"));
+	$theme->assign('maxWarnings', isset($GLOBALS['config']['admin.warns.max']) ? $GLOBALS['config']['admin.warns.max'] : 0);
+	require TEMPLATES_PATH . "/admin.admins.search.php";
+	$_f = sb_ui_v2_theme_fragment('admin_admins_list.twig');
+	if (is_string($_f) && $_f !== '') echo $_f;
 echo '</div>';
 
 
@@ -239,26 +263,34 @@ $group_list = 				$GLOBALS['db']->GetAll("SELECT * FROM `" . DB_PREFIX . "_group
 $servers = 					$GLOBALS['db']->GetAll("SELECT * FROM `" . DB_PREFIX . "_servers`");
 $server_admin_group_list = 	$GLOBALS['db']->GetAll("SELECT * FROM `" . DB_PREFIX . "_srvgroups`");
 $server_group_list = 		$GLOBALS['db']->GetAll("SELECT * FROM `" . DB_PREFIX . "_groups` WHERE type != 3");
+if (!is_array($group_list)) $group_list = array();
+if (!is_array($servers)) $servers = array();
+if (!is_array($server_admin_group_list)) $server_admin_group_list = array();
+if (!is_array($server_group_list)) $server_group_list = array();
 $server_list = array();
 $serverscript = "<script type=\"text/javascript\">";
 foreach($servers AS $server)
 {
-    $serverscript .= "xajax_ServerHostPlayers('".$server['sid']."', 'id', 'sa".$server['sid']."');";
+	if (!is_array($server) || !isset($server['sid']))
+		continue;
+	$serverscript .= "xajax_ServerHostPlayers('".$server['sid']."', 'id', 'sa".$server['sid']."');";
+	$info = array();
 	$info['sid'] = $server['sid'];
-	$info['ip'] = $server['ip'];
-	$info['port'] = $server['port'];
+	$info['ip'] = isset($server['ip']) ? $server['ip'] : '';
+	$info['port'] = isset($server['port']) ? $server['port'] : '';
 	array_push($server_list, $info);
 }
 $serverscript .= "</script>";
 
-echo '<div id="1" style="display:none;">';
+echo '<div id="1" class="admin-pane">';
 	$theme->assign('group_list', $group_list);
 	$theme->assign('server_list', $server_list);
 	$theme->assign('server_script', $serverscript);
 	$theme->assign('server_admin_group_list', $server_admin_group_list);
 	$theme->assign('server_group_list', $server_group_list);
 	$theme->assign('permission_addadmin', $userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_ADMINS));
-	$theme->display('page_admin_admins_add.tpl');
+	$_f = sb_ui_v2_theme_fragment('admin_admins_add.twig');
+	if (is_string($_f) && $_f !== '') echo $_f;
 echo '</div>';
 
 
@@ -277,7 +309,7 @@ try
 			throw new Exception("Нет доступа к переопределениям.");
 		$csrf = isset($_POST['sb_csrf']) ? $_POST['sb_csrf'] : '';
 		if(!function_exists('sb_csrf_validate') || !sb_csrf_validate($csrf))
-			throw new Exception("Неверный CSRF-токен. Обновите страницу и попробуйте снова.");
+			throw new Exception('__SB_CSRF__');
 
 		// Handle old overrides, if there are any.
 		if(isset($_POST['override_id']))
@@ -332,18 +364,24 @@ try
 		$overrides_save_success = true;
 	}
 } catch (Exception $e) {
+	if ($e->getMessage() === '__SB_CSRF__') {
+		sb_csrf_fail_page(true);
+	}
 	$overrides_error = $e->getMessage();
 }
 
-$overrides_list = $GLOBALS['db']->GetAll("SELECT * FROM `" . DB_PREFIX . "_overrides`;");
+		$overrides_list = $GLOBALS['db']->GetAll("SELECT * FROM `" . DB_PREFIX . "_overrides`;");
+		if (!is_array($overrides_list))
+			$overrides_list = array();
 
-echo '<div id="2" style="display:none;">';
+echo '<div id="2" class="admin-pane">';
 	$theme->assign('overrides_list', $overrides_list);
 	$theme->assign('overrides_error', $overrides_error);
 	$theme->assign('overrides_save_success', $overrides_save_success);
 	$theme->assign('permission_addadmin', $userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_ADMINS));
 	$theme->assign('sb_csrf', function_exists('sb_csrf_token') ? sb_csrf_token() : '');
-	$theme->display('page_admin_overrides.tpl');
+	$_f = sb_ui_v2_theme_fragment('admin_overrides.twig');
+	if (is_string($_f) && $_f !== '') echo $_f;
 echo '</div>';
-?>
-</div>
+echo '</div>';
+

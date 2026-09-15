@@ -27,13 +27,70 @@
 
 global $userbank, $ui, $theme;
 if(!defined("IN_SB")){echo "Ошибка доступа!";die();}
+
+function sb_submit_v2_on()
+{
+	return function_exists('sb_ui_v2_enabled') && sb_ui_v2_enabled() && function_exists('sb_ui_v2_render');
+}
+
+function sb_submit_v2_plain($s)
+{
+	return html_entity_decode((string)$s, ENT_QUOTES, 'UTF-8');
+}
+
+function sb_submit_v2_render($extra)
+{
+	$base = array(
+		'title' => 'Жалоба на игрока',
+		'page_blocked' => false,
+		'flash_type' => '',
+		'flash_title' => '',
+		'flash_html' => '',
+		'STEAMID' => 'STEAM_0:',
+		'ban_ip' => '',
+		'ban_reason' => '',
+		'player_name' => '',
+		'subplayer_name' => '',
+		'player_email' => '',
+		'server_list' => array(),
+		'server_selected' => -1,
+		'sb_csrf' => '',
+		'captcha_t' => time(),
+		'form_action' => 'index.php?p=submit',
+	);
+	sb_ui_v2_render('submit.twig', array_merge($base, $extra));
+	return true;
+}
+
+$flash_type = '';
+$flash_title = '';
+$flash_html = '';
+
 if($GLOBALS['config']['config.enablesubmit']!="1")
 {
+	if (sb_submit_v2_on()) {
+		sb_submit_v2_render(array(
+			'page_blocked' => true,
+			'flash_type' => 'error',
+			'flash_title' => 'Ошибка',
+			'flash_html' => 'Страница отключена.',
+		));
+		return;
+	}
 	CreateRedBox("Ошибка", "Страница отключена.");
 	PageDie();
 }
 if ($userbank->is_logged_in())
 {
+	if (sb_submit_v2_on()) {
+		sb_submit_v2_render(array(
+			'page_blocked' => true,
+			'flash_type' => 'error',
+			'flash_title' => 'Недоступно',
+			'flash_html' => 'Вы вошли как администратор. Жалобы на игроков оставляют гости; бан выдаётся из админ-панели или с сервера.',
+		));
+		return;
+	}
 	CreateRedBox("Недоступно", "Вы вошли как администратор. Жалобы на игроков оставляют гости; бан выдаётся из админ-панели или с сервера.");
 	PageDie();
 }
@@ -175,8 +232,14 @@ else
 	}
 
 
-	if(!$validsubmit)
-		CreateRedBox("Ошибка", $errors);
+	if(!$validsubmit) {
+		if (sb_submit_v2_on()) {
+			$flash_type = 'error';
+			$flash_title = 'Ошибка';
+			$flash_html = $errors;
+		} else
+			CreateRedBox("Ошибка", $errors);
+	}
 
 	if ($validsubmit)
 	{
@@ -232,11 +295,21 @@ else
 				if($userbank->HasAccess(ADMIN_OWNER|ADMIN_BAN_SUBMISSIONS, $admin['aid']) && $userbank->HasAccess(ADMIN_NOTIFY_SUB, $admin['aid']))
 					EMail($admin['email'], "[SourceBans] Добавлена жалоба на игрока", $message, $headers);
 			}
-			CreateGreenBox("Успешно", "Ваша жалоба была добавлена в базу данных, и будет рассмотрена одним из админов");
+			if (sb_submit_v2_on()) {
+				$flash_type = 'success';
+				$flash_title = 'Успешно';
+				$flash_html = 'Ваша жалоба была добавлена в базу данных, и будет рассмотрена одним из админов';
+			} else
+				CreateGreenBox("Успешно", "Ваша жалоба была добавлена в базу данных, и будет рассмотрена одним из админов");
 		}
 		else
 		{
-			CreateRedBox("Ошибка", "Ошибка загрузки демо. попробуйте позже.");
+			if (sb_submit_v2_on()) {
+				$flash_type = 'error';
+				$flash_title = 'Ошибка';
+				$flash_html = 'Ошибка загрузки демо. попробуйте позже.';
+			} else
+				CreateRedBox("Ошибка", "Ошибка загрузки демо. попробуйте позже.");
 			$log = new CSystemLog("e", "Ошибка загрузки демо", "Ошибка загрузки демо для заявки на бан от (". $Email . ")");
 		}
 	}
@@ -268,4 +341,21 @@ $theme->assign('server_list',		$servers);
 $theme->assign('server_selected',	$SID);
 $theme->assign('sb_csrf', function_exists('sb_csrf_token') ? sb_csrf_token() : '');
 
-$theme->display('page_submitban.tpl');
+if (sb_submit_v2_on()) {
+	$sidShow = $SteamID=="" ? "STEAM_0:" : $SteamID;
+	sb_submit_v2_render(array(
+		'flash_type' => $flash_type,
+		'flash_title' => $flash_title,
+		'flash_html' => $flash_html,
+		'STEAMID' => sb_submit_v2_plain($sidShow),
+		'ban_ip' => sb_submit_v2_plain($BanIP),
+		'ban_reason' => sb_submit_v2_plain($BanReason),
+		'player_name' => sb_submit_v2_plain($PlayerName),
+		'subplayer_name' => sb_submit_v2_plain($SubmitterName),
+		'player_email' => sb_submit_v2_plain($Email),
+		'server_list' => $servers,
+		'server_selected' => $SID,
+		'sb_csrf' => function_exists('sb_csrf_token') ? sb_csrf_token() : '',
+	));
+	return;
+}

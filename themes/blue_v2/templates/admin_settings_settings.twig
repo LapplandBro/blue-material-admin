@@ -1,0 +1,257 @@
+<form action="index.php?p=admin&amp;c=settings" method="post">
+  <input type="hidden" name="sb_csrf" value="{{ sb_csrf }}">
+  <input type="hidden" name="settingsGroup" value="mainsettings">
+  <div class="form-page admin-form settings-page" id="group.details">
+    <header class="form-page-head">
+      <p class="form-page-kicker">Настройки</p>
+      <h2 class="form-page-title">Главные настройки</h2>
+      <p class="form-page-lead">Заголовок, даты, страницы и почта. Подсказки на «?».</p>
+    </header>
+
+    <h3 class="form-section-title">Основные</h3>
+    <div class="form-grid">
+      <div class="form-field form-field--full">
+        <label class="form-label" for="template_title">{% include 'partials/help_icon.twig' with { title: 'Заголовок', message: 'Задайте заголовок вкладки отображаемый в браузере.' } %} Заголовок</label>
+        <input type="text" tabindex="1" class="form-control" id="template_title" name="template_title" placeholder="Введите данные" value="{{ config_title }}">
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="config_password_minlength">{% include 'partials/help_icon.twig' with { title: 'Длина пароля', message: 'Задайте минимальное количество символов пароля.' } %} Минимальная длина пароля</label>
+        <input type="text" tabindex="1" class="form-control" id="config_password_minlength" name="config_password_minlength" placeholder="Введите данные" value="{{ config_min_password }}">
+        <div id="minpasslength.msg" class="msg-err"></div>
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="sel_timezoneoffset">{% include 'partials/help_icon.twig' with { title: 'Часовой пояс', message: 'Задайте часовой пояс.' } %} Часовой пояс</label>
+        <select class="form-select" name="timezoneoffset" id="sel_timezoneoffset">
+          <option value="-12">(GMT -12:00) Eniwetok, Kwajalein</option>
+          <option value="-11" id="-39600">(GMT -11:00) Midway Island, Samoa</option>
+          <option value="-10" id="-36000">(GMT -10:00) Hawaii</option>
+          <option value="-9">(GMT -9:00) Alaska</option>
+          <option value="-8">(GMT -8:00) Pacific Time (US &amp; Canada)</option>
+          <option value="-7">(GMT -7:00) Mountain Time (US &amp; Canada)</option>
+          <option value="-6">(GMT -6:00) Central Time (US &amp; Canada), Mexico City</option>
+          <option value="-5">(GMT -5:00) Eastern Time (US &amp; Canada), Bogota, Lima</option>
+          <option value="-4">(GMT -4:00) Atlantic Time (Canada), Caracas, La Paz</option>
+          <option value="-3.5">(GMT -3:30) Newfoundland</option>
+          <option value="-3">(GMT -3:00) Brazil, Buenos Aires, Georgetown</option>
+          <option value="-2">(GMT -2:00) Mid-Atlantic</option>
+          <option value="-1">(GMT -1:00 hour) Azores, Cape Verde Islands</option>
+          <option value="0">(GMT) Western Europe Time, London, Lisbon, Casablanca</option>
+          <option value="1">(GMT +1:00 hour) Brussels, Copenhagen, Madrid, Paris</option>
+          <option value="2">(GMT +2:00) Kaliningrad, South Africa</option>
+          <option value="3">(GMT +3:00) Baghdad, Riyadh, Moscow, St. Petersburg</option>
+          <option value="3.5">(GMT +3:30) Tehran</option>
+          <option value="4">(GMT +4:00) Abu Dhabi, Muscat, Baku, Tbilisi</option>
+          <option value="4.5">(GMT +4:30) Kabul</option>
+          <option value="5">(GMT +5:00) Ekaterinburg, Islamabad, Karachi, Tashkent</option>
+          <option value="5.5">(GMT +5:30) Bombay, Calcutta, Madras, New Delhi</option>
+          <option value="6">(GMT +6:00) Almaty, Dhaka, Colombo</option>
+          <option value="7">(GMT +7:00) Bangkok, Hanoi, Jakarta</option>
+          <option value="8">(GMT +8:00) Beijing, Perth, Singapore, Hong Kong</option>
+          <option value="9">(GMT +9:00) Tokyo, Seoul, Osaka, Sapporo, Yakutsk</option>
+          <option value="9.5">(GMT +9:30) Adelaide, Darwin</option>
+          <option value="10">(GMT +10:00) Eastern Australia, Guam, Vladivostok</option>
+          <option value="11">(GMT +11:00) Magadan, Solomon Islands, New Caledonia</option>
+          <option value="12">(GMT +12:00) Auckland, Wellington, Fiji, Kamchatka</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="config_dateformat">{% include 'partials/help_icon.twig' with { title: 'Формат даты', message: 'Задайте формат даты банов отображаемый в банлисте, при подробном просмотре бана, мутов, гагов.' } %} Формат даты в деталях</label>
+        <input type="text" tabindex="1" class="form-control" id="config_dateformat" name="config_dateformat" placeholder="Введите данные" value="{{ config_dateformat }}">
+        <p class="form-help"><a href="http://www.php.net/date" target="_blank" rel="noopener">См.: PHP date</a></p>
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="config_dateformat2">{% include 'partials/help_icon.twig' with { title: 'Формат даты', message: 'Задайте формат даты банов, мутов, гагов, отображаемый в банлисте (в таблице). Не путайте с подробным просмотром!' } %} Формат даты блокировок</label>
+        <input type="text" tabindex="1" class="form-control" id="config_dateformat2" name="config_dateformat2" placeholder="Введите данные" value="{{ config_dateformat_ver2 }}">
+        <p class="form-help"><a href="http://www.php.net/date" target="_blank" rel="noopener">См.: PHP date</a></p>
+      </div>
+      <div class="form-field form-field--full">
+        <span class="form-label">Логотип и шаринг</span>
+        <p class="form-help settings-note">Логотип шапки зафиксирован (SVG бренда). OG / meta / sitemap — вкладка <strong>SEO</strong> в этих настройках.</p>
+      </div>
+    </div>
+    <div class="form-grid settings-block">
+      <div class="form-field form-field--full">
+        <label class="form-label" for="maintenance">{% include 'partials/help_icon.twig' with { title: 'Обслуживание системы', message: 'Выберите операцию для обслуживания системы, после чего нажмите «Выполнить».' } %} Обслуживание системы</label>
+        <div class="settings-run">
+          <select class="form-select" name="maintenance" id="maintenance">
+            <option value="avatarcache">Очистить кеш аватарок</option>
+            <option value="twigprecompile">Скомпилировать шаблоны Twig</option>
+            <option value="twigcache">Очистить кеш Twig</option>
+            <option value="cleancountrycache">Очистить кеш стран банлиста</option>
+            <option value="bansexpired">Удалить истёкшие баны</option>
+            <option value="commsexpired">Удалить истёкшие блокировки чата</option>
+            <option value="adminsexpired">Удалить истёкших Администраторов</option>
+            <option value="commentsclean">Удалить все комментарии</option>
+            <option value="protests">Удалить все протесты банов</option>
+            <option value="reports">Удалить все предложения бана (репорты)</option>
+            <option value="banlogclean">Очистить историю заблокированных соединений</option>
+            <option value="demosclean">Очистить все демки и медиафайлы пользователей</option>
+            <option value="warningsexpired">Удалить истёкшие Предупреждения</option>
+            <option value="rehashcountries">Обновить кеш стран в банлисте</option>
+            <option value="updatecountries">Обновить файл GeoIP</option>
+            <option value="optimizebd">Произвести оптимизацию БД</option>
+            <option value="avatarupdate">Пересобрать кеш аватарок</option>
+            <option value="checkfsperms">Проверить права на папки</option>
+          </select>
+          <button type="button" class="btn btn-outline-secondary" id="amaintenance" onclick="runMaintenance();">Выполнить</button>
+        </div>
+      </div>
+    </div>
+
+    <h3 class="form-section-title">Приветствие</h3>
+    <div class="form-grid">
+      <div class="form-field form-field--full">
+        <label class="form-label" for="dash_intro_text">{% include 'partials/help_icon.twig' with { title: 'Текст приветствия', message: 'Введите текст приветствия, отображаемого на главной странице.' } %} Приветствие</label>
+        <textarea tabindex="6" cols="80" rows="10" id="dash_intro_text" name="dash_intro_text" class="form-control html-editor">{{ config_dash_text }}</textarea>
+      </div>
+    </div>
+
+    <h3 class="form-section-title">Страницы</h3>
+    <div class="settings-toggles">
+      {% include 'partials/settings_toggle.twig' with { id: 'enable_protest', label: 'Протест банов', help_title: 'Протест банов', help_message: 'Страница протеста бана в меню и по прямой ссылке.' } %}
+      {% include 'partials/settings_toggle.twig' with { id: 'enable_submit', label: 'Предложение бана', help_title: 'Предложение бана', help_message: 'Страница жалобы / предложения бана.' } %}
+      {% include 'partials/settings_toggle.twig' with { id: 'admin_list_t', label: 'Админлист', help_title: 'Админлист', help_message: 'Публичная страница со списком администраторов.' } %}
+      {% include 'partials/settings_toggle.twig' with { id: 'vay4_t', label: 'Ваучеры', help_title: 'Ваучеры', help_message: 'Вкл.: гости видят «Активировать ваучер» (index.php?p=pay). Владелец выпускает ключи в админ-панели → «Ваучеры». Залогиненные активировать не могут.' } %}
+      {% include 'partials/settings_toggle.twig' with { id: 'protest_emailonlyinvolved', label: 'Протест только на e-mail', help_title: 'Протест только на e-mail', help_message: 'При протесте бана не создавать заявку в панели — только письмо админу.' } %}
+    </div>
+    <div class="form-grid settings-block">
+      <div class="form-field">
+        <label class="form-label" for="default_page">{% include 'partials/help_icon.twig' with { title: 'Главная страница', message: 'Выберите главную страницу при открытии SourceBans.' } %} Главная страница</label>
+        <select class="form-select" name="default_page" id="default_page">
+          <option value="0">Главная</option>
+          <option value="1">Банлист</option>
+          <option value="2">Серверы</option>
+          <option value="3">Предложить бан</option>
+          <option value="4">Протест бана</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="block_home">{% include 'partials/help_icon.twig' with { title: 'Блокировки', message: 'Выберите отображение блокировок на главной странице.' } %} Блокировки на главной</label>
+        <select class="form-select" name="block_home" id="block_home">
+          <option value="0">Скрыть все</option>
+          <option value="1">Только Баны</option>
+          <option value="2">Только Муты/Гаги</option>
+          <option value="3">Показывать все</option>
+        </select>
+      </div>
+    </div>
+
+    <h3 class="form-section-title">Банлист</h3>
+    <div class="form-grid">
+      <div class="form-field">
+        <label class="form-label" for="banlist_bansperpage">{% include 'partials/help_icon.twig' with { title: 'Банов на странице', message: 'Выберите количество банов на страницу.' } %} Банов на странице</label>
+        <input type="text" tabindex="1" class="form-control" id="banlist_bansperpage" name="banlist_bansperpage" placeholder="Введите данные" value="{{ config_bans_per_page }}">
+        <div id="bansperpage.msg" class="msg-err"></div>
+      </div>
+    </div>
+    <div class="settings-toggles">
+      {% include 'partials/settings_toggle.twig' with { id: 'banlist_hideadmname', label: 'Скрыть имя админа', help_title: 'Скрыть имя админа', help_message: 'Поставьте галку чтобы скрыть имя админа в деталях бана.' } %}
+      {% include 'partials/settings_toggle.twig' with { id: 'banlist_nocountryfetch', label: 'Не показывать страну', help_title: 'Не показывать страну', help_message: 'Поставьте галку чтобы не показывать страну забаненного игрока.' } %}
+      {% include 'partials/settings_toggle.twig' with { id: 'banlist_hideplayerips', label: 'Скрыть IP игрока', help_title: 'Скрыть IP игрока', help_message: 'Поставьте галку чтобы скрыть IP адрес игрока в деталях бана.' } %}
+    </div>
+    <div class="form-grid settings-block">
+      <div class="form-field form-field--full">
+        <label class="form-label">{% include 'partials/help_icon.twig' with { title: 'Свои причины бана', message: 'Введите свои причины банов.' } %} Свои причины бана
+          <a href="javascript:void(0)" onclick="MoreFields();" title="Добавить поле" class="ms-1">+</a>
+        </label>
+        <div class="settings-reasons">
+          {% for creason in bans_customreason %}
+          <input type="text" tabindex="1" class="form-control" placeholder="Введите данные" name="bans_customreason[]" value="{{ creason }}">
+          {% endfor %}
+          <input type="text" tabindex="1" class="form-control" placeholder="Введите данные" name="bans_customreason[]">
+          <input type="text" tabindex="1" class="form-control" placeholder="Введите данные" name="bans_customreason[]">
+          <div id="custom.reasons" name="custom.reasons"></div>
+        </div>
+        <div id="bans_customreason.msg" class="msg-err"></div>
+      </div>
+    </div>
+
+    <h3 class="form-section-title">Почта</h3>
+    <p class="form-help settings-note">Если <code>mail()</code> не настроен — включите SMTP ниже.</p>
+    <div class="settings-toggles">
+      {% include 'partials/settings_toggle.twig' with { id: 'smtp_enabled', label: 'Использовать SMTP', help_title: 'Использовать SMTP', help_message: 'Включает использование SMTP-почты вместо mail()', checked: smtp_enabled, span: true } %}
+    </div>
+    <div id="smtp" class="form-grid settings-block">
+      <div class="form-field">
+        <label class="form-label" for="smtp_host">{% include 'partials/help_icon.twig' with { title: 'Адрес почтового сервера', message: 'Здесь указывается адрес до почтового SMTP-сервера.' } %} Адрес почтового сервера</label>
+        <input type="text" tabindex="1" class="form-control" name="smtp_host" id="smtp_host" placeholder="ssl://smtp.yandex.ru" value="{{ smtp_host }}">
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="smtp_port">{% include 'partials/help_icon.twig' with { title: 'Порт почтового сервера', message: 'Порт SMTP-сервера. Можно узнать из справочной системы почтового сервиса.' } %} Порт почтового сервера</label>
+        <input type="text" tabindex="1" class="form-control" name="smtp_port" id="smtp_port" placeholder="465" value="{{ smtp_port }}">
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="smtp_username">{% include 'partials/help_icon.twig' with { title: 'Логин почтового аккаунта', message: 'Введите имя своего почтового ящика' } %} Логин почтового аккаунта</label>
+        <input type="text" tabindex="1" class="form-control" name="smtp_username" id="smtp_username" placeholder="primer@yandex.ru" value="{{ smtp_username }}">
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="smtp_password">{% include 'partials/help_icon.twig' with { title: 'Пароль от почтового аккаунта', message: 'Укажите пароль от своего почтового аккаунта на указанном SMTP-сервере.' } %} Пароль от почтового аккаунта</label>
+        <input type="text" tabindex="1" class="form-control" name="smtp_password" id="smtp_password" placeholder="" value="*Скрыт*">
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="smtp_charset">{% include 'partials/help_icon.twig' with { title: 'Кодировка сообщений', message: 'Укажите кодировку сообщений. Как правило, UTF-8 или Windows-1251' } %} Кодировка сообщений</label>
+        <input type="text" tabindex="1" class="form-control" name="smtp_charset" id="smtp_charset" placeholder="UTF-8" value="{{ smtp_charset }}">
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="smtp_from">{% include 'partials/help_icon.twig' with { title: 'Имя отправителя', message: 'От чьего имени письма будут помечаться. Отображается при прочтении в поле «От кого».' } %} Имя отправителя</label>
+        <input type="text" tabindex="1" class="form-control" name="smtp_from" id="smtp_from" placeholder="[SourceBans] SMTP-sender" value="{{ smtp_from }}">
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-accent" id="ssettings">Сохранить</button>
+      <button type="button" class="btn btn-outline-secondary" id="sback" onclick="sbGo('index.php?p=admin&amp;c=settings')">Назад</button>
+    </div>
+  </div>
+</form>
+<script>
+document.getElementById('sel_timezoneoffset').value = "{{ config_time }}";
+document.getElementById('smtp_enabled').onclick = function() {
+  if (document.getElementById('smtp_enabled').checked == false)
+    document.getElementById('smtp').style.display = "none";
+  else
+    document.getElementById('smtp').style.display = "";
+};
+document.getElementById('smtp_enabled').onclick();
+function runMaintenance() {
+  var sel = document.getElementById('maintenance');
+  var btn = document.getElementById('amaintenance');
+  if (!sel || !btn) return;
+  if (typeof sbBusy === 'function' && sbBusy(btn)) return;
+  var mv = sel.value;
+  var opt = sel.options[sel.selectedIndex];
+  var label = opt ? String(opt.textContent || opt.text || mv).replace(/\s+/g, ' ').trim() : mv;
+  var msgs = {
+    bansexpired: 'Будут безвозвратно удалены все истёкшие баны. Продолжить?',
+    commsexpired: 'Будут безвозвратно удалены все истёкшие блокировки чата. Продолжить?',
+    adminsexpired: 'Будут безвозвратно удалены все истёкшие администраторы. Продолжить?',
+    commentsclean: 'Будут безвозвратно удалены все комментарии. Продолжить?',
+    protests: 'Будут безвозвратно удалены все протесты банов. Продолжить?',
+    reports: 'Будут безвозвратно удалены все предложения бана (репорты). Продолжить?',
+    banlogclean: 'Будет безвозвратно очищена история заблокированных соединений. Продолжить?',
+    demosclean: 'Все загруженные демки и медиафайлы пользователей будут безвозвратно удалены с диска. Продолжить?',
+    warningsexpired: 'Будут безвозвратно удалены все истёкшие предупреждения. Продолжить?'
+  };
+  if (msgs[mv] && !confirm(msgs[mv])) {
+    if (typeof sbIdle === 'function') sbIdle(btn);
+    return;
+  }
+  if (!btn.getAttribute('data-sb-label'))
+    btn.setAttribute('data-sb-label', 'Выполнить');
+  btn.textContent = 'Выполняется…';
+  sel.disabled = true;
+  if (sel._sbWrap) {
+    var sbtn = sel._sbWrap.querySelector('.sb-select-btn');
+    if (sbtn) sbtn.disabled = true;
+  }
+  var safe = String(label).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  if (typeof ShowBoxWait === 'function') {
+    ShowBoxWait('Обслуживание системы',
+      '<div class="sb-wait-line"><span class="sb-wait-spin" aria-hidden="true"></span><span>Выполняется: <b>' + safe + '</b>. Подождите, операция может занять несколько секунд. Не закрывайте страницу.</span></div>');
+  }
+  if (typeof xajax_Maintenance === 'function')
+    xajax_Maintenance(mv);
+  else if (typeof ShowBox === 'function')
+    ShowBox('Ошибка', 'AJAX не загрузился. Обновите страницу (Ctrl+F5).', 'red', '', true);
+}
+</script>

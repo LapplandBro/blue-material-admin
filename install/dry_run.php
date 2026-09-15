@@ -17,6 +17,12 @@ define('INCLUDES_PATH', ROOT . 'includes');
 define('SB_SALT', 'SourceBans');
 
 $isCli = (php_sapi_name() === 'cli');
+if (!$isCli && is_file(dirname(__DIR__) . '/config.php')) {
+	http_response_code(403);
+	header('Content-Type: text/plain; charset=UTF-8');
+	echo "Installer locked: config.php exists.\n";
+	exit(1);
+}
 if (!$isCli) {
 	header('Content-Type: text/plain; charset=UTF-8');
 	if (!isset($_GET['key']) || $_GET['key'] !== 'install-dry-run') {
@@ -81,20 +87,20 @@ foreach ($junk as $rel) {
 }
 
 // --- theme assets ---
-$theme = dirname(ROOT) . '/themes/new_box';
+$theme = dirname(ROOT) . '/themes/blue_v2';
 $rootSite = dirname(ROOT);
 if (is_dir($theme))
-	dry_ok('themes/new_box exists');
+	dry_ok('themes/blue_v2 exists');
 else
-	dry_fail('themes/new_box missing');
+	dry_fail('themes/blue_v2 missing');
 
 $assets = array(
-	'css/app.min.1.css', 'css/dark-blue-theme.css',
-	'vendors/bower_components/jquery/dist/jquery.min.js',
-	'vendors/bower_components/bootstrap/dist/js/bootstrap.min.js',
-	'vendors/bower_components/bootstrap-sweetalert/lib/sweet-alert.min.js',
-	'vendors/bower_components/Waves/dist/waves.min.js',
-	'vendors/bower_components/material-design-iconic-font/dist/css/material-design-iconic-font.min.css',
+	'css/blue.css',
+	'theme.conf.php',
+	'vendor/bootstrap/bootstrap.min.css',
+	'vendor/bootstrap-icons/bootstrap-icons.min.css',
+	'vendor/sweetalert/sweet-alert.css',
+	'vendor/sweetalert/sweet-alert.min.js',
 );
 foreach ($assets as $a) {
 	if (is_file($theme . '/' . $a))
@@ -103,19 +109,14 @@ foreach ($assets as $a) {
 		dry_fail("asset missing $a");
 }
 
-// Демо-мусор Material / мёртвые редакторы — не должны возвращаться в дистрибутив.
+// Material shell и мёртвые редакторы — не должны возвращаться в дистрибутив.
 $themeJunk = array(
 	'includes/tinymce',
 	'includes/pChart',
-	'themes/new_box/vendors/summernote/dist----',
-	'themes/new_box/vendors/bower_components/flot',
-	'themes/new_box/vendors/bower_components/fullcalendar',
-	'themes/new_box/vendors/bower_components/simpleWeather',
-	'themes/new_box/vendors/bower_components/mediaelement',
-	'themes/new_box/vendors/bower_components/chosen',
-	'themes/new_box/vendors/sparklines',
-	'themes/new_box/js/demo.js',
-	'themes/new_box/js/charts.js',
+	'includes/smarty',
+	'includes/theme_framework.php',
+	'themes_c',
+	'themes/new_box',
 );
 foreach ($themeJunk as $rel) {
 	$path = $rootSite . '/' . $rel;
@@ -212,6 +213,17 @@ if (is_file(INCLUDES_PATH . '/seo.inc.php'))
 else
 	dry_fail('seo.inc.php missing');
 
+$sharedSeo = dirname(__DIR__) . '/includes/seo.inc.php';
+if (is_file($sharedSeo) && is_readable($sharedSeo)) {
+	require_once $sharedSeo;
+	if (function_exists('sb_write_seo_files') && function_exists('sb_seo_og_bundle'))
+		dry_ok('shared includes/seo.inc.php helpers');
+	else
+		dry_fail('shared seo.inc.php missing helpers');
+} else {
+	dry_fail('shared includes/seo.inc.php missing');
+}
+
 $page5 = file_get_contents(ROOT . 'template/page.5.php');
 if ($page5 !== false && strpos($page5, 'sb_install_write_cleanup_script') !== false)
 	dry_ok('page.5 wires cleanup script');
@@ -241,6 +253,11 @@ if ($page5 === false) {
 		dry_ok('config template has SB_PROTECTED_STEAMIDS');
 	else
 		dry_fail('config template missing SB_PROTECTED_STEAMIDS');
+
+	if (strpos($page5, 'SB_DBCFG_VIEW_PASSWORD') !== false && strpos($page5, 'dbcfg_pass') !== false)
+		dry_ok('config template has SB_DBCFG_VIEW_PASSWORD (required installer field)');
+	else
+		dry_fail('config template missing SB_DBCFG_VIEW_PASSWORD / dbcfg_pass');
 
 	if (strpos($page5, 'REBANNER_USE_MA_DB') !== false && strpos($page5, 'PARSEC_API_PLAYER_URL') !== false)
 		dry_ok('config template has REBANNER/PARSEC/OG block');

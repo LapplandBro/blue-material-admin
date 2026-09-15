@@ -45,8 +45,29 @@ function sb_lostpass_validate_params($email, $validation)
 	return null;
 }
 
+function sb_lostpass_v2_on()
+{
+	return function_exists('sb_ui_v2_enabled') && sb_ui_v2_enabled() && function_exists('sb_ui_v2_render');
+}
+
 function sb_lostpass_alert($type, $title, $text)
 {
+	if (sb_lostpass_v2_on()) {
+		sb_ui_v2_render('lostpassword.twig', array(
+			'title' => 'Восстановление пароля',
+			'lostpass_confirm' => false,
+			'result_only' => true,
+			'flash_type' => $type,
+			'flash_title' => $title,
+			'flash_html' => $text,
+			'login_url' => 'index.php?p=login',
+			'sb_csrf' => '',
+			'form_action' => 'index.php?p=lostpassword',
+			'lostpass_email' => '',
+			'lostpass_validation' => '',
+		));
+		exit();
+	}
 	$class = ($type === 'success') ? 'alert-success' : 'alert-danger';
 	$id = ($type === 'success') ? 'msg-blue' : 'msg-red';
 	echo '<div class="alert ' . $class . '" role="alert" id="' . $id . '"><h4>'
@@ -54,6 +75,8 @@ function sb_lostpass_alert($type, $title, $text)
 		. '</h4><span class="p-l-10">'
 		. $text
 		. '</span></div>';
+	require(TEMPLATES_PATH . "/footer.php");
+	exit();
 }
 
 $confirm_get = (
@@ -76,22 +99,16 @@ if ($confirm_post) {
 	$csrf = isset($_POST['sb_csrf']) ? $_POST['sb_csrf'] : '';
 	if (function_exists('sb_csrf_validate') && !sb_csrf_validate($csrf)) {
 		sb_lostpass_alert('error', 'Ошибка!', 'Сессия истекла или неверный CSRF-токен. Откройте ссылку из письма ещё раз.');
-		require(TEMPLATES_PATH . "/footer.php");
-		exit();
 	}
 
 	if (function_exists('sb_rate_limit_hit') && sb_rate_limit_hit('lostpass_confirm', 10, 900)) {
 		sb_lostpass_alert('error', 'Ошибка!', 'Слишком много попыток. Подождите несколько минут.');
-		require(TEMPLATES_PATH . "/footer.php");
-		exit();
 	}
 
 	$param_err = sb_lostpass_validate_params($email, $validation);
 	if ($param_err !== null) {
 		new CSystemLog("w", "LostPassword confirm probe", "Malformed confirm from IP " . (isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '?'));
 		sb_lostpass_alert('error', 'Ошибка!', 'Строка проверки не соответствует адресу электронной почты для запроса на сброс.');
-		require(TEMPLATES_PATH . "/footer.php");
-		exit();
 	}
 
 	$email = trim($email);
@@ -147,8 +164,6 @@ if ($confirm_post) {
 	} else {
 		sb_lostpass_alert('error', 'Ошибка!', 'Строка проверки не соответствует адресу электронной почты для запроса на сброс.');
 	}
-	require(TEMPLATES_PATH . "/footer.php");
-	exit();
 }
 
 if ($confirm_get) {
@@ -165,16 +180,46 @@ if ($confirm_get) {
 		} else {
 			sb_lostpass_alert('error', 'Ошибка!', 'Некорректная ссылка сброса пароля.');
 		}
-		require(TEMPLATES_PATH . "/footer.php");
-		exit();
 	}
 
 	$theme->assign('lostpass_confirm', true);
 	$theme->assign('lostpass_email', trim($email));
 	$theme->assign('lostpass_validation', trim($validation));
 	$theme->assign('sb_csrf', function_exists('sb_csrf_token') ? sb_csrf_token() : '');
-	$theme->display('page_lostpassword.tpl');
+	if (sb_lostpass_v2_on()) {
+		sb_ui_v2_render('lostpassword.twig', array(
+			'title' => 'Восстановление пароля',
+			'lostpass_confirm' => true,
+			'result_only' => false,
+			'lostpass_email' => trim($email),
+			'lostpass_validation' => trim($validation),
+			'sb_csrf' => function_exists('sb_csrf_token') ? sb_csrf_token() : '',
+			'login_url' => 'index.php?p=login',
+			'form_action' => 'index.php?p=lostpassword',
+			'flash_type' => '',
+			'flash_title' => '',
+			'flash_html' => '',
+		));
+		return;
+	}
+	PageDie('Не удалось отобразить страницу восстановления пароля (Twig).');
 } else {
 	$theme->assign('lostpass_confirm', false);
-	$theme->display('page_lostpassword.tpl');
+	if (sb_lostpass_v2_on()) {
+		sb_ui_v2_render('lostpassword.twig', array(
+			'title' => 'Восстановление пароля',
+			'lostpass_confirm' => false,
+			'result_only' => false,
+			'lostpass_email' => '',
+			'lostpass_validation' => '',
+			'sb_csrf' => '',
+			'login_url' => 'index.php?p=login',
+			'form_action' => 'index.php?p=lostpassword',
+			'flash_type' => '',
+			'flash_title' => '',
+			'flash_html' => '',
+		));
+		return;
+	}
+	PageDie('Не удалось отобразить страницу восстановления пароля (Twig).');
 }

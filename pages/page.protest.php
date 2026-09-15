@@ -26,14 +26,70 @@
 // *************************************************************************
 
 global $userbank, $theme;
+
+function sb_protest_v2_on()
+{
+	return function_exists('sb_ui_v2_enabled') && sb_ui_v2_enabled() && function_exists('sb_ui_v2_render');
+}
+
+function sb_protest_v2_plain($s)
+{
+	return html_entity_decode((string)$s, ENT_QUOTES, 'UTF-8');
+}
+
+function sb_protest_v2_render($extra)
+{
+	$base = array(
+		'title' => 'Апелляция бана',
+		'page_blocked' => false,
+		'flash_type' => '',
+		'flash_title' => '',
+		'flash_html' => '',
+		'steam_id' => '',
+		'ip' => '',
+		'player_name' => '',
+		'reason' => '',
+		'player_email' => '',
+		'sb_csrf' => '',
+		'type_selected' => 0,
+		'captcha_t' => time(),
+		'form_action' => 'index.php?p=protest',
+		'banlist_url' => 'index.php?p=banlist',
+	);
+	sb_ui_v2_render('protest.twig', array_merge($base, $extra));
+	return true;
+}
+
+$flash_type = '';
+$flash_title = '';
+$flash_html = '';
+
 if($GLOBALS['config']['config.enableprotest']!="1")
 {
+	if (sb_protest_v2_on()) {
+		sb_protest_v2_render(array(
+			'page_blocked' => true,
+			'flash_type' => 'error',
+			'flash_title' => 'Ошибка',
+			'flash_html' => 'Страница отключена.',
+		));
+		return;
+	}
 	CreateRedBox("Ошибка", "Страница отключена.");
 	PageDie();
 }
 if(!defined("IN_SB")){echo "Ошибка доступа!"; die();}
 if ($userbank->is_logged_in())
 {
+	if (sb_protest_v2_on()) {
+		sb_protest_v2_render(array(
+			'page_blocked' => true,
+			'flash_type' => 'error',
+			'flash_title' => 'Недоступно',
+			'flash_html' => 'Вы вошли как администратор. Апелляции оставляют игроки; разбан — из банлиста или админ-панели.',
+		));
+		return;
+	}
 	CreateRedBox("Недоступно", "Вы вошли как администратор. Апелляции оставляют игроки; разбан — из банлиста или админ-панели.");
 	PageDie();
 }
@@ -168,8 +224,14 @@ else
 		$validsubmit = false;
 	}
 
-	if(!$validsubmit)
-		CreateRedBox("Ошибка", $errors);
+	if(!$validsubmit) {
+		if (sb_protest_v2_on()) {
+			$flash_type = 'error';
+			$flash_title = 'Ошибка';
+			$flash_html = $errors;
+		} else
+			CreateRedBox("Ошибка", $errors);
+	}
 
 	if ($validsubmit && $BanId != -1)
 	{
@@ -209,7 +271,12 @@ else
 				EMail($admin['email'], "[SourceBans] Добавлен протест бана", $message, $headers);
 		}
 
-		CreateGreenBox("Успешно", "Ваш протест был отправлен.");
+		if (sb_protest_v2_on()) {
+			$flash_type = 'success';
+			$flash_title = 'Успешно';
+			$flash_html = 'Ваш протест был отправлен.';
+		} else
+			CreateGreenBox("Успешно", "Ваш протест был отправлен.");
 	}
 }
 
@@ -220,14 +287,18 @@ $theme->assign('reason', $UnbanReason);
 $theme->assign('player_email', $Email);
 $theme->assign('sb_csrf', function_exists('sb_csrf_token') ? sb_csrf_token() : '');
 
-$theme->display('page_protestban.tpl');
-?>
-<script type="text/javascript">
-function changeType(szListValue)
-{
-	$('steam.row').style.display = (szListValue == "0" ? "" : "none");
-	$('ip.row').style.display    = (szListValue == "1" ? "" : "none");
+if (sb_protest_v2_on()) {
+	sb_protest_v2_render(array(
+		'flash_type' => $flash_type,
+		'flash_title' => $flash_title,
+		'flash_html' => $flash_html,
+		'steam_id' => sb_protest_v2_plain($SteamID),
+		'ip' => sb_protest_v2_plain($IP),
+		'player_name' => sb_protest_v2_plain($PlayerName),
+		'reason' => sb_protest_v2_plain($UnbanReason),
+		'player_email' => sb_protest_v2_plain($Email),
+		'sb_csrf' => function_exists('sb_csrf_token') ? sb_csrf_token() : '',
+		'type_selected' => (int)$Type,
+	));
+	return;
 }
-$('Type').options[<?php echo $Type; ?>].selected = true;
-changeType(<?php echo $Type; ?>);
-</script>

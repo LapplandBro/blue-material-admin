@@ -36,7 +36,6 @@ User-agent: *
 Allow: /
 Disallow: /install/
 Disallow: /updater/
-Disallow: /themes_c/
 Disallow: /data/
 Disallow: /includes/
 

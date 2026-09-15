@@ -30,23 +30,20 @@ global $userbank, $theme;
 
 if(!isset($_GET['id']))
 {
-	CreateRedBox("Ошибка", "ID администратора не указан.");
-	PageDie();
+	sb_bad_request_page(true, 'ID администратора не указан.');
 }
 
 $_GET['id'] = (int)$_GET['id'];
 if(!$userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_ADMINS) || !sb_can_manage_admin((int)$_GET['id']))
 {
 	$log = new CSystemLog("w", "Попытка взлома", $userbank->GetProperty("user") . " пытался изменить группу админу ".$userbank->GetProperty('user', $_GET['id']).". не имея на это прав.");
-	CreateRedBox("Ошибка", "Вы не имеете прав изменения групп админов.");
-	PageDie();
+	sb_forbidden_page(true, 'Вы не имеете прав изменения групп админов.');
 }
 
 if(!$userbank->GetProperty("user", $_GET['id']))
 {
 	$log = new CSystemLog("e", "Получение данных администратора не удалось", "Не могу найти данные для администратора с идентификатором '".$_GET['id']."'");
-	CreateRedBox("Ошибка", "Ошибка получения текущих данных.");
-	PageDie();
+	sb_not_found_page(true, 'Администратор не найден.');
 }
 
 // Только POST + CSRF (раньше принимали GET wg/sg — privilege escalation).
@@ -55,8 +52,7 @@ if($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['wg']) || isset($_POST
 	$csrf = isset($_POST['sb_csrf']) ? $_POST['sb_csrf'] : '';
 	if(!function_exists('sb_csrf_validate') || !sb_csrf_validate($csrf))
 	{
-		CreateRedBox("Ошибка", "Неверный CSRF-токен. Обновите страницу и попробуйте снова.");
-		PageDie();
+		sb_csrf_fail_page(true);
 	}
 
 	$_POST['wg'] = isset($_POST['wg']) ? (int)$_POST['wg'] : -2;
@@ -72,8 +68,12 @@ if($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['wg']) || isset($_POST
 	else if(!$userbank->HasAccess(ADMIN_OWNER) && $_POST['wg'] > 0 && function_exists('sb_web_group_has_owner') && sb_web_group_has_owner($_POST['wg']))
 	{
 		$log = new CSystemLog("w", "Ошибка доступа", $userbank->GetProperty("user") . " пытался назначить OWNER веб-группу #" . $_POST['wg'] . " админу #" . $_GET['id']);
-		CreateRedBox("Ошибка", "Нельзя назначить группу с правами OWNER.");
-		PageDie();
+		sb_forbidden_page(true, 'Нельзя назначить группу с правами OWNER.');
+	}
+	else if(!$userbank->HasAccess(ADMIN_OWNER) && $_POST['wg'] > 0 && function_exists('sb_web_group_flags_within_actor') && !sb_web_group_flags_within_actor($_POST['wg']))
+	{
+		$log = new CSystemLog("w", "Ошибка доступа", $userbank->GetProperty("user") . " пытался назначить веб-группу #" . $_POST['wg'] . " шире своих прав админу #" . $_GET['id']);
+		sb_forbidden_page(true, 'Нельзя назначить группу с правами шире ваших.');
 	}
 	else
 	{
@@ -151,4 +151,4 @@ $theme->assign('web_lst',  $wgroups);
 $theme->assign('server_admin_group_id',  $server_admin_group);
 $theme->assign('sb_csrf', function_exists('sb_csrf_token') ? sb_csrf_token() : '');
 
-$theme->display('page_admin_edit_admins_group.tpl');
+sb_ui_v2_theme_fragment('admin_edit_admins_group.twig');

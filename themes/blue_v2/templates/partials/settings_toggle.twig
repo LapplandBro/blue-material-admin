@@ -1,0 +1,9 @@
+<label class="settings-toggle{% if span %} settings-toggle--span{% endif %}" for="{{ id }}">
+  <input class="form-check-input" type="checkbox" name="{{ name|default(id) }}" id="{{ id }}" value="on"{% if checked %} checked="checked"{% endif %}>
+  <span class="settings-toggle-copy">
+    <span class="settings-toggle-title">
+      {% if help_title %}{% include 'partials/help_icon.twig' with { title: help_title, message: help_message|default('') } %}{% endif %}
+      {{ label }}
+    </span>
+  </span>
+</label>

@@ -33,68 +33,31 @@ if (function_exists('sb_session_start')) {
 // *************************************************************************
 
 
-require_once('xajax.inc.php');
+require_once('SbAjax.php');
 include_once('system-functions.php');
 include_once('user-functions.php');
-$xajax = new xajax();
-//$xajax->debugOn();
-$xajax->setRequestURI(XAJAX_REQUEST_URI);
+include_once('sb-massban.php');
+$sbAjax = new SbAjax();
+$sbAjax->setRequestURI(defined('SB_AJAX_URI') ? SB_AJAX_URI : './index.php');
+$xajax = $sbAjax;
 global $userbank;
 
-$methods = array('admin' => array('AddMod', 'RemoveMod', 'AddGroup', 'RemoveGroup', 'RemoveAdmin', 'RemoveSubmission', 'RemoveServer', 'UpdateGroupPermissions', 'UpdateAdminPermissions', 'AddAdmin', 'SetupEditServer', 'AddServerGroupName', 'AddServer', 'AddBan', 'RehashAdmins', 'EditGroup', 'RemoveProtest', 'SendRcon', 'EditAdminPerms', 'AddComment', 'EditComment', 'RemoveComment', 'PrepareReban', 'Maintenance', 'KickPlayer', 'GroupBan', 'BanMemberOfGroup', 'GetGroups', 'BanFriends', 'SendMessage', 'ViewCommunityProfile', 'SetupBan', 'CheckPassword', 'ChangePassword', 'CheckSrvPassword', 'ChangeSrvPassword', 'ChangeEmail', 'SendMail', 'AddBlock', 'PrepareReblock', 'PrepareBlockFromBan', 'removeExpiredAdmins', 'AddSupport', 'ChangeAdminsInfos', 'InstallMOD', 'PastePlayerData', 'AddWarning', 'RemoveWarning'), 'default' => array('Plogin', 'ServerHostPlayers', 'ServerHostProperty', 'ServerHostPlayers_list', 'ServerPlayers', 'LostPassword', 'RefreshServer', 'AddAdmin_pay', 'RehashAdmins_pay'));
+$methods = array('admin' => array('AddMod', 'RemoveMod', 'AddGroup', 'RemoveGroup', 'RemoveAdmin', 'RemoveSubmission', 'RemoveServer', 'UpdateGroupPermissions', 'UpdateAdminPermissions', 'AddAdmin', 'SetupEditServer', 'AddServerGroupName', 'AddServer', 'AddBan', 'RehashAdmins', 'EditGroup', 'RemoveProtest', 'SendRcon', 'EditAdminPerms', 'AddComment', 'EditComment', 'RemoveComment', 'PrepareReban', 'Maintenance', 'KickPlayer', 'GroupBan', 'BanMemberOfGroup', 'GetGroups', 'BanFriends', 'SendMessage', 'ViewCommunityProfile', 'SetupBan', 'CheckPassword', 'ChangePassword', 'CheckSrvPassword', 'ChangeSrvPassword', 'ChangeEmail', 'SendMail', 'AddBlock', 'PrepareReblock', 'PrepareBlockFromBan', 'removeExpiredAdmins', 'AddSupport', 'ChangeAdminsInfos', 'InstallMOD', 'PastePlayerData', 'AddWarning', 'RemoveWarning'), 'default' => array('Plogin', 'ServerHostPlayers', 'ServerHostProperty', 'ServerHostPlayers_list', 'ServerPlayers', 'LostPassword', 'RefreshServer', 'AddAdmin_pay', 'RehashAdmins_pay', 'PingSession'));
 
-if(isset($_COOKIE['aid'], $_COOKIE['password']) && $userbank->CheckLogin($_COOKIE['password'], $_COOKIE['aid']))
+if ($userbank->is_logged_in()
+	|| (isset($_COOKIE['aid'], $_COOKIE['password']) && $userbank->CheckLogin($_COOKIE['password'], $_COOKIE['aid'])))
     foreach ($methods['admin'] as $method)
-        $xajax->registerFunction($method);
+        $sbAjax->registerFunction($method);
 
 foreach ($methods['default'] as $method)
-    $xajax->registerFunction($method);
+    $sbAjax->registerFunction($method);
 
 global $userbank;
 $username = $userbank->GetProperty("user");
 
 function InstallMOD($modfolder, $status = 0) {
-    global $userbank;
-    
     $objResponse = new xajaxResponse();
     $objResponse->addAlert("Выключено. Находится в стадии разработки");
-    return $objResponse;
-    
-    /* TODO: Добавить загрузку данных из репозитория */
-    $mapformat = str_replace('{%folder%}', $GameData['folder'], $RepoData['mapformat']);
-    $PathIcon = sprintf('%s/%s', SB_ICON_LOCATION, $GameData['icon']);
-    $PathMaps = sprintf('%s/%s', SB_MAP_LOCATION, $mapformat);
-    
-    if ($status == 0) {
-        /* Build install dialog */
-        $objResponse->addAssign("install_log", "innerHTML", "[".SBDate($GLOBALS['config']['config.dateformat'], time())."] Загрузка файлов с зеркала...");
-        $objResponse->addAssign("install_current", "innerHTML", "Загрузка файлов с зеркала");
-        $objResponse->addScript('xajax_InstallMOD("'.$modfolder.'", 1);');
-    } else if ($status == 1) {
-        /* Download files */
-        file_put_contents($PathIcon, sprintf('%s%s%s', $RepoData['mirror'], $RepoData['icons_dir'], $GameData['icon']));
-        file_put_contents($PathMaps, sprintf('%s%s%s', $RepoData['mirror'], $RepoData['maps_dir'], $mapformat));
-        
-        $objResponse->addAppend("install_log", "innerHTML", "<br />[".SBDate($GLOBALS['config']['config.dateformat'], time())."] Распаковка архива");
-        $objResponse->addAssign("install_current", "innerHTML", "Распаковка архива");
-        
-        $objResponse->addScript('xajax_InstallMOD("'.$modfolder.'", 2);');
-    } else if ($status == 2) {
-        /* Decompress maps dir */
-        decompress_tar($PathMaps, SB_MAP_LOCATION.'/'.$GameData['folder'].'/');
-        
-        $objResponse->addAppend("install_log", "innerHTML", "<br />[".SBDate($GLOBALS['config']['config.dateformat'], time())."] Удаление временных файлов");
-        $objResponse->addAssign("install_current", "innerHTML", "Удаление временных файлов");
-        
-        $objResponse->addScript('xajax_InstallMOD("'.$modfolder.'", 3);');
-    } else if ($status == 3) {
-        /* Insert to DB */
-        $GLOBALS['db']->Execute(sprintf("INSERT INTO `%s_mods` (`name`, `icon`, `modfolder`, `steam_universe`, `enabled`) VALUES (%s, %s, %s, %d, 1);", DB_PREFIX, $GLOBALS['db']->qstr($GameData['name']), $GLOBALS['db']->qstr($GameData['icon']), $GLOBALS['db']->qstr($GameData['folder']), (int) $GameData['steamcode']));
-    
-        $objResponse->addAppend("install_log", "innerHTML", "<br />[".SBDate($GLOBALS['config']['config.dateformat'], time())."] Завершено.");
-        $objResponse->addAssign("install_current", "innerHTML", "Установка завершена.");
-    }
-    
     return $objResponse;
 }
 
@@ -151,6 +114,37 @@ function removeExpiredAdmins()
 		$log = new CSystemLog("w", "Удаление админов", "Ошибка удаления истёкших админок.");
 	}
 	
+	return $objResponse;
+}
+
+/**
+ * Keepalive PHP-сессии / CSRF: трогает sb_last_active и отдаёт актуальный токен в JS.
+ * CSRF-exempt (иначе при почти истёкшей сессии продление невозможно).
+ */
+function PingSession()
+{
+	$objResponse = new xajaxResponse();
+	if (function_exists('sb_rate_limit_hit') && sb_rate_limit_hit('ping_session', 30, 60)) {
+		$objResponse->addScriptCall('sbSessionApply', array('ok' => false, 'rate' => 1));
+		return $objResponse;
+	}
+	if (function_exists('sb_session_start'))
+		sb_session_start();
+	elseif (session_status() !== PHP_SESSION_ACTIVE)
+		@session_start();
+
+	if (function_exists('sb_session_touch'))
+		sb_session_touch();
+
+	$meta = function_exists('sb_session_client_meta') ? sb_session_client_meta() : array(
+		'ttl' => function_exists('sb_session_ttl') ? sb_session_ttl() : 1440,
+		'expires_in' => function_exists('sb_session_ttl') ? sb_session_ttl() : 1440,
+		'warn_before' => 180,
+		'server_now' => time(),
+		'csrf' => function_exists('sb_csrf_token') ? sb_csrf_token() : '',
+	);
+	$meta['ok'] = true;
+	$objResponse->addScriptCall('sbSessionApply', $meta);
 	return $objResponse;
 }
 
@@ -439,7 +433,7 @@ function AddGroup($name, $type, $bitmask, $srvflags)
 	if($error > 0)
 		return $objResponse;
 
-	$bitmask = function_exists('sb_strip_nonowner_web_flags') ? sb_strip_nonowner_web_flags((int)$bitmask) : ((int)$bitmask & ~ADMIN_OWNER);
+	$bitmask = function_exists('sb_clamp_web_flags_to_actor') ? sb_clamp_web_flags_to_actor((int)$bitmask) : ((int)$bitmask & ~ADMIN_OWNER);
 
 	$query = $GLOBALS['db']->GetRow("SELECT MAX(gid) AS next_gid FROM `" . DB_PREFIX . "_groups`");
 	if($type == "1")
@@ -456,6 +450,8 @@ function AddGroup($name, $type, $bitmask, $srvflags)
 			$srvflags = substr($srvflags, 0, strlen($srvflags) - strlen($immunity)-1);
 		}
 		$immunity = (isset($immunity) && $immunity>0) ? $immunity : 0;
+		if (function_exists('sb_clamp_srv_flags_to_actor'))
+			$srvflags = sb_clamp_srv_flags_to_actor($srvflags, $immunity);
 		$add_group = $GLOBALS['db']->Prepare("INSERT INTO ".DB_PREFIX."_srvgroups(immunity,flags,name,groups_immune)
 					VALUES (?,?,?,?)");
 		$GLOBALS['db']->Execute($add_group,array($immunity, $srvflags, $name, " "));
@@ -922,7 +918,13 @@ function AddServer($ip, $port, $rcon, $rcon2, $mod, $enabled, $group, $group_nam
 function UpdateGroupPermissions($gid)
 {
 	$objResponse = new xajaxResponse();
-	global $userbank;
+	global $userbank, $username;
+	if(!$userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_GROUP|ADMIN_EDIT_GROUPS))
+	{
+		$objResponse->redirect("index.php?p=login&m=no_access", 0);
+		new CSystemLog("w", "Ошибка доступа", $username . " запрашивал форму прав группы, не имея на это прав.");
+		return $objResponse;
+	}
 	$gid = (int)$gid;
 	if($gid == 1)
 	{
@@ -947,13 +949,20 @@ function UpdateGroupPermissions($gid)
 								}');
 	$objResponse->addScript("$('type.msg').setHTML('');");
 	$objResponse->addScript("$('type.msg').setStyle('display', 'none');");
+	$objResponse->addScript("if(typeof BindWebPermissionGroupSync==='function')BindWebPermissionGroupSync();");
 	return $objResponse;
 }
 
 function UpdateAdminPermissions($type, $value)
 {
 	$objResponse = new xajaxResponse();
-	global $userbank;
+	global $userbank, $username;
+	if(!$userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_ADMINS|ADMIN_EDIT_ADMINS))
+	{
+		$objResponse->redirect("index.php?p=login&m=no_access", 0);
+		new CSystemLog("w", "Ошибка доступа", $username . " запрашивал форму прав админа, не имея на это прав.");
+		return $objResponse;
+	}
 	$type = (int)$type;
 	if($type == 1)
 	{
@@ -999,6 +1008,7 @@ function UpdateAdminPermissions($type, $value)
 									$("srootcheckbox").setStyle("display", "none");
 								}');
 	$objResponse->addAssign($id.".msg", "innerHTML", "");
+	$objResponse->addScript("if(typeof BindWebPermissionGroupSync==='function')BindWebPermissionGroupSync();");
 	return $objResponse;
 
 }
@@ -1548,7 +1558,7 @@ function AddAdmin($mask, $srv_mask, $a_name, $a_steam, $a_email, $a_password, $a
 	$a_email = RemoveCode($a_email);
 	$a_servername = ($a_servername=="0" ? null : RemoveCode($a_servername));
 	$a_webname = RemoveCode($a_webname);
-	$mask = function_exists('sb_strip_nonowner_web_flags') ? sb_strip_nonowner_web_flags((int)$mask) : ((int)$mask & ~ADMIN_OWNER);
+	$mask = function_exists('sb_clamp_web_flags_to_actor') ? sb_clamp_web_flags_to_actor((int)$mask) : ((int)$mask & ~ADMIN_OWNER);
 
 	$error=0;
 	
@@ -1664,18 +1674,6 @@ function AddAdmin($mask, $srv_mask, $a_name, $a_steam, $a_email, $a_password, $a
 		{
 			$objResponse->addAssign("email.msg", "innerHTML", "");
 			$objResponse->addScript("$('email.msg').setStyle('display', 'none');");
-		/*	if(!validate_email($a_email))
-			{
-				$error++;
-				$objResponse->addAssign("email.msg", "innerHTML", "Please enter a valid email address.");
-				$objResponse->addScript("$('email.msg').setStyle('display', 'block');");
-			}
-			else
-			{
-				$objResponse->addAssign("email.msg", "innerHTML", "");
-				$objResponse->addScript("$('email.msg').setStyle('display', 'none');");
-
-			}*/
 		}
 	}
 	
@@ -1869,6 +1867,8 @@ function AddAdmin($mask, $srv_mask, $a_name, $a_steam, $a_email, $a_password, $a
 	
 	// Avoid negative immunity
 	$immunity = ($immunity>0) ? $immunity : 0;
+	if (function_exists('sb_clamp_srv_flags_to_actor'))
+		$srv_mask = sb_clamp_srv_flags_to_actor($srv_mask, $immunity);
 	
 	// Handle Webpermissions
 	// Chose to create a new webgroup
@@ -1889,6 +1889,12 @@ function AddAdmin($mask, $srv_mask, $a_name, $a_steam, $a_email, $a_password, $a
 		{
 			$objResponse->redirect("index.php?p=login&m=no_access", 0);
 			$log = new CSystemLog("w", "Ошибка доступа", $username . " пытался назначить OWNER веб-группу #$web_group.");
+			return $objResponse;
+		}
+		if(!$userbank->HasAccess(ADMIN_OWNER) && function_exists('sb_web_group_flags_within_actor') && !sb_web_group_flags_within_actor($web_group))
+		{
+			$objResponse->redirect("index.php?p=login&m=no_access", 0);
+			$log = new CSystemLog("w", "Ошибка доступа", $username . " пытался назначить веб-группу #$web_group шире своих прав.");
 			return $objResponse;
 		}
 	}
@@ -1989,13 +1995,12 @@ function ServerHostPlayers($sid, $type="servers", $obId="", $tplsid="", $open=""
 	global $userbank;
 	// Soft rate-limit по IP: опрос игровых серверов (A2S) дёшево дёргать через xajax в цикле,
 	// не давая при этом реально мешать обычному использованию (авто-обновление списка серверов).
-	if (function_exists('sb_rate_limit_hit') && sb_rate_limit_hit('server_host_players', 60, 60))
+	if (function_exists('sb_rate_limit_hit') && sb_rate_limit_hit('server_host_players', 24, 60))
 		return $objResponse;
 	require INCLUDES_PATH.'/CServerControl.php';
 	
 	$sid = (int)$sid;
 
-	//$res = $GLOBALS['db']->GetRow("SELECT sid, ip, port FROM ".DB_PREFIX."_servers WHERE sid = $sid");
 	$res = $GLOBALS['db']->GetRow("SELECT se.sid, se.ip, se.port, se.modid, md.modfolder FROM ".DB_PREFIX."_servers se LEFT JOIN ".DB_PREFIX."_mods md ON md.mid=se.modid WHERE se.sid = $sid");
 	if(empty($res[1]) || empty($res[2]))
 		return $objResponse;
@@ -2029,159 +2034,40 @@ function ServerHostPlayers($sid, $type="servers", $obId="", $tplsid="", $open=""
 					."el.title=".json_encode($mapBase).";})();"
 				);
 				if($info['Players'] == 0) {
-					$objResponse->addScript("$('sinfo_$sid').setStyle('display', 'none');");
-					$objResponse->addScript("$('noplayer_$sid').setStyle('display', 'block');");
-					$objResponse->addScript("if($('serverwindow_$sid'))$('serverwindow_$sid').setStyle('height', 'auto');");
+					$objResponse->addScript("sbSetDisplay('sinfo_$sid', false);sbSetDisplay('noplayer_$sid', true);");
+					$objResponse->addScript("(function(){var w=document.getElementById('serverwindow_$sid');if(w)w.style.height='auto';})();");
 				} else {
-					$objResponse->addScript("$('sinfo_$sid').setStyle('display', 'block');");
-					$objResponse->addScript("$('noplayer_$sid').setStyle('display', 'none');");
+					$objResponse->addScript("sbSetDisplay('sinfo_$sid', true);sbSetDisplay('noplayer_$sid', false);");
+					$playercount = 0;
 					if(!defined('IN_HOME')) {
 						$players = $sinfo->GetPlayers();
 						if ($players !== false) {
-							// remove childnodes
-							$objResponse->addScript('var toempty = document.getElementById("playerlist_'.$sid.'");
-							var empty = toempty.cloneNode(false);
-							toempty.parentNode.replaceChild(empty,toempty);');
-							//draw table headlines
-							$objResponse->addScript('var e = document.getElementById("playerlist_'.$sid.'");
-							var tr = e.insertRow("-1");
-								// Name Top TD
-								var td = tr.insertCell("-1");
-									td.setAttribute("width","50%");
-									td.className = "servers-player-th";
-										var b = document.createElement("b");
-										var txt = document.createTextNode("Игрок");
-										b.appendChild(txt);
-									td.appendChild(b);
-								// Score Top TD
-								var td = tr.insertCell("-1");
-									td.setAttribute("width","15%");
-									td.className = "servers-player-th";
-										var b = document.createElement("b");
-										var txt = document.createTextNode("Счёт");
-										b.appendChild(txt);
-									td.appendChild(b);
-								// Time Top TD
-								var td = tr.insertCell("-1");
-									td.className = "servers-player-th";
-										var b = document.createElement("b");
-										var txt = document.createTextNode("Время");
-										b.appendChild(txt);
-									td.appendChild(b);');
-							// add players
-							$playercount = 0;
-							
-							$needAddPlayerManaging = (($userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_BAN) && $GLOBALS['db']->GetOne(sprintf("SELECT COUNT(*) FROM `%s_admins_servers_groups` WHERE `admin_id` = %d AND `server_id` = %d", DB_PREFIX, $userbank->GetAid(), (int)$sid)) == 1) || $userbank->HasAccess(ADMIN_OWNER));
-							
-							if($needAddPlayerManaging) {
-								$dl = "a";
-								$dl2 = 'var i_i = document.createElement("i");
-										i_i.className = "zmdi zmdi-label c-lightblue p-r-10 p-l-5";
-										i_i.style = "font-size: 17px;";
-										//img.style.width = "20px";
-										//img.style.height = "20px";
-										a.appendChild(i_i);
-										td.appendChild(a);
-										';
-								$dl_fix = 'p-l-5 ';
-							}else{
-								$dl = "span";
-								$dl2 = "";
-								$dl_fix = 'p-l-10 ';
+							$needAddPlayerManaging = false;
+							if ($userbank->is_logged_in() && function_exists('sb_admin_has_server_access') && sb_admin_has_server_access((int)$sid)) {
+								$needAddPlayerManaging = $userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_BAN)
+									|| $userbank->HasAccess(SM_RCON . SM_ROOT);
 							}
+							// Ник с сервера — в JSON (addScriptCall), не в eval-строке с innerHTML:
+							// кавычки в нике больше не ломают меню кик/бан.
+							$objResponse->addScriptCall('sbClearServerPlayers', (int)$sid);
+							$objResponse->addScriptCall('sbAddServerPlayerHead', (int)$sid);
 							$id = 0;
-							foreach($players as $player) {
+							foreach ($players as $player) {
 								if (empty($player['Name'])) continue;
 								$id++;
-								// Player names come from the game server and are attacker-controllable,
-								// and can legitimately contain quotes/apostrophes. The name is embedded
-								// below in several different contexts, each of which needs its OWN kind
-								// of escaping:
-								//  1) plain HTML text (modal title)                 -> htmlspecialchars()
-								//  2) a JS string literal inside a *plain* JS statement (document.
-								//     createTextNode) that is executed directly, not through the HTML
-								//     parser                                        -> plain JS escaping
-								//  3) a JS string argument inside onclick="...('NAME')" that is assigned
-								//     via innerHTML. This is the tricky one: the browser's HTML parser
-								//     decodes entities in attribute values (e.g. &#039; -> ') BEFORE the
-								//     onclick JS source is compiled, so HTML-escaping a quote does NOT
-								//     protect the JS string - it comes back as a literal quote and breaks
-								//     out, corrupting the name. It must instead be JS-escaped (\' and \\,
-								//     which pass through HTML-decoding unchanged since backslash isn't an
-								//     HTML entity), then HTML-escaped for the remaining unsafe characters.
-								//  4) a query-string value (?pName=...)             -> urlencode()
-								// A previous "fix" stripped quote characters from the name outright to
-								// dodge all of this, but that silently corrupted the name used to match
-								// against the RCON "status" output: any player whose real nickname
-								// contains a quote/apostrophe could never be found by Kick/Ban/Mute from
-								// the player list ("Игрок покинул сервер!" even though he's clearly on).
-								$safePlayerName = htmlspecialchars($player['Name'], ENT_QUOTES);
-								$jsPlayerName = str_replace(array('\\', '"'), array('\\\\', '\\"'), $player['Name']);
-								$onclickPlayerName = htmlspecialchars(str_replace(array('\\', "'"), array('\\\\', "\\'"), $player['Name']), ENT_COMPAT);
-								$urlPlayerName = urlencode($player['Name']);
-								$objResponse->addScript('var e = document.getElementById("playerlist_'.$sid.'");
-														var tr = e.insertRow("-1");
-														tr.id = "player_s'.$sid.'p'.$id.'";
-															// Name TD
-															var td = tr.insertCell("-1");
-																td.className = "servers-player-name '.$dl_fix.'";
-																	var txt = document.createTextNode("'.$jsPlayerName.'");
-																	var a = document.createElement("'.$dl.'");
-																	a.href = "#player_s' . $sid . 'p' . $id . '_t";
-																	var att = document.createAttribute("data-toggle");
-																	att.value = "modal"; 
-																	a.setAttributeNode(att);
-																	'.$dl2.'
-																td.appendChild(txt);
-															// Score TD
-															var td = tr.insertCell("-1");
-																td.className = "servers-player-score";
-																var txt = document.createTextNode("'.$player["Frags"].'");
-																td.appendChild(txt);
-															// Time TD
-															var td = tr.insertCell("-1");
-																td.className = "servers-player-time";
-																var txt = document.createTextNode("'.SecondsToString($player['Time']).'");
-																td.appendChild(txt);
-															');
-								if($needAddPlayerManaging) {
-									$objResponse->addScript('
-										var div = document.createElement("div");
-										div.className = "modal fade";
-										div.id = "player_s' . $sid . 'p' . $id . '_t";
-										var att = document.createAttribute("tabindex");
-										var att1 = document.createAttribute("role");
-										var att2 = document.createAttribute("aria-hidden");
-										att.value = "-1"; 
-										att1.value = "dialog"; 
-										att2.value = "true"; 
-										div.setAttributeNode(att);   
-										div.setAttributeNode(att1);   
-										div.setAttributeNode(att2);   
-										div.innerHTML = "\
-											<div class=\'modal-dialog modal-sm\'>\
-												<div class=\'modal-content\'>\
-													<div class=\'modal-header\'>\
-														<h4 class=\'modal-title\'>'.$safePlayerName.'</h4>\
-													</div>\
-													<div class=\'modal-body\'>\
-													<p class=\"m-b-10\"><button class=\"btn btn-link btn-block\" data-dismiss=\"modal\" onclick=\"KickPlayerConfirm('.$sid.', \''.$onclickPlayerName.'\', 0);\">Кикнуть</button></p>\
-													<p class=\"m-b-10\"><button class=\"btn btn-link btn-block\" href=\"#\" data-dismiss=\'modal\' onclick=\"ViewCommunityProfile('.$sid.', \''.$onclickPlayerName.'\');\">Профиль</button></p>\
-													<p class=\"m-b-10\"><a href=\"index.php?p=admin&c=bans&action=pasteBan&sid='.$sid.'&pName='.$urlPlayerName.'\"><button class=\"btn btn-link btn-block\">Бан</button></a></p>\
-													<p class=\"m-b-10\"><a href=\"index.php?p=admin&c=comms&action=pasteBan&sid='.$sid.'&pName='.$urlPlayerName.'\"><button class=\"btn btn-link btn-block\">Заглушить</button></a></p>\
-													<p class=\"m-b-10\"><button class=\"btn btn-link btn-block\" href=\"#\" data-dismiss=\'modal\' onclick=\"OpenMessageBox('.$sid.', \''.$onclickPlayerName.'\', 1);\">Отправить сообщение</button></p>\
-													</div>\
-													<!--<div class=\'modal-footer\'>\
-														<button type=\'button\' class=\'btn btn-link\' data-dismiss=\'modal\'>Отмена</button>\
-													</div>-->\
-												</div>\
-											</div>\
-										";
-
-										document.body.appendChild(div);');
-								}
+								$objResponse->addScriptCall('sbAddServerPlayer', array(
+									'sid' => (int)$sid,
+									'pid' => (int)$id,
+									'name' => (string)$player['Name'],
+									'frags' => (string)$player['Frags'],
+									'time' => SecondsToString($player['Time'], false),
+									'manage' => $needAddPlayerManaging ? 1 : 0,
+									'banUrl' => 'index.php?p=admin&c=bans&action=pasteBan&sid='.$sid.'&pName='.urlencode($player['Name']),
+									'muteUrl' => 'index.php?p=admin&c=comms&action=pasteBan&sid='.$sid.'&pName='.urlencode($player['Name']),
+								));
 								$playercount++;
 							}
+							$objResponse->addScriptCall('sbRevealServerPlayers', (int)$sid);
 						}
 					}
 					if($playercount>15)
@@ -2202,10 +2088,8 @@ function ServerHostPlayers($sid, $type="servers", $obId="", $tplsid="", $open=""
 			$objResponse->addAssign("map_$sid", "innerHTML", "Н/Д");
 			if(!$inHome) {
 				$connect = "onclick = \"document.location = 'steam://connect/" .  $res['ip'] . ":" . $res['port'] . "'\"";
-				$objResponse->addScript("$('sinfo_$sid').setStyle('display', 'none');");
-				$objResponse->addScript("$('noplayer_$sid').setStyle('display', 'block');");
-				$objResponse->addScript("if($('serverwindow_$sid'))$('serverwindow_$sid').setStyle('height', 'auto');");
-				$objResponse->addScript("if($('sid_$sid'))$('sid_$sid').setStyle('color', '#adadad');");
+				$objResponse->addScript("sbSetDisplay('sinfo_$sid', false);sbSetDisplay('noplayer_$sid', true);");
+				$objResponse->addScript("(function(){var w=document.getElementById('serverwindow_$sid');if(w)w.style.height='auto';var s=document.getElementById('sid_$sid');if(s)s.style.color='#adadad';})();");
 			}
 		}
 		// BUG FIX: $tplsid/$open used to be plain array-position indexes, and were passed
@@ -2215,7 +2099,7 @@ function ServerHostPlayers($sid, $type="servers", $obId="", $tplsid="", $open=""
 		// (see page.servers.php), so we resolve the actual DOM element to open by its
 		// stable id instead of trusting a fragile numeric position.
 		if($tplsid != "" && $open != "" && $tplsid==$open)
-			$objResponse->addScript("InitAccordion('tr.opener', 'div.opener', 'content', $('serverpanel_".(int)$sid."'));");
+			$objResponse->addScript("InitAccordion('div.servers-toggle', 'div.servers-detail', 'content', $('serverpanel_".(int)$sid."'));");
 		//$objResponse->addScript("$('dialog-control').setStyle('display', 'block');");
 		$objResponse->addScript("$('dialog-placement').setStyle('display', 'none');");
 	}
@@ -2277,16 +2161,26 @@ function ServerHostProperty($sid, $obId, $obProp, $trunchostname)
 function ServerHostPlayers_list($sid, $type="servers", $obId="")
 {
 	$objResponse = new xajaxResponse();
+	if (function_exists('sb_rate_limit_hit') && sb_rate_limit_hit('server_host_players', 24, 60))
+		return $objResponse;
 	require INCLUDES_PATH.'/CServerControl.php';
 
-	$sids = explode(";", $sid, -1);
-	if(count($sids) < 1)
+	$sids = explode(";", (string)$sid);
+	$clean = array();
+	foreach ($sids as $one) {
+		$one = (int)$one;
+		if ($one > 0)
+			$clean[] = $one;
+		if (count($clean) >= 20)
+			break;
+	}
+	if(count($clean) < 1)
 		return $objResponse;
 
 	$ret = "";
-	for($i=0;$i<count($sids);$i++)
+	for($i=0;$i<count($clean);$i++)
 	{
-		$sid = (int)$sids[$i];
+		$sid = $clean[$i];
 
 		$res = $GLOBALS['db']->GetRow("SELECT sid, ip, port FROM ".DB_PREFIX."_servers WHERE sid = $sid");
 		if(empty($res[1]) || empty($res[2]))
@@ -2349,7 +2243,7 @@ function ServerPlayers($sid)
 	$objResponse->addAssign("player_detail_$sid", "innerHTML", $html);
 	//$objResponse->addScript("document.getElementById('player_detail_$sid').innerHTML = 'hi';");
 	$objResponse->addScript("setTimeout('xajax_ServerPlayers($sid)', 5000);");
-	$objResponse->addScript("$('opener_$sid').setProperty('onclick', '');");
+	$objResponse->addScript("(function(){var o=document.getElementById('opener_$sid');if(o)o.onclick=null;})();");
 	return $objResponse;
 }
 
@@ -2361,7 +2255,7 @@ function KickPlayer($sid, $name)
 	
 	//$objResponse->addScript("$('dialog-control').setStyle('display', 'block');");
 		
-	if(!$userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_BAN))
+	if(!$userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_BAN) && !$userbank->HasAccess(SM_RCON . SM_ROOT))
 	{
 		$objResponse->redirect("index.php?p=login&m=no_access", 0);
 		$log = new CSystemLog("w", "Ошибка доступа", $username . " пытался кикнуть ".htmlspecialchars($name).", не имея на это прав.");
@@ -2435,7 +2329,8 @@ function KickPlayer($sid, $name)
 			}
 
 			$log = new CSystemLog("m", "Игрок кикнут", $username . " кикнул игрока '".htmlspecialchars($name)."' (".$steam.") from ".$data['ip'].":".$data['port'].".", true, true);
-			$objResponse->addScript("ShowBox('Игрок кикнут', 'Игрок \'".addslashes(htmlspecialchars($name))."\' был кикнут с сервера.', 'green', 'index.php?p=servers', 1500);$('dialog-control').setStyle('display', 'none');");
+			$objResponse->addScript("ShowBox('Игрок кикнут', 'Игрок \"".addslashes(htmlspecialchars($name))."\" кикнут с сервера.', 'green', '', false, 4000);");
+			$objResponse->addScript("if (typeof xajax_RefreshServer === 'function') xajax_RefreshServer(".(int)$sid.");");
 		} else {
 			$objResponse->addScript("ShowBox('Ошибка', 'Невозможно кикнуть ".addslashes(htmlspecialchars($name)).". У него иммунитет!', 'red', '', true);");
 		}
@@ -2826,7 +2721,7 @@ function ChangeAdminsInfos($aid, $vk, $discord)
 	$log = new CSystemLog("m", "Данные связи изменены", "У адмнистратора ".$admname['user']." успешно были изменены данные на (vk: ".$vk.", discord: ".$discord.")");
 	return $objResponse;
 }
-function ChangePassword($aid, $pass)
+function ChangePassword($aid, $pass, $current = '')
 {
 	global $userbank;
 	$objResponse = new xajaxResponse();
@@ -2840,6 +2735,23 @@ function ChangePassword($aid, $pass)
 			$log = new CSystemLog("w", "Ошибка доступа", $_SERVER["REMOTE_ADDR"] . " пытался сменить пароль, не имея на это прав.");
 			return $objResponse;
 		}
+	}
+	else
+	{
+		// Своя смена: без текущего пароля украденная сессия/XSS закрепляет атакующего.
+		if(!$userbank->is_logged_in() || !$userbank->verify_password((string)$current, $aid))
+		{
+			$objResponse->addScript("if($('current.msg')){ $('current.msg').setStyle('display', 'block'); $('current.msg').setHTML('<div class=\"c-red\">Данные не совпадают</div>'); }");
+			$objResponse->addScript("set_error(1);");
+			$objResponse->addScript("ShowBox('Ошибка', 'Текущий пароль неверен.', 'red', '', true);");
+			return $objResponse;
+		}
+	}
+
+	if(strlen((string)$pass) < MIN_PASS_LENGTH)
+	{
+		$objResponse->addScript("ShowBox('Ошибка', 'Пароль должен быть не менее " . (int)MIN_PASS_LENGTH . " символов.', 'red', '', true);");
+		return $objResponse;
 	}
 
 	$GLOBALS['db']->Execute("UPDATE `".DB_PREFIX."_admins` SET `password` = ? WHERE `aid` = ?", array($userbank->hash_password($pass), $aid));
@@ -2890,7 +2802,9 @@ function EditAdminPerms($aid, $web_flags, $srv_flags)
 	if(empty($aid))
 		return;
 	$aid = (int)$aid;
-	$web_flags = (int)$web_flags;
+	$web_flags = function_exists('sb_clamp_web_flags_to_actor')
+		? sb_clamp_web_flags_to_actor($web_flags)
+		: ((int)$web_flags & ~ADMIN_OWNER);
 
 	$objResponse = new xajaxResponse();
 	global $userbank, $username;
@@ -2950,6 +2864,8 @@ function EditAdminPerms($aid, $web_flags, $srv_flags)
 		$srv_flags = substr($srv_flags, 0, strlen($srv_flags) - strlen($immunity)-1);
 	}
 	$immunity = ($immunity>0) ? $immunity : 0;
+	if (function_exists('sb_clamp_srv_flags_to_actor'))
+		$srv_flags = sb_clamp_srv_flags_to_actor($srv_flags, $immunity);
 	// Update server stuff
 	$GLOBALS['db']->Execute("UPDATE `".DB_PREFIX."_admins` SET `srv_flags` = ?, `immunity` = ? WHERE `aid` = ?", array($srv_flags, $immunity, $aid));
 
@@ -2996,7 +2912,9 @@ function EditGroup($gid, $web_flags, $srv_flags, $type, $name, $overrides, $newO
 	
 	$gid = (int)$gid;
 	$name = RemoveCode($name);
-	$web_flags = (int)$web_flags;
+	$web_flags = function_exists('sb_clamp_web_flags_to_actor')
+		? sb_clamp_web_flags_to_actor($web_flags)
+		: ((int)$web_flags & ~ADMIN_OWNER);
 
 	// Не-OWNER не может выдать ADMIN_OWNER группе и не может править группу, где OWNER уже есть.
 	if(!$userbank->HasAccess(ADMIN_OWNER) && ($web_flags & ADMIN_OWNER))
@@ -3038,6 +2956,8 @@ function EditGroup($gid, $web_flags, $srv_flags, $type, $name, $overrides, $newO
 			$srv_flags = substr($srv_flags, 0, strlen($srv_flags) - strlen($immunity)-1);
 		}
 		$immunity = ($immunity>0) ? $immunity : 0;
+		if (function_exists('sb_clamp_srv_flags_to_actor'))
+			$srv_flags = sb_clamp_srv_flags_to_actor($srv_flags, $immunity);
 
 		// Update server stuff
 		$GLOBALS['db']->Execute("UPDATE `".DB_PREFIX."_srvgroups` SET `flags` = ?, `name` = ?, `immunity` = ? WHERE `id` = $gid", array($srv_flags, $name, $immunity));
@@ -3293,6 +3213,19 @@ function AddComment($bid, $ctype, $ctext, $page)
 	
 	$bid = (int)$bid;
 	$page = (int)$page;
+
+	$typeTable = array(
+		'B' => array(DB_PREFIX.'_bans', 'bid'),
+		'C' => array(DB_PREFIX.'_comms', 'bid'),
+		'S' => array(DB_PREFIX.'_submissions', 'subid'),
+		'P' => array(DB_PREFIX.'_protests', 'pid'),
+	);
+	if(!isset($typeTable[$ctype])
+		|| !$GLOBALS['db']->GetOne("SELECT 1 FROM `".$typeTable[$ctype][0]."` WHERE `".$typeTable[$ctype][1]."` = ?", array($bid)))
+	{
+		$objResponse->addScript("ShowBox('Ошибка', 'Цель комментария не найдена.', 'red');");
+		return $objResponse;
+	}
 	
 	$pagelink = "";
 	if($page != -1)
@@ -3343,6 +3276,18 @@ function EditComment($cid, $ctype, $ctext, $page)
 
 	$cid = (int)$cid;
 	$page = (int)$page;
+	$owner = $GLOBALS['db']->GetOne("SELECT aid FROM `".DB_PREFIX."_comments` WHERE cid = ?", array($cid));
+	if($owner === false || $owner === null)
+	{
+		$objResponse->addScript("ShowBox('Ошибка', 'Комментарий не найден.', 'red');");
+		return $objResponse;
+	}
+	if((int)$owner !== (int)$userbank->GetAid() && !$userbank->HasAccess(ADMIN_OWNER))
+	{
+		$objResponse->redirect("index.php?p=login&m=no_access", 0);
+		new CSystemLog("w", "Ошибка доступа", $username . " пытался изменить чужой комментарий №".$cid.".");
+		return $objResponse;
+	}
 	
 	$pagelink = "";
 	if($page != -1)
@@ -3427,8 +3372,51 @@ function Maintenance($type) {
     
     switch($type) {
         case "themecache": {
-            $theme->clear_compiled_tpl();
-            ShowBox_ajx("Успех", "Кеш шаблона очищен успешно.", "green", $objResponse, "", true);
+            ShowBox_ajx("Недоступно", "Очистка кеша шаблона больше не используется.", "blue", $objResponse, "", true);
+            break;
+        }
+
+        case "twigprecompile": {
+            if (!function_exists('sb_ui_v2_twig_precompile_all')) {
+                ShowBox_ajx("Ошибка", "Функция предкомпиляции шаблонов недоступна.", "red", $objResponse, "", true);
+                break;
+            }
+            $res = sb_ui_v2_twig_precompile_all();
+            $ok = isset($res['ok']) ? (int)$res['ok'] : 0;
+            $fail = isset($res['fail']) ? (int)$res['fail'] : 0;
+            $cdir = isset($res['dir']) ? (string)$res['dir'] : '';
+            $errs = (isset($res['errors']) && is_array($res['errors'])) ? $res['errors'] : array();
+            $errHtml = '';
+            if (!empty($errs)) {
+                $safeErr = array();
+                foreach ($errs as $em)
+                    $safeErr[] = htmlspecialchars((string)$em, ENT_QUOTES, 'UTF-8');
+                $errHtml = '<br>' . implode('<br>', $safeErr);
+            }
+            if ($ok === 0 && $fail > 0) {
+                ShowBox_ajx("Ошибка", "Не удалось скомпилировать шаблоны Twig." . $errHtml, "red", $objResponse, "", true);
+                break;
+            }
+            $msg = "Скомпилировано шаблонов: <b>" . $ok . "</b>";
+            if ($fail > 0)
+                $msg .= ", ошибок: <b>" . $fail . "</b>";
+            if ($cdir !== '')
+                $msg .= ".<br>Каталог кеша: <code>" . htmlspecialchars($cdir, ENT_QUOTES, 'UTF-8') . "</code>";
+            $msg .= $errHtml;
+            new CSystemLog("m", "Обслуживание системы", $username . " предкомпилировал шаблоны Twig (ok=" . $ok . ", fail=" . $fail . ").");
+            ShowBox_ajx("Успех", $msg, "green", $objResponse, "", true);
+            break;
+        }
+
+        case "twigcache": {
+            if (!function_exists('sb_ui_v2_twig_cache_clear')) {
+                ShowBox_ajx("Ошибка", "Функция очистки кеша шаблонов недоступна.", "red", $objResponse, "", true);
+                break;
+            }
+            $res = sb_ui_v2_twig_cache_clear();
+            $removed = is_array($res) && isset($res['removed']) ? (int)$res['removed'] : 0;
+            new CSystemLog("m", "Обслуживание системы", $username . " очистил кеш Twig (удалено файлов: " . $removed . ").");
+            ShowBox_ajx("Успех", "Кеш скомпилированных шаблонов Twig очищен (удалено файлов: <b>" . $removed . "</b>).", "green", $objResponse, "", true);
             break;
         }
         
@@ -3451,7 +3439,7 @@ function Maintenance($type) {
         }
 
         case "adminsexpired": {
-            // БАГ-ФИКС: в выпадающем списке "Обслуживание системы" (page_admin_settings_settings.tpl)
+            // БАГ-ФИКС: в выпадающем списке «Обслуживание системы» (admin_settings_settings.twig)
             // есть пункт adminsexpired, дёргающий xajax_Maintenance('adminsexpired'), но для этого
             // значения не было case - срабатывал default ("Неизвестная операция"). Используем ту же
             // логику удаления, что и в отдельной функции removeExpiredAdmins().
@@ -3518,18 +3506,42 @@ function Maintenance($type) {
         }
         
         case "cleancountrycache": {
-            $GLOBALS['db']->Execute("UPDATE `sb_bans` SET `country` = NULL;");
+            $GLOBALS['db']->Execute("UPDATE `" . DB_PREFIX . "_bans` SET `country` = NULL");
             ShowBox_ajx("Успех", "Кеш стран банлиста очищен успешно.<br /><br /><span style=\"color: #f00;\">Внимание!</span> Это может отрицательно сказаться на первой загрузке каждой страницы Вашего банлиста. Рекомендуем произвести операцию \"Обновить кеш стран в банлисте\".", "green", $objResponse, "", true);
             break;
         }
         
         case "rehashcountries": {
-            $bans = $GLOBALS['db']->GetAll("SELECT `bid`, `ip` FROM `" . DB_PREFIX . "_bans` WHERE `country` IS NULL or `country` = 'zz'");
-            foreach ($bans as $ban) {
-                $GLOBALS['db']->Execute("UPDATE `" . DB_PREFIX . "_bans` SET `country` = " . $GLOBALS['db']->qstr(FetchIp($ban['ip'])) . " WHERE `bid` = " . (int)$ban['bid'] . ";");
+            // Старый код на каждый бан заново сканировал IpToCountry.csv (300k+ строк)
+            // линейно + отдельный UPDATE. На большом банлисте PHP упирался в
+            // max_execution_time (~30–40с) → HTTP 500 и «AJAX ошибка».
+            if (function_exists('session_write_close'))
+                @session_write_close();
+            @set_time_limit(120);
+            @ini_set('memory_limit', '256M');
+
+            $bans = $GLOBALS['db']->GetAll("SELECT `bid`, `ip` FROM `" . DB_PREFIX . "_bans` WHERE `country` IS NULL OR `country` = 'zz' OR `country` = '' OR `country` = ' '");
+            $updated = 0;
+            $byCountry = array();
+            if (is_array($bans)) {
+                foreach ($bans as $ban) {
+                    $cc = FetchIp(isset($ban['ip']) ? $ban['ip'] : '');
+                    if (!isset($byCountry[$cc]))
+                        $byCountry[$cc] = array();
+                    $byCountry[$cc][] = (int)$ban['bid'];
+                }
+                foreach ($byCountry as $cc => $ids) {
+                    foreach (array_chunk($ids, 400) as $chunk) {
+                        $ok = $GLOBALS['db']->Execute(
+                            "UPDATE `" . DB_PREFIX . "_bans` SET `country` = " . $GLOBALS['db']->qstr($cc)
+                            . " WHERE `bid` IN (" . implode(',', $chunk) . ")"
+                        );
+                        if ($ok !== false)
+                            $updated += count($chunk);
+                    }
+                }
             }
-            
-            ShowBox_ajx("Успех", "Операция обновлений стран в кеше завершена.", "green", $objResponse, "", true);
+            ShowBox_ajx("Успех", "Кеш стран обновлён: <b>" . (int)$updated . "</b> записей.", "green", $objResponse, "", true);
             break;
         }
         
@@ -3659,6 +3671,33 @@ function Maintenance($type) {
 
             new CSystemLog("m", "Обслуживание системы", $username . " очистил все демки и медиафайлы пользователей (удалено файлов: " . $removed . ", освобождено: " . sizeFormat($freed) . ").");
             ShowBox_ajx("Успех", "Удалено файлов: <b>" . $removed . "</b>, освобождено места: <b>" . sizeFormat($freed) . "</b>. Записи о демо/медиафайлах в базе очищены.", "green", $objResponse, "", true);
+            break;
+        }
+
+        case "checkfsperms": {
+            if (!$userbank->HasAccess(ADMIN_OWNER)) {
+                ShowBox_ajx("Ошибка", "Проверка прав на папки доступна только OWNER.", "red", $objResponse, "", true);
+                break;
+            }
+            $bad = function_exists('sb_fs_permission_problems') ? sb_fs_permission_problems() : array();
+            if (empty($bad)) {
+                ShowBox_ajx(
+                    "Права на папки",
+                    "Всё в порядке: PHP может писать в <code>demos/</code>, <code>images/</code>, <code>images/maps/</code>, <code>images/games/</code>, <code>data/</code>, <code>cache/twig_predcompiled/</code>, корень сайта и <code>config.php</code>.",
+                    "green",
+                    $objResponse,
+                    "",
+                    true
+                );
+                break;
+            }
+            $safe = array();
+            foreach ($bad as $label)
+                $safe[] = htmlspecialchars((string)$label, ENT_QUOTES, 'UTF-8');
+            $msg = 'Некорректно настроены права. PHP не может писать в:<br><code>'
+                . implode('</code>, <code>', $safe)
+                . '</code><br><br>Обычно нужно: каталоги <b>775</b> (или владелец = пользователь PHP), файлы <b>644</b>, <code>config.php</code> — <b>640</b>. Не используйте 777.';
+            ShowBox_ajx("Права на папки", $msg, "red", $objResponse, "", true);
             break;
         }
         
@@ -3873,536 +3912,73 @@ function RehashAdmins($server, $do=0, $redir='')
 	return $objResponse;
 }
 
-function GroupBan($groupuri, $isgrpurl="no", $queue="no", $reason="", $last="")
+function GetGroups($friendid)
 {
-	$objResponse = new xajaxResponse();
-	
-	// Проверки доступа и конфигурации
-	if(!$GLOBALS['config']['config.enablegroupbanning'] || !$GLOBALS['userbank']->HasAccess(ADMIN_OWNER|ADMIN_ADD_BAN)) {
-		if(!$GLOBALS['config']['config.enablegroupbanning']) return $objResponse;
-		
-		$objResponse->redirect("index.php?p=login&m=no_access", 0);
-		new CSystemLog("w", "Ошибка доступа", $GLOBALS['username'] . " пытался забанить группу '".htmlspecialchars(addslashes(trim($groupuri)))."', не имея на это прав.");
-		return $objResponse;
-	}
-	
-	// Извлечение имени группы (urldecode нужен для кириллических/Unicode URL вида %D0%A0%D1%83...)
-	$grpname = ($isgrpurl=="yes") ? $groupuri : urldecode(basename(parse_url($groupuri, PHP_URL_PATH)));
-	// Убираем трейлинг-слеш на случай https://steamcommunity.com/groups/name/
-	$grpname = rtrim($grpname, '/');
-	
-	if(empty($grpname)) {
-		$objResponse->addAssign("groupurl.msg", "innerHTML", "Ошибка преобразования URL группы.");
-		$objResponse->addScript("$('groupurl.msg').setStyle('display', 'block');");
-		return $objResponse;
-	}
-	
-	$objResponse->addScript("$('groupurl.msg').setStyle('display', 'none'); $('dialog-control').setStyle('display', 'none');");
-	
-	// Создание прогресс-бара (deep-blue оформление, без изменения логики)
-	$objResponse->addScript("
-		if (!document.getElementById('ban_ui_styles')) {
-			var styleTag = document.createElement('style');
-			styleTag.id = 'ban_ui_styles';
-			styleTag.textContent =
-				'#ban_progress_overlay{position:fixed;inset:0;background:rgba(3,8,18,.72);backdrop-filter:blur(2px);z-index:9998;}' +
-				'#ban_progress{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:420px;max-width:92vw;background:#0c1528;border:1px solid #1a2d50;border-radius:12px;padding:18px 18px 14px;box-shadow:0 14px 34px rgba(0,0,0,.48);color:#ddeeff;font-family:Arial,sans-serif;z-index:9999;}' +
-				'#ban_progress .ban-title{font-size:15px;font-weight:700;color:#e8f0ff;margin:0 0 10px;}' +
-				'#ban_progress .ban-sub{font-size:13px;color:#8eb4dc;margin:0 0 8px;line-height:1.45;}' +
-				'#ban_progress .ban-bar-wrap{width:100%;height:14px;background:#0a1225;border:1px solid #1a2d50;border-radius:999px;overflow:hidden;margin:10px 0 8px;}' +
-				'#ban_progress .ban-bar{width:0%;height:100%;background:linear-gradient(90deg,#1e90ff 0%,#4ea8ff 65%,#7cc1ff 100%);transition:width .18s ease;}' +
-				'#ban_progress .ban-status{display:flex;justify-content:space-between;gap:10px;font-size:12px;color:#7ea8d4;}' +
-				'#ban_result_overlay{position:fixed;inset:0;background:rgba(3,8,18,.72);backdrop-filter:blur(2px);z-index:9999;}' +
-				'#ban_result{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:560px;max-width:94vw;background:#0c1528;border:1px solid #1a2d50;border-radius:14px;box-shadow:0 16px 40px rgba(0,0,0,.55);color:#ddeeff;padding:20px;z-index:10000;font-family:Arial,sans-serif;}' +
-				'#ban_result .br-title{font-size:20px;font-weight:700;color:#bfe0ff;margin:0 0 8px;text-align:center;}' +
-				'#ban_result .br-group{font-size:13px;color:#8eb4dc;background:#0f1f38;border:1px solid #1a2d50;padding:8px 10px;border-radius:8px;text-align:center;margin-bottom:14px;}' +
-				'#ban_result .br-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px;}' +
-				'#ban_result .br-card{background:#0f1f38;border:1px solid #1a2d50;border-radius:10px;padding:12px;text-align:center;}' +
-				'#ban_result .br-num{font-size:24px;font-weight:700;color:#dcecff;line-height:1.1;}' +
-				'#ban_result .br-lbl{font-size:12px;color:#7ea8d4;margin-top:4px;}' +
-				'#ban_result .br-time{background:#0f1f38;border:1px solid #1a2d50;border-radius:8px;padding:10px;text-align:center;color:#8eb4dc;font-size:13px;margin-bottom:14px;}' +
-				'#ban_result .br-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}' +
-				'#ban_result .br-btn{border:1px solid #1a4a7a;background:#16314a;color:#dcecff;padding:10px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;}' +
-				'#ban_result .br-btn:hover{background:#1d3f60;color:#ecf5ff;}';
-			document.head.appendChild(styleTag);
-		}
-
-		if (!document.getElementById('ban_progress_overlay')) {
-			var overlayDiv = document.createElement('div');
-			overlayDiv.id = 'ban_progress_overlay';
-			document.body.appendChild(overlayDiv);
-		}
-
-		if (!document.getElementById('ban_progress')) {
-			var progressDiv = document.createElement('div');
-			progressDiv.id = 'ban_progress';
-			progressDiv.innerHTML =
-				'<div class=\"ban-title\">Блокировка участников группы</div>' +
-				'<div id=\"ban_progress_group\" class=\"ban-sub\">Подготовка...</div>' +
-				'<div id=\"ban_progress_meta\" class=\"ban-sub\">Инициализация...</div>' +
-				'<div class=\"ban-bar-wrap\"><div id=\"ban_progress_bar\" class=\"ban-bar\"></div></div>' +
-				'<div class=\"ban-status\"><span id=\"ban_progress_err\">Ошибок: 0</span><span id=\"ban_progress_pct\">0%</span></div>';
-			document.body.appendChild(progressDiv);
-		}
-	");
-	
-	// Инициализация состояния.
-	// page_members хранит только ТЕКУЩУЮ страницу Steam (не всё сразу).
-	// Для группы 2500+ уч. loadGroupMembers делал 50 file_get_contents подряд —
-	// веб-сервер убивал запрос по таймауту -> HTTP 500.
-	// Теперь каждый xajax-вызов делает максимум 1 HTTP-запрос к Steam.
-	$_SESSION['group_ban_state'] = [
-	    'grpname'         => $grpname,
-	    'queue'           => $queue,
-	    'reason'          => $reason,
-	    'last'            => $last,
-	    'steam_page'      => 1,
-	    'page_members'    => [],
-	    'page_offset'     => 0,
-	    'processed_count' => 0,
-	    'error_count'     => 0,
-	    'start_time'      => time(),
-	    'banned_steamids' => [],
-	    'cache_loaded'    => false,
-	];
-	
-	$objResponse->addScriptCall("xajax_BanMemberOfGroup");
-	return $objResponse;
-}
-
-function BanMemberOfGroup()
-{
-	set_time_limit(30); // Достаточно для 1 HTTP-запроса к Steam + 1 INSERT
-	$objResponse = new xajaxResponse();
-
-	if (!$GLOBALS['config']['config.enablegroupbanning'] || !isset($_SESSION['group_ban_state'])) {
-		$objResponse->addScript("
-			if (document.getElementById('ban_progress')) document.getElementById('ban_progress').remove();
-			if (document.getElementById('ban_progress_overlay')) document.getElementById('ban_progress_overlay').remove();
-			ShowBox('Ошибка', 'Процесс бана группы не инициализирован или завершён.', 'red', '', true);
-		");
-		return $objResponse;
-	}
-
-	// Проверка доступа
-	if (!$GLOBALS['userbank']->HasAccess(ADMIN_OWNER|ADMIN_ADD_BAN)) {
-		$objResponse->redirect("index.php?p=login&m=no_access", 0);
-		new CSystemLog("w", "Ошибка доступа", $GLOBALS['username'] . " пытался забанить группу '".$_SESSION['group_ban_state']['grpname']."', не имея на это прав.");
-		unset($_SESSION['group_ban_state']);
-		return $objResponse;
-	}
-
-	$state = &$_SESSION['group_ban_state'];
-
-	// Один раз грузим кэш уже забаненных из БД (не HTTP — быстро)
-	if (!$state['cache_loaded']) {
-		$state['banned_steamids'] = getBannedSteamIds();
-		$state['cache_loaded'] = true;
-	}
-
-	// Если текущая страница закончилась — грузим следующую страницу Steam.
-	// Один file_get_contents per xajax-вызов — в таймаут не попадаем.
-	if ($state['page_offset'] >= count($state['page_members'])) {
-		$new_members = loadGroupPage($state['grpname'], $state['steam_page']);
-
-		if (empty($new_members)) {
-			// Страниц больше нет — завершаем
-			finishBanning($objResponse, $state);
-			unset($_SESSION['group_ban_state']);
-			return $objResponse;
-		}
-
-		$state['page_members'] = $new_members;
-		$state['page_offset']  = 0;
-		$state['steam_page']++;
-	}
-
-	// Обрабатываем одного участника с текущей позиции
-	$member = $state['page_members'][$state['page_offset']];
-	if (!processMember($member, $state)) {
-		$state['error_count']++;
-	}
-	$state['page_offset']++;
-	$state['processed_count']++;
-
-	// Обновляем прогресс и запускаем следующую итерацию
-	updateProgress($objResponse, $state);
-	$objResponse->addScriptCall("setTimeout", "xajax_BanMemberOfGroup()", 25);
-
-	return $objResponse;
-}
-
-// Вспомогательные функции для оптимизации
-
-// Загружает ОДНУ страницу участников группы Steam.
-// Вызывается по одному разу за xajax-запрос — не блокирует веб-сервер.
-function loadGroupPage($grpname, $page) {
-	// User-Agent обязателен: без него Steam отдаёт 403
-	$ctx = stream_context_create([
-		'http' => [
-			'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-			'timeout'    => 15,
-		],
-	]);
-
-	$page_url = "https://steamcommunity.com/groups/" . rawurlencode($grpname) . "/members" . ($page > 1 ? "?p={$page}" : "");
-	$raw = @file_get_contents($page_url, false, $ctx);
-	if (!$raw) return [];
-
-	$doc = new DOMDocument();
-	// Принудительно UTF-8 — иначе DOMDocument ломает кириллику/китайский
-	@$doc->loadHTML('<?xml encoding="utf-8" ?>' . $raw);
-
-	$members = [];
-	foreach ($doc->getElementsByTagName('a') as $tag) {
-		$href = $tag->getAttribute('href');
-		if ((strpos($href, 'https://steamcommunity.com/id/') === 0
-			|| strpos($href, 'https://steamcommunity.com/profiles/') === 0)
-			&& $tag->hasChildNodes()
-			&& $tag->childNodes->length == 1
-			&& $tag->childNodes->item(0)->nodeValue != ""
-		) {
-			$members[] = [
-				'href' => $href,
-				'name' => $tag->childNodes->item(0)->nodeValue,
-			];
-		}
-	}
-
-	return $members;
-}
-
-function getBannedSteamIds() {
-	// Только SteamID-баны (type=0), LIKE фильтрует IP-баны с пустым authid.
-	// CAST AS CHAR нужен чтобы PHP получал строки, а не int64 — иначе in_array() ломается на больших числах.
-	$bans = $GLOBALS['db']->GetAll(
-		"SELECT CAST(CAST(MID(authid,9,1) AS UNSIGNED) + CAST('76561197960265728' AS UNSIGNED) + CAST(MID(authid,11,10) AS UNSIGNED) * 2 AS CHAR) AS community_id " .
-		"FROM " . DB_PREFIX . "_bans " .
-		"WHERE RemoveType IS NULL AND type = 0 AND authid LIKE 'STEAM\\_%'"
-	);
-	return array_column($bans, 'community_id');
-}
-
-function processMember($member, &$state) {
-    $url_parts = explode("/", parse_url($member['href'], PHP_URL_PATH));
-    $profile_id = $url_parts[2];
-    
-    $steamid = null;
-    $community_id = null;
-    
-    if(strpos($member['href'], 'https://steamcommunity.com/id/') === 0) {
-        // Custom ID - получаем friend ID
-        $friend_id = GetFriendIDFromCommunityID($profile_id);
-        if(!$friend_id) return false;
-        
-        $community_id = $friend_id; // Для custom ID community_id = friend_id
-        $steamid = FriendIDToSteamID($friend_id);
-    } else {
-        // Обычный friend ID
-        $community_id = $profile_id;
-        $steamid = FriendIDToSteamID($profile_id);
-    }
-    
-    if (!$steamid) return false;
-
-    // Проверяем, не забанен ли уже (строковое сравнение — MySQL может вернуть int или string)
-    if (in_array((string)$community_id, $state['banned_steamids'])) {
-        return true; // Уже забанен — считаем успехом
-    }
-
-    // Дополнительная проверка в базе данных (на случай если кэш устарел)
-    $existing_ban = $GLOBALS['db']->GetRow("SELECT bid FROM ".DB_PREFIX."_bans WHERE authid = ? AND RemoveType IS NULL AND type = 0", [$steamid]);
-    if ($existing_ban) {
-        // Добавляем в кэш для будущих проверок
-        $state['banned_steamids'][] = (string)$community_id;
-        return true;
-    }
-
-    // Защита: не баним собственных администраторов веб-панели
-    $admin_check = $GLOBALS['db']->GetRow("SELECT aid FROM ".DB_PREFIX."_admins WHERE authid = ? LIMIT 1", [$steamid]);
-    if ($admin_check) {
-        return true; // Пропускаем молча (считаем "успехом" чтобы не ломать счётчик)
-    }
-
-    // Выполняем бан
-    $pre = $GLOBALS['db']->Prepare("INSERT INTO ".DB_PREFIX."_bans(created,type,ip,authid,name,ends,length,reason,aid,adminIp) VALUES (UNIX_TIMESTAMP(),?,?,?,?,UNIX_TIMESTAMP(),?,?,?,?)");
-
-    // utf8_encode() НЕЛЬЗЯ использовать — оно ломает UTF-8 строки из DOMDocument (двойное кодирование).
-    // sanitizeForMysql() убирает 4-байтовые символы (эмодзи и спец.символы), которые не влезают в utf8 (не utf8mb4).
-    $name = sanitizeForMysql($member['name']);
-    // Дополнительно: если после очистки строка всё ещё битая — fallback
-    if (!mb_check_encoding($name, 'UTF-8') || $name === '') {
-        $name = 'UNKNOWN NICKNAME';
-    }
-
-    $reason = "Steam Community Group Ban (" . $state['grpname'] . ") " . $state['reason'];
-
-    $success = $GLOBALS['db']->Execute($pre, [0, "", $steamid, $name, 0, $reason, $GLOBALS['userbank']->GetAid(), $_SERVER['REMOTE_ADDR']]);
-
-    // Если всё равно ошибка кодировки (1366) — повторяем с нейтральным именем
-    if (!$success && $GLOBALS['db']->ErrorNo() == 1366) {
-        $success = $GLOBALS['db']->Execute($pre, [0, "", $steamid, "UNKNOWN NICKNAME", 0, $reason, $GLOBALS['userbank']->GetAid(), $_SERVER['REMOTE_ADDR']]);
-    }
-
-    // Если бан успешен, добавляем в кэш
-    if ($success) {
-        $state['banned_steamids'][] = (string)$community_id;
-    }
-
-    return $success;
-}
-function updateProgress($objResponse, $state) {
-	// total_members неизвестен заранее (грузим постранично), показываем счётчик + страницу
-	$grpname_js   = json_encode($state['grpname'], JSON_UNESCAPED_UNICODE);
-	$steam_page   = (int)$state['steam_page'] - 1; // steam_page уже инкрементирован после загрузки
-	$processed    = (int)$state['processed_count'];
-	$error_count  = (int)$state['error_count'];
-
-	$objResponse->addScript("
-		var grpName = ".$grpname_js.";
-		if (document.getElementById('ban_progress_group')) {
-			document.getElementById('ban_progress_group').textContent = 'Группа: ' + grpName;
-		}
-		if (document.getElementById('ban_progress_meta')) {
-			document.getElementById('ban_progress_meta').textContent = 'Обработано: {$processed} участников (стр. {$steam_page})';
-		}
-		if (document.getElementById('ban_progress_bar')) {
-			// Анимируем полосу — пульсирует пока идёт обработка (total неизвестен)
-			var pct = ({$processed} % 100);
-			document.getElementById('ban_progress_bar').style.width = pct + '%';
-		}
-		if (document.getElementById('ban_progress_err')) {
-			document.getElementById('ban_progress_err').textContent = 'Ошибок: {$error_count}';
-		}
-		if (document.getElementById('ban_progress_pct')) {
-			document.getElementById('ban_progress_pct').textContent = '{$processed} участников';
-		}
-	");
-}
-
-function finishBanning($objResponse, $state) {
-	$objResponse->addScript("
-		if (document.getElementById('ban_progress')) document.getElementById('ban_progress').remove();
-		if (document.getElementById('ban_progress_overlay')) document.getElementById('ban_progress_overlay').remove();
-	");
-
-	$total_processed = (int)$state['processed_count'];
-	$banned_count    = $total_processed - (int)$state['error_count'];
-	$elapsed_time    = time() - $state['start_time'];
-	$time_str        = formatTime($elapsed_time);
-	$grpname_js      = json_encode($state['grpname'], JSON_UNESCAPED_UNICODE);
-	$time_str_js     = json_encode($time_str, JSON_UNESCAPED_UNICODE);
-
-	// Создание итогового окна
-	$objResponse->addScript("
-		var grpName     = ".$grpname_js.";
-		var timeStr     = ".$time_str_js.";
-		var bannedCount = ".$banned_count.";
-		var errorCount  = ".(int)$state['error_count'].";
-		var totalCount  = ".$total_processed.";
-
-		if (document.getElementById('ban_result_overlay')) document.getElementById('ban_result_overlay').remove();
-		if (document.getElementById('ban_result')) document.getElementById('ban_result').remove();
-
-		var overlay = document.createElement('div');
-		overlay.id = 'ban_result_overlay';
-
-		var resultDiv = document.createElement('div');
-		resultDiv.id = 'ban_result';
-		resultDiv.innerHTML =
-			'<div class=\"br-title\">Группа успешно забанена</div>' +
-			'<div class=\"br-group\">Группа: ' + grpName + '</div>' +
-			'<div class=\"br-stats\">' +
-				'<div class=\"br-card\"><div class=\"br-num\">' + bannedCount + '</div><div class=\"br-lbl\">Забанено</div></div>' +
-				'<div class=\"br-card\"><div class=\"br-num\">' + errorCount + '</div><div class=\"br-lbl\">Ошибок</div></div>' +
-				'<div class=\"br-card\"><div class=\"br-num\">' + totalCount + '</div><div class=\"br-lbl\">Обработано</div></div>' +
-			'</div>' +
-			'<div class=\"br-time\">Время выполнения: ' + timeStr + '</div>' +
-			'<div class=\"br-actions\">' +
-				'<button class=\"br-btn\" onclick=\"location.reload();\">Обновить страницу</button>' +
-				'<button class=\"br-btn\" onclick=\"document.getElementById(\\'ban_result\\').remove(); document.getElementById(\\'ban_result_overlay\\').remove();\">Закрыть</button>' +
-			'</div>';
-
-		document.body.appendChild(overlay);
-		document.body.appendChild(resultDiv);
-	");
-
-	// Обработка очереди и логирование
-	if ($state['queue'] == "yes") {
-		$objResponse->addScript("$('steamGroupStatus').setStyle('display', 'block');");
-		$objResponse->addAppend("steamGroupStatus", "innerHTML", "<p>Забанено {$banned_count} из {$total_processed} участников группы '{$state['grpname']}'. <br/>Ошибок: {$state['error_count']}.</p>");
-
-		if ($state['grpname'] == $state['last']) {
-			$objResponse->addScript("setTimeout(function() { location.reload(); }, 8000);");
-			$objResponse->addScript("$('dialog-control').setStyle('display', 'block');");
-		}
-	} else {
-		$objResponse->addScript("$('dialog-control').setStyle('display', 'block');");
-	}
-
-	new CSystemLog("m", "Группа забанена", "Забанено {$banned_count} из {$total_processed} обработанных участников группы '{$state['grpname']}'.<br>Ошибок: {$state['error_count']}. Время: {$time_str}");
-}
-
-function formatTime($seconds) {
-	$minutes = floor($seconds / 60);
-	$seconds = $seconds % 60;
-	return $minutes > 0 ? "{$minutes} мин {$seconds} сек" : "{$seconds} сек";
-}
-
-function sanitizeForMysql($string) {
-    // Удаляем 4-байтовые UTF-8 символы (эмодзи и специальные символы)
-    return preg_replace('/[\x{10000}-\x{10FFFF}]/u', '', $string);
-}
-
-function hasProblematicChars($string) {
-    // Проверяем наличие 4-байтовых UTF-8 символов (эмодзи, математические символы и т.д.)
-    if (preg_match('/[\x{10000}-\x{10FFFF}]/u', $string)) {
-        return true;
-    }
-    // Проверяем другие проблемные символы
-    if (preg_match('/[\x{1D400}-\x{1D7FF}]/u', $string)) { // Mathematical symbols
-        return true;
-    }
-    // Проверяем символы которые могут вызвать проблемы с кодировкой
-    if (!mb_check_encoding($string, 'UTF-8')) {
-        return true;
-    }
-    return false;
-}
-
-function BanFriends($friendid, $name)
-{
-	set_time_limit(0);
-	$objResponse = new xajaxResponse();
-	if($GLOBALS['config']['config.enablefriendsbanning']==0 || !is_numeric($friendid))
+	$objResponse = new SbJsonResponse();
+	if (empty($GLOBALS['config']['config.enablegroupbanning']) || !is_numeric($friendid))
 		return $objResponse;
 	global $userbank, $username;
-	if(!$userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_BAN))
-	{
+	if (!$userbank->HasAccess(ADMIN_OWNER | ADMIN_ADD_BAN)) {
 		$objResponse->redirect("index.php?p=login&m=no_access", 0);
-		return $objResponse;
-	}
-	$bans = $GLOBALS['db']->GetAll(
-		"SELECT CAST(CAST(MID(authid,9,1) AS UNSIGNED) + CAST('76561197960265728' AS UNSIGNED) + CAST(MID(authid,11,10) AS UNSIGNED) * 2 AS CHAR) AS community_id " .
-		"FROM " . DB_PREFIX . "_bans " .
-		"WHERE RemoveType IS NULL AND type = 0 AND authid LIKE 'STEAM\\_%'"
-	);
-	$already = [];
-	foreach($bans as $ban) {
-		$already[] = (string)$ban["community_id"];
-	}
-	$doc = new DOMDocument();
-	$ctx = stream_context_create([
-		'http' => [
-			'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-			'timeout'    => 15,
-		],
-	]);
-	$result = get_headers("https://steamcommunity.com/profiles/".$friendid."/", 1);
-	$raw = @file_get_contents(($result["Location"]!=""?$result["Location"]:"https://steamcommunity.com/profiles/".$friendid."/")."friends", false, $ctx);
-	@$doc->loadHTML('<?xml encoding="utf-8" ?>' . $raw);
-	$divs = $doc->getElementsByTagName('div');
-	$friends = array();
-	foreach ($divs as $div) {
-		$class = $div->getAttribute('class');
-		if (strpos($class, 'friend_block_v2') !== false) {
-			// Ссылка на профиль
-			$profile_url = '';
-			$links = $div->getElementsByTagName('a');
-			foreach ($links as $a) {
-				$href = $a->getAttribute('href');
-				if (strpos($href, 'steamcommunity.com/profiles/') !== false || strpos($href, 'steamcommunity.com/id/') !== false) {
-					$profile_url = $href;
-					break;
-				}
-			}
-			// Имя друга
-			$name = '';
-			$contentDivs = $div->getElementsByTagName('div');
-			foreach ($contentDivs as $cdiv) {
-				if ($cdiv->getAttribute('class') === 'friend_block_content') {
-					$name = trim($cdiv->nodeValue);
-					break;
-				}
-			}
-			if ($profile_url) {
-				$friends[] = array('url' => $profile_url, 'name' => $name);
-			}
-		}
-	}
-
-	$total = 0;
-	$bannedbefore = 0;
-	$error = 0;
-
-	if (empty($friends)) {
-		$objResponse->addScript("ShowBox('Ошибка выборки друзей', 'Не удалось найти друзей в профиле STEAM. Возможно, Steam изменил структуру страницы или у пользователя нет друзей.', 'red', 'index.php?p=banlist', true);");
-		$objResponse->addScript("$('dialog-control').setStyle('display', 'block');");
+		new CSystemLog("w", "Ошибка доступа", $username . " пытался получить список групп '" . $friendid . "', не имея прав.");
 		return $objResponse;
 	}
 
-	foreach ($friends as $friend) {
-		$total++;
-		if (empty($friend['url'])) {
-			$error++;
-			continue;
-		}
-		$url = parse_url($friend['url'], PHP_URL_PATH);
-		$url = explode("/", $url);
-		if (!isset($url[2])) {
-			$error++;
-			continue;
-		}
-		if (in_array((string)$url[2], $already)) {
-			$bannedbefore++;
-			continue;
-		}
-		if (strpos($friend['url'], "steamcommunity.com/id/") !== false) {
-			// we don't have the friendid as this player is using a custom id :S need to get the friendid
-			if ($tfriend = GetFriendIDFromCommunityID($url[2])) {
-				if (in_array((string)$tfriend, $already)) {
-					$bannedbefore++;
-					continue;
-				}
-				$cust = $url[2];
-				$steamid = FriendIDToSteamID($tfriend);
-				$urltag = $tfriend;
-			} else {
-				$error++;
-				continue;
-			}
-		} else {
-			// just a normal friendid profile =)
-			$cust = NULL;
-			$steamid = FriendIDToSteamID($url[2]);
-			$urltag = $url[2];
-		}
-		// Sanitize name: убираем 4-байтовые символы (эмодзи и т.п.) — не влезают в utf8 (не utf8mb4)
-		// str_replace "&#13;" убирает CR-символы которые Steam иногда вставляет
-		$friendName = sanitizeForMysql(trim(str_replace("&#13;", "", $friend['name'])));
-		if (!mb_check_encoding($friendName, 'UTF-8') || $friendName === '') {
-			$friendName = 'UNKNOWN NICKNAME';
-		}
-
-		$banReason = "Steam Community Friend Ban (" . $friendName . ")";
-
-		$pre = $GLOBALS['db']->Prepare("INSERT INTO ".DB_PREFIX."_bans(created,type,ip,authid,name,ends,length,reason,aid,adminIp) VALUES (UNIX_TIMESTAMP(),?,?,?,?,UNIX_TIMESTAMP(),?,?,?,?)");
-		$success = $GLOBALS['db']->Execute($pre, array(0, "", $steamid, $friendName, 0, $banReason, $userbank->GetAid(), $_SERVER['REMOTE_ADDR']));
-
-		// Fallback на случай если sanitizeForMysql не уберёг от 1366 (битые байты из DOMDocument)
-		if (!$success && $GLOBALS['db']->ErrorNo() == 1366) {
-			$GLOBALS['db']->Execute($pre, array(0, "", $steamid, 'UNKNOWN NICKNAME', 0, $banReason, $userbank->GetAid(), $_SERVER['REMOTE_ADDR']));
-		}
-
-	}
-
-	if($total==0) {
-		$objResponse->addScript("ShowBox('Ошибка выборки друзей', 'Ошибка выборки друзей из профиля STEAM. Возможно его профиль скрыт, или у него нет друзей!', 'red', 'index.php?p=banlist', true);");
-		$objResponse->addScript("$('dialog-control').setStyle('display', 'block');");
+	$friendid = preg_replace('/\D+/', '', (string)$friendid);
+	if (strlen($friendid) < 16) {
+		$objResponse->addAssign("steamGroupsText", "innerHTML", "Некорректный Steam Community ID");
 		return $objResponse;
 	}
-	$objResponse->addScript("ShowBox('Друзья были забанены', 'Забанено ".($total-$bannedbefore-$error)." из ".$total." друзей у ".htmlspecialchars($name).".<br>".$bannedbefore." были забанены до этого.<br>И ".$error." ошибок.', 'green', 'index.php?p=banlist', true);");
-	$objResponse->addScript("$('dialog-control').setStyle('display', 'block');");
+
+	$url = "https://steamcommunity.com/profiles/" . $friendid . "/?xml=1";
+	$raw = @file_get_contents($url);
+	if (!is_string($raw) || $raw === '') {
+		$objResponse->addScript("ShowBox('Ошибка', 'Не удалось загрузить профиль Steam.', 'red', '', true);");
+		$objResponse->addAssign("steamGroupsText", "innerHTML", "<i>Нет групп…</i>");
+		return $objResponse;
+	}
+
+	if (strpos($raw, "<groups>") === false) {
+		$objResponse->addScript("ShowBox('Ошибка', 'Не удалось получить группы. Профиль скрыт или игрок не состоит в группах.<br><a href=\"https://steamcommunity.com/profiles/" . $friendid . "/\" target=\"_blank\" rel=\"noopener\">Профиль</a>', 'red', 'index.php?p=banlist', true);");
+		$objResponse->addAssign("steamGroupsText", "innerHTML", "<i>Нет групп…</i>");
+		return $objResponse;
+	}
+
+	$raw = str_replace("&", "", $raw);
+	$raw = strip_31_ascii($raw);
+	$xml = @simplexml_load_string($raw);
+	if ($xml === false) {
+		$objResponse->addAssign("steamGroupsText", "innerHTML", "<i>Нет групп…</i>");
+		return $objResponse;
+	}
+	$nodes = $xml->xpath('/profile/groups/group');
+	if (!is_array($nodes) || empty($nodes)) {
+		$objResponse->addAssign("steamGroupsText", "innerHTML", "<i>Нет групп…</i>");
+		return $objResponse;
+	}
+
+	$i = 0;
+	foreach ($nodes as $node) {
+		$groupURL = isset($node->groupURL) ? (string)$node->groupURL : '';
+		$groupName = isset($node->groupName) ? (string)$node->groupName : $groupURL;
+		$memberCount = isset($node->memberCount) ? (string)$node->memberCount : '0';
+		if ($groupURL === '')
+			continue;
+		$objResponse->addScript(
+			'var e=document.getElementById("steamGroupsTable");'
+			. 'if(e){var tr=e.insertRow(-1);var td=tr.insertCell(-1);td.setAttribute("data-label","");td.style.padding="0px";td.style.width="3px";'
+			. 'var input=document.createElement("input");input.type="checkbox";input.id="chkb_' . $i . '";input.value=' . sb_ajax_json_encode($groupURL) . ';'
+			. 'td.appendChild(input);td=tr.insertCell(-1);td.setAttribute("data-label","Группа");var a=document.createElement("a");a.href="https://steamcommunity.com/groups/"+encodeURIComponent(' . sb_ajax_json_encode($groupURL) . ');a.target="_blank";a.rel="noopener";'
+			. 'a.appendChild(document.createTextNode(' . sb_ajax_json_encode($groupName) . '));td.appendChild(a);'
+			. 'td.appendChild(document.createTextNode(" ("));'
+			. 'var span=document.createElement("span");span.id="membcnt_' . $i . '";span.appendChild(document.createTextNode(' . sb_ajax_json_encode($memberCount) . '));td.appendChild(span);'
+			. 'td.appendChild(document.createTextNode(" уч.)");}'
+		);
+		$i++;
+	}
+
+	$objResponse->addScript("var t=document.getElementById('steamGroupsText');if(t)t.style.display='none';");
+	$objResponse->addScript("var g=document.getElementById('steamGroups');if(g)g.style.display='block';");
 	return $objResponse;
 }
 
@@ -4461,8 +4037,8 @@ function ViewCommunityProfile($sid, $name)
 		if(strpos($steam, "[U:") === 0) {
 			$steam = renderSteam2(getAccountId($steam), 0);
 		}
-        $objResponse->addScript("ShowBox('Profile', 'Ссылка на игрока \"".addslashes(htmlspecialchars($name))."\", была успешно создана: <a href=\"http://www.steamcommunity.com/profiles/".SteamIDToFriendID($steam)."/\" title=\"".addslashes(htmlspecialchars($name))."\'s Profile\" target=\"_blank\">Открыть</a>', 'green', '', true);");
-		$objResponse->addScript("window.open('http://www.steamcommunity.com/profiles/".SteamIDToFriendID($steam)."/', 'Community_".$steam."');");
+        $objResponse->addScript("ShowBox('Профиль Steam', 'Ссылка на игрока \"".addslashes(htmlspecialchars($name))."\" создана: <a href=\"https://steamcommunity.com/profiles/".SteamIDToFriendID($steam)."/\" target=\"_blank\" rel=\"noopener noreferrer\">Открыть</a>', 'green', '', false);");
+		$objResponse->addScript("window.open('https://steamcommunity.com/profiles/".SteamIDToFriendID($steam)."/', 'Community_".$steam."');");
 	} else {
 		$objResponse->addScript("ShowBox('Ошибка', 'Невозможно получить информацию о игроке ".addslashes(htmlspecialchars($name)).". Игрок ушёл с сервера!', 'red', '', true);");
 	}

@@ -94,11 +94,7 @@ foreach($var AS $v)
 	$first=false;
 }
 
-//if($_GET['p'] == "account")
-	//$theme->assign('pane_image','<img src="themes/' . SB_THEME . '/images/admin/your_account.png"> </div>') ;
-//else 
-	//$theme->assign('pane_image', '<img src="themes/' . SB_THEME . '/images/admin/'.  $_GET['c'] . '.png"> </div>');
-	
 $theme->assign('tabs', $tabs);
 
-$theme->display('item_admin_tabs.tpl');
+if (function_exists('sb_ui_v2_enabled') && sb_ui_v2_enabled())
+	return;

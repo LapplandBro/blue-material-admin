@@ -1,0 +1,42 @@
+<form action="" method="post">
+  <input type="hidden" name="sb_csrf" value="{{ sb_csrf }}">
+  <div class="form-page admin-form" id="add-group">
+    <header class="form-page-head">
+      <p class="form-page-kicker">Редактирование</p>
+      <h2 class="form-page-title">Группы админа</h2>
+      <p class="form-page-lead">{% if group_admin_name %}{{ group_admin_name }} · {% endif %}готовая группа или свои права ниже.</p>
+    </header>
+    <div class="form-grid" id="group.details">
+      <div class="form-field form-field--full">
+        <label class="form-label" for="sg">Серверная группа</label>
+        <select class="form-select" tabindex="11" onchange="update_server()" name="sg" id="sg">
+          <option value="-1">Нет группы</option>
+          <optgroup label="Группы">
+            {% for sg in group_lst %}
+            <option value="{{ sg.id }}"{% if sg.id == server_admin_group_id %} selected="selected"{% endif %}>{{ sg.name }}</option>
+            {% endfor %}
+          </optgroup>
+        </select>
+        <div id="sgroup.msg" class="msg-err"></div>
+      </div>
+      <div class="form-field form-field--full" id="serverperm" style="display: none;"></div>
+      <div class="form-field form-field--full">
+        <label class="form-label" for="wg">Веб-группа</label>
+        <select tabindex="9" onchange="update_web()" name="wg" id="wg" class="form-select">
+          <option value="-1">Нет группы</option>
+          <optgroup label="Группы">
+            {% for wg in web_lst %}
+            <option value="{{ wg.gid }}"{% if wg.gid == group_admin_id %} selected="selected"{% endif %}>{{ wg.name }}</option>
+            {% endfor %}
+          </optgroup>
+        </select>
+        <div id="wgroup.msg" class="msg-err"></div>
+      </div>
+      <div class="form-field form-field--full" id="webperm" style="display: none;"></div>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-accent" id="agroups">Сохранить</button>
+      <button type="button" class="btn btn-outline-secondary" id="aback" onclick="sbGo('index.php?p=admin&amp;c=admins')">Назад</button>
+    </div>
+  </div>
+</form>

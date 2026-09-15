@@ -1,0 +1,23 @@
+<div class="form-page admin-form" id="group.details">
+  <header class="form-page-head">
+    <p class="form-page-kicker">Админка</p>
+    <h2 class="form-page-title">E-mail игрока</h2>
+    <p class="form-page-lead"><i>({{ email_addr|raw }})</i></p>
+  </header>
+  <div class="form-grid">
+    <div class="form-field form-field--full">
+      <label class="form-label" for="subject">{% include 'partials/help_icon.twig' with { title: 'Тема', message: 'Введите тему сообщения.' } %} Тема</label>
+      <input type="text" class="form-control" id="subject" name="subject" tabindex="1">
+      <div id="subject.msg" class="msg-err badentry"></div>
+    </div>
+    <div class="form-field form-field--full">
+      <label class="form-label" for="message">{% include 'partials/help_icon.twig' with { title: 'Сообщение', message: 'Пишите Ваше сообщение тут.' } %} Сообщение</label>
+      <textarea class="form-control" tabindex="2" cols="35" rows="7" id="message" name="message"></textarea>
+      <div id="message.msg" class="msg-err badentry"></div>
+    </div>
+  </div>
+  <div class="form-actions">
+    <button type="button" class="btn btn-accent" id="aemail" onclick="{{ email_js|raw }}">Отправить E-mail</button>
+    <button type="button" class="btn btn-outline-secondary" id="back" onclick="sbGo('index.php?p=admin&amp;c=bans')">Назад</button>
+  </div>
+</div>

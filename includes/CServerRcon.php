@@ -5,7 +5,7 @@
  * Licensed under the GNU General Public License v3.0 or later.
  * See LICENSE and NOTICE in the project root.
  *
- * UI theme under themes/new_box has separate provenance — see NOTICE.
+ * UI shell: themes/blue_v2 (Twig + Bootstrap 5). See NOTICE.
  ***************************************************************************/
 class CServerRcon
 {
@@ -118,7 +118,6 @@ class CServerRcon
 
     public function sendCommand($command)
     {
-        //$command = '"'.trim(str_replace(' ','" "', $command)).'"';
         // Harden against RCON command injection: a single RCON packet must contain
         // exactly one command. Embedded NUL/CR/LF bytes could otherwise be abused
         // by a caller that forwards unsanitized user input to terminate the current

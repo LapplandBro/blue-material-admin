@@ -34,8 +34,11 @@ if(!defined("IN_SB")){echo "Ошибка доступа!";die();}
 	if (isset($_GET['page']) && $_GET['page'] > 0)
 		$page = intval($_GET['page']);
 		
-	if(isset($_GET['log_clear']) && $_GET['log_clear'] == "true")
+	if(isset($_POST['log_clear']) && $_POST['log_clear'] == "true")
 	{
+		$csrf = isset($_POST['sb_csrf']) ? $_POST['sb_csrf'] : '';
+		if(!function_exists('sb_csrf_validate') || !sb_csrf_validate($csrf))
+			sb_csrf_fail_page(true);
 		if($userbank->HasAccess(ADMIN_OWNER))
 		{
 			$clearing_admin = $userbank->GetProperty('user');
@@ -55,7 +58,7 @@ if(!defined("IN_SB")){echo "Ошибка доступа!";die();}
 	if(isset($_GET['advSearch']))
 	{
 		// Escape the value, but strip the leading and trailing quote
-		$value = substr($GLOBALS['db']->qstr($_GET['advSearch'], get_magic_quotes_gpc()), 1, -1);
+		$value = substr($GLOBALS['db']->qstr($_GET['advSearch'], false), 1, -1);
 		$type = $_GET['advType'];
 		switch($type)
 		{
@@ -85,40 +88,47 @@ if(!defined("IN_SB")){echo "Ошибка доступа!";die();}
 	else
 		$searchlink = "";
 	
-	$list_start = ($page-1) * intval($GLOBALS['config']['banlist.bansperpage']);
-	$list_end = $list_start + intval($GLOBALS['config']['banlist.bansperpage']);
-	
+	$perpage = intval($GLOBALS['config']['banlist.bansperpage']);
+	if ($perpage < 1)
+		$perpage = 20;
+
 	$log_count = $logs->LogCount($where);
-	$log = $logs->getAll($list_start, intval($GLOBALS['config']['banlist.bansperpage']), $where);
-	if(($page > 1))
+	$pages = (int)ceil($log_count / $perpage);
+	if ($pages < 1)
+		$pages = 1;
+	if ($page > $pages)
+		$page = $pages;
+	if ($page < 1)
+		$page = 1;
+
+	$list_start = ($page - 1) * $perpage;
+	$list_end = $list_start + $perpage;
+	$log = $logs->getAll($list_start, $perpage, $where);
+	if ($page > 1)
 		$prev = CreateLinkR('<- пред', sb_url_query('admin', $searchlink . '&c=settings&page=' . ($page-1)) . '#^2');
-	else 
+	else
 		$prev = "";
-		
-	if($list_end < $log_count)
+
+	if ($list_end < $log_count)
 		$next = CreateLinkR('след ->', sb_url_query('admin', $searchlink . '&c=settings&page=' . ($page+1)) . '#^2');
-	else 
+	else
 		$next = "";
 
-		
-	$pages = (round($log_count/intval($GLOBALS['config']['banlist.bansperpage']))==0)?1:round($log_count/intval($GLOBALS['config']['banlist.bansperpage']));
-	if($pages>1)
-		$page_numbers =  'Страница ' . $page . ' из ' . $pages . " - " . $prev . " | " . $next;
+	if ($pages > 1)
+		$page_numbers = 'Страница ' . $page . ' из ' . $pages . " - " . $prev . " | " . $next;
 	else
 		$page_numbers = 'Страница ' . $page . ' из ' . $pages;
-		
-		
-	$pages = ceil($log_count/intval($GLOBALS['config']['banlist.bansperpage']));
-	if($pages > 1) {
-		if(!isset($_GET['advSearch']) || !isset($_GET['advType'])) {
+
+	if ($pages > 1) {
+		if (!isset($_GET['advSearch']) || !isset($_GET['advType'])) {
 			$_GET['advSearch'] = "";
 			$_GET['advType'] = "";
 		}
 		$advSearchJs = json_encode((string)$_GET['advSearch'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
 		$advTypeJs = json_encode((string)$_GET['advType'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
 		$page_numbers .= '&nbsp;<select onchange=\'changePage(this,"L",' . $advSearchJs . ',' . $advTypeJs . ');\'>';
-		for($i=1;$i<=$pages;$i++) {
-			if(isset($_GET["page"]) && $i==$_GET["page"]) {
+		for ($i = 1; $i <= $pages; $i++) {
+			if ($i == $page) {
 				$page_numbers .= '<option value="' . $i . '" selected="selected">' . $i . '</option>';
 				continue;
 			}
@@ -138,14 +148,22 @@ if(!defined("IN_SB")){echo "Ошибка доступа!";die();}
 			$log_item['type_img'] = "<img class='sb-ico' src='images/icons/warning.svg' width='16' height='16' alt='Error'>"; 
 		$log_item['user'] = !empty($l['user'])?$l['user']:'Guest';
 		$log_item['date_str'] = SBDate($dateformat, $l['created']);
-		$log_item = array_merge($l, $log_item);	
+		$log_item = array_merge($l, $log_item);
+		$log_item['function'] = function_exists('sb_log_plain_stack')
+			? sb_log_plain_stack(isset($l['function']) ? $l['function'] : '')
+			: (isset($l['function']) ? $l['function'] : '');
+		if (trim((string)$log_item['function']) === '')
+			$log_item['function'] = '—';
+		$qraw = isset($l['query']) ? html_entity_decode(strip_tags((string)$l['query']), ENT_QUOTES, 'UTF-8') : '';
+		$log_item['query'] = method_exists($logs, 'SanitizeQuery') ? $logs->SanitizeQuery($qraw) : $qraw;
+		$log_item['message'] = isset($l['message']) ? html_entity_decode(strip_tags((string)$l['message']), ENT_QUOTES, 'UTF-8') : '';
 		array_push($log_list, $log_item);
 	}
 ?>
 <div id="admin-page-content">
 <?php if(!$userbank->HasAccess(ADMIN_OWNER|ADMIN_WEB_SETTINGS))
 {
-	echo '<div id="0" style="display:none;">Доступ запрещен!</div>';
+	echo '<div id="0" class="admin-pane is-on">Доступ запрещен!</div>';
 }
 else
 {
@@ -157,8 +175,7 @@ else
 		$csrf = isset($_POST['sb_csrf']) ? $_POST['sb_csrf'] : '';
 		if(!function_exists('sb_csrf_validate') || !sb_csrf_validate($csrf))
 		{
-			CreateRedBox("Ошибка", "Неверный CSRF-токен. Обновите страницу и попробуйте снова.");
-			PageDie();
+			sb_csrf_fail_page(true);
 		}
 
 		if ($_POST['settingsGroup'] == "mainsettings_themes")
@@ -199,32 +216,33 @@ else
 					$protest = 0;
 				}
 
-				$debugmode = (isset($_POST['config_debug']) && $_POST['config_debug'] == "on" ? 1 : 0);
-				
-				$summertime = (isset($_POST['config_summertime']) && $_POST['config_summertime'] == "on" ? 1 : 0);
-				
+				$debugmode = 0;
+				$summertime = 0;
 				$hideadmname = (isset($_POST['banlist_hideadmname']) && $_POST['banlist_hideadmname'] == "on" ? 1 : 0);
                 
 				$hideplayerips = (isset($_POST['banlist_hideplayerips']) && $_POST['banlist_hideplayerips'] == "on" ? 1 : 0);
 				
 				$nocountryfetch = (isset($_POST['banlist_nocountryfetch']) && $_POST['banlist_nocountryfetch'] == "on" ? 1 : 0);
 				
-				$gendata = (isset($_POST['footer_gendata']) && $_POST['footer_gendata'] == "on") ? 1 : 0;
+				$gendata = 0;
 				
 				$onlyinvolved = (isset($_POST['protest_emailonlyinvolved']) && $_POST['protest_emailonlyinvolved'] == "on" ? 1 : 0);
 				
 				$admin_list_en = (isset($_POST['admin_list_t']) && $_POST['admin_list_t'] == "on" ? 1 : 0);
 				$vay4_en = (isset($_POST['vay4_t']) && $_POST['vay4_t'] == "on" ? 1 : 0);
 				
-				$size = sizeof($_POST['bans_customreason']);
+				$customReasons = (isset($_POST['bans_customreason']) && is_array($_POST['bans_customreason']))
+					? $_POST['bans_customreason']
+					: array();
+				$size = sizeof($customReasons);
 				for($i=0;$i<$size;$i++) {
-					if(empty($_POST['bans_customreason'][$i]))
-						unset($_POST['bans_customreason'][$i]);
+					if(empty($customReasons[$i]))
+						unset($customReasons[$i]);
 					else
-						$_POST['bans_customreason'][$i] = htmlspecialchars($_POST['bans_customreason'][$i]);
+						$customReasons[$i] = htmlspecialchars($customReasons[$i]);
 				}
-				if(sizeof($_POST['bans_customreason'])!=0)
-					$cureason = serialize($_POST['bans_customreason']);
+				if(sizeof($customReasons)!=0)
+					$cureason = serialize($customReasons);
 				else
 					$cureason = "";
 
@@ -236,6 +254,7 @@ else
 					? sb_sanitize_admin_html(isset($_POST['dash_intro_text']) ? $_POST['dash_intro_text'] : '')
 					: (isset($_POST['dash_intro_text']) ? $_POST['dash_intro_text'] : '');
 
+				$GLOBALS['db']->StartTrans();
 				$edit = $GLOBALS['db']->Execute("REPLACE INTO ".DB_PREFIX."_settings (`value`, `setting`) VALUES
 												(?, 'template.title'),
 												(?,'template.logo'),
@@ -261,19 +280,33 @@ else
 												(".(int)$vay4_en.", 'page.vay4er')", array($_POST['template_title'], $locked_logo, $_POST['config_dateformat'], $_POST['config_dateformat2'], $dash_intro_safe, $tz_string, $summertime, $cureason));
 				
 				/* SMTP */
-				$GLOBALS['db']->Execute(sprintf("REPLACE INTO `%s_settings` (`value`, `setting`) VALUES
+				$smtpEnabled = (isset($_POST['smtp_enabled']) && $_POST['smtp_enabled'] == "on") ? "1" : "0";
+				$smtpUsername = isset($_POST['smtp_username']) ? $_POST['smtp_username'] : '';
+				$smtpPort = isset($_POST['smtp_port']) ? $_POST['smtp_port'] : '';
+				$smtpHost = isset($_POST['smtp_host']) ? $_POST['smtp_host'] : '';
+				$smtpCharset = isset($_POST['smtp_charset']) ? $_POST['smtp_charset'] : '';
+				$smtpFrom = isset($_POST['smtp_from']) ? $_POST['smtp_from'] : '';
+				$smtpEdit = $GLOBALS['db']->Execute(sprintf("REPLACE INTO `%s_settings` (`value`, `setting`) VALUES
 				('%s', 'smtp.enabled'),
 				(%s, 'smtp.username'),
 				(%s, 'smtp.port'),
 				(%s, 'smtp.host'),
 				(%s, 'smtp.charset'),
-				(%s, 'smtp.from');", DB_PREFIX, (($_POST['smtp_enabled']=="on")?"1":"0"), $GLOBALS['db']->qstr($_POST['smtp_username']), $GLOBALS['db']->qstr($_POST['smtp_port']), $GLOBALS['db']->qstr($_POST['smtp_host']), $GLOBALS['db']->qstr($_POST['smtp_charset']), $GLOBALS['db']->qstr($_POST['smtp_from'])));
+				(%s, 'smtp.from');", DB_PREFIX, $smtpEnabled, $GLOBALS['db']->qstr($smtpUsername), $GLOBALS['db']->qstr($smtpPort), $GLOBALS['db']->qstr($smtpHost), $GLOBALS['db']->qstr($smtpCharset), $GLOBALS['db']->qstr($smtpFrom)));
 				// PASSWORD SMTP
-				if ($_POST['smtp_password'] != "*Скрыт*")
-					$GLOBALS['db']->Execute(sprintf("REPLACE INTO `%s_settings` (`value`, `setting`) VALUES (%s, 'smtp.password');", DB_PREFIX, $GLOBALS['db']->qstr($_POST['smtp_password'])));
+				$passwordEdit = true;
+				$smtpPassword = isset($_POST['smtp_password']) ? $_POST['smtp_password'] : '*Скрыт*';
+				if ($smtpPassword != "*Скрыт*")
+					$passwordEdit = (bool)$GLOBALS['db']->Execute(sprintf("REPLACE INTO `%s_settings` (`value`, `setting`) VALUES (%s, 'smtp.password');", DB_PREFIX, $GLOBALS['db']->qstr($smtpPassword)));
+				$saveOk = (bool)$edit && (bool)$smtpEdit && $passwordEdit;
+				$saveOk = (bool)$GLOBALS['db']->CompleteTrans($saveOk) && $saveOk;
 				
-				?><script>setTimeout("ShowBox('Главные настройки изменены', 'Изменения были успешно применены!', 'green', 'index.php?p=admin&c=settings', false, 2500);", 1200);</script><?php 
-				$log = new CSystemLog("m", "Настройки изменены", $userbank->GetProperty("user") . " изменил главные настройки (mainsettings).");
+				if ($saveOk) {
+					?><script>setTimeout("ShowBox('Главные настройки изменены', 'Изменения были успешно применены!', 'green', 'index.php?p=admin&c=settings', false, 2500);", 1200);</script><?php
+					$log = new CSystemLog("m", "Настройки изменены", $userbank->GetProperty("user") . " изменил главные настройки (mainsettings).");
+				} else {
+					CreateRedBox("Ошибка", "Не удалось полностью сохранить настройки: " . htmlspecialchars($GLOBALS['db']->ErrorMsg(), ENT_QUOTES, 'UTF-8'));
+				}
 			}else{
 				CreateRedBox("Ошибка", $errors); 
 			}
@@ -288,6 +321,7 @@ else
 			$groupban = (isset($_POST['enable_groupbanning']) && $_POST['enable_groupbanning'] == "on" ? 1 : 0);
 			
 			$friendsban = (isset($_POST['enable_friendsbanning']) && $_POST['enable_friendsbanning'] == "on" ? 1 : 0);
+			$fetchnicks = (isset($_POST['enable_fetchnicks']) && $_POST['enable_fetchnicks'] == "on" ? 1 : 0);
 			
 			$adminrehash = (isset($_POST['enable_adminrehashing']) && $_POST['enable_adminrehashing'] == "on" ? 1 : 0);
 			
@@ -300,12 +334,14 @@ else
 			
 			$map_autofetch = (isset($_POST['map_autofetch']) && $_POST['map_autofetch'] == "on" ? 1 : 0);
 			$totp_enforce_owner = (isset($_POST['totp_enforce_owner']) && $_POST['totp_enforce_owner'] == "on" ? 1 : 0);
+			$twig_precompile = (isset($_POST['twig_precompile']) && $_POST['twig_precompile'] == "on" ? 1 : 0);
 			
 			$edit = $GLOBALS['db']->Execute("REPLACE INTO ".DB_PREFIX."_settings (`value`, `setting`) VALUES
 											(" . (int)$exportpub . ", 'config.exportpublic'),
 											(" . (int)$kickit . ", 'config.enablekickit'),
 											(" . (int)$groupban . ", 'config.enablegroupbanning'),
 											(" . (int)$friendsban . ", 'config.enablefriendsbanning'),
+											(" . (int)$fetchnicks . ", 'config.fetchbannicks'),
 											(" . (int)$_POST['moder_group_st'] . ", 'config.modgroup'),
 											(" . (int)$admininfos . ", 'config.enableadmininfos'),
 											(" . (int)$alladmininfos . ", 'config.changeadmininfos'),
@@ -314,10 +350,146 @@ else
 											(" . (int)$admin_warns . ", 'admin.warns'),
 											(" . (int)$_POST['admin_warns_max'] . ", 'admin.warns.max'),
 											(" . (int)$map_autofetch . ", 'feature.map_autofetch'),
-											(" . (int)$totp_enforce_owner . ", 'config.totp.enforce_owner');");
+											(" . (int)$totp_enforce_owner . ", 'config.totp.enforce_owner'),
+											(" . (int)$twig_precompile . ", 'config.twig.precompile');");
 
-			?><script>setTimeout("ShowBox('Настройки опций изменены', 'Изменения были успешно применены!', 'green', 'index.php?p=admin&c=settings#^3', false, 2500);", 1200);</script><?php
-			$log = new CSystemLog("m", "Настройки изменены", $userbank->GetProperty("user") . " изменил настройки раздела \"Опции\" (features).");
+			if ($edit) {
+				if ((int)$twig_precompile === 1 && function_exists('sb_ui_v2_twig_precompile_all')) {
+					try {
+						sb_ui_v2_twig_precompile_all();
+					} catch (Throwable $e) {
+					}
+				} elseif ((int)$twig_precompile === 0 && function_exists('sb_ui_v2_twig_cache_clear')) {
+					$twig_was_on = isset($GLOBALS['config']['config.twig.precompile']) && (string)$GLOBALS['config']['config.twig.precompile'] === '1';
+					if ($twig_was_on) {
+						try {
+							sb_ui_v2_twig_cache_clear();
+						} catch (Throwable $e) {
+						}
+					}
+				}
+				?><script>setTimeout("ShowBox('Настройки опций изменены', 'Изменения были успешно применены!', 'green', 'index.php?p=admin&c=settings#^3', false, 2500);", 1200);</script><?php
+				$log = new CSystemLog("m", "Настройки изменены", $userbank->GetProperty("user") . " изменил настройки раздела \"Опции\" (features).");
+			} else {
+				CreateRedBox("Ошибка", "Не удалось сохранить настройки опций: " . htmlspecialchars($GLOBALS['db']->ErrorMsg(), ENT_QUOTES, 'UTF-8'));
+			}
+		}
+
+		if ($_POST['settingsGroup'] == "seo")
+		{
+			$ogSite = isset($_POST['seo_og_site_name']) ? trim((string)$_POST['seo_og_site_name']) : '';
+			$ogTitle = isset($_POST['seo_og_title']) ? trim((string)$_POST['seo_og_title']) : '';
+			$ogDesc = isset($_POST['seo_og_description']) ? trim((string)$_POST['seo_og_description']) : '';
+			$metaDesc = isset($_POST['seo_meta_description']) ? trim((string)$_POST['seo_meta_description']) : '';
+			$ogImage = isset($_POST['seo_og_image']) ? trim((string)$_POST['seo_og_image']) : '';
+			$ogW = isset($_POST['seo_og_image_width']) ? (int)$_POST['seo_og_image_width'] : 0;
+			$ogH = isset($_POST['seo_og_image_height']) ? (int)$_POST['seo_og_image_height'] : 0;
+
+			if ($ogImage !== '' && preg_match('#^https?://#i', $ogImage) === 0) {
+				$ogImage = ltrim(str_replace('\\', '/', $ogImage), '/');
+				if (strpos($ogImage, '..') !== false) {
+					CreateRedBox("Ошибка", "Некорректный путь к обложке.");
+					PageDie();
+				}
+			}
+			if ($ogW < 0)
+				$ogW = 0;
+			if ($ogH < 0)
+				$ogH = 0;
+			if ($ogW > 4096)
+				$ogW = 4096;
+			if ($ogH > 4096)
+				$ogH = 4096;
+
+			$edit = $GLOBALS['db']->Execute(
+				"REPLACE INTO " . DB_PREFIX . "_settings (`value`, `setting`) VALUES
+					(?, 'seo.og_site_name'),
+					(?, 'seo.og_title'),
+					(?, 'seo.og_description'),
+					(?, 'seo.meta_description'),
+					(?, 'seo.og_image'),
+					(?, 'seo.og_image_width'),
+					(?, 'seo.og_image_height')",
+				array(
+					$ogSite,
+					$ogTitle,
+					$ogDesc,
+					$metaDesc,
+					$ogImage,
+					$ogW > 0 ? (string)$ogW : '',
+					$ogH > 0 ? (string)$ogH : '',
+				)
+			);
+
+			if ($edit) {
+				$GLOBALS['config']['seo.og_site_name'] = $ogSite;
+				$GLOBALS['config']['seo.og_title'] = $ogTitle;
+				$GLOBALS['config']['seo.og_description'] = $ogDesc;
+				$GLOBALS['config']['seo.meta_description'] = $metaDesc;
+				$GLOBALS['config']['seo.og_image'] = $ogImage;
+				$GLOBALS['config']['seo.og_image_width'] = $ogW > 0 ? (string)$ogW : '';
+				$GLOBALS['config']['seo.og_image_height'] = $ogH > 0 ? (string)$ogH : '';
+				?><script>setTimeout("ShowBox('SEO сохранено', 'Параметры SEO записаны в базу.', 'green', 'index.php?p=admin&c=settings#^4', false, 2500);", 1200);</script><?php
+				$log = new CSystemLog("m", "SEO настройки", $userbank->GetProperty("user") . " изменил SEO / Open Graph.");
+			} else {
+				CreateRedBox("Ошибка", "Не удалось сохранить SEO: " . htmlspecialchars($GLOBALS['db']->ErrorMsg(), ENT_QUOTES, 'UTF-8'));
+			}
+		}
+
+		if ($_POST['settingsGroup'] == "seo_rebuild")
+		{
+			if (!function_exists('sb_write_seo_files')) {
+				CreateRedBox("Ошибка", "Модуль SEO не загружен.");
+			} else {
+				$base = defined('SB_WP_URL') ? (string)SB_WP_URL : '';
+				$res = sb_write_seo_files(rtrim(str_replace('\\', '/', ROOT), '/'), $base, array('write_og_stub' => false));
+				if (!empty($res['ok'])) {
+					$files = !empty($res['files']) ? implode(', ', $res['files']) : 'sitemap.xml, robots.txt';
+					$msg = $files;
+					if (!empty($res['error']))
+						$msg .= ' (' . $res['error'] . ')';
+					$msgJs = json_encode($msg, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+					?><script>setTimeout(function(){ ShowBox('SEO файлы', <?php echo $msgJs; ?>, 'green', 'index.php?p=admin&c=settings#^4', false, 2800); }, 800);</script><?php
+					$log = new CSystemLog("m", "SEO файлы", $userbank->GetProperty("user") . " пересобрал sitemap.xml / robots.txt.");
+				} else {
+					$err = !empty($res['error']) ? $res['error'] : 'неизвестная ошибка';
+					CreateRedBox("Ошибка", htmlspecialchars($err, ENT_QUOTES, 'UTF-8'));
+					$log = new CSystemLog("w", "SEO файлы", $userbank->GetProperty("user") . " не смог пересобрать SEO-файлы: " . $err);
+				}
+			}
+		}
+
+		if ($_POST['settingsGroup'] == "seo_upload")
+		{
+			if (!function_exists('sb_seo_save_og_upload')) {
+				CreateRedBox("Ошибка", "Модуль SEO не загружен.");
+			} elseif (empty($_FILES['seo_og_file']) || !is_array($_FILES['seo_og_file'])) {
+				CreateRedBox("Ошибка", "Выберите файл обложки.");
+			} else {
+				$up = sb_seo_save_og_upload($_FILES['seo_og_file'], rtrim(str_replace('\\', '/', ROOT), '/'));
+				if (!empty($up['ok']) && !empty($up['path'])) {
+					$wStr = !empty($up['width']) ? (string)(int)$up['width'] : '';
+					$hStr = !empty($up['height']) ? (string)(int)$up['height'] : '';
+					$GLOBALS['db']->Execute(
+						"REPLACE INTO " . DB_PREFIX . "_settings (`value`, `setting`) VALUES
+							(?, 'seo.og_image'),
+							(?, 'seo.og_image_width'),
+							(?, 'seo.og_image_height')",
+						array($up['path'], $wStr, $hStr)
+					);
+					$GLOBALS['config']['seo.og_image'] = $up['path'];
+					if ($wStr !== '')
+						$GLOBALS['config']['seo.og_image_width'] = $wStr;
+					if ($hStr !== '')
+						$GLOBALS['config']['seo.og_image_height'] = $hStr;
+					?><script>setTimeout("ShowBox('Обложка OG', 'Файл сохранён как <?php echo htmlspecialchars($up['path'], ENT_QUOTES, 'UTF-8'); ?>', 'green', 'index.php?p=admin&c=settings#^4', false, 2500);", 800);</script><?php
+					$log = new CSystemLog("m", "SEO обложка", $userbank->GetProperty("user") . " загрузил " . $up['path'] . ".");
+				} else {
+					$err = !empty($up['error']) ? $up['error'] : 'загрузка не удалась';
+					CreateRedBox("Ошибка", htmlspecialchars($err, ENT_QUOTES, 'UTF-8'));
+					$log = new CSystemLog("w", "SEO обложка", $userbank->GetProperty("user") . " — ошибка загрузки: " . $err);
+				}
+			}
 		}
 	}
 
@@ -326,7 +498,7 @@ else
 	$theme->assign('sb_csrf', function_exists('sb_csrf_token') ? sb_csrf_token() : '');
 
 	#########[Settings Page]###############
-	echo '<div id="0" style="display:none;">';
+	echo '<div id="0" class="admin-pane is-on">';
 		
 		$wgroups = $GLOBALS['db']->GetAll("SELECT gid, name FROM ".DB_PREFIX."_groups WHERE type != 3");
 		$theme->assign('wgroups', 				$wgroups);
@@ -341,7 +513,7 @@ else
 		$theme->assign('config_dash_text', 		stripslashes($GLOBALS['config']['dash.intro.text']));
 		$theme->assign('config_bans_per_page',	$GLOBALS['config']['banlist.bansperpage']);
 		
-		$theme->assign('bans_customreason', ((isset($GLOBALS['config']['bans.customreasons'])&&$GLOBALS['config']['bans.customreasons']!="")?unserialize($GLOBALS['config']['bans.customreasons']):array()));
+		$theme->assign('bans_customreason', sb_unserialize_array(isset($GLOBALS['config']['bans.customreasons']) ? $GLOBALS['config']['bans.customreasons'] : '') ?: array());
 		
 		// SMTP Settings
 		$theme->assign('smtp_enabled', ($GLOBALS['config']['smtp.enabled'] == "1"));
@@ -351,41 +523,74 @@ else
 		$theme->assign('smtp_charset',  $GLOBALS['config']['smtp.charset']);
 		$theme->assign('smtp_from',     $GLOBALS['config']['smtp.from']);
 		
-		$theme->display('page_admin_settings_settings.tpl');	
+		sb_ui_v2_theme_fragment('admin_settings_settings.twig');
 	echo '</div>';
 	#########/[Settings Page]###############
 
 	#########[Features Page]###############
-	echo '<div id="3" style="display:none;">';
+	echo '<div id="3" class="admin-pane">';
 		$theme->assign('old_serverside', ($GLOBALS['config']['feature.old_serverside'] == "1"));
 		// Настройка ещё не сохранялась ни разу -> считаем автозагрузку карт включённой по умолчанию.
 		$theme->assign('map_autofetch', (!isset($GLOBALS['config']['feature.map_autofetch']) || $GLOBALS['config']['feature.map_autofetch'] == "1"));
 		$theme->assign('totp_enforce_owner', (!empty($GLOBALS['config']['config.totp.enforce_owner']) && $GLOBALS['config']['config.totp.enforce_owner'] == "1"));
 		$theme->assign('maxWarnings', $GLOBALS['config']['admin.warns.max']);
 		$theme->assign('warnings_enabled', ($GLOBALS['config']['admin.warns'] == "1"));
-		$theme->display('page_admin_settings_features.tpl');
+		sb_ui_v2_theme_fragment('admin_settings_features.twig');
 	echo '</div>';
 	#########/[Features Page]###############
+
+	#########[SEO Page]###############
+	echo '<div id="4" class="admin-pane">';
+		$seoBundle = function_exists('sb_seo_og_bundle')
+			? sb_seo_og_bundle(isset($GLOBALS['config']['template.title']) ? $GLOBALS['config']['template.title'] : '')
+			: array(
+				'og_site_name' => '',
+				'og_title' => '',
+				'og_description' => '',
+				'og_image' => 'images/og-cover.jpg',
+				'og_image_width' => 1200,
+				'og_image_height' => 630,
+				'meta_description' => '',
+				'site_base' => '',
+			);
+		$theme->assign('seo_og_site_name', function_exists('sb_seo_cfg') ? sb_seo_cfg('seo.og_site_name') : '');
+		$theme->assign('seo_og_title', function_exists('sb_seo_cfg') ? sb_seo_cfg('seo.og_title') : '');
+		$theme->assign('seo_og_description', function_exists('sb_seo_cfg') ? sb_seo_cfg('seo.og_description') : '');
+		$theme->assign('seo_meta_description', function_exists('sb_seo_cfg') ? sb_seo_cfg('seo.meta_description') : '');
+		$theme->assign('seo_og_image', function_exists('sb_seo_cfg') ? sb_seo_cfg('seo.og_image') : '');
+		$theme->assign('seo_og_image_width', function_exists('sb_seo_cfg') ? sb_seo_cfg('seo.og_image_width') : '');
+		$theme->assign('seo_og_image_height', function_exists('sb_seo_cfg') ? sb_seo_cfg('seo.og_image_height') : '');
+		$theme->assign('seo_resolved', $seoBundle);
+		$previewImg = function_exists('sb_seo_absolute_image_url')
+			? sb_seo_absolute_image_url($seoBundle['og_image'], $seoBundle['site_base'])
+			: '';
+		if ($previewImg !== '' && is_readable(ROOT . 'images/og-cover.jpg')) {
+			$previewImg .= (strpos($previewImg, '?') === false ? '?' : '&') . 'v=' . (int)@filemtime(ROOT . 'images/og-cover.jpg');
+		}
+		$theme->assign('seo_preview_image', $previewImg);
+		sb_ui_v2_theme_fragment('admin_settings_seo.twig');
+	echo '</div>';
+	#########/[SEO Page]###############
 	
 	#########[Themes Page]###############
-	echo '<div id="1" style="display:none;">';
+	echo '<div id="1" class="admin-pane">';
 		$theme->assign('config_text_home', 			isset($GLOBALS['config']['config.text_home']) ? $GLOBALS['config']['config.text_home'] : '');
 		$theme->assign('config_text_mon', 			isset($GLOBALS['config']['config.text_mon']) ? $GLOBALS['config']['config.text_mon'] : '');
 		$theme->assign('config_text_acc', 			isset($GLOBALS['config']['config.text_acc']) ? $GLOBALS['config']['config.text_acc'] : '');
 		$theme->assign('config_text_acc2', 			isset($GLOBALS['config']['config.text_acc2']) ? $GLOBALS['config']['config.text_acc2'] : '');
 
-		$theme->display('page_admin_settings_theme.tpl');	
+		sb_ui_v2_theme_fragment('admin_settings_theme.twig');
 	echo '</div>';
 	#########/[Settings Page]###############
 	
 	#########[Logs Page]###############
-	echo '<div id="2" style="display:none;">';
+	echo '<div id="2" class="admin-pane">';
 		if($userbank->HasAccess(ADMIN_OWNER))
 			$theme->assign('clear_logs', "( <a href='javascript:ClearLogs();'>Очистить лог</a> )");
 		$theme->assign('page_numbers', 			$page_numbers);
 		$theme->assign('log_items',				$log_list);
-				
-		$theme->display('page_admin_settings_logs.tpl');	
+		$theme->assign('admin_list', $GLOBALS['db']->GetAll("SELECT aid, user FROM `" . DB_PREFIX . "_admins` ORDER BY user ASC"));
+		sb_ui_v2_theme_fragment('admin_settings_logs.twig');
 	echo '</div>';
 	#########/[Logs Page]###############
 	
@@ -421,11 +626,10 @@ else
 	setChecked('vay4_t', <?php echo $sbCfgInt('page.vay4er'); ?>);
 	setChecked('admin_list_t', <?php echo $sbCfgInt('page.adminlist'); ?>);
 
-	setChecked('config_debug', <?php echo $sbCfgInt('config.debug'); ?>);
-	setChecked('config_summertime', <?php echo $sbCfgInt('config.summertime'); ?>);
 	setChecked('enable_submit', <?php echo $sbCfgInt('config.enablesubmit'); ?>);
 	setChecked('enable_protest', <?php echo $sbCfgInt('config.enableprotest'); ?>);
 	setChecked('enable_kickit', <?php echo $sbCfgInt('config.enablekickit', 1); ?>);
+	setChecked('twig_precompile', <?php echo $sbCfgInt('config.twig.precompile'); ?>);
 	setChecked('export_public', <?php echo $sbCfgInt('config.exportpublic'); ?>);
 	setValue('default_page', <?php echo $sbCfgInt('config.defaultpage'); ?>);
 	setValue('block_home', <?php echo $sbCfgInt('config.home.comms', 1); ?>);
@@ -435,11 +639,11 @@ else
 	setChecked('banlist_hideplayerips', <?php echo $sbCfgInt('banlist.hideplayerips'); ?>);
 	setChecked('enable_groupbanning', <?php echo $sbCfgInt('config.enablegroupbanning'); ?>);
 	setChecked('enable_friendsbanning', <?php echo $sbCfgInt('config.enablefriendsbanning'); ?>);
+	setChecked('enable_fetchnicks', <?php echo $sbCfgInt('config.fetchbannicks'); ?>);
 	setChecked('enable_admininfo', <?php echo $sbCfgInt('config.enableadmininfos', 1); ?>);
 	setChecked('allow_admininfo', <?php echo $sbCfgInt('config.changeadmininfos', 1); ?>);
 	setChecked('enable_adminrehashing', <?php echo $sbCfgInt('config.enableadminrehashing', 1); ?>);
 	setValue('moder_group_st', <?php echo json_encode((string)$sbCfg('config.modgroup', '0'), JSON_UNESCAPED_UNICODE); ?>);
-	setChecked('footer_gendata', <?php echo $sbCfgInt('page.footer.allow_show_data'); ?>);
 })();
 
 function MoreFields()
@@ -447,7 +651,7 @@ function MoreFields()
 	var t = document.getElementById("custom.reasons");
 	if (!t) return;
 	var div_add = document.createElement("div");
-	div_add.className = "fg-line";
+	div_add.className = "mb-2";
 	var input_add = document.createElement("input");
 	input_add.className = "form-control";
 	input_add.setAttribute("placeholder","Введите данные");
@@ -457,3 +661,4 @@ function MoreFields()
 	t.appendChild(div_add);
 }
 </script>
+</div>

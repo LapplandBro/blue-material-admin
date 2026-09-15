@@ -1,0 +1,68 @@
+{% extends 'layout.twig' %}
+{% block extra_head %}
+<link href="{{ asset_base }}themes/blue_v2/css/banlist.css" rel="stylesheet">
+{% endblock %}
+{% block topbar_title %}
+<div>
+  <h1 class="h5 mb-0">Список банов</h1>
+  <div class="small topbar-user">Макет оболочки, не рабочий банлист</div>
+</div>
+{% endblock %}
+{% block content %}
+<div class="hint rounded-3 p-3 mb-3">
+  Twig здесь только подставляет строки.
+  Картинку рисует Bootstrap 5 + <code>themes/blue_v2/css/blue.css</code> и <code>banlist.css</code>.
+</div>
+<div class="panel banlist-panel">
+  <header class="banlist-chrome">
+    <div class="banlist-chrome-title">
+      <p class="banlist-kicker">Превью</p>
+      <div class="banlist-chrome-heading">
+        <h1 class="banlist-title">Список банов</h1>
+        <span class="banlist-count">{{ rows|length }}</span>
+      </div>
+    </div>
+  </header>
+  <div class="table-responsive table-cards-wrap">
+    <table class="table table-v2 banlist-table table-cards">
+      <thead>
+        <tr>
+          <th>Игрок</th>
+          <th>Причина</th>
+          <th>Админ</th>
+          <th class="banlist-th-length">Длительность</th>
+          <th class="banlist-th-date">Дата</th>
+          <th class="banlist-th-length">Статус</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          <td data-label="Игрок">
+            <div class="banlist-player">
+              <div class="banlist-player-text">
+                <strong class="player">{{ row.player }}</strong>
+                <span class="steam">{{ row.steam }}</span>
+              </div>
+            </div>
+          </td>
+          <td data-label="Причина">{{ row.reason }}</td>
+          <td data-label="Админ"><span class="banlist-admin">{{ row.admin }}</span></td>
+          <td class="banlist-td-length" data-label="Длительность">{{ row.length }}</td>
+          <td class="banlist-td-date" data-label="Дата"><span class="banlist-date">{{ row.date }}</span></td>
+          <td class="banlist-td-length" data-label="Статус">
+            {% if row.badge == 'perm' %}
+              <span class="badge badge-perm">{{ row.status }}</span>
+            {% elseif row.badge == 'temp' %}
+              <span class="badge badge-temp">{{ row.status }}</span>
+            {% else %}
+              <span class="badge badge-ok">{{ row.status }}</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

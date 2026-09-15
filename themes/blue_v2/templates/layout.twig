@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="ru" class="page-booting" data-bs-theme="dark" data-page="{{ nav_active|default('home')|lower|replace({'_': '-'})|e('html_attr') }}"{% if nav_c|default('') %} data-sub="{{ nav_c|e('html_attr') }}"{% endif %} prefix="og: https://ogp.me/ns#">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script>
+  (function () {
+    var root = document.documentElement;
+    var page = (root.getAttribute('data-page') || 'home').toLowerCase().replace(/[^a-z0-9-]/g, '');
+    var sub = (root.getAttribute('data-sub') || '').toLowerCase().replace(/[^a-z0-9-]/g, '');
+    var seed = page + (sub ? '/' + sub : '');
+    var h = 2166136261;
+    var i;
+    for (i = 0; i < seed.length; i++) {
+      h ^= seed.charCodeAt(i);
+      h = Math.imul ? Math.imul(h, 16777619) : ((h * 16777619) | 0);
+    }
+    h = h >>> 0;
+    function u(shift, min, span) {
+      return min + ((h >>> shift) % (span + 1));
+    }
+    root.style.setProperty('--glow-1-x', u(0, 8, 36) + '%');
+    root.style.setProperty('--glow-1-y', u(6, -10, 26) + '%');
+    root.style.setProperty('--glow-2-x', u(12, 56, 38) + '%');
+    root.style.setProperty('--glow-2-y', u(18, -4, 34) + '%');
+    root.style.setProperty('--glow-3-x', u(24, 28, 52) + '%');
+    root.style.setProperty('--glow-3-y', u(28, 58, 42) + '%');
+  })();
+  </script>
+  <style>
+    html.page-booting{background:#070d1a}
+    html.page-booting #page-loader{display:block!important;opacity:1!important;visibility:visible}
+    html.page-booting #page-loader[hidden]{display:block!important}
+    html.page-booting #cookie-notice{display:none!important}
+  </style>
+  <noscript><style>html.page-booting #page-loader,html.page-booting #page-loader[hidden]{display:none!important}</style></noscript>
+  <title>{{ title|default(seo_document_title|default('Blue Admin')) }}</title>
+  {% if seo_description is defined and seo_description %}
+  <meta name="description" content="{{ seo_description }}">
+  {% endif %}
+  {% if seo_noindex|default(false) %}
+  <meta name="robots" content="noindex, nofollow">
+  {% else %}
+  <meta name="robots" content="index, follow">
+  {% endif %}
+  {% if seo_canonical is defined and seo_canonical %}
+  <link rel="canonical" href="{{ seo_canonical }}">
+  {% endif %}
+  {% if og_title is defined and og_title %}
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="{{ og_site_name|default(title) }}">
+  <meta property="og:title" content="{{ og_title }}">
+  <meta property="og:description" content="{{ og_description|default(seo_description|default('')) }}">
+  <meta property="og:url" content="{{ seo_canonical|default(seo_site_url|default('')) }}">
+  <meta property="og:locale" content="ru_RU">
+  {% if og_image is defined and og_image %}
+  <meta property="og:image" content="{{ og_image }}">
+  <meta property="og:image:secure_url" content="{{ og_image }}">
+  <meta property="og:image:type" content="{{ og_image_type|default('image/jpeg') }}">
+  <meta property="og:image:width" content="{{ og_image_width|default(1200) }}">
+  <meta property="og:image:height" content="{{ og_image_height|default(630) }}">
+  <meta property="og:image:alt" content="{{ og_image_alt|default(og_title) }}">
+  {% endif %}
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{{ og_title }}">
+  <meta name="twitter:description" content="{{ og_description|default(seo_description|default('')) }}">
+  {% if og_image is defined and og_image %}
+  <meta name="twitter:image" content="{{ og_image }}">
+  {% endif %}
+  {% endif %}
+  {% if seo_jsonld is defined and seo_jsonld %}
+  <script type="application/ld+json">{{ seo_jsonld|raw }}</script>
+  {% endif %}
+  {% if asset_base %}<base href="{{ asset_base }}">{% endif %}
+  <link rel="icon" href="{{ asset_base }}images/icons/logo-mark.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="{{ asset_base }}images/icons/logo-mark.svg">
+  <link href="{{ asset_base }}themes/blue_v2/vendor/bootstrap/bootstrap.min.css" rel="stylesheet">
+  <link href="{{ asset_base }}themes/blue_v2/vendor/bootstrap-icons/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="{{ asset_base }}themes/blue_v2/vendor/sweetalert/sweet-alert.css" rel="stylesheet">
+  <link href="{{ asset_base }}themes/blue_v2/css/rubik.css" rel="stylesheet">
+  <link href="{{ asset_base }}themes/blue_v2/css/blue.css?v={{ css_ver }}" rel="stylesheet">
+  {% block extra_head %}{% endblock %}
+  <link href="{{ asset_base }}themes/blue_v2/css/mobile.css?v={{ css_ver }}" rel="stylesheet">
+  <link href="{{ asset_base }}themes/blue_v2/css/wide.css?v={{ css_ver }}" rel="stylesheet">
+  <script>try{var _mq=window.matchMedia('(max-width: 991.98px)');var _k=_mq.matches?'sb-ui-sidebar-mobile':'sb-ui-sidebar-desktop';var _s=localStorage.getItem(_k);if(_mq.matches){if(_s!=='on')document.documentElement.classList.add('sidebar-off');}else{if(_s==='off')document.documentElement.classList.add('sidebar-off');else document.documentElement.classList.remove('sidebar-off');}}catch(e){}</script>
+  <script src="{{ asset_base }}scripts/mootools.js?v={{ mt_js_ver|default(sb_js_ver) }}"></script>
+  <script src="{{ asset_base }}scripts/sourcebans.js?v={{ sb_js_ver }}"></script>
+  {{ xajax_js|raw }}
+  <script>window.SB_CSRF={{ sb_csrf|default('')|json_encode(15)|raw }};window.SB_SESSION={{ sb_session|default({})|json_encode(15)|raw }};</script>
+</head>
+<body class="blue-v2">
+<div class="page-loader is-on" id="page-loader" hidden>
+  <div class="preloader pls-blue">
+    <svg class="pl-circular" viewBox="25 25 50 50" aria-hidden="true">
+      <circle class="plc-path" cx="50" cy="50" r="20"></circle>
+    </svg>
+    <p>Загрузка</p>
+  </div>
+</div>
+<div class="page-progress" id="page-progress" hidden></div>
+{% block body %}
+<header class="topbar">
+  <div class="topbar-left">
+    <a class="header-brand" href="index.php?p=home" title="На главную">
+      {% include 'partials/brand_icon.twig' %}
+      <span class="header-brand-text">
+        <span class="header-brand-primary">{{ brand_primary|default('Blue Admin') }}</span>
+        {% if brand_secondary %}
+        <span class="header-brand-sep" aria-hidden="true">|</span>
+        <span class="header-brand-secondary">{{ brand_secondary }}</span>
+        {% endif %}
+      </span>
+    </a>
+    <span class="topbar-split" aria-hidden="true"></span>
+    <div class="topbar-crumb">
+      <span class="topbar-kicker">Панель</span>
+      <span class="topbar-sep" aria-hidden="true">/</span>
+      <div class="topbar-title">{% block topbar_title %}{% endblock %}</div>
+    </div>
+  </div>
+  <div class="topbar-actions">
+    {% if logged_in %}
+      <a class="topbar-btn" href="index.php?p=logout"><i class="bi bi-box-arrow-right" aria-hidden="true"></i> Выход</a>
+    {% else %}
+      <a class="topbar-btn topbar-btn-accent" href="{{ login_url }}">Вход</a>
+    {% endif %}
+    <button type="button" class="menu-trigger" id="menu-trigger" aria-label="Полное меню: админка, аккаунт, жалобы" aria-controls="sidebar" aria-expanded="true">
+      <span class="menu-trigger-lines" aria-hidden="true"><span></span><span></span><span></span></span>
+    </button>
+  </div>
+</header>
+<div class="sidebar-backdrop" id="sidebar-backdrop" hidden aria-hidden="true"></div>
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar" aria-label="Главное меню">
+    <div class="profile-menu">
+      <a href="{% if logged_in %}index.php?p=account{% else %}{{ login_url }}{% endif %}" title="{% if logged_in %}Профиль{% else %}Авторизация{% endif %}">
+        <div class="profile-pic">
+          <img src="{{ avatar|default('images/default-avatar.jpg') }}" alt="{% if logged_in %}{{ username }}{% else %}Гость{% endif %}" title="{% if logged_in %}{{ username }}{% else %}Гость{% endif %}" width="48" height="48" loading="lazy">
+        </div>
+        <div class="profile-info">
+          {% if logged_in %}
+          <span class="profile-info-label">Аккаунт</span> <mark>{{ username }}</mark>
+          {% else %}
+          Гость
+          {% endif %}
+        </div>
+      </a>
+    </div>
+
+    <nav class="sidebar-nav">
+      {% if nav_groups %}
+      {% for group in nav_groups %}
+      <div class="nav-group">
+        <div class="nav-group-label">{{ group.label }}</div>
+        <div class="nav-v2">
+          {% for item in group.items %}
+          <a class="nav-link{% if item.active %} active{% endif %}{% if item.tab_slot|default('') %} nav-link--tabbar-slot{% endif %}" href="{{ item.href }}"{% if item.tab_slot|default('') %} data-tab-slot="{{ item.tab_slot }}"{% endif %}{% if item.active %} aria-current="page"{% endif %}{% if item.newtab %} target="_blank" rel="noopener noreferrer"{% endif %}{% if item.desc %} title="{{ item.desc }}"{% endif %}>
+            {% if item.icon == 'sb-bi-vk' %}
+            <i class="sb-bi-vk nav-ico" aria-hidden="true"></i>
+            {% else %}
+            <i class="bi {{ item.icon }} nav-ico" aria-hidden="true"></i>
+            {% endif %}
+            {{ item.title }}
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+      {% else %}
+      <div class="nav-group">
+        <div class="nav-group-label">Обзор</div>
+        <div class="nav-v2">
+          <a class="nav-link nav-link--tabbar-slot{% if nav_active == 'home' or nav_active == '' %} active{% endif %}" href="index.php?p=home" data-tab-slot="home"{% if nav_active == 'home' or nav_active == '' %} aria-current="page"{% endif %}>
+            <i class="bi bi-house-door nav-ico" aria-hidden="true"></i>
+            Главная
+          </a>
+          <a class="nav-link nav-link--tabbar-slot{% if nav_active == 'servers' %} active{% endif %}" href="index.php?p=servers" data-tab-slot="servers"{% if nav_active == 'servers' %} aria-current="page"{% endif %}>
+            <i class="bi bi-hdd-stack nav-ico" aria-hidden="true"></i>
+            Серверы
+          </a>
+        </div>
+      </div>
+      <div class="nav-group">
+        <div class="nav-group-label">Списки</div>
+        <div class="nav-v2">
+          <a class="nav-link nav-link--tabbar-slot{% if nav_active == 'banlist' or nav_active == 'ui_v2' %} active{% endif %}" href="index.php?p=banlist" data-tab-slot="banlist"{% if nav_active == 'banlist' or nav_active == 'ui_v2' %} aria-current="page"{% endif %}>
+            <i class="bi bi-shield-x nav-ico" aria-hidden="true"></i>
+            Баны
+          </a>
+          <a class="nav-link nav-link--tabbar-slot{% if nav_active == 'commslist' %} active{% endif %}" href="index.php?p=commslist" data-tab-slot="commslist"{% if nav_active == 'commslist' %} aria-current="page"{% endif %}>
+            <i class="bi bi-mic-mute nav-ico" aria-hidden="true"></i>
+            Муты
+          </a>
+          <a class="nav-link nav-link--tabbar-slot{% if nav_active == 'adminlist' %} active{% endif %}" href="index.php?p=adminlist" data-tab-slot="adminlist"{% if nav_active == 'adminlist' %} aria-current="page"{% endif %}>
+            <i class="bi bi-people nav-ico" aria-hidden="true"></i>
+            Админы
+          </a>
+        </div>
+      </div>
+      <div class="nav-group">
+        <div class="nav-group-label">Кабинет</div>
+        <div class="nav-v2">
+          <a class="nav-link nav-link--tabbar-slot{% if nav_active == 'admin' %} active{% endif %}" href="index.php?p=admin" data-tab-slot="admin"{% if nav_active == 'admin' %} aria-current="page"{% endif %}>
+            <i class="bi bi-gear nav-ico" aria-hidden="true"></i>
+            Админка
+          </a>
+          {% if logged_in %}
+          <a class="nav-link nav-link--tabbar-slot{% if nav_active == 'account' %} active{% endif %}" href="index.php?p=account" data-tab-slot="account"{% if nav_active == 'account' %} aria-current="page"{% endif %}>
+            <i class="bi bi-person nav-ico" aria-hidden="true"></i>
+            Аккаунт
+          </a>
+          {% else %}
+          <a class="nav-link nav-link--tabbar-slot{% if nav_active == 'login' %} active{% endif %}" href="{{ login_url }}" data-tab-slot="login"{% if nav_active == 'login' %} aria-current="page"{% endif %}>
+            <i class="bi bi-box-arrow-in-right nav-ico" aria-hidden="true"></i>
+            Вход
+          </a>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+    </nav>
+  </aside>
+
+  <div class="app-main">
+    <div id="content" class="app-content">
+      {% block content %}{% endblock %}
+    </div>
+    <footer class="app-footer">
+      <div class="app-footer-inner">
+        <div class="app-footer-copy">
+          <strong>{{ brand_primary|default('Blue Admin') }}</strong>{% if sb_version %} · {{ sb_version }}{% endif %}
+          <p>Свободное ПО под <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank" rel="noopener noreferrer">GNU GPLv3</a>. Форк <a href="https://github.com/sbpp/sourcebans-pp" target="_blank" rel="noopener noreferrer">SourceBans++</a> / <a href="https://github.com/GameConnect/sourcebansv1" target="_blank" rel="noopener noreferrer">SourceBans</a>.</p>
+          <p class="app-footer-author">Автор сборки: <a href="https://github.com/LapplandBro/blue-material-admin" target="_blank" rel="noopener noreferrer">LapplandBro</a></p>
+          <p>Идея оформления: <a href="https://hlmod.net/threads/alpha-material-admin-refork-na-osnove-sb-1-5-4-7-bootstrap-3.36382/" target="_blank" rel="noopener noreferrer">Material Admin (HLMod)</a> · <a href="https://github.com/CrazyHackGUT" target="_blank" rel="noopener noreferrer">Kruzya</a>. Самостоятельный форк — живёт отдельно от остальных сборок.</p>
+        </div>
+        <nav class="app-footer-nav">
+          <a href="index.php?p=home">Главная</a>
+          <a href="index.php?p=servers">Серверы</a>
+          <a href="index.php?p=banlist">Баны</a>
+          <a href="index.php?p=commslist">Муты</a>
+          <a href="index.php?p=adminlist">Админы</a>
+        </nav>
+      </div>
+    </footer>
+  </div>
+</div>
+{% include 'partials/mobile_tabbar.twig' %}
+{% endblock %}
+<button type="button" class="page-top" id="page-top" aria-label="Наверх" aria-hidden="true" tabindex="-1">
+  <i class="bi bi-chevron-up" aria-hidden="true"></i>
+</button>
+{% include 'partials/cookie_notice.twig' %}
+<script src="{{ asset_base }}themes/blue_v2/vendor/bootstrap/bootstrap.bundle.min.js"></script>
+<script src="{{ asset_base }}themes/blue_v2/vendor/sweetalert/sweet-alert.min.js"></script>
+{{ extra_js|raw }}
+{% block extra_js %}{% endblock %}
+<script>
+(function () {
+  var loader = document.getElementById('page-loader');
+  var bar = document.getElementById('page-progress');
+  var hideTimer = 0;
+  var stuckTimer = 0;
+  function reduceMotion() {
+    return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  }
+  function motionMs() {
+    return reduceMotion() ? 0 : 340;
+  }
+  function showBar() {
+    if (!bar) return;
+    bar.removeAttribute('hidden');
+    if (typeof window.requestAnimationFrame === 'function')
+      window.requestAnimationFrame(function () { bar.classList.add('is-on'); });
+    else
+      bar.classList.add('is-on');
+  }
+  function hideBar() {
+    if (!bar) return;
+    bar.classList.remove('is-on');
+    window.setTimeout(function () {
+      if (!bar.classList.contains('is-on'))
+        bar.setAttribute('hidden', 'hidden');
+    }, motionMs());
+  }
+  function showLoader() {
+    if (hideTimer) {
+      window.clearTimeout(hideTimer);
+      hideTimer = 0;
+    }
+    if (stuckTimer) {
+      window.clearTimeout(stuckTimer);
+      stuckTimer = 0;
+    }
+    if (loader) {
+      loader.hidden = false;
+      if (typeof window.requestAnimationFrame === 'function')
+        window.requestAnimationFrame(function () { loader.classList.add('is-on'); });
+      else
+        loader.classList.add('is-on');
+    }
+    showBar();
+    stuckTimer = window.setTimeout(function () {
+      stuckTimer = 0;
+      hideLoader();
+    }, 2500);
+  }
+  function hideLoader() {
+    if (stuckTimer) {
+      window.clearTimeout(stuckTimer);
+      stuckTimer = 0;
+    }
+    if (hideTimer) {
+      window.clearTimeout(hideTimer);
+      hideTimer = 0;
+    }
+    if (loader) {
+      loader.hidden = false;
+      loader.classList.add('is-on');
+    }
+    document.documentElement.classList.remove('page-booting');
+    hideBar();
+    if (!loader) return;
+    if (typeof window.requestAnimationFrame === 'function')
+      window.requestAnimationFrame(function () { loader.classList.remove('is-on'); });
+    else
+      loader.classList.remove('is-on');
+    hideTimer = window.setTimeout(function () {
+      if (!loader.classList.contains('is-on')) {
+        loader.hidden = true;
+        loader.style.opacity = '';
+        loader.style.transition = '';
+      }
+      hideTimer = 0;
+    }, motionMs());
+  }
+  function isNavHref(href) {
+    if (!href) return false;
+    if (href.indexOf('#') === 0 || href.indexOf('javascript:') === 0) return false;
+    if (href.indexOf('#^') !== -1) return false;
+    return true;
+  }
+  function isSamePathQuery(a) {
+    try {
+      var u = new URL(a.href, window.location.href);
+      return u.origin === window.location.origin
+        && u.pathname === window.location.pathname
+        && u.search === window.location.search;
+    } catch (err) {
+      return false;
+    }
+  }
+  function relHasExternal(a) {
+    var rel = (a.getAttribute('rel') || '').toLowerCase().split(/\s+/);
+    return rel.indexOf('external') !== -1;
+  }
+  function isAjaxForm(form) {
+    var action = (form.getAttribute('action') || '').trim();
+    if (!action || action === '#' || action.toLowerCase().indexOf('javascript:') === 0) return true;
+    var onsubmit = form.getAttribute('onsubmit') || '';
+    if (/return\s+false/i.test(onsubmit) || /xajax/i.test(onsubmit) || /DoLogin/i.test(onsubmit)) return true;
+    return false;
+  }
+  function isFileHref(href, a) {
+    if (a && a.hasAttribute('download')) return true;
+    var path = href || '';
+    try {
+      path = new URL(a.href, window.location.href).pathname;
+    } catch (err) {}
+    path = String(path).toLowerCase().split('?')[0];
+    if (/(^|\/)exportbans\.php$/.test(path) || /(^|\/)getdemo\.php$/.test(path)) return true;
+    if (/\.(cfg|dem|zip|txt|csv|json|xml|sql|gz|7z|rar)$/.test(path)) return true;
+    return false;
+  }
+  document.addEventListener('click', function (e) {
+    var from = e.target;
+    if (from && from.closest && from.closest('.sb-select, .sb-select-catch, .sweet-alert, .tox'))
+      return;
+    var a = from;
+    while (a && a.tagName !== 'A') a = a.parentNode;
+    if (!a || !a.href || a.target === '_blank') return;
+    if (a.hasAttribute('download') || relHasExternal(a) || isFileHref(a.getAttribute('href') || '', a)) return;
+    if ((a.className || '').indexOf('js-player-menu') !== -1) return;
+    var href = a.getAttribute('href') || '';
+    if (!isNavHref(href) || isSamePathQuery(a)) return;
+    if ((a.getAttribute('onclick') || '').indexOf('SwapPane') !== -1) return;
+    if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    showLoader();
+  }, true);
+  document.addEventListener('submit', function (e) {
+    var form = e.target;
+    if (!form || form.tagName !== 'FORM' || isAjaxForm(form)) return;
+    showBar();
+  }, true);
+  function bootDone() {
+    hideLoader();
+  }
+  if (document.readyState === 'complete')
+    bootDone();
+  else
+    window.addEventListener('load', function () {
+      if (typeof window.requestAnimationFrame === 'function')
+        window.requestAnimationFrame(function () { bootDone(); });
+      else
+        bootDone();
+    });
+  window.addEventListener('pageshow', function (e) {
+    if (e.persisted) bootDone();
+  });
+  window.addEventListener('pagehide', hideLoader);
+  window.setTimeout(bootDone, 8000);
+
+  var trigger = document.getElementById('menu-trigger');
+  var backdrop = document.getElementById('sidebar-backdrop');
+  var mqDrawer = window.matchMedia('(max-width: 991.98px)');
+  var backdropHideTimer = 0;
+
+  function sidebarOff() {
+    return document.documentElement.classList.contains('sidebar-off');
+  }
+
+  function drawerMode() {
+    return mqDrawer.matches;
+  }
+
+  function syncSidebarUi() {
+    var off = sidebarOff();
+    if (trigger) trigger.setAttribute('aria-expanded', off ? 'false' : 'true');
+    if (backdrop) {
+      if (backdropHideTimer) {
+        window.clearTimeout(backdropHideTimer);
+        backdropHideTimer = 0;
+      }
+      if (drawerMode() && !off) {
+        backdrop.removeAttribute('hidden');
+        backdrop.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('sidebar-drawer-open');
+      } else {
+        backdrop.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('sidebar-drawer-open');
+        backdropHideTimer = window.setTimeout(function () {
+          backdrop.setAttribute('hidden', 'hidden');
+          backdropHideTimer = 0;
+        }, 240);
+      }
+    }
+  }
+
+  function setSidebar(off) {
+    document.documentElement.classList.toggle('sidebar-off', off);
+    try {
+      var key = drawerMode() ? 'sb-ui-sidebar-mobile' : 'sb-ui-sidebar-desktop';
+      localStorage.setItem(key, off ? 'off' : 'on');
+    } catch (err) {}
+    syncSidebarUi();
+  }
+
+  function applySidebarForViewport() {
+    try {
+      var key = drawerMode() ? 'sb-ui-sidebar-mobile' : 'sb-ui-sidebar-desktop';
+      var stored = localStorage.getItem(key);
+      if (drawerMode()) {
+        setSidebar(stored !== 'on');
+      } else {
+        setSidebar(stored === 'off');
+      }
+    } catch (err) {}
+  }
+
+  function tabbarVisibleSlots() {
+    var slots = ['home', 'banlist', 'commslist', 'servers'];
+    if (window.matchMedia('(min-width: 360px)').matches) {
+      slots.push('account');
+      slots.push('login');
+    }
+    if (window.matchMedia('(min-width: 576px)').matches) slots.push('adminlist');
+    if (window.matchMedia('(min-width: 768px)').matches) slots.push('admin');
+    return slots;
+  }
+
+  function syncTabbarSidebar() {
+    var root = document.documentElement;
+    var inDrawer = drawerMode();
+    var hasMore = inDrawer;
+    root.classList.toggle('tabbar-has-more', hasMore);
+    if (!inDrawer) {
+      document.querySelectorAll('.nav-link--in-tabbar').forEach(function (el) {
+        el.classList.remove('nav-link--in-tabbar');
+      });
+      document.querySelectorAll('.nav-group--tabbar-empty').forEach(function (el) {
+        el.classList.remove('nav-group--tabbar-empty');
+      });
+      return;
+    }
+    var visible = tabbarVisibleSlots();
+    document.querySelectorAll('.sidebar-nav .nav-link[data-tab-slot]').forEach(function (el) {
+      var slot = el.getAttribute('data-tab-slot');
+      el.classList.toggle('nav-link--in-tabbar', visible.indexOf(slot) !== -1);
+    });
+    document.querySelectorAll('.sidebar-nav .nav-group').forEach(function (group) {
+      var links = group.querySelectorAll('.nav-link:not(.nav-link--in-tabbar)');
+      group.classList.toggle('nav-group--tabbar-empty', links.length === 0);
+    });
+  }
+
+  if (trigger) {
+    syncSidebarUi();
+    trigger.addEventListener('click', function () { setSidebar(!sidebarOff()); });
+  }
+  syncTabbarSidebar();
+  var tabMenu = document.getElementById('mobile-tabbar-menu');
+  if (tabMenu) {
+    tabMenu.addEventListener('click', function () { setSidebar(false); });
+  }
+  if (backdrop) {
+    backdrop.addEventListener('click', function () { setSidebar(true); });
+  }
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && drawerMode() && !sidebarOff()) setSidebar(true);
+  });
+  function onDrawerChange() {
+    applySidebarForViewport();
+    syncSidebarUi();
+    syncTabbarSidebar();
+  }
+  if (mqDrawer.addEventListener) mqDrawer.addEventListener('change', onDrawerChange);
+  else if (mqDrawer.addListener) mqDrawer.addListener(onDrawerChange);
+  window.addEventListener('resize', function () {
+    syncSidebarUi();
+    syncTabbarSidebar();
+  });
+})();
+</script>
+<script>
+(function () {
+  var items = {{ page_notices|default([])|json_encode(15)|raw }};
+  if (!items || !items.length) return;
+  var hosts = {};
+  function hostFor(place) {
+    place = place || 'top-right';
+    if (place === 'top-left' && !document.documentElement.classList.contains('sidebar-off')) {
+      place = 'top-right';
+    }
+    if (hosts[place]) return hosts[place];
+    var box = document.createElement('div');
+    box.className = 'sb-toasts sb-toasts--' + place;
+    box.setAttribute('aria-live', 'polite');
+    document.body.appendChild(box);
+    hosts[place] = box;
+    return box;
+  }
+  function hide(el) {
+    el.classList.remove('is-on');
+    window.setTimeout(function () {
+      if (el.parentNode) el.parentNode.removeChild(el);
+    }, 340);
+  }
+  function show(item, wait) {
+    window.setTimeout(function () {
+      var el = document.createElement('div');
+      el.className = 'sb-toast sb-toast--' + (item.tone || 'info');
+      el.setAttribute('role', 'status');
+      var msg = document.createElement('span');
+      msg.className = 'sb-toast-msg';
+      msg.appendChild(document.createTextNode(item.text || ''));
+      var x = document.createElement('button');
+      x.type = 'button';
+      x.className = 'sb-toast-x';
+      x.setAttribute('aria-label', 'Закрыть');
+      x.appendChild(document.createTextNode('\u00d7'));
+      x.addEventListener('click', function () { hide(el); });
+      el.appendChild(msg);
+      el.appendChild(x);
+      hostFor(item.place).appendChild(el);
+      window.setTimeout(function () { el.classList.add('is-on'); }, 20);
+      window.setTimeout(function () { hide(el); }, item.ms || 8000);
+    }, wait);
+  }
+  var i;
+  for (i = 0; i < items.length; i++)
+    show(items[i], i * 240);
+})();
+</script>
+<script>
+(function () {
+  var btn = document.getElementById('page-top');
+  if (!btn) return;
+  var shown = false;
+  var ticking = false;
+  var showAt = 240;
+  function pageOverflows() {
+    var doc = document.documentElement;
+    return (doc.scrollHeight - doc.clientHeight) > 48;
+  }
+  function sync() {
+    ticking = false;
+    var y = window.pageYOffset || document.documentElement.scrollTop || 0;
+    var on = pageOverflows() && y > showAt;
+    if (on === shown) return;
+    shown = on;
+    btn.classList.toggle('is-on', on);
+    btn.setAttribute('aria-hidden', on ? 'false' : 'true');
+    if (on) btn.removeAttribute('tabindex');
+    else btn.setAttribute('tabindex', '-1');
+  }
+  function onScroll() {
+    if (ticking) return;
+    ticking = true;
+    if (typeof window.requestAnimationFrame === 'function')
+      window.requestAnimationFrame(sync);
+    else
+      sync();
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', onScroll, { passive: true });
+  if (typeof ResizeObserver === 'function') {
+    try { new ResizeObserver(onScroll).observe(document.documentElement); }
+    catch (e) {}
+  }
+  btn.addEventListener('click', function () {
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (typeof window.scrollTo === 'function')
+      window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' });
+    else
+      window.scrollTop = 0;
+  });
+  sync();
+})();
+</script>
+<script>
+(function () {
+  var KEY = 'sb-cookie-ok';
+  var el = document.getElementById('cookie-notice');
+  var okBtn = document.getElementById('cookie-notice-ok');
+  var hideTimer = 0;
+  var dismissed = false;
+  if (!el) return;
+  function reduceMotion() {
+    return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  }
+  function storedOk() {
+    try { return window.localStorage.getItem(KEY) === '1'; }
+    catch (e) { return false; }
+  }
+  function syncShift() {
+    var h = el.hidden ? 0 : el.offsetHeight;
+    document.documentElement.style.setProperty('--cookie-notice-shift', h + 'px');
+    document.documentElement.classList.toggle('cookie-notice-on', h > 0);
+  }
+  function reveal() {
+    if (dismissed || storedOk()) return;
+    el.hidden = false;
+    syncShift();
+    function on() {
+      if (dismissed || storedOk()) return;
+      el.classList.add('is-on');
+    }
+    if (reduceMotion()) {
+      on();
+      return;
+    }
+    if (typeof window.requestAnimationFrame === 'function')
+      window.requestAnimationFrame(function () { window.requestAnimationFrame(on); });
+    else
+      window.setTimeout(on, 20);
+  }
+  function dismiss() {
+    dismissed = true;
+    try { window.localStorage.setItem(KEY, '1'); }
+    catch (e) {}
+    el.classList.remove('is-on');
+    if (hideTimer) window.clearTimeout(hideTimer);
+    hideTimer = window.setTimeout(function () {
+      el.hidden = true;
+      syncShift();
+      hideTimer = 0;
+    }, reduceMotion() ? 0 : 340);
+  }
+  if (okBtn) okBtn.addEventListener('click', dismiss);
+  window.addEventListener('resize', syncShift, { passive: true });
+  function afterBoot() {
+    if (document.documentElement.classList.contains('page-booting')) {
+      window.setTimeout(afterBoot, 80);
+      return;
+    }
+    reveal();
+  }
+  if (document.readyState === 'complete')
+    afterBoot();
+  else
+    window.addEventListener('load', afterBoot);
+})();
+</script>
+<script>
+(function () {
+  var openWrap = null;
+  var catcher = null;
+  function showCatch() {
+    if (!catcher) {
+      catcher = document.createElement('div');
+      catcher.className = 'sb-select-catch';
+      catcher.addEventListener('mousedown', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      });
+      catcher.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (openWrap) closeWrap(openWrap);
+      });
+      document.body.appendChild(catcher);
+    }
+    catcher.classList.add('is-on');
+  }
+  function hideCatch() {
+    if (catcher) catcher.classList.remove('is-on');
+  }
+  function fireSelectChange(sel) {
+    var ev, ok = false;
+    try {
+      ev = new Event('change', { bubbles: true, cancelable: true });
+      if (ev && typeof ev.preventDefault === 'function' && !ev.$extended) {
+        sel.dispatchEvent(ev);
+        ok = true;
+      }
+    } catch (err) {}
+    if (!ok) {
+      try {
+        if (typeof CustomEvent === 'function') {
+          ev = new CustomEvent('change', { bubbles: true, cancelable: true });
+          if (ev && !ev.$extended) {
+            sel.dispatchEvent(ev);
+            ok = true;
+          }
+        }
+      } catch (err2) {}
+    }
+    if (!ok) {
+      try {
+        ev = document.createEvent('HTMLEvents');
+        ev.initEvent('change', true, true);
+        sel.dispatchEvent(ev);
+        ok = true;
+      } catch (err3) {}
+    }
+    if (!ok && typeof sel.onchange === 'function') {
+      try { sel.onchange(); } catch (err4) {}
+    }
+  }
+  function clearMenuPos(menu) {
+    if (!menu || !menu.style) return;
+    menu.style.position = '';
+    menu.style.left = '';
+    menu.style.right = '';
+    menu.style.top = '';
+    menu.style.bottom = '';
+    menu.style.width = '';
+    menu.style.zIndex = '';
+  }
+  function placeMenu(wrap) {
+    var menu = wrap.querySelector('.sb-select-menu');
+    var btn = wrap.querySelector('.sb-select-btn');
+    if (!menu || !btn) return;
+    var rect = btn.getBoundingClientRect();
+    var mh = Math.min(menu.scrollHeight || 0, window.innerHeight * 0.55);
+    var dropUp = window.innerHeight - rect.bottom < mh + 12 && rect.top > mh;
+    wrap.classList.toggle('sb-select--drop-up', dropUp);
+    menu.style.position = 'fixed';
+    menu.style.left = Math.round(rect.left) + 'px';
+    menu.style.width = Math.round(rect.width) + 'px';
+    menu.style.right = 'auto';
+    menu.style.zIndex = '5000';
+    if (dropUp) {
+      menu.style.top = 'auto';
+      menu.style.bottom = Math.round(window.innerHeight - rect.top + 4) + 'px';
+    } else {
+      menu.style.bottom = 'auto';
+      menu.style.top = Math.round(rect.bottom + 4) + 'px';
+    }
+  }
+  function cancelClose(wrap) {
+    if (!wrap) return;
+    if (wrap._sbCloseTimer) {
+      window.clearTimeout(wrap._sbCloseTimer);
+      wrap._sbCloseTimer = 0;
+    }
+    if (wrap._sbOnClose) {
+      var menu = wrap.querySelector('.sb-select-menu');
+      if (menu) menu.removeEventListener('transitionend', wrap._sbOnClose);
+      wrap._sbOnClose = null;
+    }
+    wrap._sbClosing = false;
+  }
+  function closeWrap(wrap) {
+    if (!wrap) return;
+    var menu = wrap.querySelector('.sb-select-menu');
+    wrap.classList.remove('is-open');
+    var btn = wrap.querySelector('.sb-select-btn');
+    if (btn) btn.setAttribute('aria-expanded', 'false');
+    if (openWrap === wrap) openWrap = null;
+    if (!openWrap) hideCatch();
+    function finish() {
+      if (wrap._sbCloseTimer) {
+        window.clearTimeout(wrap._sbCloseTimer);
+        wrap._sbCloseTimer = 0;
+      }
+      if (menu && wrap._sbOnClose) {
+        menu.removeEventListener('transitionend', wrap._sbOnClose);
+        wrap._sbOnClose = null;
+      }
+      wrap._sbClosing = false;
+      if (!wrap.classList.contains('is-open'))
+        clearMenuPos(menu);
+    }
+    if (wrap._sbClosing)
+      return;
+    wrap._sbClosing = true;
+    wrap._sbOnClose = function (e) {
+      if (!e || e.target !== menu) return;
+      if (e.propertyName && e.propertyName !== 'opacity' && e.propertyName !== 'transform' && e.propertyName !== 'visibility')
+        return;
+      finish();
+    };
+    if (menu) menu.addEventListener('transitionend', wrap._sbOnClose);
+    wrap._sbCloseTimer = window.setTimeout(finish, 180);
+  }
+  function closeAll(except) {
+    var all = document.querySelectorAll('.sb-select.is-open');
+    var i;
+    for (i = 0; i < all.length; i++) {
+      if (all[i] !== except) closeWrap(all[i]);
+    }
+  }
+  function selectedLabel(sel) {
+    var opt = sel.options[sel.selectedIndex];
+    return opt ? (opt.textContent || '').replace(/\s+/g, ' ').trim() : '';
+  }
+  function fillMenu(wrap, sel) {
+    var menu = wrap.querySelector('.sb-select-menu');
+    if (!menu) return;
+    menu.textContent = '';
+    var nodes = sel.children;
+    var i;
+    for (i = 0; i < nodes.length; i++) {
+      var node = nodes[i];
+      if (node.tagName === 'OPTGROUP') {
+        var g = document.createElement('li');
+        g.className = 'sb-select-group';
+        g.textContent = node.label || '';
+        menu.appendChild(g);
+        var j;
+        for (j = 0; j < node.children.length; j++)
+          menu.appendChild(itemFor(sel, node.children[j]));
+      } else if (node.tagName === 'OPTION') {
+        menu.appendChild(itemFor(sel, node));
+      }
+    }
+    wrap._sbDirty = false;
+  }
+  function itemFor(sel, opt) {
+    var li = document.createElement('li');
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'sb-select-item';
+    btn.textContent = (opt.textContent || '').replace(/\s+/g, ' ').trim();
+    btn.disabled = !!opt.disabled;
+    if (opt.selected) btn.classList.add('is-selected');
+    btn.setAttribute('role', 'option');
+    btn.setAttribute('data-value', opt.value);
+    btn.addEventListener('mousedown', function (e) {
+      e.stopPropagation();
+    });
+    btn.addEventListener('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (opt.disabled) return;
+      var wrap = sel._sbWrap;
+      var changed = sel.value !== opt.value;
+      sel.value = opt.value;
+      syncBtn(wrap, sel);
+      window.setTimeout(function () {
+        closeWrap(wrap);
+        if (changed) fireSelectChange(sel);
+      }, 0);
+    });
+    li.appendChild(btn);
+    return li;
+  }
+  function syncBtn(wrap, sel) {
+    var btn = wrap.querySelector('.sb-select-btn');
+    if (btn) {
+      btn.textContent = selectedLabel(sel) || '\u00a0';
+      btn.disabled = !!sel.disabled;
+    }
+    var items = wrap.querySelectorAll('.sb-select-item');
+    var i;
+    for (i = 0; i < items.length; i++) {
+      items[i].classList.toggle('is-selected', items[i].getAttribute('data-value') === sel.value);
+    }
+  }
+  function openWrapMenu(wrap, sel) {
+    if (wrap._sbDirty) fillMenu(wrap, sel);
+    syncBtn(wrap, sel);
+    closeAll(wrap);
+    cancelClose(wrap);
+    wrap.classList.remove('sb-select--drop-up');
+    wrap.querySelector('.sb-select-btn').setAttribute('aria-expanded', 'true');
+    openWrap = wrap;
+    showCatch();
+    placeMenu(wrap);
+    wrap.classList.add('is-open');
+  }
+  function enhance(sel) {
+    if (!sel || sel.nodeType !== 1 || sel.tagName !== 'SELECT') return;
+    if (sel._sbWrap) return;
+    if (sel.multiple || (sel.size && sel.size > 1)) return;
+    if (sel.closest && sel.closest('.tox, .sb-select')) return;
+    if (!sel.classList.contains('form-select')) return;
+    var wrap = document.createElement('div');
+    wrap.className = 'sb-select';
+    wrap._sbDirty = true;
+    if (sel.classList.contains('banlist-bulk')) wrap.classList.add('banlist-bulk');
+    if (sel.classList.contains('v2-page-select')) wrap.classList.add('v2-page-select');
+    if (sel.classList.contains('form-select-sm')) wrap.classList.add('form-select-sm');
+    sel.parentNode.insertBefore(wrap, sel);
+    wrap.appendChild(sel);
+    sel._sbWrap = wrap;
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'sb-select-btn form-select' + (sel.classList.contains('form-select-sm') ? ' form-select-sm' : '') + (sel.classList.contains('banlist-bulk') ? ' banlist-bulk' : '') + (sel.classList.contains('v2-page-select') ? ' v2-page-select' : '');
+    btn.setAttribute('aria-haspopup', 'listbox');
+    btn.setAttribute('aria-expanded', 'false');
+    var menu = document.createElement('ul');
+    menu.className = 'sb-select-menu';
+    menu.setAttribute('role', 'listbox');
+    wrap.appendChild(btn);
+    wrap.appendChild(menu);
+    fillMenu(wrap, sel);
+    syncBtn(wrap, sel);
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (sel.getAttribute('onmouseup')) {
+        try {
+          sel.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+        } catch (err) {}
+      }
+      if (wrap.classList.contains('is-open')) closeWrap(wrap);
+      else openWrapMenu(wrap, sel);
+    });
+    btn.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        if (!wrap.classList.contains('is-open')) openWrapMenu(wrap, sel);
+      }
+      if (e.key === 'Escape') closeWrap(wrap);
+    });
+    sel.addEventListener('change', function () {
+      syncBtn(wrap, sel);
+    });
+    if (typeof MutationObserver === 'function') {
+      try {
+        new MutationObserver(function () {
+          wrap._sbDirty = true;
+        }).observe(sel, { childList: true, subtree: true });
+      } catch (err) {}
+    }
+  }
+  function scan(root) {
+    var list = (root || document).querySelectorAll('select.form-select');
+    var i;
+    for (i = 0; i < list.length; i++) enhance(list[i]);
+  }
+  function maybeEnhanceTree(n) {
+    if (!n || n.nodeType !== 1) return;
+    if (n.closest && n.closest('.sb-select, .tox')) return;
+    if (n.matches && n.matches('select.form-select')) {
+      enhance(n);
+      return;
+    }
+    if (!n.querySelector) return;
+    var found = n.querySelectorAll('select.form-select');
+    var k;
+    for (k = 0; k < found.length; k++) enhance(found[k]);
+  }
+  document.addEventListener('click', function (e) {
+    if (openWrap && !openWrap.contains(e.target)) closeWrap(openWrap);
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && openWrap) closeWrap(openWrap);
+  });
+  window.addEventListener('scroll', function (e) {
+    if (!openWrap) return;
+    var t = e.target;
+    if (t && t.nodeType !== 1) t = t.parentElement;
+    if (t && openWrap.contains(t)) return;
+    closeWrap(openWrap);
+  }, true);
+  window.addEventListener('resize', function () {
+    if (openWrap) closeWrap(openWrap);
+  });
+  if (document.readyState === 'loading')
+    document.addEventListener('DOMContentLoaded', function () { scan(document); });
+  else
+    scan(document);
+  if (typeof MutationObserver === 'function') {
+    try {
+      new MutationObserver(function (recs) {
+        var r, j;
+        for (r = 0; r < recs.length; r++) {
+          for (j = 0; j < recs[r].addedNodes.length; j++)
+            maybeEnhanceTree(recs[r].addedNodes[j]);
+        }
+      }).observe(document.documentElement, { childList: true, subtree: true });
+    } catch (err) {}
+  }
+})();
+</script>
+</body>
+</html>

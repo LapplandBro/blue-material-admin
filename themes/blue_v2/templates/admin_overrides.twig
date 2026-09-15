@@ -1,0 +1,63 @@
+{% if not permission_addadmin %}
+<div class="form-page">
+  <p class="form-flash form-flash--err">Нет доступа к переопределениям.</p>
+</div>
+{% else %}
+{% if overrides_error != "" %}
+<script type="text/javascript">ShowBox("Ошибка", "{{ overrides_error|raw }}", "red");</script>
+{% endif %}
+{% if overrides_save_success %}
+<script type="text/javascript">ShowBox("Переопределения обновлены", "Изменения успешно сохранены.", "green", "index.php?p=admin&c=admins");</script>
+{% endif %}
+
+<form action="" method="post">
+  <input type="hidden" name="sb_csrf" value="{{ sb_csrf }}">
+  <div class="form-page admin-form">
+    <header class="form-page-head">
+      <p class="form-page-kicker">Админка</p>
+      <h2 class="form-page-title">Переопределения</h2>
+      <p class="form-page-lead">Флаги команд SourceMod без правки плагинов · пустое название = удалить. Справка — <a href="https://wiki.alliedmods.net/Ru:Overriding_Command_Access_(SourceMod)" target="_blank" rel="noopener">AlliedModders Wiki</a>.</p>
+    </header>
+    <div class="table-responsive table-cards-wrap">
+      <table class="admin-manage-table table-cards" id="overrides">
+        <thead>
+          <tr>
+            <th>Тип</th>
+            <th>Название</th>
+            <th>Флаги</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for override in overrides_list %}
+          <tr>
+            <td data-label="Тип">
+              <select name="override_type[]" class="form-select">
+                <option{% if override.type == "command" %} selected="selected"{% endif %} value="command">Команда</option>
+                <option{% if override.type == "group" %} selected="selected"{% endif %} value="group">Группа</option>
+              </select>
+              <input type="hidden" name="override_id[]" value="{{ override.id }}">
+            </td>
+            <td data-label="Название"><input class="form-control" name="override_name[]" value="{{ override.name }}"></td>
+            <td data-label="Флаги"><input class="form-control" name="override_flags[]" value="{{ override.flags }}"></td>
+          </tr>
+          {% endfor %}
+          <tr>
+            <td data-label="Тип">
+              <select class="form-select" name="new_override_type">
+                <option value="command">Команда</option>
+                <option value="group">Группа</option>
+              </select>
+            </td>
+            <td data-label="Название"><input class="form-control" name="new_override_name" placeholder="Новое…"></td>
+            <td data-label="Флаги"><input class="form-control" name="new_override_flags" placeholder="Флаги"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-accent" id="oversave">Сохранить</button>
+      <button type="button" class="btn btn-outline-secondary" id="oback" onclick="sbAdminBack(0, 'index.php?p=admin&amp;c=admins')">Назад</button>
+    </div>
+  </div>
+</form>
+{% endif %}

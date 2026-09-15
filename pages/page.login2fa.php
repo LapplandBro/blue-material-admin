@@ -6,11 +6,32 @@ if (!defined("IN_SB")) {
 
 global $userbank, $theme;
 
+function sb_login2fa_v2_render($vars)
+{
+	if (!function_exists('sb_ui_v2_enabled') || !sb_ui_v2_enabled() || !function_exists('sb_ui_v2_render'))
+		return false;
+	$base = array(
+		'title' => 'Blue Admin 2FA',
+		'login2fa_mode' => 'challenge',
+		'error' => '',
+		'sb_csrf' => '',
+		'totp_user' => '',
+		'totp_secret' => '',
+		'totp_otpauth' => '',
+		'recovery_codes' => array(),
+		'account_url' => 'index.php?p=account',
+		'login_url' => 'index.php?p=login',
+		'form_action' => 'index.php?p=login2fa',
+	);
+	sb_ui_v2_render('login2fa.twig', array_merge($base, $vars));
+	return true;
+}
+
 $pending = function_exists('sb_mfa_pending') ? sb_mfa_pending() : null;
 if (!$pending) {
 	if (function_exists('sb_redirect'))
 		sb_redirect(sb_url('login'));
-	header('Location: login');
+	header('Location: index.php?p=login');
 	exit;
 }
 
@@ -21,7 +42,7 @@ if (!$row) {
 	sb_mfa_clear();
 	if (function_exists('sb_redirect'))
 		sb_redirect(sb_url('login'));
-	header('Location: login');
+	header('Location: index.php?p=login');
 	exit;
 }
 
@@ -58,8 +79,13 @@ if ($mode === 'enroll') {
 			$theme->assign('login2fa_mode', 'recovery');
 			$theme->assign('recovery_codes', $recovery_show);
 			$theme->assign('sb_csrf', function_exists('sb_csrf_token') ? sb_csrf_token() : '');
-			$theme->display('page_login2fa.tpl');
-			return;
+			if (sb_login2fa_v2_render(array(
+				'login2fa_mode' => 'recovery',
+				'recovery_codes' => $recovery_show,
+				'sb_csrf' => function_exists('sb_csrf_token') ? sb_csrf_token() : '',
+			)))
+				return;
+			PageDie('Не удалось отобразить страницу 2FA (Twig).');
 		}
 	}
 
@@ -69,8 +95,16 @@ if ($mode === 'enroll') {
 	$theme->assign('totp_user', $row['user']);
 	$theme->assign('error', $error);
 	$theme->assign('sb_csrf', function_exists('sb_csrf_token') ? sb_csrf_token() : '');
-	$theme->display('page_login2fa.tpl');
-	return;
+	if (sb_login2fa_v2_render(array(
+		'login2fa_mode' => 'enroll',
+		'totp_secret' => $secret,
+		'totp_otpauth' => sb_totp_otpauth_uri($secret, $row['user'], $issuer),
+		'totp_user' => $row['user'],
+		'error' => $error,
+		'sb_csrf' => function_exists('sb_csrf_token') ? sb_csrf_token() : '',
+	)))
+		return;
+	PageDie('Не удалось отобразить страницу 2FA (Twig).');
 }
 
 // Challenge mode.
@@ -99,7 +133,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && strtoupper($_SERVER['REQUEST_METHOD']) 
 			sb_mfa_clear();
 			if (function_exists('sb_redirect'))
 				sb_redirect(sb_url('account'));
-			header('Location: account');
+			header('Location: index.php?p=account');
 			exit;
 		}
 		$error = 'Неверный код или recovery-код.';
@@ -110,4 +144,11 @@ $theme->assign('login2fa_mode', 'challenge');
 $theme->assign('totp_user', $row['user']);
 $theme->assign('error', $error);
 $theme->assign('sb_csrf', function_exists('sb_csrf_token') ? sb_csrf_token() : '');
-$theme->display('page_login2fa.tpl');
+if (sb_login2fa_v2_render(array(
+	'login2fa_mode' => 'challenge',
+	'totp_user' => $row['user'],
+	'error' => $error,
+	'sb_csrf' => function_exists('sb_csrf_token') ? sb_csrf_token() : '',
+)))
+	return;
+PageDie('Не удалось отобразить страницу 2FA (Twig).');

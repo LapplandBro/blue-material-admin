@@ -25,19 +25,23 @@
 //
 // *************************************************************************
 
-global $theme;
+global $userbank;
 if(!defined("IN_SB")){echo "Ошибка доступа!";die();}
 $BansPerPage = SB_BANS_PER_PAGE;
 $servers = array();
-global $userbank;
+$dateformat = !empty($GLOBALS['config']['config.dateformat']) ? $GLOBALS['config']['config.dateformat'] : 'm-d-y H:i';
 function setPostKey()
 {
-	if(isset($_SERVER['REMOTE_IP']))
-		$_SESSION['banlist_postkey'] = md5($_SERVER['REMOTE_IP'].time().rand(0,100000));
-	else
-		$_SESSION['banlist_postkey'] = md5(time().rand(0,100000));
+	if (function_exists('sb_ensure_list_postkey')) {
+		unset($_SESSION['banlist_postkey']);
+		sb_ensure_list_postkey();
+		return;
+	}
+	$_SESSION['banlist_postkey'] = md5(uniqid((string)mt_rand(), true));
 }
-if (!isset($_SESSION['banlist_postkey']) || strlen($_SESSION['banlist_postkey']) < 4)
+if (function_exists('sb_ensure_list_postkey'))
+	sb_ensure_list_postkey();
+elseif (!isset($_SESSION['banlist_postkey']) || strlen($_SESSION['banlist_postkey']) < 4)
 	setPostKey();
 
 $page = 1;
@@ -121,12 +125,12 @@ if (isset($_GET['a']) && $_GET['a'] == "unban" && isset($_GET['id']))
 
 		if($res){
 			if(!isset($_GET['bulk']))
-				echo "<script>setTimeout('ShowBox(\"Игрок разбанен\", \"<b>".StripQuotes($row['name'])."</b> (<b>" . ($row['type']==0?$row['authid']:$row['ip']) . "</b>) был разбанен.<br><br><font color=\'green\' class=\'f-15\'><b>Переадресация...</b></font>\", \"green\", \"$banlist_redir\", false);', 1350);</script>";
+				echo "<script>setTimeout('ShowBox(\"Игрок разбанен\", \"<b>".htmlspecialchars(StripQuotes($row['name']), ENT_QUOTES, 'UTF-8')."</b> (<b>" . htmlspecialchars((string)($row['type']==0?$row['authid']:$row['ip']), ENT_QUOTES, 'UTF-8') . "</b>) был разбанен.<br><br><font color=\'green\' class=\'f-15\'><b>Переадресация...</b></font>\", \"green\", \"$banlist_redir\", false);', 1350);</script>";
 			$log = new CSystemLog("m", "Игрок разбанен", "'".StripQuotes($row['name'])."' (" . ($row['type']==0?$row['authid']:$row['ip']) . ") был разбанен");
 			$ucount++;
 		}else{
 			if(!isset($_GET['bulk']))
-				echo "<script>setTimeout('ShowBox(\"Игрок не разбанен\", \"Произошла ошибка <b>".StripQuotes($row['name'])."</b><br><br><font color=\'green\' class=\'f-15\'><b>Переадресация...</b></font>\", \"red\", \"$banlist_redir\", false);', 1350);</script>";
+				echo "<script>setTimeout('ShowBox(\"Игрок не разбанен\", \"Произошла ошибка <b>".htmlspecialchars(StripQuotes($row['name']), ENT_QUOTES, 'UTF-8')."</b><br><br><font color=\'green\' class=\'f-15\'><b>Переадресация...</b></font>\", \"red\", \"$banlist_redir\", false);', 1350);</script>";
 			$fail++;
 		}
 	}
@@ -155,7 +159,8 @@ else if(isset($_GET['a']) && $_GET['a'] == "delete")
 		$bid = intval($bid);
 		$demres = $GLOBALS['db']->Execute("SELECT filename FROM `".DB_PREFIX."_demos` WHERE `demid` = ?",
 									array( $bid ));
-		@unlink(SB_DEMOS."/".$demres->fields["filename"]);
+		if (!empty($demres->fields["filename"]))
+			sb_unlink_demo($demres->fields["filename"]);
 		$blocked = $GLOBALS['db']->GetAll("SELECT s.sid, m.steam_universe FROM `".DB_PREFIX."_banlog` bl INNER JOIN ".DB_PREFIX."_servers s ON s.sid = bl.sid INNER JOIN ".DB_PREFIX."_mods m ON m.mid = s.modid WHERE bl.bid=? AND (UNIX_TIMESTAMP() - bl.time <= 300)",array($bid));
 		$steam = $GLOBALS['db']->GetRow("SELECT b.name, b.authid, b.created, b.sid, b.RemoveType, b.ip, b.type, m.steam_universe, UNIX_TIMESTAMP() AS now
 										FROM ".DB_PREFIX."_bans b 
@@ -165,6 +170,8 @@ else if(isset($_GET['a']) && $_GET['a'] == "delete")
 		$block = $GLOBALS['db']->Execute("DELETE FROM `".DB_PREFIX."_banlog` WHERE bid = ?",array($bid));
 		$res = $GLOBALS['db']->Execute("DELETE FROM `".DB_PREFIX."_bans` WHERE `bid` = ?",
 									array( $bid ));
+		if ($res && !empty($steam['authid']))
+			RecidivismRevokeOnUnpunish($steam['authid'], 'ban', 'bans', $bid, 'web_delete');
 		if(empty($steam['RemoveType']))
 		{
 			foreach($blocked as $tempban)
@@ -177,12 +184,12 @@ else if(isset($_GET['a']) && $_GET['a'] == "delete")
 
 		if($res){
 			if(!isset($_GET['bulk']))
-				echo "<script>setTimeout('ShowBox(\"Бан удален\", \"Бан игрока <b>".StripQuotes($steam['name'])."</b> (<b>".($steam['type']==0?$steam['authid']:$steam['ip'])."</b>) был удален из SourceBans<br><br><font color=\'green\' class=\'f-15\'><b>Переадресация...</b></font>\", \"green\", \"$banlist_redir\", false);', 1350);</script>";
+				echo "<script>setTimeout('ShowBox(\"Бан удален\", \"Бан игрока <b>".htmlspecialchars(StripQuotes($steam['name']), ENT_QUOTES, 'UTF-8')."</b> (<b>".htmlspecialchars((string)($steam['type']==0?$steam['authid']:$steam['ip']), ENT_QUOTES, 'UTF-8')."</b>) был удален из SourceBans<br><br><font color=\'green\' class=\'f-15\'><b>Переадресация...</b></font>\", \"green\", \"$banlist_redir\", false);', 1350);</script>";
 			$log = new CSystemLog("m", "Бан удален", "Бан ".StripQuotes($steam['name'])."' (" . ($steam['type']==0?$steam['authid']:$steam['ip']) . ") был удален.");
 			$dcount++;
 		}else{
 			if(!isset($_GET['bulk']))
-				echo "<script>setTimeout('ShowBox(\"Бан не удален\", \"При удалении бана игрока <b>".StripQuotes($steam['name'])."</b> произошла ошибка.<br><br><font color=\'green\' class=\'f-15\'><b>Переадресация...</b></font>\", \"red\", \"$banlist_redir\", false);', 1350);</script>";
+				echo "<script>setTimeout('ShowBox(\"Бан не удален\", \"При удалении бана игрока <b>".htmlspecialchars(StripQuotes($steam['name']), ENT_QUOTES, 'UTF-8')."</b> произошла ошибка.<br><br><font color=\'green\' class=\'f-15\'><b>Переадресация...</b></font>\", \"red\", \"$banlist_redir\", false);', 1350);</script>";
 			$fail++;
 		}
 	}
@@ -242,7 +249,7 @@ if (isset($_GET['searchText']))
 	   FROM ".DB_PREFIX."_bans AS BA
   LEFT JOIN ".DB_PREFIX."_servers AS SE ON SE.sid = BA.sid
   LEFT JOIN ".DB_PREFIX."_mods AS MO on SE.modid = MO.mid
-  LEFT JOIN ".DB_PREFIX."_admins AS AD ON BA.aid = AD.aid
+  LEFT JOIN ".DB_PREFIX."_admins AS AD ON ".(function_exists('sb_admin_join_on_punish') ? sb_admin_join_on_punish('BA', 'AD') : 'BA.aid = AD.aid')."
       WHERE ".$search_ips."BA.authid LIKE ? or BA.name LIKE ? or BA.reason LIKE ?" . $hideinactive."
    ORDER BY BA.created DESC
    LIMIT ?,?",array_merge($search_array, array($search,$search,$search,intval($BansStart),intval($BansPerPage))));
@@ -263,7 +270,7 @@ elseif(!isset($_GET['advSearch']))
 	   FROM ".DB_PREFIX."_bans AS BA
   LEFT JOIN ".DB_PREFIX."_servers AS SE ON SE.sid = BA.sid
   LEFT JOIN ".DB_PREFIX."_mods AS MO on SE.modid = MO.mid
-  LEFT JOIN ".DB_PREFIX."_admins AS AD ON BA.aid = AD.aid
+  LEFT JOIN ".DB_PREFIX."_admins AS AD ON ".(function_exists('sb_admin_join_on_punish') ? sb_admin_join_on_punish('BA', 'AD') : 'BA.aid = AD.aid')."
   ".$hideinactiven."
    ORDER BY created DESC
    LIMIT ?,?",
@@ -356,8 +363,14 @@ if(isset($_GET['advSearch']))
 				$advcrit = array();
 			}
             else {
-                $where = "WHERE BA.aid=?";
-                $advcrit = array($value);
+				if (function_exists('sb_admin_issued_where')) {
+					list($issuedSql, $issuedParams) = sb_admin_issued_where((int)$value, null, 'BA');
+					$where = "WHERE ".$issuedSql;
+					$advcrit = $issuedParams;
+				} else {
+					$where = "WHERE BA.aid=?";
+					$advcrit = array($value);
+				}
             }
 		break;
 		case "where_banned":
@@ -365,8 +378,14 @@ if(isset($_GET['advSearch']))
 			$advcrit = array($value);
 		break;
 		case "nodemo":
-			$where = "WHERE BA.aid = ? AND NOT EXISTS (SELECT DM.demid FROM ".DB_PREFIX."_demos AS DM WHERE DM.demid = BA.bid)";
-			$advcrit = array($value);
+			if (function_exists('sb_admin_issued_where')) {
+				list($issuedSql, $issuedParams) = sb_admin_issued_where((int)$value, null, 'BA');
+				$where = "WHERE ".$issuedSql." AND NOT EXISTS (SELECT DM.demid FROM ".DB_PREFIX."_demos AS DM WHERE DM.demid = BA.bid)";
+				$advcrit = $issuedParams;
+			} else {
+				$where = "WHERE BA.aid = ? AND NOT EXISTS (SELECT DM.demid FROM ".DB_PREFIX."_demos AS DM WHERE DM.demid = BA.bid)";
+				$advcrit = array($value);
+			}
 		break;
 		case "bid":
 			$where = "WHERE BA.bid = ?";
@@ -407,7 +426,7 @@ if(isset($_GET['advSearch']))
 	   FROM ".DB_PREFIX."_bans AS BA
   LEFT JOIN ".DB_PREFIX."_servers AS SE ON SE.sid = BA.sid
   LEFT JOIN ".DB_PREFIX."_mods AS MO on SE.modid = MO.mid
-  LEFT JOIN ".DB_PREFIX."_admins AS AD ON BA.aid = AD.aid
+  LEFT JOIN ".DB_PREFIX."_admins AS AD ON ".(function_exists('sb_admin_join_on_punish') ? sb_admin_join_on_punish('BA', 'AD') : 'BA.aid = AD.aid')."
   ".($type=="comment"&&$userbank->is_admin()?"LEFT JOIN ".DB_PREFIX."_comments AS CO ON BA.bid = CO.bid":"")."
       ".$where.$hideinactive."
    ORDER BY BA.created DESC
@@ -429,8 +448,12 @@ if (!$res)
 $view_comments = false;
 $bans = array();
 function CommunityID($steamid_id){
-	$parts = explode(':', str_replace('STEAM_', '' ,$steamid_id)); 
-	return bcadd(bcadd('76561197960265728', $parts['1']), bcmul($parts['2'], '2')); 
+	if (function_exists('GetCommunityIDFromSteamID2'))
+		return GetCommunityIDFromSteamID2($steamid_id);
+	$parts = explode(':', str_replace('STEAM_', '' , (string)$steamid_id));
+	if (!isset($parts[1], $parts[2]) || !function_exists('bcadd'))
+		return '';
+	return bcadd(bcadd('76561197960265728', (string)$parts[1]), bcmul((string)$parts[2], '2'));
 }
 while (!$res->EOF)
 {
@@ -442,7 +465,9 @@ while (!$res->EOF)
 	{
 		if(!empty($res->fields['ban_country']) && $res->fields['ban_country'] != ' ')
 		{
-			$data['country'] = '<img src="images/country/' .strtolower($res->fields['ban_country']) . '.gif" alt="' . $res->fields['ban_country'] . '" border="0" align="absmiddle" />';
+			$cc = htmlspecialchars(strtolower((string)$res->fields['ban_country']), ENT_QUOTES, 'UTF-8');
+			$ccLabel = htmlspecialchars((string)$res->fields['ban_country'], ENT_QUOTES, 'UTF-8');
+			$data['country'] = '<img src="images/country/' . $cc . '.gif" alt="' . $ccLabel . '" title="' . $ccLabel . '" width="16" height="11" loading="lazy">';
 	    }
 	    elseif(isset($GLOBALS['config']['banlist.nocountryfetch']) && $GLOBALS['config']['banlist.nocountryfetch'] == "0")
 		{
@@ -450,28 +475,30 @@ while (!$res->EOF)
 			$edit = $GLOBALS['db']->Execute("UPDATE ".DB_PREFIX."_bans SET country = ?
 				                            WHERE bid = ?",array($country,$res->fields['ban_id']));
 
-			$data['country'] = '<img src="images/country/' . strtolower($country) . '.gif" alt="' . $country . '" border="0" align="absmiddle" />';
+			$cc = htmlspecialchars(strtolower((string)$country), ENT_QUOTES, 'UTF-8');
+			$ccLabel = htmlspecialchars((string)$country, ENT_QUOTES, 'UTF-8');
+			$data['country'] = '<img src="images/country/' . $cc . '.gif" alt="' . $ccLabel . '" title="' . $ccLabel . '" width="16" height="11" loading="lazy">';
 		}
 		else
 		{
-			$data['country'] = '<img src="images/country/zz.gif" alt="Страна неизвестна" border="0" align="absmiddle" />';
+			$data['country'] = '<img src="images/country/zz.gif" alt="Страна неизвестна" title="Страна неизвестна" width="16" height="11" loading="lazy">';
 		}
 	}
 	else
 	{
-		$data['country'] = '<img src="images/country/zz.gif" alt="Страна неизвестна" border="0" align="absmiddle" />';
+		$data['country'] = '<img src="images/country/zz.gif" alt="Страна неизвестна" title="Страна неизвестна" width="16" height="11" loading="lazy">';
 	}
 
-	//$data['ban_date'] = SBDate($dateformat,$res->fields['ban_created']);
-	$data['ban_date'] = SBDate($GLOBALS['config']['config.dateformat'],$res->fields['ban_created']);
+	$data['ban_date'] = SBDate($dateformat,$res->fields['ban_created']);
 	$data['ban_date_info'] = SBDate($GLOBALS['config']['config.dateformat_ver2'],$res->fields['ban_created']);
 	$data['player'] = addslashes($res->fields['player_name']);
 	$data['type'] = $res->fields['type'];
 	$data['steamid'] = $res->fields['authid'];
 	$data['communityid'] = $res->fields['community_id'];
 	$steam2id = $data['steamid'];
-	$steam3parts = explode(':', $steam2id);
-	$data['steamid3'] = '[U:1:' . ($steam3parts[2] * 2 + $steam3parts[1]) . ']';
+	$data['steamid3'] = function_exists('sb_steamid2_to_steamid3')
+		? sb_steamid2_to_steamid3($steam2id)
+		: '';
 	// Ссылка на профиль Steam (STEAM_ / Steam3 / Community — один URL на communityid)
 	$data['steam_profile'] = '';
 	if ((int)$data['type'] === 0 && !empty($data['communityid']) && preg_match('/^7656\d{13}$/', (string)$data['communityid']))
@@ -480,13 +507,26 @@ while (!$res->EOF)
 	if(isset($GLOBALS['config']['banlist.hideadminname']) && $GLOBALS['config']['banlist.hideadminname'] == "1" && !$userbank->is_admin())
 		$data['admin'] = false;
 	else{
-		$data['admin'] = stripslashes($res->fields['admin_name']);
-		$data['admin_comm'] = stripslashes($res->fields['admin_comm']);
-		$data['admin_gid'] = stripslashes($res->fields['gid']);
-		$data['admin_vk'] = stripslashes($res->fields['admin_vk']);
-		$data['admin_authid'] = stripslashes($res->fields['admin_authid']);
-		$data['admin_authid_link'] = CommunityID($data['admin_authid']);
-		$data['admin_discord'] = stripslashes($res->fields['admin_discord']);
+		$admDisp = function_exists('sb_punish_admin_display')
+			? sb_punish_admin_display($res->fields, false)
+			: array(
+				'name' => stripslashes((string)$res->fields['admin_name']),
+				'authid' => isset($res->fields['admin_authid']) ? stripslashes((string)$res->fields['admin_authid']) : '',
+				'vk' => isset($res->fields['admin_vk']) ? stripslashes((string)$res->fields['admin_vk']) : '',
+				'discord' => isset($res->fields['admin_discord']) ? stripslashes((string)$res->fields['admin_discord']) : '',
+				'comment' => isset($res->fields['admin_comm']) ? stripslashes((string)$res->fields['admin_comm']) : '',
+				'gid' => isset($res->fields['gid']) ? stripslashes((string)$res->fields['gid']) : '',
+				'authid_link' => '',
+			);
+		$data['admin'] = $admDisp['name'];
+		$data['admin_comm'] = $admDisp['comment'];
+		$data['admin_gid'] = $admDisp['gid'];
+		$data['admin_vk'] = $admDisp['vk'];
+		$data['admin_authid'] = $admDisp['authid'];
+		$data['admin_authid_link'] = $admDisp['authid_link'] !== ''
+			? $admDisp['authid_link']
+			: (function_exists('CommunityID') ? CommunityID($data['admin_authid']) : '');
+		$data['admin_discord'] = $admDisp['discord'];
 	}
 	$data['reason'] = stripslashes($res->fields['ban_reason']);
 	$data['ban_length'] = $res->fields['ban_length'] == 0 ? 'Навсегда' : SecondsToString(intval($res->fields['ban_length']));
@@ -525,20 +565,19 @@ while (!$res->EOF)
 
 		$data['ureason'] = stripslashes($res->fields['unban_reason']);
 
-		$removedby = $GLOBALS['db']->GetRow("SELECT user FROM `".DB_PREFIX."_admins` WHERE aid = '".$res->fields['RemovedBy']."'");
-        $data['removedby'] = "";
-        if(isset($removedby[0]))
-            $data['removedby'] = $removedby[0];
+		if (function_exists('sb_punish_removedby_display')) {
+			$data['removedby'] = sb_punish_removedby_display(
+				$res->fields['RemovedBy'],
+				isset($res->fields['row_type']) ? $res->fields['row_type'] : '',
+				isset($data['ub_reason']) ? $data['ub_reason'] : ''
+			);
+		} else {
+			$removedby = $GLOBALS['db']->GetRow("SELECT user FROM `".DB_PREFIX."_admins` WHERE aid = '".$res->fields['RemovedBy']."'");
+			$data['removedby'] = "";
+			if(isset($removedby[0]))
+				$data['removedby'] = $removedby[0];
+		}
 	}
-// Don't need this stuff.
-// Uncomment below if the modifications above cause issues
-//	else
-//	{
-//		$data['unbanned'] = false;
-//		$data['class'] = "listtable_1";
-//		$data['ub_reason'] = "";
-//	}
-
 	$data['layer_id'] = 'layer_'.$res->fields['ban_id'];
 	if($data['type'] == "0")
 		$alrdybnd = $GLOBALS['db']->Execute("SELECT count(bid) as count FROM `".DB_PREFIX."_bans` WHERE authid = '".$data['steamid']."' AND (length = 0 OR ends > UNIX_TIMESTAMP()) AND RemovedBy IS NULL AND type = '0';");
@@ -555,11 +594,17 @@ while (!$res->EOF)
 		$data['recidivism_link'] = false;
 	$data['details_link'] = CreateLinkR('Кликни','getdemo.php?type=B&id='.$res->fields['ban_id']);
 	$data['groups_link'] = CreateLinkR('Показать группы',"index.php?p=admin&c=bans&fid=".$data['communityid']."#^4");
-	$data['friend_ban_link'] = CreateLinkR('Забанить друзей', '#', '', '_self', false, "BanFriendsProcess('".$data['communityid']."','".StripQuotes($data['player'])."');return false;");
+	$jsPlayer = function_exists('sb_json_js') ? sb_json_js((string)$data['player']) : json_encode((string)$data['player'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+	$jsCid = function_exists('sb_json_js') ? sb_json_js((string)$data['communityid']) : json_encode((string)$data['communityid'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+	$jsKey = function_exists('sb_json_js') ? sb_json_js((string)$_SESSION['banlist_postkey']) : json_encode((string)$_SESSION['banlist_postkey'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+	$jsPage = function_exists('sb_json_js') ? sb_json_js((string)$pagelink) : json_encode((string)$pagelink, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+	$jsBid = (int)$res->fields['ban_id'];
+	$data['friend_ban_link'] = CreateLinkR('Забанить друзей', '#', '', '_self', false, "BanFriendsProcess(".$jsCid.",".$jsPlayer.");return false;");
 	$data['edit_link'] = CreateLinkR('Редактировать',"index.php?p=admin&c=bans&o=edit".$pagelink."&id=".$res->fields['ban_id']."&key=".$_SESSION['banlist_postkey']);
+	$data['edit_url'] = "index.php?p=admin&c=bans&o=edit".$pagelink."&id=".$res->fields['ban_id']."&key=".$_SESSION['banlist_postkey'];
 
-	$data['unban_link'] = CreateLinkR('Разбанить',"#","", "_self", false, "UnbanBan('".$res->fields['ban_id']."', '".$_SESSION['banlist_postkey']."', '".$pagelink."', '".StripQuotes($data['player'])."', 1, false);return false;");
-	$data['delete_link'] = CreateLinkR('Удалить',"#","", "_self", false, "RemoveBan('".$res->fields['ban_id']."', '".$_SESSION['banlist_postkey']."', '".$pagelink."', '".StripQuotes($data['player'])."', 0, false);return false;");
+	$data['unban_link'] = CreateLinkR('Разбанить',"#","", "_self", false, "UnbanBan(".$jsBid.", ".$jsKey.", ".$jsPage.", ".$jsPlayer.", 1, false);return false;");
+	$data['delete_link'] = CreateLinkR('Удалить',"#","", "_self", false, "RemoveBan(".$jsBid.", ".$jsKey.", ".$jsPage.", ".$jsPlayer.", 0, false);return false;");
 
 	
 	$data['server_id'] = $res->fields['ban_server'];
@@ -576,10 +621,11 @@ while (!$res->EOF)
 	$data['mod_icon'] = sb_game_icon_html($modicon, 'Игра', 22);
 	$data['country_icon'] = $data['country'] . ' &nbsp;';
 
-    if($res->fields['history_count'] > 1)
-        $data['prevoff_link'] = $res->fields['history_count'] . " " . CreateLinkR("(search)","index.php?p=banlist&searchText=" . ($data['type']==0?$data['steamid']:$res->fields['ban_ip']) . "&Submit");
-    else
-        $data['prevoff_link'] = "Не найдено";
+    if($res->fields['history_count'] > 1) {
+        $prevq = ($data['type']==0 ? $data['steamid'] : $res->fields['ban_ip']);
+        $data['prevoff_link'] = $res->fields['history_count'] . " " . CreateLinkR("найти все","index.php?p=banlist&searchText=" . rawurlencode((string)$prevq) . "&Submit");
+    } else
+        $data['prevoff_link'] = "Первый бан";
 
 
 
@@ -594,7 +640,10 @@ while (!$res->EOF)
 		$data['expires'] = SBDate($dateformat,$res->fields['ban_ends']);
 
 
-	if ($res->fields['demo_count'] == 0)
+	$canDemo = $userbank->is_logged_in() && $userbank->HasAccess(
+		ADMIN_OWNER|ADMIN_ADD_BAN|ADMIN_EDIT_OWN_BANS|ADMIN_EDIT_GROUP_BANS|ADMIN_EDIT_ALL_BANS
+	);
+	if ($res->fields['demo_count'] == 0 || !$canDemo)
 	{
 		$data['demo_available'] = false;
 		$data['demo_quick'] = 'Н/Д';
@@ -602,10 +651,16 @@ while (!$res->EOF)
 	}
 	else
 	{
-		$demtype = $GLOBALS['db']->GetRow("SELECT demtype FROM `".DB_PREFIX."_demos` WHERE demid = '".$data['ban_id']."'");
-		$data['demo_available'] = true;
-		$data['demo_quick'] = CreateLinkR('Демо',"getdemo.php?type=".$demtype['demtype']."&id=".$data['ban_id']);
-		$data['demo_link'] = CreateLinkR('Демка',"getdemo.php?type=".$demtype['demtype']."&id=".$data['ban_id']);
+		$demtype = $GLOBALS['db']->GetRow("SELECT demtype FROM `".DB_PREFIX."_demos` WHERE demid = ?", array($data['ban_id']));
+		if (!is_array($demtype) || empty($demtype['demtype'])) {
+			$data['demo_available'] = false;
+			$data['demo_quick'] = 'Н/Д';
+			$data['demo_link'] = CreateLinkR('Нет Демо',"#");
+		} else {
+			$data['demo_available'] = true;
+			$data['demo_quick'] = CreateLinkR('Демо',"getdemo.php?type=".$demtype['demtype']."&id=".$data['ban_id']);
+			$data['demo_link'] = CreateLinkR('Демка',"getdemo.php?type=".$demtype['demtype']."&id=".$data['ban_id']);
+		}
 	}
 
 	$data['server_id'] = $res->fields['ban_server'];
@@ -675,15 +730,13 @@ while (!$res->EOF)
 	}
 
 
-	//$data['addcomment'] = CreateLinkR('<img src="images/details.gif" border="0" alt="" style="vertical-align:middle" /> Add Comment','index.php?p=banlist&comment='.$data['ban_id'].'&ctype=B'.$pagelink);
 	$data['addcomment_link'] = sb_url_query('banlist', 'comment='.$data['ban_id'].'&ctype=B'.$pagelink);
 	//-----------------------------------
 
 	$data['ub_reason'] = (isset($data['ub_reason'])?$data['ub_reason']:"");
  	$data['banlength'] = $data['ban_length'];
- 	//$data['banlength'] = $data['ban_length'] . " " .  $data['ub_reason'];
 
-	// UI status for banlist badges (avoid string-compare quirks in Smarty)
+	// UI status for banlist badges (avoid string-compare quirks in legacy templates).
 	if (!empty($data['unbanned'])) {
 		$ubr = (string)$data['ub_reason'];
 		if ($ubr === 'Истек' || stripos($ubr, 'истек') !== false)
@@ -712,68 +765,19 @@ if(isset($_GET['advSearch']))
 else
 	$advSearchString = '';
 
-if ($page > 1)
-{
-	if(isset($_GET['c']) && $_GET['c'] == "bans")
-		$prev = CreateLinkR('<i class="zmdi zmdi-chevron-right"></i>',"javascript:void(0);", "", "_self", false, $prev);
-	else
-		$prev = CreateLinkR('<i class="zmdi zmdi-chevron-left"></i>',"index.php?p=banlist&page=".($page-1).(isset($_GET['searchText']) > 0?"&searchText=".rawurlencode((string)$_GET['searchText']):'' . $advSearchString));
-}
-else
-{
-	$prev = "";
-}
-if ($BansEnd < $BanCount)
-{
-	if(isset($_GET['c']) && $_GET['c'] == "bans")
-	{
-		if(!isset($nxt))
-			$nxt = "";
-			$next = CreateLinkR('<i class="zmdi zmdi-chevron-left"></i>',"javascript:void(0);", "", "_self", false, $nxt);
-	}
-	else
-		$next = CreateLinkR('<i class="zmdi zmdi-chevron-right"></i>',"index.php?p=banlist&page=".($page+1).(isset($_GET['searchText']) ?"&searchText=".rawurlencode((string)$_GET['searchText']):'' . $advSearchString));
-}
-else
-	$next = "";
-
-//=================[ Start Layout ]==================================
-$ban_nav = '<ul class="pagination">';
-
-if (strlen($prev) > 0)
-{
-	$ban_nav .= '<li>'.$prev.'</li>';
-}
-if (strlen($next) > 0)
-{
-	$ban_nav .= '<li>'.$next.'</li>';
-}
-
-$ban_nav .= '</ul>&nbsp;'; 
-
 $pages = ceil($BanCount/$BansPerPage);
 $ban_nav_p = '';
-if($pages > 1) {
-	$advSearchJs = json_encode(isset($_GET['advSearch']) ? (string)$_GET['advSearch'] : '', JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
-	$advTypeJs = json_encode(isset($_GET['advType']) ? (string)$_GET['advType'] : '', JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
-	// Атрибут в одинарных кавычках: json_encode даёт "...", иначе onchange="…,"",""…" рвётся и страница не листается.
-	$ban_nav_p = ' / Страница: <span class="select" style="display: inline-block;"><select class="form-control" onchange=\'changePage(this,"B",' . $advSearchJs . ',' . $advTypeJs . ');\' style="display: inline-block;width: 50px;">';
-	for($i=1;$i<=$pages;$i++)
-	{
-		if(isset($_GET["page"]) && $i == $page) {
-			$ban_nav_p .= '<option value="' . $i . '" selected="selected">&nbsp;' . $i . '</option>';
-			continue;
-		}
-		$ban_nav_p .= '<option value="' . $i . '">&nbsp;' . $i . '</option>';
-	}
-	$ban_nav_p .= '</select></span>&nbsp;';
+$ban_nav = '';
+if (function_exists('sb_ui_v2_page_select')) {
+	$ban_nav_p = sb_ui_v2_page_select($page, $pages, 'B');
+	if (function_exists('sb_ui_v2_page_arrows'))
+		$ban_nav = sb_ui_v2_page_arrows('banlist', $page, $BansEnd, $BanCount, $advSearchString);
 }
 
 //COMMENT STUFF
 //----------------------------------------
 if(isset($_GET["comment"])) {
 	$_GET["comment"] = (int)$_GET["comment"];
-	$theme->assign('commenttype', (isset($_GET["cid"])?"Редактировать":"Добавить"));
 	if(isset($_GET["cid"])) {
 		$_GET["cid"] = (int)$_GET["cid"];
 		$ceditdata = $GLOBALS['db']->GetRow("SELECT * FROM ".DB_PREFIX."_comments WHERE cid = '".$_GET["cid"]."'");
@@ -815,48 +819,57 @@ if(isset($_GET["comment"])) {
 		array_push($ocomments,$coment);
 		$cotherdata->MoveNext();
 	}
-
-	$theme->assign('page', (isset($_GET["page"])?$page:-1));
-	$theme->assign('othercomments', $ocomments);
-	$theme->assign('commenttext', (isset($ctext)?$ctext:""));
-	$theme->assign('ctype', $_GET["ctype"]);
-	$theme->assign('cid', (isset($_GET["cid"])?$_GET["cid"]:""));
 }
-$theme->assign('view_comments',$view_comments);
-$theme->assign('comment', (isset($_GET["comment"])&&$view_comments?$_GET["comment"]:false));
-//----------------------------------------
 
-unset($_SESSION['CountryFetchHndl']);
-
-$theme->assign('searchlink', $searchlink);
-$theme->assign('hidetext', $hidetext);
-$theme->assign('hidetext_darf', $hidetext_darf);
-$theme->assign('total_bans', $BanCount);
-$theme->assign('active_bans', $BanCount);
-
-$theme->assign('ban_nav', $ban_nav);
-$theme->assign('ban_nav_p', $ban_nav_p);
 if (function_exists('sb_steam_enrich_list_profiles') && is_array($bans) && count($bans) > 0)
 	$bans = sb_steam_enrich_list_profiles($bans);
-$theme->assign('ban_list', $bans);
-$theme->assign('admin_nick', $userbank->GetProperty("user"));
-$theme->assign('nocountryshow', ($GLOBALS['config']['banlist.nocountryfetch'] == "1" && !$userbank->is_logged_in()));
-
-$theme->assign('admin_postkey', $_SESSION['banlist_postkey']);
-$theme->assign('admininfos', $GLOBALS['config']['config.enableadmininfos']);
-$theme->assign('hideplayerips', (isset($GLOBALS['config']['banlist.hideplayerips']) && $GLOBALS['config']['banlist.hideplayerips'] == "1" && !$userbank->is_admin()));
 $hideadminname = (isset($GLOBALS['config']['banlist.hideadminname']) && $GLOBALS['config']['banlist.hideadminname'] == "1" && !$userbank->is_admin());
 $view_bans = ($userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_ALL_BANS|ADMIN_EDIT_OWN_BANS|ADMIN_EDIT_GROUP_BANS|ADMIN_UNBAN|ADMIN_UNBAN_OWN_BANS|ADMIN_UNBAN_GROUP_BANS|ADMIN_DELETE_BAN));
 $view_recidivism = function_exists('RecidivismCanView') && RecidivismCanView();
-$theme->assign('hideadminname', $hideadminname);
-$theme->assign('groupban', ($GLOBALS['config']['config.enablegroupbanning']==1 && $userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_BAN)));
-$theme->assign('friendsban', ($GLOBALS['config']['config.enablefriendsbanning']==1 && $userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_BAN)));
-$theme->assign('general_unban', $userbank->HasAccess(ADMIN_OWNER|ADMIN_UNBAN|ADMIN_UNBAN_OWN_BANS|ADMIN_UNBAN_GROUP_BANS));
-$theme->assign('can_delete', $userbank->HasAccess(ADMIN_DELETE_BAN));
-$theme->assign('view_bans', $view_bans);
-$theme->assign('view_recidivism', $view_recidivism);
-// Игра + дата + игрок + срок (+ чекбокс / рецидив / админ)
 $ban_colspan = 4 + ($view_bans ? 1 : 0) + ($view_recidivism ? 1 : 0) + (!$hideadminname ? 1 : 0);
-$theme->assign('ban_colspan', $ban_colspan);
-$theme->assign('can_export',($userbank->HasAccess(ADMIN_OWNER) || (isset($GLOBALS['config']['config.exportpublic']) && $GLOBALS['config']['config.exportpublic'] == "1")));
-$theme->display('page_bans.tpl');
+
+if (function_exists('sb_ui_v2_enabled') && sb_ui_v2_enabled()) {
+	if (is_array($bans)) {
+		foreach ($bans as $bi => $brow) {
+			if (isset($brow['player']))
+				$bans[$bi]['player'] = stripslashes($brow['player']);
+		}
+	}
+	sb_ui_v2_render('banlist.twig', array(
+		'title' => 'Список банов',
+		'search_text' => isset($_GET['searchText']) ? (string)$_GET['searchText'] : '',
+		'commenttype' => isset($_GET['cid']) ? 'Редактировать' : 'Добавить',
+		'page' => isset($_GET['page']) ? $page : -1,
+		'othercomments' => isset($ocomments) ? $ocomments : array(),
+		'commenttext' => isset($ctext) ? $ctext : '',
+		'ctype' => isset($_GET['ctype']) ? $_GET['ctype'] : '',
+		'cid' => isset($_GET['cid']) ? $_GET['cid'] : '',
+		'view_comments' => $view_comments,
+		'comment' => (isset($_GET['comment']) && $view_comments) ? $_GET['comment'] : false,
+		'searchlink' => $searchlink,
+		'hidetext' => $hidetext,
+		'hidetext_darf' => $hidetext_darf,
+		'total_bans' => $BanCount,
+		'ban_nav' => $ban_nav,
+		'ban_nav_p' => $ban_nav_p,
+		'ban_list' => $bans,
+		'admin_nick' => $userbank->GetProperty('user'),
+		'nocountryshow' => ($GLOBALS['config']['banlist.nocountryfetch'] == '1' && !$userbank->is_logged_in()),
+		'admin_postkey' => $_SESSION['banlist_postkey'],
+		'admininfos' => $GLOBALS['config']['config.enableadmininfos'],
+		'hideplayerips' => (isset($GLOBALS['config']['banlist.hideplayerips']) && $GLOBALS['config']['banlist.hideplayerips'] == '1' && !$userbank->is_admin()),
+		'hideadminname' => $hideadminname,
+		'groupban' => ($GLOBALS['config']['config.enablegroupbanning'] == 1 && $userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_BAN)),
+		'friendsban' => ($GLOBALS['config']['config.enablefriendsbanning'] == 1 && $userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_BAN)),
+		'general_unban' => $userbank->HasAccess(ADMIN_OWNER|ADMIN_UNBAN|ADMIN_UNBAN_OWN_BANS|ADMIN_UNBAN_GROUP_BANS),
+		'can_delete' => $userbank->HasAccess(ADMIN_DELETE_BAN),
+		'view_bans' => $view_bans,
+		'view_recidivism' => $view_recidivism,
+		'ban_colspan' => $ban_colspan,
+		'can_export' => ($userbank->HasAccess(ADMIN_OWNER) || (isset($GLOBALS['config']['config.exportpublic']) && $GLOBALS['config']['config.exportpublic'] == '1')),
+		'can_add_ban' => $userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_BAN),
+		'add_ban_url' => 'index.php?p=admin&c=bans',
+		'hideinactive_url' => 'index.php?p=banlist&hideinactive=' . (isset($_SESSION['hideinactive']) ? 'false' : 'true') . $searchlink,
+	));
+	return;
+}
