@@ -1,0 +1,130 @@
+<div id="0" class="admin-pane is-on">
+  <div class="form-page admin-form admin-manage">
+    <header class="form-page-head">
+      <p class="form-page-kicker">Админка</p>
+      <h2 class="form-page-title">Меню</h2>
+      <p class="form-page-lead">Включённые пункты появляются в боковой панели — те же разделы, что и на публичке: Сайт, Инструменты, Сообщество, Админка.</p>
+    </header>
+    <div class="table-responsive table-cards-wrap">
+      <table class="admin-manage-table admin-menu-table table-cards">
+        <thead>
+          <tr>
+            <th class="admin-menu-icon-col"></th>
+            <th>Пункт</th>
+            <th>Раздел</th>
+            <th>Статус</th>
+            <th class="text-end">Действия</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for menu in menu_list %}
+          <tr class="admin-manage-row{% if menu.enabled != '1' %} admin-row--off{% endif %}">
+            <td class="admin-menu-icon-cell" data-label="">
+              {% if menu.icon_bi == 'sb-bi-vk' %}
+              <i class="sb-bi-vk" aria-hidden="true" title="{{ menu.icon_class }}"></i>
+              {% else %}
+              <i class="bi {{ menu.icon_bi|default('bi-link-45deg') }}" aria-hidden="true" title="{{ menu.icon_class }}"></i>
+              {% endif %}
+            </td>
+            <td data-label="Пункт">
+              <span class="admin-menu-title">{{ menu.text_plain }}</span>
+              {% if menu.description %}
+              <p class="admin-menu-desc">{{ menu.description }}</p>
+              {% endif %}
+              <p class="admin-menu-url"><a href="{{ menu.url }}"{% if menu.newtab == '1' %} target="_blank" rel="noopener noreferrer"{% endif %}>{{ menu.url }}</a></p>
+            </td>
+            <td data-label="Раздел">{{ menu.group_label }}</td>
+            <td class="admin-menu-meta" data-label="Статус">
+              {% if menu.enabled == "1" %}
+              <span class="parsec-chip parsec-chip-fp">вкл</span>
+              {% else %}
+              <span class="parsec-chip parsec-chip-esc">выкл</span>
+              {% endif %}
+              <span class="parsec-muted">id {{ menu.id }} · приор. {{ menu.priority }}</span>
+            </td>
+            <td class="text-end" data-label="Действия">
+              <span class="admin-actions">
+                <a class="admin-action" href="index.php?p=admin&amp;c=menu&amp;o=edit&amp;id={{ menu.id }}">Изменить</a>
+                {% if menu.enabled != "1" %}
+                <a class="admin-action" href="index.php?p=admin&amp;c=menu&amp;o=on&amp;id={{ menu.id }}&amp;sb_csrf={{ sb_csrf }}">Вкл</a>
+                {% else %}
+                <a class="admin-action" href="index.php?p=admin&amp;c=menu&amp;o=off&amp;id={{ menu.id }}&amp;sb_csrf={{ sb_csrf }}">Выкл</a>
+                {% endif %}
+                {% if menu.system != "1" %}
+                <a class="admin-action admin-action--danger" href="index.php?p=admin&amp;c=menu&amp;o=del&amp;id={{ menu.id }}&amp;sb_csrf={{ sb_csrf }}" onclick="return confirm('Удалить пункт «{{ menu.text_plain|e('js') }}»?');">Удалить</a>
+                {% endif %}
+              </span>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="5" class="parsec-muted" data-label="">Пунктов меню пока нет.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div id="1" class="admin-pane">
+<form action="index.php?p=admin&amp;c=menu" method="post">
+  <div class="form-page admin-form">
+      <input type="hidden" name="sb_csrf" value="{{ sb_csrf }}">
+      <input type="hidden" name="Link" value="add">
+      <header class="form-page-head">
+        <p class="form-page-kicker">Админка</p>
+        <h2 class="form-page-title">Новая ссылка</h2>
+        <p class="form-page-lead">Заголовок, URL и приоритет. Иконку выбери кликом из списка ниже. «Авто» — подберётся сама по URL/названию.</p>
+      </header>
+      <div class="form-grid" id="group.details">
+        <div class="form-field form-field--full">
+          <label class="form-label">{% include 'partials/help_icon.twig' with { title: 'Иконка', message: 'Выберите иконку. «Авто» — иконка подставится сама.' } %} Иконка</label>
+          {{ menu_icon_picker|raw }}
+        </div>
+        <div class="form-field form-field--full">
+          <label class="form-label" for="menu_group">{% include 'partials/help_icon.twig' with { title: 'Раздел', message: 'В какой блок бокового меню попадет ссылка: Сайт, Инструменты, Сообщество, Админка.' } %} Раздел</label>
+          {{ menu_group_picker|raw }}
+        </div>
+        <div class="form-field form-field--full">
+          <label class="form-label" for="names_link">{% include 'partials/help_icon.twig' with { title: 'Заголовок', message: 'Введите заголовок названия ссылки. Грубо говоря «Имя» ссылки.' } %} Заголовок</label>
+          <input type="text" tabindex="1" class="form-control" id="names_link" name="names_link" placeholder="Введите данные">
+          <div id="names_link.msg" class="msg-err"></div>
+        </div>
+        <div class="form-field form-field--full">
+          <label class="form-label" for="des_link">{% include 'partials/help_icon.twig' with { title: 'Описание', message: 'Описание ссылки, которое появляется при наведении курсора.' } %} Описание</label>
+          <input type="text" tabindex="1" class="form-control" id="des_link" name="des_link" placeholder="Введите данные">
+          <div id="des_link.msg" class="msg-err"></div>
+        </div>
+        <div class="form-field form-field--full">
+          <label class="form-label" for="url_link">{% include 'partials/help_icon.twig' with { title: 'Линк', message: 'Адрес, на который перейдёт пользователь после нажатия на пункт меню.' } %} URL</label>
+          <input type="text" tabindex="1" class="form-control" id="url_link" name="url_link" placeholder="Введите данные">
+          <div id="url_link.msg" class="msg-err"></div>
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="priora_link">{% include 'partials/help_icon.twig' with { title: 'Приоритет', message: 'Позволяет вставить ссылку в определённое место меню.' } %} Приоритет</label>
+          <input type="text" tabindex="1" class="form-control" id="priora_link" name="priora_link" placeholder="Введите данные">
+          <div id="priora_link.msg" class="msg-err"></div>
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="on_link">{% include 'partials/help_icon.twig' with { title: 'Статус', message: 'Показывать пункт в боковом меню SourceBans.' } %} Статус</label>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="on_link" id="on_link" value="on">
+            <label class="form-check-label" for="on_link">Показывать в меню</label>
+          </div>
+        </div>
+        <div class="form-field form-field--full">
+          <label class="form-label" for="onNewTab">{% include 'partials/help_icon.twig' with { title: 'Открывать в новой вкладке', message: 'При щелчке пункт откроется в новой вкладке браузера.' } %} Новая вкладка</label>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="onNewTab" id="onNewTab" value="on">
+            <label class="form-check-label" for="onNewTab">Открывать в новой вкладке</label>
+          </div>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-accent">Добавить</button>
+        <button type="button" class="btn btn-outline-secondary" id="back" onclick="sbGo('index.php?p=admin&amp;c=menu')">Назад</button>
+      </div>
+  </div>
+</form>
+</div>

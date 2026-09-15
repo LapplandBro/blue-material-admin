@@ -25,15 +25,36 @@
 //
 // *************************************************************************
 
-global $userbank, $theme; if(!defined("IN_SB")){echo "Ошибка доступа!";die();}if(isset($GLOBALS['IN_ADMIN']))define('CUR_AID', $userbank->GetAid());
+global $userbank;
+if(!defined("IN_SB")){echo "Ошибка доступа!";die();}
+
+if (!isset($userbank) || !is_object($userbank)) {
+	echo '<div id="admin-page-content"><div id="0" class="admin-pane is-on"><div class="form-page"><p class="form-flash form-flash--err">Нет сессии администратора.</p></div></div></div>';
+	return;
+}
+if(isset($GLOBALS['IN_ADMIN']) && !defined('CUR_AID'))
+	define('CUR_AID', $userbank->GetAid());
+
+if (!isset($dateformat) || $dateformat === '')
+	$dateformat = !empty($GLOBALS['config']['config.dateformat']) ? $GLOBALS['config']['config.dateformat'] : 'm-d-y H:i';
 
 // SECURITY FIX: this action processed the uploaded ban list unconditionally - any admin who could
 // reach this section (e.g. one with only ADMIN_ADD_BAN, but without ADMIN_BAN_IMPORT) could import
 // bans. The "permission_import" flag further below is only used for hiding the UI, not enforced here.
 if(isset($_POST['action']) && $_POST['action'] == "importBans" && $userbank->HasAccess(ADMIN_OWNER|ADMIN_BAN_IMPORT))
 {
-	$bannedcfg = file($_FILES["importFile"]["tmp_name"]);
+	$csrf = isset($_POST['sb_csrf']) ? $_POST['sb_csrf'] : '';
+	if (!function_exists('sb_csrf_validate') || !sb_csrf_validate($csrf))
+		sb_csrf_fail_page(true);
+	$tmp = (isset($_FILES['importFile']) && isset($_FILES['importFile']['tmp_name']))
+		? (string)$_FILES['importFile']['tmp_name']
+		: '';
+	$bannedcfg = ($tmp !== '' && is_readable($tmp)) ? @file($tmp) : false;
+	if (!is_array($bannedcfg))
+		$bannedcfg = array();
 	$bancnt = 0;
+	$importAid = isset($_COOKIE['aid']) ? $_COOKIE['aid'] : 0;
+	$importIp = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '';
 
 	// SteamID's protected via config.php's SB_PROTECTED_STEAMIDS must never be bannable (see
 	// includes/group_ban_process.php for the reference implementation of this same protection).
@@ -42,45 +63,44 @@ if(isset($_POST['action']) && $_POST['action'] == "importBans" && $userbank->Has
 	foreach($bannedcfg AS $ban)
 	{
 		$line = explode(" ", trim($ban));
+		if (!isset($line[1], $line[2]) || $line[1] != "0")
+			continue;
 
-		if($line[1] == "0")
+		if(validate_ip($line[2])) // if its an banned_ip.cfg
 		{
-			if(validate_ip($line[2])) // if its an banned_ip.cfg
-			{
-				$check = $GLOBALS['db']->Execute("SELECT ip FROM `" . DB_PREFIX . "_bans` WHERE ip = ? AND RemoveType IS NULL", array($line[2]));
+			$check = $GLOBALS['db']->Execute("SELECT ip FROM `" . DB_PREFIX . "_bans` WHERE ip = ? AND RemoveType IS NULL", array($line[2]));
 
-				if($check->RecordCount() == 0)
-				{
-					$bancnt++;
-					$pre = $GLOBALS['db']->Prepare("INSERT INTO ".DB_PREFIX."_bans(created,authid,ip,name,ends,length,reason,aid,adminIp,type) VALUES
-										(UNIX_TIMESTAMP(),?,?,?,(UNIX_TIMESTAMP() + ?),?,?,?,?,?)");
-					$GLOBALS['db']->Execute($pre, array("", $line[2], "Импортированный бан", 0, 0, "Импорт из banned_ip.cfg", $_COOKIE['aid'], $_SERVER['REMOTE_ADDR'], 1));
-				}
-			} else { // if its an banned_user.cfg
-				if (!validate_steam($line[2])) {
-					if (($accountId = getAccountId($line[2])) !== -1) {
-						$steam = renderSteam2($accountId, 0);
-					} else {
-						continue;
-					}
+			if(is_object($check) && $check->RecordCount() == 0)
+			{
+				$bancnt++;
+				$pre = $GLOBALS['db']->Prepare("INSERT INTO ".DB_PREFIX."_bans(created,authid,ip,name,ends,length,reason,aid,adminIp,type) VALUES
+									(UNIX_TIMESTAMP(),?,?,?,(UNIX_TIMESTAMP() + ?),?,?,?,?,?)");
+				$GLOBALS['db']->Execute($pre, array("", $line[2], "Импортированный бан", 0, 0, "Импорт из banned_ip.cfg", $importAid, $importIp, 1));
+			}
+		} else { // if its an banned_user.cfg
+			if (!validate_steam($line[2])) {
+				if (($accountId = getAccountId($line[2])) !== -1) {
+					$steam = renderSteam2($accountId, 0);
 				} else {
-					$steam = $line[2];
-				}
-				if(in_array($steam, $protected_steamids))
-				{
 					continue;
 				}
-				$check = $GLOBALS['db']->Execute("SELECT authid FROM `" . DB_PREFIX . "_bans` WHERE authid = ? AND RemoveType IS NULL", array($steam));
-				if($check->RecordCount() == 0)
-				{
-					if(!isset($_POST['friendsname']) || $_POST['friendsname'] != "on" || ($pname = GetCommunityName($steam)) == "")
-						$pname = "Импортированный бан";
-					
-					$bancnt++;
-					$pre = $GLOBALS['db']->Prepare("INSERT INTO ".DB_PREFIX."_bans(created,authid,ip,name,ends,length,reason,aid,adminIp,type) VALUES
-										(UNIX_TIMESTAMP(),?,?,?,(UNIX_TIMESTAMP() + ?),?,?,?,?,?)");
-					$GLOBALS['db']->Execute($pre, array($steam, "", $pname, 0, 0, "Импорт из banned_user.cfg", $_COOKIE['aid'], $_SERVER['REMOTE_ADDR'], 0));
-				}
+			} else {
+				$steam = $line[2];
+			}
+			if(in_array($steam, $protected_steamids))
+			{
+				continue;
+			}
+			$check = $GLOBALS['db']->Execute("SELECT authid FROM `" . DB_PREFIX . "_bans` WHERE authid = ? AND RemoveType IS NULL", array($steam));
+			if(is_object($check) && $check->RecordCount() == 0)
+			{
+				if(!isset($_POST['friendsname']) || $_POST['friendsname'] != "on" || ($pname = GetCommunityName($steam)) == "")
+					$pname = "Импортированный бан";
+				
+				$bancnt++;
+				$pre = $GLOBALS['db']->Prepare("INSERT INTO ".DB_PREFIX."_bans(created,authid,ip,name,ends,length,reason,aid,adminIp,type) VALUES
+									(UNIX_TIMESTAMP(),?,?,?,(UNIX_TIMESTAMP() + ?),?,?,?,?,?)");
+				$GLOBALS['db']->Execute($pre, array($steam, "", $pname, 0, 0, "Импорт из banned_user.cfg", $importAid, $importIp, 0));
 			}
 		}
 	}
@@ -98,45 +118,50 @@ if(isset($_GET["rebanid"]))
 {
 	echo '<script type="text/javascript">xajax_PrepareReban("'.(int)$_GET["rebanid"].'");</script>';
 }
-if((isset($_GET['action']) && $_GET['action'] == "pasteBan") && isset($_GET['pName']) && isset($_GET['sid'])) {
-	echo "<script type=\"text/javascript\">setTimeout(\"ShowBox('Загрузка..','<i>Ждите!</i>', 'blue', '', false, 5000);\", 800);xajax_PastePlayerData('".(int)$_GET['sid']."', '".htmlspecialchars(addslashes($_GET['pName']))."');</script>";
+if((isset($_GET['action']) && $_GET['action'] == "pasteBan") && isset($_GET['pName']) && is_string($_GET['pName']) && isset($_GET['sid'])) {
+	echo "<script type=\"text/javascript\">setTimeout(function(){ ShowBox('Загрузка..','Ждите!', 'blue', '', false, 5000); }, 800);xajax_PastePlayerData('".(int)$_GET['sid']."', '".htmlspecialchars(addslashes($_GET['pName']), ENT_QUOTES, 'UTF-8')."');</script>";
 }
 
 echo '<div id="admin-page-content">';
-	// Add Ban
-	echo '<div id="0" style="display:none;">';
-		$theme->assign('permission_addban', $userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_BAN));
-		$theme->assign('customreason', ((isset($GLOBALS['config']['bans.customreasons'])&&$GLOBALS['config']['bans.customreasons']!="")?unserialize($GLOBALS['config']['bans.customreasons']):false));
-		$theme->display('page_admin_bans_add.tpl');
+	echo '<div id="0" class="admin-pane is-on">';
+		$canAddBan = $userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_BAN);
+		$crRaw = isset($GLOBALS['config']['bans.customreasons']) ? $GLOBALS['config']['bans.customreasons'] : '';
+		if (is_array($crRaw))
+			$customreason = $crRaw;
+		elseif (is_string($crRaw) && $crRaw !== '') {
+			$crUn = sb_unserialize_array($crRaw);
+			$customreason = is_array($crUn) ? $crUn : false;
+		} else
+			$customreason = false;
+		sb_admin_echo_twig_fragment('admin_bans_add.twig', array(
+			'permission_addban' => $canAddBan,
+			'customreason' => $customreason,
+		));
 	echo '</div>';
 
 	// Protests
-	echo '<div id="1" style="display:none;">';
-	echo '<div class="card m-b-15">
-		<div class="card-body">
-			<div class="fw-container">
-				<ul class="tab-nav text-center fw-nav admin-subtabs-nav">
-					<li id="utab-p0" class="active">
-						<a href="admin/bans#^1~p0" id="admin_utab_p0" onclick="Swap2ndPane(0,\'p\');" class="tip" title="Показать протесты :: Показать активные протесты." target="_self">Активные</a>
-					</li>
-					<li id="utab-p1">
-						<a href="admin/bans#^1~p1" id="admin_utab_p1" onclick="Swap2ndPane(1,\'p\');" class="tip" title="Показать архивы :: Показать архив протестов." target="_self">Архив</a>
-					</li>
-				</ul>
-			</div>
-		</div>
-	</div>';
+	echo '<div id="1" class="admin-pane">';
+	echo '<ul class="admin-embed-tabs admin-subtabs-nav">
+		<li id="utab-p0" class="active">
+			<a href="index.php?p=admin&amp;c=bans#^1~p0" id="admin_utab_p0" onclick="Swap2ndPane(0,\'p\');return false;">Активные</a>
+		</li>
+		<li id="utab-p1">
+			<a href="index.php?p=admin&amp;c=bans#^1~p1" id="admin_utab_p1" onclick="Swap2ndPane(1,\'p\');return false;">Архив</a>
+		</li>
+	</ul>';
 		// current protests
 		echo '<div id="p0">';
-        $ItemsPerPage = SB_BANS_PER_PAGE;
+        $ItemsPerPage = max(1, (int)SB_BANS_PER_PAGE);
         $page = 1;
         if (isset($_GET['ppage']) && $_GET['ppage'] > 0)
         {
             $page = intval($_GET['ppage']);
         }
         $protests = $GLOBALS['db']->GetAll("SELECT * FROM `" . DB_PREFIX . "_protests` WHERE archiv = '0' ORDER BY pid DESC LIMIT " . intval(($page-1) * $ItemsPerPage) . "," . intval($ItemsPerPage));
+        if (!is_array($protests))
+            $protests = array();
         $protests_count = $GLOBALS['db']->GetRow("SELECT count(pid) AS count FROM `" . DB_PREFIX . "_protests` WHERE archiv = '0' ORDER BY pid DESC");
-        $page_count = $protests_count['count'];
+        $page_count = (is_array($protests_count) && isset($protests_count['count'])) ? (int)$protests_count['count'] : 0;
         $PageStart = intval(($page-1) * $ItemsPerPage);
         $PageEnd = intval($PageStart+$ItemsPerPage);
         if ($PageEnd > $page_count) $PageEnd = $page_count;
@@ -179,7 +204,7 @@ echo '<div id="admin-page-content">';
 		$protest_list = array();
 		foreach($protests as $prot)
 		{
-			$prot['reason'] = wordwrap(htmlspecialchars($prot['reason']), 55, "<br />\n", true);
+			$prot['reason'] = wordwrap(htmlspecialchars(isset($prot['reason']) ? $prot['reason'] : ''), 55, "<br />\n", true);
 			$protestb = $GLOBALS['db']->GetRow("SELECT bid, ba.ip, ba.authid, ba.name, created, ends, length, reason, ba.aid, ba.sid, email,ad.user, CONCAT(se.ip,':',se.port), se.sid
 							    				FROM ".DB_PREFIX."_bans AS ba
 							    				LEFT JOIN ".DB_PREFIX."_admins AS ad ON ba.aid = ad.aid
@@ -219,7 +244,7 @@ echo '<div id="admin-page-content">';
 												FROM `".DB_PREFIX."_comments` AS C
 												WHERE type = 'P' AND bid = '".(int)$prot['pid']."' ORDER BY added desc");
 
-			if($commentres->RecordCount()>0) {
+			if(is_object($commentres) && $commentres->RecordCount()>0) {
 				$comment = array();
 				$morecom = 0;
 				while(!$commentres->EOF) {
@@ -259,7 +284,7 @@ echo '<div id="admin-page-content">';
 				$comment = "None";
 
 			$prot['commentdata'] = $comment;
-			$prot['protaddcomment'] = CreateLinkR('<img src="images/details.png" border="0" alt="" style="vertical-align:middle" /> Добавить комментарий','index.php?p=banlist&comment='.(int)$prot['pid'].'&ctype=P');
+			$prot['protaddcomment'] = CreateLinkR('<img src="images/details.png" alt="" /> Добавить комментарий','index.php?p=banlist&comment='.(int)$prot['pid'].'&ctype=P');
 			//-----------------------------------------
 
             array_push($protest_list, $prot);
@@ -271,27 +296,29 @@ echo '<div id="admin-page-content">';
 			$GLOBALS['db']->Execute("UPDATE ".DB_PREFIX."_protests SET archiv = '2' WHERE bid IN($ids) limit $cnt");
 		}
 
-		$theme->assign('permission_protests', $userbank->HasAccess(ADMIN_OWNER|ADMIN_BAN_PROTESTS));
-		$theme->assign('permission_editban', 	$userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_ALL_BANS|ADMIN_EDIT_GROUP_BANS|ADMIN_EDIT_OWN_BANS));
-		$theme->assign('protest_nav', $page_nav);
-		$theme->assign('protest_list', $protest_list);
-		$theme->assign('protest_count', $page_count-(isset($cnt)?$cnt:0));
-		$theme->display('page_admin_bans_protests.tpl');
+		sb_admin_echo_twig_fragment('admin_bans_protests.twig', array(
+			'permission_protests' => $userbank->HasAccess(ADMIN_OWNER|ADMIN_BAN_PROTESTS),
+			'permission_editban' => $userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_ALL_BANS|ADMIN_EDIT_GROUP_BANS|ADMIN_EDIT_OWN_BANS),
+			'protest_nav' => $page_nav,
+			'protest_list' => $protest_list,
+			'protest_count' => $page_count-(isset($cnt)?$cnt:0),
+		));
 		echo '</div>';
 
-		$protestsarchiv = $GLOBALS['db']->GetAll("SELECT * FROM `" . DB_PREFIX . "_protests` WHERE archiv > '0' ORDER BY pid DESC");
 		// archived protests
 		echo '<div id="p1" style="display:none;">';
         
-        $ItemsPerPage = SB_BANS_PER_PAGE;
+        $ItemsPerPage = max(1, (int)SB_BANS_PER_PAGE);
         $page = 1;
         if (isset($_GET['papage']) && $_GET['papage'] > 0)
         {
             $page = intval($_GET['papage']);
         }
         $protestsarchiv = $GLOBALS['db']->GetAll("SELECT p.*, (SELECT user FROM `" . DB_PREFIX . "_admins` WHERE aid = p.archivedby) AS archivedby FROM `" . DB_PREFIX . "_protests` p WHERE archiv > '0' ORDER BY pid DESC LIMIT " . intval(($page-1) * $ItemsPerPage) . "," . intval($ItemsPerPage));
+        if (!is_array($protestsarchiv))
+            $protestsarchiv = array();
         $protestsarchiv_count = $GLOBALS['db']->GetRow("SELECT count(pid) AS count FROM `" . DB_PREFIX . "_protests` WHERE archiv > '0' ORDER BY pid DESC");
-        $page_count = $protestsarchiv_count['count'];
+        $page_count = (is_array($protestsarchiv_count) && isset($protestsarchiv_count['count'])) ? (int)$protestsarchiv_count['count'] : 0;
         $PageStart = intval(($page-1) * $ItemsPerPage);
         $PageEnd = intval($PageStart+$ItemsPerPage);
         if ($PageEnd > $page_count) $PageEnd = $page_count;
@@ -334,7 +361,7 @@ echo '<div id="admin-page-content">';
 		$protest_list_archiv = array();
 		foreach($protestsarchiv as $prot)
 		{
-			$prot['reason'] = wordwrap(htmlspecialchars($prot['reason']), 55, "<br />\n", true);
+			$prot['reason'] = wordwrap(htmlspecialchars(isset($prot['reason']) ? $prot['reason'] : ''), 55, "<br />\n", true);
 
 			if($prot['archiv'] != "2") {
 				$protestb = $GLOBALS['db']->GetRow("SELECT bid, ba.ip, ba.authid, ba.name, created, ends, length, reason, ba.aid, ba.sid, email,ad.user, CONCAT(se.ip,':',se.port), se.sid
@@ -384,7 +411,7 @@ echo '<div id="admin-page-content">';
 												FROM `".DB_PREFIX."_comments` AS C
 												WHERE type = 'P' AND bid = '".(int)$prot['pid']."' ORDER BY added desc");
 
-			if($commentres->RecordCount()>0) {
+			if(is_object($commentres) && $commentres->RecordCount()>0) {
 				$comment = array();
 				$morecom = 0;
 				while(!$commentres->EOF) {
@@ -424,7 +451,7 @@ echo '<div id="admin-page-content">';
 				$comment = "None";
 
 			$prot['commentdata'] = $comment;
-			$prot['protaddcomment'] = CreateLinkR('<img src="images/details.png" border="0" alt="" style="vertical-align:middle" /> Добавить комментарий','index.php?p=banlist&comment='.(int)$prot['pid'].'&ctype=P');
+			$prot['protaddcomment'] = CreateLinkR('<img src="images/details.png" alt="" /> Добавить комментарий','index.php?p=banlist&comment='.(int)$prot['pid'].'&ctype=P');
 			//-----------------------------------------
 			if (empty($prot['label_js'])) {
 				$protLabel = !empty($prot['authid']) ? $prot['authid'] : (!empty($prot['ip']) ? $prot['ip'] : ('#'.$prot['pid']));
@@ -435,43 +462,40 @@ echo '<div id="admin-page-content">';
 
 		}
 
-		$theme->assign('permission_protests', $userbank->HasAccess(ADMIN_OWNER|ADMIN_BAN_PROTESTS));
-		$theme->assign('permission_editban', 	$userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_ALL_BANS|ADMIN_EDIT_GROUP_BANS|ADMIN_EDIT_OWN_BANS));
-		$theme->assign('aprotest_nav', $page_nav);
-		$theme->assign('protest_list_archiv', $protest_list_archiv);
-		$theme->assign('protest_count_archiv', $page_count);
-		$theme->display('page_admin_bans_protests_archiv.tpl');
+		sb_admin_echo_twig_fragment('admin_bans_protests_archiv.twig', array(
+			'permission_protests' => $userbank->HasAccess(ADMIN_OWNER|ADMIN_BAN_PROTESTS),
+			'permission_editban' => $userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_ALL_BANS|ADMIN_EDIT_GROUP_BANS|ADMIN_EDIT_OWN_BANS),
+			'aprotest_nav' => $page_nav,
+			'protest_list_archiv' => $protest_list_archiv,
+			'protest_count_archiv' => $page_count,
+		));
 		echo '</div>';
 	echo '</div>';
 
 
 
 	//Submissions page
-	echo '<div id="2" style="display:none;">';
-	echo '<div class="card m-b-15">
-		<div class="card-body">
-			<div class="fw-container">
-				<ul class="tab-nav text-center fw-nav admin-subtabs-nav">
-					<li id="utab-s0" class="active">
-						<a href="admin/bans#^2~s0" id="admin_utab_s0" onclick="Swap2ndPane(0,\'s\');" class="tip" title="Показать жалобы :: Показать активные жалобы." target="_self">Активные</a>
-					</li>
-					<li id="utab-s1">
-						<a href="admin/bans#^2~s1" id="admin_utab_s1" onclick="Swap2ndPane(1,\'s\');" class="tip" title="Показать архив :: Показать жалобы в архиве." target="_self">Архив</a>
-					</li>
-				</ul>
-			</div>
-		</div>
-	</div>';
+	echo '<div id="2" class="admin-pane">';
+	echo '<ul class="admin-embed-tabs admin-subtabs-nav">
+		<li id="utab-s0" class="active">
+			<a href="index.php?p=admin&amp;c=bans#^2~s0" id="admin_utab_s0" onclick="Swap2ndPane(0,\'s\');return false;">Активные</a>
+		</li>
+		<li id="utab-s1">
+			<a href="index.php?p=admin&amp;c=bans#^2~s1" id="admin_utab_s1" onclick="Swap2ndPane(1,\'s\');return false;">Архив</a>
+		</li>
+	</ul>';
 		echo '<div id="s0">'; // current submissions
-            $ItemsPerPage = SB_BANS_PER_PAGE;
+            $ItemsPerPage = max(1, (int)SB_BANS_PER_PAGE);
             $page = 1;
             if (isset($_GET['spage']) && $_GET['spage'] > 0)
             {
                 $page = intval($_GET['spage']);
             }
             $submissions = $GLOBALS['db']->GetAll("SELECT * FROM `" . DB_PREFIX . "_submissions` WHERE archiv = '0' ORDER BY subid DESC LIMIT " . intval(($page-1) * $ItemsPerPage) . "," . intval($ItemsPerPage));
+            if (!is_array($submissions))
+                $submissions = array();
             $submissions_count = $GLOBALS['db']->GetRow("SELECT count(subid) AS count FROM `" . DB_PREFIX . "_submissions` WHERE archiv = '0' ORDER BY subid DESC");
-            $page_count = $submissions_count['count'];
+            $page_count = (is_array($submissions_count) && isset($submissions_count['count'])) ? (int)$submissions_count['count'] : 0;
             $PageStart = intval(($page-1) * $ItemsPerPage);
             $PageEnd = intval($PageStart+$ItemsPerPage);
             if ($PageEnd > $page_count) $PageEnd = $page_count;
@@ -510,32 +534,30 @@ echo '<div id="admin-page-content">';
                 $page_nav .= '</select>';
             }
             
-			$theme->assign('permissions_submissions', $userbank->HasAccess(ADMIN_OWNER|ADMIN_BAN_SUBMISSIONS));
-			$theme->assign('permissions_editsub', $userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_ALL_BANS|ADMIN_EDIT_GROUP_BANS|ADMIN_EDIT_OWN_BANS));
-			$theme->assign('submission_count', $page_count);
 			$submission_list = array();
 			foreach($submissions AS $sub)
 			{
 				// name_js — для onclick (RemoveSubmission): НЕ htmlspecialchars.
 				// Иначе &#039; в атрибуте декодируется браузером → breakout в JS (XSS → xajax_AddAdmin).
-				$sub['name_js'] = json_encode((string)$sub['name'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
-                $sub['name'] = wordwrap(htmlspecialchars($sub['name']), 55, "<br />", true);
-                $sub['reason'] = wordwrap(htmlspecialchars($sub['reason']), 55, "<br />", true);
+				$subName = isset($sub['name']) ? (string)$sub['name'] : '';
+				$sub['name_js'] = json_encode($subName, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+                $sub['name'] = wordwrap(htmlspecialchars($subName), 55, "<br />", true);
+                $sub['reason'] = wordwrap(htmlspecialchars(isset($sub['reason']) ? $sub['reason'] : ''), 55, "<br />", true);
             
 				$dem = $GLOBALS['db']->GetRow("SELECT filename FROM " . DB_PREFIX . "_demos
 												WHERE demtype = \"S\" AND demid = " .(int)$sub['subid']);
 
 			    if($dem && !empty($dem['filename']) && @file_exists(SB_DEMOS . "/" . $dem['filename']))
-			    	$sub['demo'] =  "<a href=\"getdemo.php?id=". $sub['subid'] . "&type=S\"><img src=\"images/demo.png\" border=\"0\" style=\"vertical-align:middle\" /> Получить демо</a>";
+			    	$sub['demo'] =  "<a href=\"getdemo.php?id=". $sub['subid'] . "&type=S\"><img src=\"images/demo.png\" alt=\"\" /> Получить демо</a>";
 			    else
-			    	$sub['demo'] = "<a href=\"#\"><img src=\"images/demo.png\" border=\"0\" style=\"vertical-align:middle\" /> Нет демо</a>";
+			    	$sub['demo'] = "<a href=\"#\" aria-disabled=\"true\"><img src=\"images/demo.png\" alt=\"\" /> Нет демо</a>";
 
 			    $sub['submitted'] = SBDate($dateformat, $sub['submitted']);
 
 				$mod = $GLOBALS['db']->GetRow("SELECT m.name FROM `".DB_PREFIX."_submissions` AS s
 												LEFT JOIN `".DB_PREFIX."_mods` AS m ON m.mid = s.ModID
 												WHERE s.subid = ".(int)$sub['subid']);
-			    $sub['mod'] = $mod['name'];
+			    $sub['mod'] = (is_array($mod) && isset($mod['name'])) ? $mod['name'] : '';
 
 				if(empty($sub['server']))
 					$sub['hostname'] = '<i><font color="#677882">Другой сервер...</font></i>';
@@ -552,7 +574,7 @@ echo '<div id="admin-page-content">';
 														FROM `".DB_PREFIX."_comments` AS C
 														WHERE type = 'S' AND bid = '".(int)$sub['subid']."' ORDER BY added desc");
 
-					if($commentres->RecordCount()>0) {
+					if(is_object($commentres) && $commentres->RecordCount()>0) {
 						$comment = array();
 						$morecom = 0;
 						while(!$commentres->EOF) {
@@ -592,27 +614,33 @@ echo '<div id="admin-page-content">';
 						$comment = "None";
 
 					$sub['commentdata'] = $comment;
-					$sub['subaddcomment'] = CreateLinkR('<img src="images/details.png" border="0" alt="" style="vertical-align:middle" /> Добавить комментарий','index.php?p=banlist&comment='.(int)$sub['subid'].'&ctype=S');
+					$sub['subaddcomment'] = CreateLinkR('<img src="images/details.png" alt="" /> Добавить комментарий','index.php?p=banlist&comment='.(int)$sub['subid'].'&ctype=S');
 				//----------------------------------------
 
 			    array_push($submission_list, $sub);
 			}
-			$theme->assign('submission_nav', $page_nav);
-			$theme->assign('submission_list', $submission_list);
-			$theme->display('page_admin_bans_submissions.tpl');
+			sb_admin_echo_twig_fragment('admin_bans_submissions.twig', array(
+				'permissions_submissions' => $userbank->HasAccess(ADMIN_OWNER|ADMIN_BAN_SUBMISSIONS),
+				'permissions_editsub' => $userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_ALL_BANS|ADMIN_EDIT_GROUP_BANS|ADMIN_EDIT_OWN_BANS),
+				'submission_count' => $page_count,
+				'submission_nav' => $page_nav,
+				'submission_list' => $submission_list,
+			));
 		echo '</div>';
 
 		// submission archiv
 		echo '<div id="s1" style="display:none;">';
-            $ItemsPerPage = SB_BANS_PER_PAGE;
+            $ItemsPerPage = max(1, (int)SB_BANS_PER_PAGE);
             $page = 1;
             if (isset($_GET['sapage']) && $_GET['sapage'] > 0)
             {
                 $page = intval($_GET['sapage']);
             }
             $submissionsarchiv = $GLOBALS['db']->GetAll("SELECT s.*, (SELECT user FROM `" . DB_PREFIX . "_admins` WHERE aid = s.archivedby) AS archivedby FROM `" . DB_PREFIX . "_submissions` s WHERE archiv > '0' ORDER BY subid DESC LIMIT " . intval(($page-1) * $ItemsPerPage) . "," . intval($ItemsPerPage));
+            if (!is_array($submissionsarchiv))
+                $submissionsarchiv = array();
             $submissionsarchiv_count = $GLOBALS['db']->GetRow("SELECT count(subid) AS count FROM `" . DB_PREFIX . "_submissions` WHERE archiv > '0' ORDER BY subid DESC");
-            $page_count = $submissionsarchiv_count['count'];
+            $page_count = (is_array($submissionsarchiv_count) && isset($submissionsarchiv_count['count'])) ? (int)$submissionsarchiv_count['count'] : 0;
             $PageStart = intval(($page-1) * $ItemsPerPage);
             $PageEnd = intval($PageStart+$ItemsPerPage);
             if ($PageEnd > $page_count) $PageEnd = $page_count;
@@ -651,30 +679,28 @@ echo '<div id="admin-page-content">';
                 $page_nav .= '</select>';
             }
             
-			$theme->assign('permissions_submissions', $userbank->HasAccess(ADMIN_OWNER|ADMIN_BAN_SUBMISSIONS));
-			$theme->assign('permissions_editsub', $userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_ALL_BANS|ADMIN_EDIT_GROUP_BANS|ADMIN_EDIT_OWN_BANS));
-			$theme->assign('submission_count_archiv', $page_count);
 			$submission_list_archiv = array();
 			foreach($submissionsarchiv AS $sub)
 			{
-				$sub['name_js'] = json_encode((string)$sub['name'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
-                $sub['name'] = wordwrap(htmlspecialchars($sub['name']), 55, "<br />", true);
-                $sub['reason'] = wordwrap(htmlspecialchars($sub['reason']), 55, "<br />", true);
+				$subName = isset($sub['name']) ? (string)$sub['name'] : '';
+				$sub['name_js'] = json_encode($subName, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+                $sub['name'] = wordwrap(htmlspecialchars($subName), 55, "<br />", true);
+                $sub['reason'] = wordwrap(htmlspecialchars(isset($sub['reason']) ? $sub['reason'] : ''), 55, "<br />", true);
             
 				$dem = $GLOBALS['db']->GetRow("SELECT filename FROM " . DB_PREFIX . "_demos
 												WHERE demtype = \"S\" AND demid = " .(int)$sub['subid']);
 
 			    if($dem && !empty($dem['filename']) && @file_exists(SB_DEMOS . "/" . $dem['filename']))
-			    	$sub['demo'] =  "<a href=\"getdemo.php?id=". $sub['subid'] . "&type=S\"><img src=\"images/demo.png\" border=\"0\" style=\"vertical-align:middle\" /> Получить демо</a>";
+			    	$sub['demo'] =  "<a href=\"getdemo.php?id=". $sub['subid'] . "&type=S\"><img src=\"images/demo.png\" alt=\"\" /> Получить демо</a>";
 			    else
-			    	$sub['demo'] = "<a href=\"#\"><img src=\"images/demo.png\" border=\"0\" style=\"vertical-align:middle\" /> Нет демо</a>";
+			    	$sub['demo'] = "<a href=\"#\" aria-disabled=\"true\"><img src=\"images/demo.png\" alt=\"\" /> Нет демо</a>";
 
 			    $sub['submitted'] = SBDate($dateformat, $sub['submitted']);
 
 				$mod = $GLOBALS['db']->GetRow("SELECT m.name FROM `".DB_PREFIX."_submissions` AS s
 												LEFT JOIN `".DB_PREFIX."_mods` AS m ON m.mid = s.ModID
 												WHERE s.subid = ".(int)$sub['subid']);
-			    $sub['mod'] = $mod['name'];
+			    $sub['mod'] = (is_array($mod) && isset($mod['name'])) ? $mod['name'] : '';
                 if(empty($sub['server']))
                     $sub['hostname'] = '<i><font color="#677882">Другой сервер...</font></i>';
                 else
@@ -695,7 +721,7 @@ echo '<div id="admin-page-content">';
 														FROM `".DB_PREFIX."_comments` AS C
 														WHERE type = 'S' AND bid = '".(int)$sub['subid']."' ORDER BY added desc");
 
-					if($commentres->RecordCount()>0) {
+					if(is_object($commentres) && $commentres->RecordCount()>0) {
 						$comment = array();
 						$morecom = 0;
 						while(!$commentres->EOF) {
@@ -735,42 +761,48 @@ echo '<div id="admin-page-content">';
 						$comment = "None";
 
 					$sub['commentdata'] = $comment;
-					$sub['subaddcomment'] = CreateLinkR('<img src="images/details.png" border="0" alt="" style="vertical-align:middle" /> Добавить комментарий','index.php?p=banlist&comment='.(int)$sub['subid'].'&ctype=S');
+					$sub['subaddcomment'] = CreateLinkR('<img src="images/details.png" alt="" /> Добавить комментарий','index.php?p=banlist&comment='.(int)$sub['subid'].'&ctype=S');
 				//----------------------------------------
 
 			    array_push($submission_list_archiv, $sub);
 			}
-            $theme->assign('asubmission_nav', $page_nav);
-			$theme->assign('submission_list_archiv', $submission_list_archiv);
-			$theme->display('page_admin_bans_submissions_archiv.tpl');
+			sb_admin_echo_twig_fragment('admin_bans_submissions_archiv.twig', array(
+				'permissions_submissions' => $userbank->HasAccess(ADMIN_OWNER|ADMIN_BAN_SUBMISSIONS),
+				'permissions_editsub' => $userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_ALL_BANS|ADMIN_EDIT_GROUP_BANS|ADMIN_EDIT_OWN_BANS),
+				'submission_count_archiv' => $page_count,
+				'asubmission_nav' => $page_nav,
+				'submission_list_archiv' => $submission_list_archiv,
+			));
 		echo '</div>';
 	echo '</div>';
 
-	echo '<div id="3" style="display:none;">';
-		$theme->assign('permission_import', $userbank->HasAccess(ADMIN_OWNER|ADMIN_BAN_IMPORT));
-		if(ini_get('safe_mode')==1)
-			$requirements = false;
-		else
-			$requirements = true;
-		$theme->assign('extreq', $requirements);
-		$theme->display('page_admin_bans_import.tpl');
+	echo '<div id="3" class="admin-pane">';
+		$permImport = $userbank->HasAccess(ADMIN_OWNER|ADMIN_BAN_IMPORT);
+		$requirements = (ini_get('safe_mode') != 1);
+		sb_admin_echo_twig_fragment('admin_bans_import.twig', array(
+			'permission_import' => $permImport,
+			'extreq' => $requirements,
+		));
 	echo '</div>';
 
-	echo '<div id="4" style="display:none;">';
-		$theme->assign('permission_addban', $userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_BAN));
-		$theme->assign('groupbanning_enabled', $GLOBALS['config']['config.enablegroupbanning']==1?true:false);
-		if(isset($_GET['fid'])) {
-			$theme->assign('list_steam_groups', $_GET['fid']);
-		} else {
-            $theme->assign('list_steam_groups', false);
-        }
-		$theme->display('page_admin_bans_groups.tpl');
+	echo '<div id="4" class="admin-pane">';
+		$permAddBan = $userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_BAN);
+		$groupBanOn = (isset($GLOBALS['config']['config.enablegroupbanning']) && $GLOBALS['config']['config.enablegroupbanning'] == 1);
+		sb_admin_echo_twig_fragment('admin_bans_groups.twig', array(
+			'permission_addban' => $permAddBan,
+			'groupbanning_enabled' => $groupBanOn,
+			'list_steam_groups' => isset($_GET['fid']) ? $_GET['fid'] : false,
+			'player_name' => '',
+		));
 	echo '</div>';
 ?>
 
 <script type="text/javascript">
 var did = 0;
 var dname = "";
+function banFormIdle() {
+	if (typeof sbIdleLast === 'function') sbIdleLast();
+}
 function demo(id, name)
 {
 	$('demo.msg').setHTML("<b>" + name + "</b>");
@@ -839,8 +871,10 @@ function ProcessBan()
 		$('reason.msg').setStyle('display', 'none');
 	}
 
-	if(err)
+	if(err) {
+		banFormIdle();
 		return 0;
+	}
 
 	xajax_AddBan($('nickname').value,
 				 $('type').value,
@@ -859,6 +893,7 @@ function ProcessGroupBan()
 	{
 		$('groupurl.msg').setHTML('Введите ссылку на группу, которую баните');
 		$('groupurl.msg').setStyle('display', 'block');
+		banFormIdle();
 	}else
 	{
 		$('groupurl.msg').setHTML('');
@@ -868,17 +903,18 @@ function ProcessGroupBan()
 }
 function CheckGroupBan()
 {
-	var last = 0;
-	for(var i=0;$('chkb_' + i);i++)
-	{
-		if($('chkb_' + i).checked == true)
+	var last = 0, ids = [];
+	for (var i = 0; $('chkb_' + i); i++) {
+		if ($('chkb_' + i).checked) {
 			last = $('chkb_' + i).value;
+			ids.push(last);
+		}
 	}
-	for(var i=0;$('chkb_' + i);i++)
-	{
-		if($('chkb_' + i).checked == true)
-			xajax_GroupBan($('chkb_' + i).value, "yes", "yes", $('groupreason').value, last);
+	if (!ids.length) {
+		banFormIdle();
+		return;
 	}
+	xajax_GroupBan(ids.join(','), "yes", "yes", $('groupreason').value, last);
 }
 </script>
 </div>

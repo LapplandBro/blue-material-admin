@@ -1,0 +1,57 @@
+<div class="form-page admin-form">
+  <header class="form-page-head">
+    <p class="form-page-kicker">Админы</p>
+    <h2 class="form-page-title">Список предупреждений</h2>
+    <p class="form-page-lead">Всего: {{ count }}</p>
+  </header>
+  <div class="table-responsive table-cards-wrap">
+    <table class="admin-manage-table table-cards">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>От кого</th>
+          <th>Причина</th>
+          <th>Истекает</th>
+          <th class="text-end">Действия</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for warning in Warnings|default([]) %}
+        <tr{% if warning.expired %} class="admin-row-muted"{% endif %}>
+          <td data-label="ID">{{ warning.id }}</td>
+          <td data-label="От кого"><strong>{{ warning.from }}</strong></td>
+          <td data-label="Причина">{{ warning.reason }}</td>
+          <td data-label="Истекает">{{ warning.expires|raw }}</td>
+          <td class="text-end" data-label="Действия">
+            {% if warning.expired %}
+              Недоступно
+            {% else %}
+              <button type="button" class="btn btn-outline-secondary btn-sm" onclick="xajax_RemoveWarning({{ warning.id }})">Снять</button>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="form-page admin-form" id="add-group">
+  <header class="form-page-head">
+    <p class="form-page-kicker">Админы</p>
+    <h2 class="form-page-title">Выдача предупреждения</h2>
+  </header>
+  <div class="form-grid">
+    <div class="form-field">
+      <label class="form-label" for="time">Срок (в днях)</label>
+      <input class="form-control" type="text" id="time" name="time">
+    </div>
+    <div class="form-field">
+      <label class="form-label" for="reason">Причина</label>
+      <input class="form-control" type="text" id="reason" name="reason">
+    </div>
+  </div>
+  <div class="form-actions">
+    <button type="button" class="btn btn-accent" onclick="xajax_AddWarning({{ thisId }}, $('time').value, $('reason').value);">Добавить</button>
+  </div>
+</div>

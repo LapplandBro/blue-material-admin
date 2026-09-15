@@ -835,7 +835,7 @@ if (!defined('_ADODB_LAYER')) {
 	 * Requested by "Karsten Dambekalns" <k.dambekalns@fishfarm.de>
 	 */
 	function QMagic($s) {
-		return $this->qstr($s,get_magic_quotes_gpc());
+		return $this->qstr($s, function_exists('get_magic_quotes_gpc') && get_magic_quotes_gpc());
 	}
 
 	function q(&$s) {
@@ -1150,8 +1150,8 @@ if (!defined('_ADODB_LAYER')) {
 
 				foreach($inputarr as $arr) {
 					$sql = ''; $i = 0;
-					//Use each() instead of foreach to reduce memory usage -mikefedyk
-					while(list(, $v) = each($arr)) {
+					// PHP 8+: each() removed — foreach over bind values
+					foreach ($arr as $v) {
 						$sql .= $sqlarr[$i];
 						// from Ron Baldwin <ron.baldwin#sourceprose.com>
 						// Only quote string types
@@ -3052,20 +3052,25 @@ http://www.stanford.edu/dept/itss/docs/oracle/10g/server.101/b10759/statements_1
 			$this->rs = $rs;
 		}
 
+		#[\ReturnTypeWillChange]
 		function rewind() {}
 
+		#[\ReturnTypeWillChange]
 		function valid() {
 			return !$this->rs->EOF;
 		}
 
+		#[\ReturnTypeWillChange]
 		function key() {
 			return false;
 		}
 
+		#[\ReturnTypeWillChange]
 		function current() {
 			return false;
 		}
 
+		#[\ReturnTypeWillChange]
 		function next() {}
 
 		function __call($func, $params) {
@@ -3117,6 +3122,7 @@ http://www.stanford.edu/dept/itss/docs/oracle/10g/server.101/b10759/statements_1
 
 		function Init() {}
 
+		#[\ReturnTypeWillChange]
 		function getIterator() {
 			return new ADODB_Iterator_empty($this);
 		}
@@ -3177,22 +3183,27 @@ http://www.stanford.edu/dept/itss/docs/oracle/10g/server.101/b10759/statements_1
 			$this->rs = $rs;
 		}
 
+		#[\ReturnTypeWillChange]
 		function rewind() {
 			$this->rs->MoveFirst();
 		}
 
+		#[\ReturnTypeWillChange]
 		function valid() {
 			return !$this->rs->EOF;
 		}
 
+		#[\ReturnTypeWillChange]
 		function key() {
 			return $this->rs->_currentRow;
 		}
 
+		#[\ReturnTypeWillChange]
 		function current() {
 			return $this->rs->fields;
 		}
 
+		#[\ReturnTypeWillChange]
 		function next() {
 			$this->rs->MoveNext();
 		}
@@ -3269,6 +3280,7 @@ http://www.stanford.edu/dept/itss/docs/oracle/10g/server.101/b10759/statements_1
 		$this->Close();
 	}
 
+	#[\ReturnTypeWillChange]
 	function getIterator() {
 		return new ADODB_Iterator($this);
 	}

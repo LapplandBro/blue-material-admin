@@ -167,8 +167,8 @@ function AddTab($title, $url, $desc, $active=false)
  */
 function BuildPageTabs()
 {
-	AddTab("<i class='zmdi zmdi-globe'></i> SourceBans", "http://www.sourcebans.net", "");
-	AddTab("<i class='zmdi zmdi-flower-alt'></i>SourceMod", "http://www.sourcemod.net", "");
+	AddTab('<i class="bi bi-globe"></i> SourceBans', "http://www.sourcebans.net", "");
+	AddTab('<i class="bi bi-plugin"></i> SourceMod', "http://www.sourcemod.net", "");
 }
 
 /**
@@ -219,8 +219,8 @@ function CreateLinkR($title, $url, $tooltip="", $target="_self", $wide=false, $o
 
 function HelpIcon($title, $text)
 {
-	//return '<img border="0" align="absbottom" src="images/admin/help.png" class="tip" title="' .  $title . ' :: ' .  $text . '">&nbsp;&nbsp;';
-	return '<img border="0" align="absbottom" src="../images/help.png" style="float:left;" data-trigger="hover" data-toggle="popover" data-placement="top" data-content="' .  $text . '" title="" data-original-title="' .  $title. '">&nbsp;&nbsp;';
+	$tip = htmlspecialchars($title . ' — ' . $text, ENT_QUOTES, 'UTF-8');
+	return '<i class="bi bi-info-circle" title="' . $tip . '" style="margin-right:6px;"></i>';
 }
 
 /**

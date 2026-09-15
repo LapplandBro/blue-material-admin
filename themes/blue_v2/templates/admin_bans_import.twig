@@ -1,0 +1,36 @@
+{% if not permission_import %}
+<div class="form-page">
+  <p class="form-flash form-flash--err">Доступ запрещен!</p>
+</div>
+{% else %}
+<div class="form-page admin-form" id="group.details">
+  <header class="form-page-head">
+    <p class="form-page-kicker">Админка</p>
+    <h2 class="form-page-title">Импорт банов</h2>
+    <p class="form-page-lead">Загрузка banned_users.cfg или banned_ip.cfg. Импорт добавляет баны из конфига SourceMod / сервера.</p>
+  </header>
+  <form action="" method="post" enctype="multipart/form-data">
+    <input type="hidden" name="action" value="importBans">
+    {% if sb_csrf %}<input type="hidden" name="sb_csrf" value="{{ sb_csrf }}">{% endif %}
+    <div class="form-grid">
+      <div class="form-field form-field--full">
+        <label class="form-label" for="importFile">Файл</label>
+        <input name="importFile" id="importFile" type="file" class="form-control" accept=".cfg,text/plain">
+        <div id="file.msg" class="msg-err"></div>
+        <p class="form-help">Обычно: <code>banned_users.cfg</code> или <code>banned_ip.cfg</code></p>
+      </div>
+      <div class="form-field form-field--full">
+        <label class="form-label" for="friendsname">Получить имена</label>
+        <div class="form-check">
+          <input type="checkbox" class="form-check-input" name="friendsname" id="friendsname"{% if not extreq %} disabled title="нужен Steam API ключ"{% endif %}>
+          <label class="form-check-label" for="friendsname">{% if not extreq %}нужен Steam API ключ{% else %}Включить запрос ников из Steam{% endif %}</label>
+        </div>
+        <p class="form-help">{% if not extreq %}Ники из Steam недоступны без API ключа.{% else %}Работает с banned_users.cfg.{% endif %}</p>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-accent" id="iban" name="iban" value="Импортировать баны">Импортировать баны</button>
+    </div>
+  </form>
+</div>
+{% endif %}

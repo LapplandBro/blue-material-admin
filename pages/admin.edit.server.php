@@ -1,5 +1,4 @@
-<div id="admin-page-content">
-<?php  
+<?php
 // *************************************************************************
 //  This file is part of SourceBans++.
 //
@@ -35,14 +34,12 @@ global $theme, $userbank;
 if(!$userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_SERVERS))
 {
 	$log = new CSystemLog("w", "Попытка взлома", $userbank->GetProperty("user") . " пытался редактировать сервер, не имея на это прав.");
-	CreateRedBox("Ошибка", "Вы не имеете прав редактирования серверов.");
-	PageDie();
+	sb_forbidden_page(true, 'Вы не имеете прав редактирования серверов.');
 }
 
 if(!isset($_GET['id']))
 {
-	CreateRedBox("Ошибка", "Идентификатор сервера не указан");
-	die();
+	sb_bad_request_page(true, 'Идентификатор сервера не указан.');
 }
 $_GET['id'] = (int)$_GET['id'];
 
@@ -50,8 +47,7 @@ $server = $GLOBALS['db']->GetRow("SELECT * FROM ".DB_PREFIX."_servers WHERE sid 
 if(!$server)
 {
 	$log = new CSystemLog("e", "Получение данных сервера не удалось", "Не удается найти данные для сервера с идентификатором '".$_GET['id']."'");
-	CreateRedBox("Ошибка", "Ошибка получения текущих данных.");
-	PageDie();
+	sb_not_found_page(true, 'Сервер не найден.');
 }
 
 $errorScript = "";
@@ -62,8 +58,7 @@ if(isset($_POST['address']))
 	$csrf = isset($_POST['sb_csrf']) ? $_POST['sb_csrf'] : '';
 	if(!function_exists('sb_csrf_validate') || !sb_csrf_validate($csrf))
 	{
-		CreateRedBox("Ошибка", "Неверный CSRF-токен. Обновите страницу и попробуйте снова.");
-		PageDie();
+		sb_csrf_fail_page(true);
 	}
 
 	// Form validation
@@ -173,7 +168,11 @@ if(isset($_POST['address']))
 }
 
 $modlist = $GLOBALS['db']->GetAll("SELECT mid, name FROM `" . DB_PREFIX . "_mods` WHERE `mid` > 0 AND `enabled` = 1 ORDER BY name ASC");
+if (!is_array($modlist))
+	$modlist = array();
 $grouplist = $GLOBALS['db']->GetAll("SELECT gid, name FROM `" . DB_PREFIX . "_groups` WHERE type = 3 ORDER BY name ASC");
+if (!is_array($grouplist))
+	$grouplist = array();
 
 $theme->assign('ip', 	$server['ip']);
 $theme->assign('port', 	 $server['port']);
@@ -188,15 +187,20 @@ $theme->assign('grouplist', $grouplist);
 $theme->assign('edit_server', true);
 $theme->assign('submit_text', "Обновить данные");
 
+echo '<div id="admin-page-content">';
+echo '<div id="0" class="admin-pane is-on">';
 echo '<form action="" method="post" name="editserver">';
 echo '<input type="hidden" name="sb_csrf" value="' . htmlspecialchars(function_exists('sb_csrf_token') ? sb_csrf_token() : '', ENT_QUOTES, 'UTF-8') . '" />';
-$theme->display('page_admin_servers_add.tpl');
+$_f = sb_ui_v2_theme_fragment('admin_servers_add.twig');
+if (is_string($_f) && $_f !== '') echo $_f;
 echo '</form>';
 
 echo "<script>";
 if(!isset($_POST['address']))
 {
 	$groups = $GLOBALS['db']->GetAll("SELECT group_id FROM `" . DB_PREFIX . "_servers_groups` WHERE server_id = ?", array((int)$_GET['id']));
+	if (!is_array($groups))
+		$groups = array();
 }
 else
 {
@@ -219,10 +223,8 @@ foreach($groups AS $g)
 		echo "if($('g_" . $g[0] . "')) $('g_" . $g[0] . "').checked = true;";
 }
 echo $errorScript;
-?>
-
-$('enabled').checked = <?php echo $server['enabled']; ?>;
-if($('mod')) $('mod').value = <?php echo $server['modid']?>;
-</script>
-
-</div>
+echo "$('enabled').checked = " . (int)$server['enabled'] . ";";
+echo "if($('mod')) $('mod').value = " . (int)$server['modid'] . ";";
+echo "</script>";
+echo '</div>';
+echo '</div>';

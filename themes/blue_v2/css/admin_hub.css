@@ -1,0 +1,258 @@
+.admin-hub-kicker {
+  margin: 0 0 0.55rem;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.admin-hub-head {
+  margin-bottom: 1.25rem;
+}
+.admin-hub-head .admin-hub-kicker {
+  margin-bottom: 0.28rem;
+}
+.admin-hub-head h1 {
+  margin: 0;
+  color: var(--text-heading);
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+.admin-hub-head p {
+  margin: 0.28rem 0 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.4;
+}
+.admin-hub-section {
+  margin-bottom: 1.25rem;
+}
+.admin-hub,
+.admin-hub-section,
+.admin-hub-grid {
+  width: 100%;
+}
+.admin-hub-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 214px), 1fr));
+  gap: 0.7rem;
+  align-items: stretch;
+}
+.admin-hub-tile,
+.admin-hub-tile--with-extra {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 148px;
+  padding: 0.85rem 0.9rem 0.8rem;
+  background:
+    linear-gradient(180deg, rgba(30, 144, 255, 0.05), transparent 46%),
+    var(--bg-card);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-panel);
+  color: var(--text);
+  text-decoration: none;
+  transition:
+    transform 0.16s ease,
+    border-color 0.16s ease,
+    box-shadow 0.16s ease,
+    background 0.16s ease;
+}
+a.admin-hub-tile:hover,
+.admin-hub-tile--with-extra:hover {
+  transform: translateY(-3px);
+  border-color: rgba(30, 144, 255, 0.42);
+  background:
+    linear-gradient(180deg, rgba(30, 144, 255, 0.1), transparent 52%),
+    var(--bg-card-alt);
+  box-shadow: var(--shadow-elevated);
+  color: var(--text);
+  text-decoration: none;
+}
+a.admin-hub-tile:focus-visible {
+  border-color: rgba(30, 144, 255, 0.42);
+  color: var(--text);
+  text-decoration: none;
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.admin-hub-tile--with-extra:focus-within {
+  border-color: rgba(30, 144, 255, 0.42);
+}
+a.admin-hub-tile:focus:not(:focus-visible) {
+  outline: none;
+}
+.admin-hub-tile-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.55rem;
+  margin-bottom: 0.55rem;
+}
+.admin-hub-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.15rem;
+  height: 2.15rem;
+  flex: 0 0 auto;
+  border-radius: 0.55rem;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: 1px solid var(--border-hairline);
+  box-shadow: 0 0 14px rgba(30, 144, 255, 0.12);
+}
+.admin-hub-mark svg {
+  display: block;
+}
+.admin-hub-count {
+  flex: 0 0 auto;
+  color: var(--text-heading);
+  font-size: 1.35rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+.admin-hub-tile-title {
+  display: block;
+  color: var(--text-heading);
+  font-size: 0.96rem;
+  font-weight: 650;
+  line-height: 1.25;
+}
+.admin-hub-tile-desc {
+  display: block;
+  margin-top: 0.22rem;
+  color: var(--muted);
+  font-size: 0.76rem;
+  line-height: 1.4;
+}
+.admin-hub-tile-meta {
+  margin-top: auto;
+  padding-top: 0.5rem;
+  color: #6f96c2;
+  font-size: 0.7rem;
+  line-height: 1.35;
+  font-variant-numeric: tabular-nums;
+}
+.admin-hub-tile-main {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  color: inherit;
+  text-decoration: none;
+}
+.admin-hub-tile-main:hover {
+  color: inherit;
+  text-decoration: none;
+}
+.admin-hub-tile-main:focus-visible {
+  color: inherit;
+  text-decoration: none;
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.admin-hub-tile-extra {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 0.55rem;
+  align-self: flex-start;
+  padding: 0.18rem 0.58rem;
+  border: 1px solid var(--border-hairline);
+  border-radius: 999px;
+  color: var(--accent);
+  background: rgba(8, 15, 31, 0.45);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+.admin-hub-tile-extra:hover {
+  color: #fff;
+  background: var(--accent-soft);
+  border-color: rgba(30, 144, 255, 0.45);
+  text-decoration: none;
+}
+.admin-hub-tile-extra:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.admin-hub-stats-wrap {
+  margin-top: 0.35rem;
+  padding-top: 1.05rem;
+  border-top: 1px solid var(--border-hairline);
+}
+.admin-hub-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 128px), 1fr));
+  gap: 0.55rem;
+}
+.admin-hub-stat {
+  position: relative;
+  padding: 0.7rem 0.8rem 1.05rem;
+  background:
+    linear-gradient(180deg, rgba(30, 144, 255, 0.07), transparent 48%),
+    var(--bg-sidebar);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  overflow: hidden;
+}
+.admin-hub-stat::after {
+  content: "";
+  position: absolute;
+  left: 0.75rem;
+  right: 0.75rem;
+  bottom: 0.48rem;
+  height: 3px;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--accent), rgba(30, 144, 255, 0.12));
+  opacity: 0.7;
+}
+.admin-hub-stat-label {
+  color: var(--muted);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.admin-hub-stat-value {
+  margin-top: 0.18rem;
+  color: var(--text-heading);
+  font-size: 1.28rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+.admin-hub-stat-hint {
+  margin-top: 0.12rem;
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 575.98px) {
+  .admin-hub-grid {
+    grid-template-columns: 1fr;
+  }
+  .admin-hub-tile,
+  .admin-hub-tile--with-extra {
+    min-height: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .admin-hub-tile,
+  .admin-hub-tile--with-extra {
+    transition: none;
+  }
+  a.admin-hub-tile:hover,
+  .admin-hub-tile--with-extra:hover {
+    transform: none;
+  }
+}

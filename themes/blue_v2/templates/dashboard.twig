@@ -1,0 +1,207 @@
+{% extends 'layout.twig' %}
+{% block extra_head %}
+<link href="{{ asset_base }}themes/blue_v2/css/dashboard.css?v={{ css_ver }}" rel="stylesheet">
+{% endblock %}
+{% block topbar_title %}
+<h1>Главная</h1>
+{% endblock %}
+{% block content %}
+{% set dash_text_empty = dashboard_text == '<p><br></p>' or dashboard_text == '' %}
+{% set show_info = dashboard_info_block == '1' %}
+{% set show_intro = (not dash_text_empty) or show_info %}
+{% set show_comms = listing_block == '2' or listing_block == '3' %}
+{% set show_bans = listing_block == '1' or listing_block == '3' %}
+<div id="dialog-placement" class="dash-dialog-sink"></div>
+
+<div class="dash">
+{% if stats %}
+  <div class="dash-stats">
+    <a class="dash-stat" href="index.php?p=adminlist">
+      <span class="dash-stat-kicker">Состав</span>
+      <span class="dash-stat-value">{{ total_admins }}</span>
+      <span class="dash-stat-label">Админы</span>
+    </a>
+    <a class="dash-stat" href="index.php?p=banlist">
+      <span class="dash-stat-kicker">Модерация</span>
+      <span class="dash-stat-value">{{ total_bans }}</span>
+      <span class="dash-stat-label">Баны</span>
+    </a>
+    <a class="dash-stat" href="index.php?p=commslist">
+      <span class="dash-stat-kicker">Чат</span>
+      <span class="dash-stat-value">{{ total_comms }}</span>
+      <span class="dash-stat-label">Муты / гаги</span>
+    </a>
+    <a class="dash-stat" href="index.php?p=servers">
+      <span class="dash-stat-kicker">Слоты</span>
+      <span class="dash-stat-value">{{ total_servers }}</span>
+      <span class="dash-stat-label">Серверы</span>
+    </a>
+  </div>
+{% endif %}
+
+  <div class="dash-main{% if not show_intro %} dash-main--solo{% endif %}">
+    {% if show_intro %}
+    <section class="panel dash-intro">
+      <header class="dash-head">
+        <h2 class="dash-title dash-title--intro">
+          {% if header_title %}{{ header_title }}{% elseif dashboard_title %}{{ dashboard_title }}{% else %}Главная{% endif %}
+          <small>{% if dash_text_empty %}Модерация и серверы{% else %}Правила и информация{% endif %}</small>
+        </h2>
+      </header>
+      <div class="dash-intro-body">
+        {% if not dash_text_empty and show_info %}
+        <ul class="dash-tabs" role="tablist">
+          <li role="presentation">
+            <button class="dash-tab active" id="dash-tab-rules" data-toggle="tab" data-bs-toggle="tab" data-bs-target="#tab-home" type="button" role="tab" aria-controls="tab-home" aria-selected="true">Правила</button>
+          </li>
+          <li role="presentation">
+            <button class="dash-tab" id="dash-tab-info" data-toggle="tab" data-bs-toggle="tab" data-bs-target="#tab-rek" type="button" role="tab" aria-controls="tab-rek" aria-selected="false">Ещё</button>
+          </li>
+        </ul>
+        <div class="tab-content">
+          <div class="tab-pane fade show active" id="tab-home" role="tabpanel" aria-labelledby="dash-tab-rules">
+            <div class="dash-prose">{{ dashboard_text|raw }}</div>
+          </div>
+          <div class="tab-pane fade" id="tab-rek" role="tabpanel" aria-labelledby="dash-tab-info">
+            {% include 'partials/dash_extra.twig' %}
+          </div>
+        </div>
+        {% elseif not dash_text_empty %}
+          <div class="dash-prose">{{ dashboard_text|raw }}</div>
+        {% else %}
+          {% include 'partials/dash_extra.twig' %}
+        {% endif %}
+      </div>
+    </section>
+    {% endif %}
+
+    <section class="panel dash-servers">
+      <header class="dash-head dash-head--row">
+        <div>
+          <p class="dash-kicker">Онлайн</p>
+          <h2 class="dash-title">Серверы</h2>
+          <p class="dash-sub">{{ total_servers }} шт.</p>
+        </div>
+        <a class="dash-more" href="index.php?p=servers">Все серверы</a>
+      </header>
+      <ul class="dash-server-list">
+        {% if server_list %}
+          {% for server in server_list %}
+          <li class="dash-server">
+            <a class="dash-server-link" href="index.php?p=servers&amp;s={{ server.sid }}">
+              <span class="dash-server-mod">{{ server.icon_html|raw }}</span>
+              <span class="dash-server-meta">
+                <span class="dash-server-host" id="host_{{ server.sid }}">Загрузка…</span>
+                <code class="dash-server-addr">{{ server.ip }}:{{ server.port }}</code>
+              </span>
+              <span class="dash-server-players" id="players_{{ server.sid }}">—</span>
+            </a>
+            <span id="os_{{ server.sid }}" hidden></span>
+            <span id="vac_{{ server.sid }}" hidden></span>
+            <span id="map_{{ server.sid }}" hidden></span>
+          </li>
+          {% endfor %}
+        {% else %}
+          <li class="dash-empty-row">Пока нет записей.</li>
+        {% endif %}
+      </ul>
+    </section>
+  </div>
+
+  <div class="dash-feeds{% if show_comms and show_bans %} dash-feeds--3{% elseif show_bans %} dash-feeds--2{% endif %}">
+    {% if show_comms %}
+    <section class="panel dash-feed">
+      <header class="dash-head dash-head--row">
+        <div>
+          <p class="dash-kicker">Чат</p>
+          <h2 class="dash-title">Муты и гаги</h2>
+          <p class="dash-sub">{{ total_comms }} · последние</p>
+        </div>
+        <a class="dash-more" href="index.php?p=commslist">Все</a>
+      </header>
+      <div class="dash-feed-list">
+        {% for player in players_commed %}
+        <a class="dash-feed-row" href="{{ player.search_link }}">
+          <span class="dash-feed-ico">{{ player.type_html|raw }}</span>
+          <span class="dash-feed-main">
+            <span class="dash-feed-name">{% if player.short_name is empty %}без имени{% else %}{{ player.short_name }}{% endif %}</span>
+            <span class="dash-feed-date" title="{{ player.created_info }}">{{ player.created }}</span>
+          </span>
+          {% if player.unbanned %}
+            <span class="badge badge-ok" title="Снято / истекло">{{ player.length }}</span>
+          {% elseif player.perm %}
+            <span class="badge badge-perm">{{ player.length }}</span>
+          {% else %}
+            <span class="badge badge-temp">{{ player.length }}</span>
+          {% endif %}
+        </a>
+        {% else %}
+        <div class="dash-empty-row">Пока нет записей.</div>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+    {% if show_bans %}
+    <section class="panel dash-feed">
+      <header class="dash-head dash-head--row">
+        <div>
+          <p class="dash-kicker">Модерация</p>
+          <h2 class="dash-title">Баны</h2>
+          <p class="dash-sub">{{ total_bans }} · последние</p>
+        </div>
+        <a class="dash-more" href="index.php?p=banlist">Все</a>
+      </header>
+      <div class="dash-feed-list">
+        {% for player in players_banned %}
+        <a class="dash-feed-row" href="{{ player.search_link }}">
+          <span class="dash-feed-ico">{{ player.icon_html|raw }}</span>
+          <span class="dash-feed-main">
+            <span class="dash-feed-name">{% if not nocountryshow %}<span class="dash-flag">{{ player.country_icon|raw }}</span>{% endif %}{% if player.short_name is empty %}без имени{% else %}{{ player.short_name }}{% endif %}</span>
+            <span class="dash-feed-date" title="{{ player.created_info }}">{{ player.created }}</span>
+          </span>
+          {% if player.unbanned %}
+            <span class="badge badge-ok" title="Снято / истекло">{{ player.length }}</span>
+          {% elseif player.perm %}
+            <span class="badge badge-perm">{{ player.length }}</span>
+          {% else %}
+            <span class="badge badge-temp">{{ player.length }}</span>
+          {% endif %}
+        </a>
+        {% else %}
+        <div class="dash-empty-row">Пока нет записей.</div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="panel dash-feed">
+      <header class="dash-head dash-head--row">
+        <div>
+          <p class="dash-kicker">Вход</p>
+          <h2 class="dash-title">Блоки</h2>
+          <p class="dash-sub">{{ total_blocked }} · последние</p>
+        </div>
+        <a class="dash-more" href="index.php?p=banlist">Банлист</a>
+      </header>
+      <div class="dash-feed-list">
+        {% if total_blocked == 0 or total_blocked == '0' %}
+        <div class="dash-empty-row">Пока нет записей.</div>
+        {% else %}
+          {% for player in players_blocked %}
+          <a class="dash-feed-row" id="{{ player.server }}" href="{{ player.search_link }}">
+            <span class="dash-feed-ico">
+              <img class="sb-ico" src="images/icons/forbidden.svg" width="18" height="18" alt="" loading="lazy">
+            </span>
+            <span class="dash-feed-main">
+              <span class="dash-feed-name">{% if player.short_name is empty %}без имени{% else %}{{ player.short_name }}{% endif %}</span>
+              <span class="dash-feed-date">{{ player.date }}</span>
+            </span>
+          </a>
+          {% endfor %}
+        {% endif %}
+      </div>
+    </section>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -4,7 +4,7 @@
 	{
 		if(empty($_POST['server']) ||empty($_POST['port']) ||empty($_POST['username']) ||empty($_POST['database']) ||empty($_POST['prefix']))
 		{
-			echo "<script>setTimeout(function(){ ShowBox('Внимание!', 'Заполните необходимые поля.', 'blue', '', true); }, 400);</script>";
+			echo "<script>ShowBox('Внимание!', 'Заполните необходимые поля.', 'blue', '', true);</script>";
 		}
 		else
 		{
@@ -13,9 +13,9 @@
 			$server = "mysqli://" . $_POST['username'] . ":" . $_POST['password'] . "@" . $_POST['server'] . ":" . $_POST['port'] . "/" . $_POST['database'];
 			$db = ADONewConnection($server);
 			if(!$db) {
-				echo "<script>setTimeout(\"ShowBox('Ошибка', 'ошибка соединения с сервером баз данных. <br />Проверьте введенные данные', 'red', '', true);\", 1200);</script>";
+				echo "<script>ShowBox('Ошибка', 'Ошибка соединения с сервером баз данных. Проверьте введённые данные.', 'red', '', true);</script>";
 			} else if(strlen($_POST['prefix']) > 9) {
-				echo "<script>setTimeout(\"ShowBox('Ошибка', 'Префикс таблиц не может быть длиннее 9 символов.<br />Исправьте это.', 'red', '', true);\", 1200);</script>";
+				echo "<script>ShowBox('Ошибка', 'Префикс таблиц не может быть длиннее 9 символов.', 'red', '', true);</script>";
 			} else {
 				?>
 				<form action="index.php?step=3" method="post" name="send" id="send">
@@ -50,7 +50,7 @@
 					<div class="lv-avatar bgm-orange pull-left">1</div>
 					<div class="media-body">
 						<div class="lv-title"><del>Шаг: Лицензия</del></div>
-						<div class="lv-small"><i class="zmdi zmdi-timer-off zmdi-hc-fw c-red"></i> <del>Предыдущий шаг</del></div>
+						<div class="lv-small"><i class="bi bi-x-circle c-red"></i> <del>Предыдущий шаг</del></div>
 					</div>
 				</div>
 
@@ -58,7 +58,7 @@
 					<div class="lv-avatar bgm-red pull-left">2</div>
 					<div class="media-body">
 						<div class="lv-title">Шаг: База данных</div>
-						<div class="lv-small"><i class="zmdi zmdi-badge-check zmdi-hc-fw c-green"></i> Текущий шаг</div>
+						<div class="lv-small"><i class="bi bi-check-circle c-green"></i> Текущий шаг</div>
 					</div>
 				</div>
 
@@ -66,7 +66,7 @@
 					<div class="lv-avatar bgm-orange pull-left">3</div>
 					<div class="media-body">
 						<div class="lv-title">Шаг: Системные требования</div>
-						<div class="lv-small"><i class="zmdi zmdi-time zmdi-hc-fw c-blue"></i> Следующий шаг</div>
+						<div class="lv-small"><i class="bi bi-clock c-blue"></i> Следующий шаг</div>
 					</div>
 				</div>
 
@@ -74,7 +74,7 @@
 					<div class="lv-avatar bgm-orange pull-left">4</div>
 					<div class="media-body">
 						<div class="lv-title">Шаг: Создание таблиц</div>
-						<div class="lv-small"><i class="zmdi zmdi-time zmdi-hc-fw c-blue"></i> Следующий шаг</div>
+						<div class="lv-small"><i class="bi bi-clock c-blue"></i> Следующий шаг</div>
 					</div>
 				</div>
 
@@ -82,7 +82,7 @@
 					<div class="lv-avatar bgm-orange pull-left">5</div>
 					<div class="media-body">
 						<div class="lv-title">Шаг: Установка</div>
-						<div class="lv-small"><i class="zmdi zmdi-time zmdi-hc-fw c-blue"></i> Следующий шаг</div>
+						<div class="lv-small"><i class="bi bi-clock c-blue"></i> Следующий шаг</div>
 					</div>
 				</div>
 			</div>
@@ -97,7 +97,7 @@
 				</div>
 
 				<div class="lv-body p-15">                                    
-					Наводите курсор мыши на иконку <img border="0" src="../images/help.png" /> для получения дополнительной информации.
+					Наводите курсор мыши на иконку <i class="bi bi-info-circle" title="Подсказка у каждого поля формы"></i> для получения дополнительной информации.
 				</div>
 
 				<div class="lv-header-alt clearfix">
@@ -113,7 +113,6 @@
 								<div class="fg-line">
 									<input type="text" class="form-control input-sm" id="server" name="server" placeholder="Введите данные" value="<?php echo isset($_POST['server'])?$_POST['server']:'localhost';?>" />
 								</div>
-								<div id="server.msg"></div>
 							</div>
 						</div>
 						
@@ -123,7 +122,6 @@
 								<div class="fg-line">
 									<input type="text" class="form-control input-sm" id="port" name="port" placeholder="Введите данные" value="<?php echo isset($_POST['port'])?$_POST['port']:3306;?>" />
 								</div>
-								<div id="port.msg"></div>
 							</div>
 						</div>
 						
@@ -133,7 +131,6 @@
 								<div class="fg-line">
 									<input type="text" class="form-control input-sm" id="username" name="username" placeholder="Введите данные" value="<?php echo isset($_POST['username'])?$_POST['username']:'';?>" />
 								</div>
-								<div id="user.msg"></div>
 							</div>
 						</div>
 						
@@ -143,7 +140,6 @@
 								<div class="fg-line">
 									<input type="password" class="form-control input-sm" id="password" name="password" placeholder="Введите данные" value="<?php echo isset($_POST['password'])?$_POST['password']:'';?>" />
 								</div>
-								<div id="password.msg"></div>
 							</div>
 						</div>
 						
@@ -153,7 +149,6 @@
 								<div class="fg-line">
 									<input type="text" class="form-control input-sm" id="database" name="database" placeholder="Введите данные" value="<?php echo isset($_POST['database'])?$_POST['database']:'';?>" />
 								</div>
-								<div id="database.msg"></div>
 							</div>
 						</div>
 						
@@ -163,7 +158,6 @@
 								<div class="fg-line">
 									<input type="text" class="form-control input-sm" id="prefix" name="prefix" placeholder="Введите данные" value="<?php echo isset($_POST['prefix'])?$_POST['prefix']:'sb';?>" />
 								</div>
-								<div id="database.msg"></div>
 							</div>
 						</div>
 						
@@ -173,7 +167,6 @@
 								<div class="fg-line">
 									<input type="text" class="form-control input-sm" id="apikey" name="apikey" placeholder="Введите данные" value="<?php echo isset($_POST['apikey'])?$_POST['apikey']:'';?>" />
 								</div>
-								<div id="database.msg"></div>
 							</div>
 						</div>
 						
@@ -183,11 +176,10 @@
 								<div class="fg-line">
 									<input type="text" class="form-control input-sm" id="sb-wp-url" name="sb-wp-url" placeholder="Введите данные" value="<?php echo isset($_POST['sb-wp-url'])?$_POST['sb-wp-url']:TryAutodetectURL();?>" />
 								</div>
-								<div id="database.msg"></div>
 							</div>
 						</div>
 						<div class="p-10" align="center">
-							<button onclick="checkAccept()" class="btn btn-primary waves-effect" id="button" name="button">Далее</button>
+							<button type="submit" class="btn btn-primary" id="button" name="button">Далее</button>
 						</div>
 						<input type="hidden" name="postd" value="1">
 					</div>

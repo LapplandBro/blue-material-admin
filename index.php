@@ -34,63 +34,46 @@
 include_once 'init.php';
 
 // 301: дубли главной → canonical /
-// ВАЖНО: только для реальной GET-навигации. AJAX/xajax-запросы (автообновление
-// списка серверов и т.п.) идут в index.php?p=... — их нельзя редиректить, иначе
-// XHR получает всю главную вместо фрагмента и дублирует страницу в саму себя.
-// xajax 0.2.5 определяет запрос по параметру "xajax" (имя функции), метод POST/GET.
+// ВАЖНО: только для реальной GET-навигации. JSON AJAX (опрос серверов и т.п.)
+// идёт POST на index.php — его нельзя редиректить на ЧПУ.
+$sb_ctype = isset($_SERVER['CONTENT_TYPE']) ? $_SERVER['CONTENT_TYPE'] : '';
 $sb_is_ajax =
 	(isset($_SERVER['REQUEST_METHOD']) && strcasecmp($_SERVER['REQUEST_METHOD'], 'GET') !== 0)
-	|| isset($_POST['xajax']) || isset($_GET['xajax'])
-	|| isset($_POST['xajaxargs']) || isset($_GET['xajaxargs'])
+	|| isset($_POST['sb_ajax']) || isset($_GET['sb_ajax'])
+	|| stripos($sb_ctype, 'application/json') !== false
 	|| (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strcasecmp($_SERVER['HTTP_X_REQUESTED_WITH'], 'XMLHttpRequest') === 0);
 
 if (!$sb_is_ajax) {
-	// Только если клиент реально открыл /index.php (не rewrite /banlist → index.php).
-	// Caddy rewrite → /index.php?p=banlist → PHP 301 /banlist → снова rewrite = ERR_TOO_MANY_REDIRECTS.
-	// За reverse proxy (X-Forwarded-*) канонизацию отключаем: ЧПУ делает Apache внутренним rewrite.
 	$req_path = parse_url(isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '/', PHP_URL_PATH);
-	$asked_index = is_string($req_path) && (bool)preg_match('#/index\.php$#i', $req_path);
-	if (!$asked_index && !empty($_SERVER['THE_REQUEST']))
-		$asked_index = (bool)preg_match('#\s/+index\.php[\s?]#i', (string)$_SERVER['THE_REQUEST']);
-	if ($asked_index && !empty($_SERVER['REDIRECT_URL'])) {
-		$redir_path = parse_url((string)$_SERVER['REDIRECT_URL'], PHP_URL_PATH);
-		if (is_string($redir_path) && $redir_path !== '' && !preg_match('#/index\.php$#i', $redir_path))
-			$asked_index = false;
+	$home_base = rtrim(defined('SB_WP_URL') ? SB_WP_URL : '', '/');
+	if ($home_base === '') {
+		$home_base = ((defined('COOKIE_SECURE') && COOKIE_SECURE) ? 'https' : 'http') . '://' . (isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'localhost');
 	}
-	if ($asked_index && (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) || !empty($_SERVER['HTTP_X_FORWARDED_HOST'])))
-		$asked_index = false;
-	if ($asked_index) {
-		$query_string = isset($_SERVER['QUERY_STRING']) ? $_SERVER['QUERY_STRING'] : '';
-		parse_str($query_string, $qparams);
-		$page_param = isset($qparams['p']) ? preg_replace('/[^a-zA-Z0-9_]/', '', (string)$qparams['p']) : '';
-		unset($qparams['p']);
-		$home_base = rtrim(defined('SB_WP_URL') ? SB_WP_URL : '', '/');
-		if ($home_base === '') {
-			$home_base = ((defined('COOKIE_SECURE') && COOKIE_SECURE) ? 'https' : 'http') . '://' . (isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'localhost');
-		}
-		if (($page_param === '' || strcasecmp($page_param, 'home') === 0) && count($qparams) === 0) {
-			header('Location: ' . $home_base . '/', true, 301);
-			exit;
-		}
-		// index.php?p=banlist → /banlist (и /admin/bans для c=)
-		$pretty_pages = array(
-			'login', 'logout', 'admin', 'submit', 'banlist', 'commslist', 'servers',
-			'protest', 'account', 'lostpassword', 'login2fa', 'search_bans', 'search_comm',
-			'pay', 'adminlist',
-		);
-		if ($page_param !== '' && in_array($page_param, $pretty_pages, true)) {
-			$c = '';
-			if ($page_param === 'admin' && !empty($qparams['c'])) {
-				$c = preg_replace('/[^a-zA-Z0-9_]/', '', (string)$qparams['c']);
-				unset($qparams['c']);
+	// ЧПУ → query-string. Не новые rewrite-правила: если PHP уже видит /admin/bans или /banlist — уводим на index.php?p=.
+	if (is_string($req_path) && !preg_match('#/index\.php$#i', $req_path)) {
+		$q = $_GET;
+		$target = '';
+		if (preg_match('#/admin(?:/([a-zA-Z0-9_]+))?/?$#', $req_path, $am)) {
+			$c = isset($am[1]) ? $am[1] : '';
+			$pnow = isset($_GET['p']) ? (string)$_GET['p'] : '';
+			if ($pnow === 'admin' || ($pnow === '' && $c !== '') || ($pnow === '' && $c === '' && preg_match('#/admin/?$#', $req_path))) {
+				$q['p'] = 'admin';
+				if ($c !== '')
+					$q['c'] = $c;
+				$target = 'admin';
 			}
-			$path = ($page_param === 'admin' && $c !== '') ? ('/admin/' . $c) : ('/' . $page_param);
-			if (($page_param === 'banlist' || $page_param === 'commslist') && !empty($qparams['page']) && (int)$qparams['page'] > 1) {
-				$path .= '/' . (int)$qparams['page'];
-				unset($qparams['page']);
+		} elseif (preg_match('#/(banlist|commslist|servers|login|logout|submit|protest|account|lostpassword|login2fa|search_bans|search_comm|pay|adminlist)(?:/(\d+))?/?$#', $req_path, $pm)) {
+			$pname = $pm[1];
+			$pnow = isset($_GET['p']) ? (string)$_GET['p'] : '';
+			if ($pnow === $pname || $pnow === '') {
+				$q['p'] = $pname;
+				if (($pname === 'banlist' || $pname === 'commslist') && !empty($pm[2]) && (int)$pm[2] > 1)
+					$q['page'] = (int)$pm[2];
+				$target = $pname;
 			}
-			$qs = http_build_query($qparams);
-			header('Location: ' . $home_base . $path . ($qs !== '' ? ('?' . $qs) : ''), true, 301);
+		}
+		if ($target !== '') {
+			header('Location: ' . $home_base . '/index.php?' . http_build_query($q), true, 302);
 			exit;
 		}
 	}

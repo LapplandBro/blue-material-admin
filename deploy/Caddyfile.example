@@ -8,6 +8,10 @@
 example.com, www.example.com {
 	encode gzip zstd
 
+	# Дубль .htaccess: при file_server или не-Apache бэкенде эти пути не должны отдаваться.
+	@blocked path /.git /.git/* /config.php /data/* /cache/* /includes/* /install/* /demos/* /sb_debug_connection.php /remove_setup.php
+	respond @blocked 403
+
 	reverse_proxy 127.0.0.1:5987 {
 		header_up Host {host}
 		header_up X-Forwarded-Proto {scheme}

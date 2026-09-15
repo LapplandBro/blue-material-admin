@@ -135,9 +135,9 @@ $theme->assign('theme_css', $theme_css);
 $theme->assign('theme_color_attr', $theme_color_attr);
 $theme->assign('def_ch_chenger',  $def_ch);
 $theme->assign('def_body_chenger',  $def_body);
-$theme->assign('xajax_functions',  $xajax->printJavascript("scripts", "xajax.js"));
+$theme->assign('xajax_functions',  $xajax->printJavascript("scripts", "sb-api.js"));
 $theme->assign('sb_csrf', function_exists('sb_csrf_token') ? sb_csrf_token() : '');
-// Шапка Material Admin | SourceBans — путь логотипа в настройках заблокирован.
+// Шапка Blue Admin | название сайта — путь логотипа в настройках заблокирован.
 $logo = 'images/icons/logo-material-admin.svg';
 $theme->assign('header_logo', $logo);
 $theme->assign('header_title', $GLOBALS['config']['template.title']);
@@ -218,13 +218,31 @@ if ($seo_page_label !== '' && $seo_page !== 'home') {
 	if ($seo_strlen($seo_document_title) > 60)
 		$seo_document_title = $seo_substr($seo_document_title, 0, 57) . '…';
 } else {
-	$seo_document_title = $seo_title;
+	// Главная: короткий template.title (часто < 35) — добиваем SEO/OG title или слоганом
+	$homeOgTitle = '';
+	if (function_exists('sb_seo_cfg') && sb_seo_cfg('seo.og_title') !== '')
+		$homeOgTitle = sb_seo_cfg('seo.og_title');
+	elseif (defined('SB_OG_TITLE') && SB_OG_TITLE !== '')
+		$homeOgTitle = (string)SB_OG_TITLE;
+	if ($homeOgTitle !== '' && $seo_strlen($homeOgTitle) >= 35)
+		$seo_document_title = $homeOgTitle;
+	elseif ($seo_strlen($seo_title) < 35)
+		$seo_document_title = $seo_title . ' — серверы, банлист и админы';
+	else
+		$seo_document_title = $seo_title;
 	if ($seo_strlen($seo_document_title) > 60)
 		$seo_document_title = $seo_substr($seo_document_title, 0, 57) . '…';
 }
 
-// Описание: сначала per-page, иначе короткий текст из настроек (не dash.intro.text).
+// Описание: сначала per-page, иначе seo.meta_description / og, иначе короткие тексты настроек.
 $seo_description = isset($seo_page_meta[$seo_page]['desc']) ? $seo_page_meta[$seo_page]['desc'] : '';
+if ($seo_description === '') {
+	$seo_bundle_early = function_exists('sb_seo_og_bundle')
+		? sb_seo_og_bundle($seo_brand)
+		: null;
+	if (is_array($seo_bundle_early) && !empty($seo_bundle_early['meta_description']))
+		$seo_description = $seo_bundle_early['meta_description'];
+}
 if ($seo_description === '') {
 	$seo_desc_src = '';
 	if (!empty($GLOBALS['config']['config.text_home']))
@@ -239,14 +257,14 @@ if ($seo_description === '' || $seo_strlen($seo_description) < 50)
 if ($seo_strlen($seo_description) > 155)
 	$seo_description = $seo_substr($seo_description, 0, 152) . '…';
 
-// Canonical: ЧПУ (/banlist, /admin/bans), главная без хвоста.
+// Canonical: query-string URL; главная без хвоста.
 $seo_c = (isset($_GET['c']) ? preg_replace('/[^a-zA-Z0-9_]/', '', (string)$_GET['c']) : '');
 if ($seo_page === 'home')
 	$seo_canonical = $site_base . '/';
 elseif ($seo_page === 'admin' && $seo_c !== '')
-	$seo_canonical = $site_base . '/admin/' . rawurlencode($seo_c);
+	$seo_canonical = $site_base . '/index.php?p=admin&c=' . urlencode($seo_c);
 elseif ($seo_page !== '')
-	$seo_canonical = $site_base . '/' . rawurlencode($seo_page);
+	$seo_canonical = $site_base . '/index.php?p=' . urlencode($seo_page);
 else
 	$seo_canonical = $site_base . '/';
 
@@ -254,19 +272,27 @@ else
 $base_href = $site_base . '/';
 $theme->assign('base_href', $base_href);
 
-// --- Social embed (Discord/Telegram/etc.): отдельно от dashboard UI ---
-$og_site_name = (defined('SB_OG_SITE_NAME') && SB_OG_SITE_NAME !== '')
-	? SB_OG_SITE_NAME
-	: $seo_brand;
-$og_title = (defined('SB_OG_TITLE') && SB_OG_TITLE !== '')
-	? SB_OG_TITLE
-	: ($seo_page === 'home' ? ($og_site_name . ' — SourceBans') : $seo_document_title);
-$og_description = (defined('SB_OG_DESCRIPTION') && SB_OG_DESCRIPTION !== '')
-	? SB_OG_DESCRIPTION
-	: $seo_description;
+// --- Social embed (Discord/Telegram/etc.): DB seo.* → SB_OG_* → эвристики ---
+$seo_og = function_exists('sb_seo_og_bundle')
+	? sb_seo_og_bundle($seo_brand)
+	: array(
+		'og_site_name' => (defined('SB_OG_SITE_NAME') && SB_OG_SITE_NAME !== '') ? SB_OG_SITE_NAME : $seo_brand,
+		'og_title' => (defined('SB_OG_TITLE') && SB_OG_TITLE !== '') ? SB_OG_TITLE : '',
+		'og_description' => (defined('SB_OG_DESCRIPTION') && SB_OG_DESCRIPTION !== '') ? SB_OG_DESCRIPTION : $seo_description,
+		'og_image' => (defined('SB_OG_IMAGE') && SB_OG_IMAGE !== '') ? trim((string)SB_OG_IMAGE) : 'images/og-cover.jpg',
+		'og_image_width' => (defined('SB_OG_IMAGE_WIDTH') && (int)SB_OG_IMAGE_WIDTH > 0) ? (int)SB_OG_IMAGE_WIDTH : 1200,
+		'og_image_height' => (defined('SB_OG_IMAGE_HEIGHT') && (int)SB_OG_IMAGE_HEIGHT > 0) ? (int)SB_OG_IMAGE_HEIGHT : 630,
+		'site_base' => $site_base,
+	);
 
-$og_image = (defined('SB_OG_IMAGE') && SB_OG_IMAGE !== '') ? trim((string)SB_OG_IMAGE) : '';
-	if ($og_image === '')
+$og_site_name = $seo_og['og_site_name'];
+$og_title = ($seo_og['og_title'] !== '')
+	? $seo_og['og_title']
+	: ($seo_page === 'home' ? ($og_site_name . ' — SourceBans') : $seo_document_title);
+$og_description = ($seo_og['og_description'] !== '') ? $seo_og['og_description'] : $seo_description;
+
+$og_image = isset($seo_og['og_image']) ? trim((string)$seo_og['og_image']) : '';
+if ($og_image === '')
 	$og_image = 'images/og-cover.jpg';
 if (!preg_match('#^https?://#i', $og_image))
 	$og_image = $site_base . '/' . ltrim($og_image, '/');
@@ -279,8 +305,8 @@ if ($og_image_mtime <= 0)
 	$og_image_mtime = time();
 $og_image .= (strpos($og_image, '?') === false ? '?' : '&') . 'v=' . $og_image_mtime;
 
-$og_image_width = (defined('SB_OG_IMAGE_WIDTH') && (int)SB_OG_IMAGE_WIDTH > 0) ? (int)SB_OG_IMAGE_WIDTH : 1200;
-$og_image_height = (defined('SB_OG_IMAGE_HEIGHT') && (int)SB_OG_IMAGE_HEIGHT > 0) ? (int)SB_OG_IMAGE_HEIGHT : 630;
+$og_image_width = !empty($seo_og['og_image_width']) ? (int)$seo_og['og_image_width'] : 1200;
+$og_image_height = !empty($seo_og['og_image_height']) ? (int)$seo_og['og_image_height'] : 630;
 $og_image_type = 'image/png';
 if (preg_match('/\.(jpe?g)(?:\?|$)/i', $og_image))
 	$og_image_type = 'image/jpeg';
@@ -342,13 +368,13 @@ $seo_jsonld = array(
 		)
 	)
 );
-$theme->assign('seo_jsonld', json_encode($seo_jsonld, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+$theme->assign('seo_jsonld', json_encode($seo_jsonld, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT));
 
 // Cache-busting для собственных CSS темы (иначе правки видны только через 7 дней кэша).
 // Берём максимум mtime по всем нашим CSS — правка ЛЮБОГО файла сбрасывает кэш.
-$css_dir = dirname(__FILE__) . '/../themes/new_box/css/';
+$css_dir = dirname(__FILE__) . '/../themes/blue_v2/css/';
 $css_ver = 0;
-foreach (array('dark-blue-theme.css', 'css_sup.css', 'rules.css') as $css_file) {
+foreach (array('blue.css', 'forms.css', 'dashboard.css') as $css_file) {
 	$mt = @filemtime($css_dir . $css_file);
 	if ($mt !== false && $mt > $css_ver) {
 		$css_ver = $mt;
@@ -362,5 +388,3 @@ $theme->assign('asset_ver', $css_ver);
 // Cache-bust scripts/sourcebans.js (иначе прод годами крутит старый файл без sbSetChecked).
 $sb_js_mt = @filemtime(dirname(__FILE__) . '/../scripts/sourcebans.js');
 $theme->assign('sb_js_ver', ($sb_js_mt !== false) ? $sb_js_mt : $css_ver);
-
-$theme->display('page_header.tpl');

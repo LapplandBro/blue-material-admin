@@ -138,7 +138,7 @@ function sb_totp_verify($secret_b32, $code, $window = 1)
 	return false;
 }
 
-function sb_totp_otpauth_uri($secret_b32, $account, $issuer = 'SourceBans')
+function sb_totp_otpauth_uri($secret_b32, $account, $issuer = 'Blue Admin 2FA')
 {
 	$issuer = (string)$issuer;
 	$account = (string)$account;
@@ -326,7 +326,5 @@ function sb_totp_secret_for_aid($aid)
 
 function sb_totp_issuer()
 {
-	if (!empty($GLOBALS['config']['template.title']))
-		return preg_replace('/[^\p{L}\p{N}\s._-]/u', '', (string)$GLOBALS['config']['template.title']) ?: 'SourceBans';
-	return 'SourceBans';
+	return 'Blue Admin 2FA';
 }

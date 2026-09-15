@@ -1,0 +1,9 @@
+<div class="dash-extra">
+  <div class="dash-extra-copy">
+    <div class="dash-prose">
+      {% if dashboard_info_block_text %}{{ dashboard_info_block_text|raw }}{% else %}<p class="dash-empty">Информация пока не задана.</p>{% endif %}
+    </div>
+    {% if dashboard_info_block_text_p %}<p class="dash-intro-foot">{{ dashboard_info_block_text_p|raw }}</p>{% endif %}
+  </div>
+  {% include 'partials/social_links.twig' %}
+</div>

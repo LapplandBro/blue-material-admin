@@ -1,8 +1,12 @@
 //MooTools, My Object Oriented Javascript Tools. Copyright (c) 2006 Valerio Proietti, <http://mad4milk.net>, MIT Style License.
 
 var MooTools = {
-	version: '1.2dev'
+	version: '1.2dev-sb2'
 };
+
+function $poisonKey(key){
+	return key === '__proto__' || key === 'constructor' || key === 'prototype';
+}
 
 function $defined(obj){
 	return (obj != undefined);
@@ -36,6 +40,7 @@ function $merge(){
 	var mix = {};
 	for (var i = 0; i < arguments.length; i++){
 		for (var property in arguments[i]){
+			if ($poisonKey(property)) continue;
 			var ap = arguments[i][property];
 			var mp = mix[property];
 			if (mp && $type(ap) == 'object' && $type(mp) == 'object') mix[property] = $merge(mp, ap);
@@ -48,7 +53,10 @@ function $merge(){
 var $extend = function(){
 	var args = arguments;
 	if (!args[1]) args = [this, args[0]];
-	for (var property in args[1]) args[0][property] = args[1][property];
+	for (var property in args[1]){
+		if ($poisonKey(property)) continue;
+		args[0][property] = args[1][property];
+	}
 	return args[0];
 };
 
@@ -388,15 +396,49 @@ String.extend({
 		return (hex) ? hex.slice(1).hexToRgb(array) : false;
 	},
 
-	contains: function(string, s){
-		return (s) ? (s + this + s).indexOf(s + string + s) > -1 : this.indexOf(string) > -1;
-	},
-
 	escapeRegExp: function(){
 		return this.replace(/([.*+?^${}()|[\]\/\\])/g, '\\$1');
+	},
+
+	parseQueryString: function(){
+		var str = String(this);
+		if (str.charAt(0) === '?') str = str.substr(1);
+		if (str.length > 8192) str = str.substr(0, 8192);
+		var object = {};
+		if (!str) return object;
+		var parts = str.split('&');
+		if (parts.length > 512) parts.length = 512;
+		var i, eq, key, val;
+		for (i = 0; i < parts.length; i++){
+			if (!parts[i]) continue;
+			eq = parts[i].indexOf('=');
+			key = eq === -1 ? parts[i] : parts[i].substr(0, eq);
+			val = eq === -1 ? '' : parts[i].substr(eq + 1);
+			try { key = decodeURIComponent(key.replace(/\+/g, ' ')); } catch (err) {}
+			try { val = decodeURIComponent(val.replace(/\+/g, ' ')); } catch (err2) {}
+			if ($poisonKey(key) || key.indexOf('__proto__') !== -1) continue;
+			if (Object.prototype.hasOwnProperty.call(object, key)){
+				if ($type(object[key]) != 'array') object[key] = [object[key]];
+				object[key].push(val);
+			} else {
+				object[key] = val;
+			}
+		}
+		return object;
 	}
 
 });
+
+String.prototype.contains = function(string, separator){
+	string = (string == null) ? '' : String(string);
+	if (separator == null || separator === '')
+		return String.prototype.indexOf.call(this, string) !== -1;
+	if (typeof separator === 'number')
+		return String.prototype.indexOf.call(this, string, separator) !== -1;
+	separator = String(separator);
+	return (separator + this + separator).indexOf(separator + string + separator) !== -1;
+};
+if (!String.contains) String.contains = $native.generic('contains');
 
 Array.extend({
 
@@ -461,10 +503,6 @@ Function.extend({
 		return this.create({'arguments': args, 'bind': bind, 'attempt': true})();
 	},
 
-	bind: function(bind, args){
-		return this.create({'bind': bind, 'arguments': args});
-	},
-
 	bindAsEventListener: function(bind, args){
 		return this.create({'bind': bind, 'event': true, 'arguments': args});
 	},
@@ -478,6 +516,25 @@ Function.extend({
 	}
 
 });
+
+(function(){
+	var nativeBind = Function.prototype.bind;
+	Function.prototype.bind = function(that){
+		var n = arguments.length;
+		if (n <= 1){
+			if (nativeBind) return nativeBind.call(this, that);
+			return this.create({'bind': that});
+		}
+		if (n === 2 && $type(arguments[1]) == 'array')
+			return this.create({'bind': that, 'arguments': arguments[1]});
+		if (nativeBind)
+			return nativeBind.apply(this, arguments);
+		var rest = [];
+		for (var i = 1; i < n; i++) rest.push(arguments[i]);
+		return this.create({'bind': that, 'arguments': rest});
+	};
+	if (!Function.bind) Function.bind = $native.generic('bind');
+})();
 
 Number.extend({
 
@@ -858,6 +915,7 @@ Element.extend({
 	},
 
 	setProperty: function(property, value){
+		if (Element.isURIProperty(property) && Element.unsafeURI(value)) return this;
 		var index = Element.Properties[property];
 		if (index) this[index] = value;
 		else this.setAttribute(property, value);
@@ -929,6 +987,29 @@ Element.PropertiesIFlag = {
 	'href': 2, 'src': 2
 };
 
+// Attributes the browser will navigate to or fetch. Only these get scheme
+// filtering; event-handler attributes such as onclick are deliberately left
+// alone because contextMenoo.js and the admin templates build markup with them.
+Element.URIProperties = {
+	'href': 1, 'src': 1, 'action': 1, 'formaction': 1,
+	'background': 1, 'poster': 1, 'data': 1, 'xlink:href': 1
+};
+
+Element.isURIProperty = function(property){
+	return Object.prototype.hasOwnProperty.call(Element.URIProperties, String(property).toLowerCase());
+};
+
+Element.unsafeURI = function(value){
+	if (typeof value != 'string') return false;
+	// Browsers ignore control characters and whitespace while sniffing the
+	// scheme, so strip them before matching (e.g. "java\tscript:alert(1)").
+	var probe = value.replace(/[\x00-\x20\u00a0\u1680\u180e\u2000-\u200d\u2028\u2029\u202f\u205f\u3000\ufeff]/g, '').toLowerCase();
+	// data: is only blocked for the script-capable media types; data:image/png
+	// and friends stay usable.
+	return (/^(?:javascript|vbscript|livescript|mocha):/).test(probe) ||
+		(/^data:(?:text\/html|image\/svg)/).test(probe);
+};
+
 Element.Methods = {
 	Listeners: {
 		addListener: function(type, fn){
@@ -985,7 +1066,7 @@ window.addListener('beforeunload', function(){
 	if (window.ie) window.addListener('unload', CollectGarbage);
 });
 
-var Event = new Class({
+var DOMEvent = new Class({
 
 	initialize: function(event){
 		if (event && event.$extended) return event;
@@ -1003,8 +1084,8 @@ var Event = new Class({
 			this.wheel = (event.wheelDelta) ? event.wheelDelta / 120 : -(event.detail || 0) / 3;
 		} else if (this.type.contains('key')){
 			this.code = event.which || event.keyCode;
-			for (var name in Event.keys){
-				if (Event.keys[name] == this.code){
+			for (var name in DOMEvent.keys){
+				if (DOMEvent.keys[name] == this.code){
 					this.key = name;
 					break;
 				}
@@ -1051,21 +1132,21 @@ var Event = new Class({
 
 });
 
-Event.fix = {
+DOMEvent.fix = {
 
 	relatedTarget: function(){
 		if (this.relatedTarget && this.relatedTarget.nodeType == 3) this.relatedTarget = this.relatedTarget.parentNode;
 	},
 
 	relatedTargetGecko: function(){
-		try {Event.fix.relatedTarget.call(this);} catch(e){this.relatedTarget = this.target;}
+		try {DOMEvent.fix.relatedTarget.call(this);} catch(e){this.relatedTarget = this.target;}
 	}
 
 };
 
-Event.prototype.fixRelatedTarget = (window.gecko) ? Event.fix.relatedTargetGecko : Event.fix.relatedTarget;
+DOMEvent.prototype.fixRelatedTarget = (window.gecko) ? DOMEvent.fix.relatedTargetGecko : DOMEvent.fix.relatedTarget;
 
-Event.keys = new Abstract({
+DOMEvent.keys = new Abstract({
 	'enter': 13,
 	'up': 38,
 	'down': 40,
@@ -1077,6 +1158,8 @@ Event.keys = new Abstract({
 	'tab': 9,
 	'delete': 46
 });
+
+window.DOMEvent = DOMEvent;
 
 Element.Methods.Events = {
 
@@ -1161,7 +1244,7 @@ Element.Events = new Abstract({
 	'mouseenter': {
 		type: 'mouseover',
 		map: function(event){
-			event = new Event(event);
+			event = new DOMEvent(event);
 			if (event.relatedTarget != this && !this.hasChild(event.relatedTarget)) this.fireEvent('mouseenter', event);
 		}
 	},
@@ -1169,7 +1252,7 @@ Element.Events = new Abstract({
 	'mouseleave': {
 		type: 'mouseout',
 		map: function(event){
-			event = new Event(event);
+			event = new DOMEvent(event);
 			if (event.relatedTarget != this && !this.hasChild(event.relatedTarget)) this.fireEvent('mouseleave', event);
 		}
 	},
@@ -1193,7 +1276,7 @@ Element.NativeEvents = [
 Function.extend({
 
 	bindWithEvent: function(bind, args){
-		return this.create({'bind': bind, 'arguments': args, 'event': Event});
+		return this.create({'bind': bind, 'arguments': args, 'event': DOMEvent});
 	}
 
 });
@@ -1250,25 +1333,26 @@ function $ES(selector, filter){
 
 $$.shared = {
 
-	'regexp': /^(\w*|\*)(?:#([\w-]+)|\.([\w-]+))?(?:\[(\w+)(?:([!*^$]?=)["']?([^"'\]]*)["']?)?])?$/,
+	'regexp': /^(\w{0,64}|\*)(?:#([\w-]{1,64})|\.([\w-]{1,64}))?(?:\[(\w{1,64})(?:([!*^$]?=)["']?([^"'\]]{0,256})["']?)?])?$/,
 
 	'xpath': {
 
 		getParam: function(items, context, param, i){
 			var temp = [context.namespaceURI ? 'xhtml:' : '', param[1]];
-			if (param[2]) temp.push('[@id="', param[2], '"]');
-			if (param[3]) temp.push('[contains(concat(" ", @class, " "), " ', param[3], ' ")]');
+			function xp(s){ return String(s || '').replace(/"/g, ''); }
+			if (param[2]) temp.push('[@id="', xp(param[2]), '"]');
+			if (param[3]) temp.push('[contains(concat(" ", @class, " "), " ', xp(param[3]), ' ")]');
 			if (param[4]){
 				if (param[5] && param[6]){
 					switch(param[5]){
-						case '*=': temp.push('[contains(@', param[4], ', "', param[6], '")]'); break;
-						case '^=': temp.push('[starts-with(@', param[4], ', "', param[6], '")]'); break;
-						case '$=': temp.push('[substring(@', param[4], ', string-length(@', param[4], ') - ', param[6].length, ' + 1) = "', param[6], '"]'); break;
-						case '=': temp.push('[@', param[4], '="', param[6], '"]'); break;
-						case '!=': temp.push('[@', param[4], '!="', param[6], '"]');
+						case '*=': temp.push('[contains(@', xp(param[4]), ', "', xp(param[6]), '")]'); break;
+						case '^=': temp.push('[starts-with(@', xp(param[4]), ', "', xp(param[6]), '")]'); break;
+						case '$=': temp.push('[substring(@', xp(param[4]), ', string-length(@', xp(param[4]), ') - ', xp(param[6]).length, ' + 1) = "', xp(param[6]), '"]'); break;
+						case '=': temp.push('[@', xp(param[4]), '="', xp(param[6]), '"]'); break;
+						case '!=': temp.push('[@', xp(param[4]), '!="', xp(param[6]), '"]');
 					}
 				} else {
-					temp.push('[@', param[4], ']');
+					temp.push('[@', xp(param[4]), ']');
 				}
 			}
 			items.push(temp.join(''));
@@ -1327,10 +1411,16 @@ $$.shared.method = (window.xpath) ? 'xpath' : 'normal';
 Element.Methods.Dom = {
 
 	getElements: function(selector, nocash){
+		var empty = (nocash) ? [] : new Elements([]);
+		if (selector == null) return empty;
+		selector = String(selector);
+		if (selector.length > 256) return empty;
 		var items = [];
 		selector = selector.trim().split(' ');
+		if (selector.length > 16) return empty;
 		for (var i = 0, j = selector.length; i < j; i++){
 			var sel = selector[i];
+			if (!sel || sel.length > 128) break;
 			var param = sel.match($$.shared.regexp);
 			if (!param) break;
 			param[1] = param[1] || '*';
@@ -1346,8 +1436,13 @@ Element.Methods.Dom = {
 	},
 
 	getElementsBySelector: function(selector, nocash){
+		var empty = (nocash) ? [] : new Elements([]);
+		if (selector == null) return empty;
+		selector = String(selector);
+		if (selector.length > 256) return empty;
 		var elements = [];
 		selector = selector.split(',');
+		if (selector.length > 16) selector.length = 16;
 		for (var i = 0, j = selector.length; i < j; i++) elements = elements.concat(this.getElements(selector[i], true));
 		return (nocash) ? elements : $$.unique(elements);
 	}
@@ -2381,7 +2476,11 @@ var Ajax = XHR.extend({
 		return this.send(this.url, data);
 	},
 
+	// Running script bodies out of an XHR response is a remote-code-execution
+	// sink and nothing in this app needs it, so the per-request options alone
+	// are not enough: Ajax.allowScriptEval has to be flipped by hand as well.
 	evalScripts: function(){
+		if (Ajax.allowScriptEval !== true) return;
 		var script, scripts;
 		if (this.options.evalResponse || (/(ecma|java)script/).test(this.getHeader('Content-type'))) scripts = this.response.text;
 		else {
@@ -2390,7 +2489,7 @@ var Ajax = XHR.extend({
 			while ((script = regexp.exec(this.response.text))) scripts.push(script[1]);
 			scripts = scripts.join('\n');
 		}
-		if (scripts) (window.execScript) ? window.execScript(scripts) : eval.call(window, scripts);
+		if (scripts) (new Function(scripts)).call(window);
 	},
 
 	getHeader: function(name){
@@ -2399,6 +2498,8 @@ var Ajax = XHR.extend({
 	}
 
 });
+
+Ajax.allowScriptEval = false;
 
 Object.toQueryString = function(source){
 	var queryString = [];
@@ -2423,11 +2524,18 @@ var Cookie = new Abstract({
 		secure: false
 	},
 
+	// Attribute separators must never survive into a cookie name/domain/path,
+	// otherwise a crafted key can forge `; domain=` or `; secure` segments.
+	sanitize: function(str){
+		return String(str).replace(/[;,=\s\x00-\x1f\x7f]/g, '');
+	},
+
 	set: function(key, value, options){
 		options = $merge(this.options, options);
+		key = encodeURIComponent(key);
 		value = encodeURIComponent(value);
-		if (options.domain) value += '; domain=' + options.domain;
-		if (options.path) value += '; path=' + options.path;
+		if (options.domain) value += '; domain=' + this.sanitize(options.domain);
+		if (options.path) value += '; path=' + this.sanitize(options.path);
 		if (options.duration){
 			var date = new Date();
 			date.setTime(date.getTime() + options.duration * 24 * 60 * 60 * 1000);
@@ -2439,8 +2547,9 @@ var Cookie = new Abstract({
 	},
 
 	get: function(key){
-		var value = document.cookie.match('(?:^|;)\\s*' + key.escapeRegExp() + '=([^;]*)');
-		return value ? decodeURIComponent(value[1]) : false;
+		var value = document.cookie.match('(?:^|;)\\s*' + encodeURIComponent(key).escapeRegExp() + '=([^;]*)');
+		if (!value) return false;
+		try { return decodeURIComponent(value[1]); } catch (e){ return false; }
 	},
 
 	remove: function(cookie, options){
@@ -2470,9 +2579,24 @@ var Json = {
 		return String(obj);
 	},
 
+	// `secure` is accepted for call-site compatibility but is no longer able to
+	// weaken the parse: the eval fallback always validates against JSON grammar.
 	evaluate: function(str, secure){
-		return (($type(str) != 'string') || (secure && !str.test(/^("(\\.|[^"\\\n\r])*?"|[,:{}\[\]0-9.\-+Eaeflnr-u \n\r\t])+?$/))) ? null : eval('(' + str + ')');
-	}
+		if ($type(str) != 'string' || str === '') return null;
+		if (window.JSON && typeof JSON.parse === 'function'){
+			try { return JSON.parse(str); } catch (err) { return null; }
+		}
+		// Last-ditch path for engines with no native JSON (pre-IE8). Length is
+		// capped so the grammar test cannot be used as a CPU sink.
+		if (str.length > Json.maxEvalLength) return null;
+		var probe = str.replace(/\\(?:["\\\/bfnrt]|u[0-9a-fA-F]{4})/g, '@')
+			.replace(/"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g, ']')
+			.replace(/(?:^|:|,)(?:\s*\[)+/g, '');
+		if (!(/^[\],:{}\s]*$/).test(probe)) return null;
+		try { return eval('(' + str + ')'); } catch (err2) { return null; }
+	},
+
+	maxEvalLength: 1048576
 
 };
 
@@ -2579,6 +2703,7 @@ var Hash = new Class({
 	},
 
 	set: function(key, value){
+		if ($poisonKey(key)) return this;
 		if (!this.hasKey(key)) this.length++;
 		this.obj[key] = value;
 		return this;

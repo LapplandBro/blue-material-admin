@@ -29,4 +29,3 @@ global $theme;
 if(!defined("IN_SB")){echo "Ошибка доступа!";die();}
 $theme->assign('active', (bool)$tabs['active']);
 $theme->assign('tab_link', CreateLinkR($tabs['title'], $tabs['url'], $tabs['desc'], (($tabs['newtab'])?"_blank":"_self")));
-$theme->display('tab.tpl');

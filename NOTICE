@@ -1,61 +1,71 @@
-Blue Material Admin — licensing notice
-======================================
+Blue Material Admin — licensing and attribution
+===============================================
 
-This project is a fork of SourceBans++ with an inherited Material Admin–style UI.
-Licenses are layered. Do not treat the whole tree as a single “pure GPL” product
-until the legacy theme layer is replaced (see docs/THEME_MIGRATION.md).
+SPDX-License-Identifier: GPL-3.0-or-later
+
+This repository is an **independent fork**. It is not affiliated with,
+endorsed by, or a drop-in continuation of other SourceBans / Material Admin
+builds. Development here follows its own roadmap.
+
+The full GNU GPLv3 text is in LICENSE.
 
 
-1) Application code (PHP logic, installer, most of pages/, includes/)
---------------------------------------------------------------------
+1) Application code (PHP, installer, pages/, includes/, scripts/)
+-----------------------------------------------------------------
 License: GNU General Public License v3.0 or later
 File:    LICENSE
 
-Upstream:
-  - SourceBans++ — GPLv3 (https://github.com/sbpp/sourcebans-pp)
-  - Original SourceBans lineage — see file headers / upstream history
+This is a derivative of **SourceBans** / **SourceBans++** (GPLv3):
 
-This is what GitHub SPDX detection refers to when it shows GPL-3.0.
+  - SourceBans (GameConnect) — https://github.com/GameConnect/sourcebansv1
+  - SourceBans++ — https://github.com/sbpp/sourcebans-pp
+    https://sbpp.github.io/
 
-
-2) UI theme shell (themes/new_box — excluding third-party vendors/)
-------------------------------------------------------------------
-Status: DERIVATIVE / LEGACY — not cleared as pure GPLv3
-
-The template structure, compiled CSS (app.min.*), layout JS (functions.js),
-and Material Design–style markup (fg-line, zmdi, waves, card layouts, etc.)
-descend from Material Admin–class admin templates and SourceBans Material /
-IceMan TF2 theme adaptations.
-
-There is no separate clean SPDX grant for that shell inside this repo.
-Visual re-skinning (colors, logo, dark theme) does NOT remove that provenance.
-
-Until themes/new_box is rewritten (THEME_MIGRATION.md):
-  - Do not claim the UI shell is MIT or “your exclusive commercial IP”.
-  - Commercial redistribution / “sell the panel as a product” with this theme
-    is at your own legal risk.
-  - Prefer replacing the theme before packaging a paid/commercial offering.
+File headers that say “This file is part of SourceBans++” remain valid:
+the program is still SourceBans lineage under GPLv3. This fork’s
+maintainer is Lappland (https://github.com/LapplandBro).
 
 
-3) Third-party libraries (examples)
------------------------------------
-  - Bootstrap 3, jQuery, Waves, many vendors under themes/new_box/vendors/
-      → typically MIT (see each package)
-  - ADOdb → BSD-3-Clause / LGPL-2.1 (includes/adodb)
-  - SourceQuery → LGPL-2.1 (includes/SourceQuery)
-  - Smarty 2.x → LGPL-2.1 (includes/smarty)
+2) UI idea (not the old theme files)
+------------------------------------
+The **look-and-feel idea** of a Material-style SourceBans panel comes from
+the public HLMod thread (tribute to that work):
 
-Always keep their original license files.
+  https://hlmod.net/threads/alpha-material-admin-refork-na-osnove-sb-1-5-4-7-bootstrap-3.36382/
+
+Related ecosystem (not this repo’s owners):
+
+  - Kruzya (CrazyHackGUT) — https://github.com/CrazyHackGUT
+    HLMod profile — https://hlmod.net/members/kruzya.72654/
+  - SB-MaterialAdmin — https://github.com/SB-MaterialAdmin
+
+Those projects are **separate**. This fork does not ship their ThemeForest /
+CC BY-NC-SA layout CSS. The live shell is original Blue V2 (see §3).
 
 
-4) Branding note
-----------------
-“Material Admin” in titles/footer is a product brand name used by this fork.
-It does not by itself grant rights to ThemeForest / upstream theme authors.
+3) UI shell (themes/blue_v2 — excluding vendor/)
+------------------------------------------------
+License: GNU GPLv3 together with the application
+See:     themes/blue_v2/NOTICE
+
+Twig templates and CSS are original to this fork (Bootstrap 5.3).
+This is the only theme the panel ships.
 
 
-5) Contact / intent
--------------------
-Goal: keep application code under GPLv3 and replace the legacy UI shell with
-an original (or clearly MIT/Apache-licensed) front-end so the distribution
-can be honestly described as GPLv3 + standard OSS dependencies only.
+4) Third-party libraries
+------------------------
+  - Bootstrap 5.3, Bootstrap Icons — MIT (themes/blue_v2/vendor/)
+  - SweetAlert 1 — MIT
+  - TinyMCE 7 — GPL-2.0-or-later
+  - Twig — BSD-3-Clause
+  - ADOdb — BSD-3-Clause / LGPL-2.1
+  - SourceQuery — LGPL-2.1
+
+Keep each package’s own license files.
+
+
+5) Branding
+-----------
+“BLUE ADMIN” / “Blue Material Admin” is this fork’s branding. It does not
+grant rights to third-party theme marketplaces or other Material Admin
+products. Site titles/logos in config remain the operator’s.

@@ -59,7 +59,6 @@ function sb_install_ensure_dirs()
 	$base = dirname(ROOT);
 	$dirs = array(
 		$base . '/demos',
-		$base . '/themes_c',
 		$base . '/images/games',
 		$base . '/images/maps',
 		$base . '/images/icons',

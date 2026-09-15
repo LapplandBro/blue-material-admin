@@ -23,22 +23,23 @@ class CErrorHandler {
     }
     
     private function DrawErrorMessage($message, $function = null, $title = "Ошибка системы") {
-        global $theme;
         $this->CloseOutputBuffer(false);
-        
-        $theme->assign('title', $title);
-        $theme->assign('message', $message);
+
+        if (!headers_sent())
+            header('Content-Type: text/html; charset=utf-8');
+        echo '<!DOCTYPE html><html lang="ru"><head><meta charset="utf-8"><title>'
+            . htmlspecialchars($title, ENT_QUOTES, 'UTF-8') . '</title></head><body>';
+        echo '<h1>' . htmlspecialchars($title, ENT_QUOTES, 'UTF-8') . '</h1>';
+        echo '<pre style="white-space:pre-wrap;">' . htmlspecialchars((string)$message, ENT_QUOTES, 'UTF-8') . '</pre>';
         if ($function)
-            $theme->assign('pfunction', str_replace("\n", "<br />", $function));
-        else
-            $theme->assign('pfunction', false);
-        $theme->assign('SB_ADDRESS', SB_WP_URL);
-        $theme->display('page_error.tpl');
+            echo '<p>' . str_replace("\n", "<br />", htmlspecialchars((string)$function, ENT_QUOTES, 'UTF-8')) . '</p>';
+        echo '<p><a href="index.php?p=admin">Админка</a> · <a href="index.php">На главную</a></p>';
+        echo '</body></html>';
     }
     
     public function BasicErrorCatcher($errno, $errstr, $errfile, $errline) {
         // set_error_handler получает ВСЕ уровни, даже если error_reporting их маскирует.
-        // Deprecated/Strict от Smarty 2.x на PHP 8.2+ не показываем и не логируем.
+        // Deprecated/Strict от легаси-кода на PHP 8.2+ не показываем и не логируем.
         if ($errno === E_DEPRECATED || $errno === E_USER_DEPRECATED || $errno === E_STRICT || $errno === E_NOTICE)
             return true;
 
@@ -92,9 +93,23 @@ class CErrorHandler {
             $this->CloseOutputBuffer(true);
             return;
         }
-        
+
         if (in_array($error['type'], $this->fatalcodes)) {
             $this->CloseOutputBuffer(false);
+            $ctype = isset($_SERVER['CONTENT_TYPE']) ? $_SERVER['CONTENT_TYPE'] : '';
+            $isAjax = (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strcasecmp($_SERVER['HTTP_X_REQUESTED_WITH'], 'XMLHttpRequest') === 0)
+                || stripos($ctype, 'application/json') !== false
+                || !empty($_POST['sb_ajax']);
+            if ($isAjax) {
+                if (!headers_sent()) {
+                    header('HTTP/1.1 200 OK');
+                    header('Content-Type: application/json; charset=utf-8');
+                }
+                $msg = 'Ошибка PHP: ' . $error['message'];
+                $js = 'if(typeof ShowBox==="function"){ShowBox("Ошибка",' . json_encode($msg, JSON_UNESCAPED_UNICODE) . ',"red","",true);}else{alert(' . json_encode($msg, JSON_UNESCAPED_UNICODE) . ');}';
+                echo json_encode(array('ok' => false, 'error' => $msg, 'cmds' => array(array('n' => 'js', 'data' => $js))), JSON_UNESCAPED_UNICODE);
+                return;
+            }
             $this->DrawErrorMessage("Произошла фатальная ошибка PHP\n" . $error['message'] . "\n\n" . $error['file'] . "::" . $error['line'], null, "Критическая ошибка PHP");
         }
     }

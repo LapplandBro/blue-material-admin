@@ -1,0 +1,492 @@
+{% extends 'layout.twig' %}
+{% block extra_head %}
+<link href="{{ asset_base }}themes/blue_v2/css/account.css" rel="stylesheet">
+{% endblock %}
+{% block topbar_title %}
+<span class="h5 mb-0">Аккаунт</span>
+{% endblock %}
+{% block content %}
+<div class="account-page" id="admin-page-content">
+  <div class="account-head">
+    <p class="account-kicker">Кабинет</p>
+    <h1>Аккаунт</h1>
+  </div>
+
+  <ul class="account-tabs" id="admin-page-menu">
+    <li id="tab-0" class="active"><a href="index.php?p=account#^0" id="admin_tab_0" onclick="SwapPane(0);return false;">Информация</a></li>
+    {% if allow_change_inf %}
+    <li id="tab-4"><a href="index.php?p=account#^4" id="admin_tab_4" onclick="SwapPane(4);return false;">Связь</a></li>
+    {% endif %}
+    <li id="tab-1"><a href="index.php?p=account#^1" id="admin_tab_1" onclick="SwapPane(1);return false;">Сменить пароль</a></li>
+    <li id="tab-2"><a href="index.php?p=account#^2" id="admin_tab_2" onclick="SwapPane(2);return false;">Серверный пароль</a></li>
+    <li id="tab-3"><a href="index.php?p=account#^3" id="admin_tab_3" onclick="SwapPane(3);return false;">Сменить E-mail</a></li>
+    <li id="tab-5"><a href="index.php?p=account#^5" id="admin_tab_5" onclick="SwapPane(5);return false;">2FA</a></li>
+  </ul>
+
+  <div id="0" class="admin-pane is-on">
+    <div class="panel account-card">
+      <p class="account-kicker">Профиль</p>
+      <h2>Привилегии</h2>
+      <p class="account-lead">Права веб-панели, серверные флаги и срок доступа</p>
+      <div class="account-summary">
+        <div class="account-summary-item">
+          <span class="account-summary-label">Логин</span>
+          <span class="account-summary-value">{{ user_name }}</span>
+        </div>
+        <div class="account-summary-item">
+          <span class="account-summary-label">SteamID</span>
+          <span class="account-summary-value account-summary-mono">{{ user_steam }}</span>
+        </div>
+        <div class="account-summary-item">
+          <span class="account-summary-label">E-mail</span>
+          <span class="account-summary-value">{{ email }}</span>
+        </div>
+        <div class="account-summary-item">
+          <span class="account-summary-label">Срок</span>
+          <span class="account-summary-value">{{ expired_time }}</span>
+        </div>
+        <a class="account-summary-item account-summary-link" href="{{ my_bans_url }}">
+          <span class="account-summary-label">Ваши баны</span>
+          <span class="account-summary-value">{{ my_bans_total }} <span class="account-summary-hint">· {{ my_bans_active }} акт.</span></span>
+        </a>
+        <a class="account-summary-item account-summary-link" href="{{ my_comms_url }}">
+          <span class="account-summary-label">Ваши муты</span>
+          <span class="account-summary-value">{{ my_comms_total }} <span class="account-summary-hint">· {{ my_comms_active }} акт.</span></span>
+        </a>
+      </div>
+      <div class="account-perms">
+        <div class="account-perms-col">
+          <div class="account-perms-label">Веб-права</div>
+          <ul class="account-perm-list">{{ web_permissions|raw }}</ul>
+        </div>
+        <div class="account-perms-col">
+          <div class="account-perms-label">Серверные права</div>
+          <ul class="account-perm-list">{{ server_permissions|raw }}</ul>
+        </div>
+      </div>
+    </div>
+    <div class="account-activity">
+      <section class="panel account-card account-feed">
+        <header class="account-feed-head">
+          <div>
+            <p class="account-kicker">Модерация</p>
+            <h2>Баны</h2>
+            <p class="account-lead account-lead--tight">{{ my_bans_total }} шт. · {{ my_bans_active }} активных · последние 12</p>
+          </div>
+          <a class="account-feed-more" href="{{ my_bans_url }}">Все</a>
+        </header>
+        <div class="account-feed-list">
+          {% for player in my_bans %}
+          <a class="account-feed-row" href="{{ player.search_link }}">
+            <span class="account-feed-ico" aria-hidden="true"></span>
+            <span class="account-feed-main">
+              <span class="account-feed-name">{% if player.short_name is empty %}без имени{% else %}{{ player.short_name }}{% endif %}</span>
+              <span class="account-feed-meta">{{ player.created }}{% if player.reason %} · {{ player.reason }}{% endif %}</span>
+            </span>
+            {% if player.unbanned %}
+              <span class="badge badge-ok" title="Снято / истекло">{{ player.length }}</span>
+            {% elseif player.perm %}
+              <span class="badge badge-perm">{{ player.length }}</span>
+            {% else %}
+              <span class="badge badge-temp">{{ player.length }}</span>
+            {% endif %}
+          </a>
+          {% else %}
+          <div class="account-feed-empty">Вы ещё не выдавали баны.</div>
+          {% endfor %}
+        </div>
+      </section>
+      <section class="panel account-card account-feed">
+        <header class="account-feed-head">
+          <div>
+            <p class="account-kicker">Чат</p>
+            <h2>Муты и гаги</h2>
+            <p class="account-lead account-lead--tight">{{ my_comms_total }} шт. · {{ my_comms_active }} активных · последние 12</p>
+          </div>
+          <a class="account-feed-more" href="{{ my_comms_url }}">Все</a>
+        </header>
+        <div class="account-feed-list">
+          {% for player in my_comms %}
+          <a class="account-feed-row" href="{{ player.search_link }}">
+            <span class="account-feed-ico">{{ player.type_html|raw }}</span>
+            <span class="account-feed-main">
+              <span class="account-feed-name">{% if player.short_name is empty %}без имени{% else %}{{ player.short_name }}{% endif %}</span>
+              <span class="account-feed-meta">{{ player.created }}{% if player.reason %} · {{ player.reason }}{% endif %}</span>
+            </span>
+            {% if player.unbanned %}
+              <span class="badge badge-ok" title="Снято / истекло">{{ player.length }}</span>
+            {% elseif player.perm %}
+              <span class="badge badge-perm">{{ player.length }}</span>
+            {% else %}
+              <span class="badge badge-temp">{{ player.length }}</span>
+            {% endif %}
+          </a>
+          {% else %}
+          <div class="account-feed-empty">Вы ещё не выдавали муты.</div>
+          {% endfor %}
+        </div>
+      </section>
+    </div>
+  </div>
+
+  {% if allow_change_inf %}
+  <div id="4" class="admin-pane account-pane-form" style="display:none;">
+    <div class="panel account-card">
+      <p class="account-kicker">Контакты</p>
+      <h2>Связь</h2>
+      <p class="account-lead">Контакты для связи с вами</p>
+      <div id="group.details" class="account-form-grid">
+        <div class="field">
+          <label class="form-label" for="current_vk">ВКонтакте</label>
+          <input type="text" class="form-control" id="current_vk" name="current_vk"{% if vk %} value="{{ vk }}"{% else %} placeholder="ID или короткое имя, без https://vk.com/"{% endif %}>
+        </div>
+        <div class="field">
+          <label class="form-label" for="current_discord">Discord</label>
+          <input type="text" class="form-control" id="current_discord" name="current_discord"{% if discord %} value="{{ discord }}"{% else %} placeholder="Логин Discord"{% endif %}>
+        </div>
+        <div class="account-form-actions">
+          <button type="button" class="btn btn-accent" onclick="xajax_ChangeAdminsInfos({{ user_aid }}, $('current_vk').value, $('current_discord').value);">Сохранить</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div id="4" class="admin-pane" style="display:none;"></div>
+  {% endif %}
+
+  <div id="1" class="admin-pane account-pane-form" style="display:none;">
+    <div class="panel account-card">
+      <p class="account-kicker">Безопасность</p>
+      <h2>Пароль аккаунта</h2>
+      <p class="account-lead">Смена пароля входа в веб-панель</p>
+      <div class="account-form-grid">
+        <div class="field">
+          <label class="form-label" for="current">Текущий пароль</label>
+          <input type="password" onblur="xajax_CheckPassword({{ user_aid }}, $('current').value);" class="form-control" id="current" name="current" placeholder="Текущий пароль" autocomplete="current-password">
+          <div id="current.msg" class="msg-err"></div>
+        </div>
+        <div class="field">
+          <label class="form-label" for="pass1" title="Минимальная длина: {{ min_pass_len }} символов.">Новый пароль</label>
+          <input type="password" onkeyup="checkYourAcctPass();" class="form-control" id="pass1" name="pass1" placeholder="Новый пароль" autocomplete="new-password">
+          <div id="pass1.msg" class="msg-err"></div>
+        </div>
+        <div class="field">
+          <label class="form-label" for="pass2" title="Повторите новый пароль ещё раз.">Повторите пароль</label>
+          <input type="password" onkeyup="checkYourAcctPass();" class="form-control" id="pass2" name="pass2" placeholder="Повтор пароля" autocomplete="new-password">
+          <div id="pass2.msg" class="msg-err"></div>
+        </div>
+        <div class="account-form-actions">
+          <button type="button" class="btn btn-accent" onclick="dispatch();">Сохранить</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="2" class="admin-pane account-pane-form" style="display:none;">
+    <div class="panel account-card">
+      <p class="account-kicker">Сервер</p>
+      <h2>Серверный пароль</h2>
+      <p class="account-lead">Пароль для прав администратора на игровых серверах · <a href="http://wiki.alliedmods.net/Adding_Admins_%28SourceMod%29#Passwords" target="_blank" rel="noopener">документация SourceMod</a></p>
+      <div class="account-form-grid">
+      {% if srvpwset %}
+      <div class="field">
+        <label class="form-label" for="scurrent" title="Введите текущий серверный пароль.">Текущий пароль</label>
+        <input type="password" onblur="xajax_CheckSrvPassword({{ user_aid }}, $('scurrent').value);" class="form-control" id="scurrent" name="scurrent" placeholder="Текущий серверный пароль" autocomplete="off">
+        <div id="scurrent.msg" class="msg-err"></div>
+      </div>
+      {% endif %}
+      <div class="field">
+        <label class="form-label" for="spass1" title="Минимальная длина: {{ min_pass_len }} символов.">Новый пароль</label>
+        <input type="password" onkeyup="checkYourSrvPass();" id="spass1" class="form-control" name="spass1" placeholder="Новый серверный пароль" autocomplete="off">
+        <div id="spass1.msg" class="msg-err"></div>
+      </div>
+      <div class="field">
+        <label class="form-label" for="spass2" title="Повторите новый серверный пароль.">Подтверждение</label>
+        <input type="password" onkeyup="checkYourSrvPass();" id="spass2" class="form-control" name="spass2" placeholder="Повтор пароля" autocomplete="off">
+        <div id="spass2.msg" class="msg-err"></div>
+      </div>
+      {% if srvpwset %}
+      <div class="field field-check">
+        <div class="form-check">
+          <input type="checkbox" class="form-check-input" id="delspass" name="delspass">
+          <label class="form-check-label" for="delspass" title="Снять серверный пароль с аккаунта.">Снять серверный пароль</label>
+        </div>
+      </div>
+      {% endif %}
+      <div class="account-form-actions">
+        <button type="button" class="btn btn-accent" onclick="srvdispatch();">Сохранить</button>
+      </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="3" class="admin-pane account-pane-form" style="display:none;">
+    <div class="panel account-card">
+      <p class="account-kicker">Почта</p>
+      <h2>E-mail</h2>
+      <p class="account-lead">Нужен для восстановления доступа к аккаунту</p>
+      <div class="account-form-grid">
+      <div class="field">
+        <span class="form-label" title="Текущий адрес электронной почты.">Текущий E-mail</span>
+        <div class="account-email-current">{{ email }}</div>
+      </div>
+      <div class="field">
+        <label class="form-label" for="emailpw" title="Пароль от аккаунта веб-панели.">Пароль</label>
+        <input type="password" id="emailpw" class="form-control" name="emailpw" placeholder="Пароль аккаунта" autocomplete="current-password">
+        <div id="emailpw.msg" class="msg-err"></div>
+      </div>
+      <div class="field">
+        <label class="form-label" for="email1" title="Новый адрес электронной почты.">Новый E-mail</label>
+        <input type="email" id="email1" class="form-control" name="email1" placeholder="Новый E-mail" autocomplete="email">
+        <div id="email1.msg" class="msg-err"></div>
+      </div>
+      <div class="field">
+        <label class="form-label" for="email2" title="Повторите новый адрес.">Подтвердить E-mail</label>
+        <input type="email" id="email2" class="form-control" name="email2" placeholder="Повтор E-mail" autocomplete="email">
+        <div id="email2.msg" class="msg-err"></div>
+      </div>
+      <div class="account-form-actions">
+        <button type="button" class="btn btn-accent" onclick="checkmail();">Сохранить</button>
+      </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="5" class="admin-pane account-pane-form" style="display:none;">
+    <div class="panel account-card">
+      <p class="account-kicker">Защита</p>
+      <h2>Двухфакторная аутентификация (TOTP)</h2>
+      <p class="account-lead">Google Authenticator, Aegis, 1Password и совместимые приложения</p>
+
+      {% if totp_msg %}
+      <div class="alert {% if totp_msg_type == 'success' %}alert-success{% elseif totp_msg_type == 'error' %}alert-danger{% else %}alert-info{% endif %}" role="alert">{{ totp_msg }}</div>
+      {% endif %}
+
+      {% if totp_recovery_once %}
+      <div class="alert alert-warning" role="alert">
+        <p class="account-alert-title">Recovery-коды (сохраните сейчас):</p>
+        <ul class="totp-codes">
+        {% for c in totp_recovery_once %}
+          <li>{{ c }}</li>
+        {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      {% if totp_enabled %}
+      <p class="account-totp-status">2FA сейчас <strong>включена</strong>. Для отключения нужны пароль панели и код из приложения (или неиспользованный recovery-код).</p>
+      <form method="post" action="index.php?p=account">
+        {% if sb_csrf %}<input type="hidden" name="sb_csrf" value="{{ sb_csrf }}" />{% endif %}
+        <input type="hidden" name="totp_action" value="disable" />
+        <div class="field">
+          <label class="form-label" for="totp_dis_pw">Пароль</label>
+          <input type="password" class="form-control" id="totp_dis_pw" name="password" required autocomplete="current-password">
+        </div>
+        <div class="field">
+          <label class="form-label" for="totp_dis_code">Код 2FA</label>
+          <input type="text" class="form-control" id="totp_dis_code" name="code" required autocomplete="one-time-code">
+        </div>
+        <div class="account-form-actions">
+          <button type="submit" class="btn btn-outline-danger">Отключить 2FA</button>
+        </div>
+      </form>
+      {% elseif totp_setup_secret %}
+      <div class="totp-setup">
+        <p class="account-step">1. Отсканируйте QR в Google Authenticator / Aegis / 1Password.</p>
+        <div id="totp-qr" class="totp-qr" data-otpauth="{{ totp_otpauth }}"></div>
+        <p class="account-step-muted">Если камеры нет — введите секрет вручную:</p>
+        <p class="totp-secret-row">
+          <code id="totp-secret-text">{{ totp_setup_secret }}</code>
+          <button type="button" class="btn btn-sm btn-outline-secondary" onclick="(function(){var t=document.getElementById('totp-secret-text');if(!t)return;var r=document.createRange();r.selectNodeContents(t);var s=window.getSelection();s.removeAllRanges();s.addRange(r);})();">Выделить</button>
+        </p>
+        <p class="totp-otpauth"><a href="{{ totp_otpauth }}">Открыть otpauth:// на этом устройстве</a></p>
+      </div>
+      <form method="post" action="index.php?p=account">
+        {% if sb_csrf %}<input type="hidden" name="sb_csrf" value="{{ sb_csrf }}" />{% endif %}
+        <input type="hidden" name="totp_action" value="confirm" />
+        <div class="field">
+          <label class="form-label" for="totp_en_code">2. Код из приложения</label>
+          <input type="text" class="form-control" id="totp_en_code" name="code" required inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="6 цифр">
+        </div>
+        <div class="account-form-actions">
+          <button type="submit" class="btn btn-accent">Подтвердить и включить</button>
+        </div>
+      </form>
+      <script src="{{ asset_base }}scripts/qrcode.min.js"></script>
+      <script>
+      (function () {
+        var box = document.getElementById('totp-qr');
+        if (!box || typeof QRCode === 'undefined') return;
+        var uri = box.getAttribute('data-otpauth') || '';
+        if (!uri) return;
+        box.innerHTML = '';
+        new QRCode(box, { text: uri, width: 192, height: 192, correctLevel: QRCode.CorrectLevel.M });
+      })();
+      </script>
+      {% else %}
+      <p class="account-totp-status">После включения вход по паролю или через Steam потребует код из приложения.</p>
+      <form method="post" action="index.php?p=account">
+        {% if sb_csrf %}<input type="hidden" name="sb_csrf" value="{{ sb_csrf }}" />{% endif %}
+        <input type="hidden" name="totp_action" value="start" />
+        <div class="account-form-actions">
+          <button type="submit" class="btn btn-accent">Начать настройку 2FA</button>
+        </div>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+var error = 0;
+var pendingAcctPass = false;
+var pendingSrvPass = false;
+function set_error(count) {
+  error = count;
+  if (pendingAcctPass) {
+    pendingAcctPass = false;
+    if (error != 0) {
+      if (typeof ShowBox === 'function') ShowBox("Ошибка", "Текущий пароль неверен.", "red", "", true);
+      else alert("Текущий пароль неверен.");
+      return;
+    }
+    if (checkYourAcctPass()) {
+      xajax_ChangePassword({{ user_aid }}, $('pass2').value, $('current').value);
+    }
+    return;
+  }
+  if (pendingSrvPass) {
+    pendingSrvPass = false;
+    if (error != 0) {
+      if (typeof sbSiteAlert === 'function') sbSiteAlert("Неверный пароль", "Ошибка", "red");
+      else if (typeof ShowBox === 'function') ShowBox("Ошибка", "Неверный пароль", "red", "", true);
+      else alert("Неверный пароль");
+      return;
+    }
+    finishSrvPassChange();
+  }
+}
+function checkYourAcctPass() {
+  var err = 0;
+  if ($('pass1').value.length < {{ min_pass_len }}) {
+    $('pass1.msg').setStyle('display', 'block');
+    $('pass1.msg').setHTML('Пароль должен быть не менее {{ min_pass_len }} символов');
+    err++;
+  } else {
+    $('pass1.msg').setStyle('display', 'none');
+  }
+  if ($('pass2').value != "" && $('pass2').value != $('pass1').value) {
+    $('pass2.msg').setStyle('display', 'block');
+    $('pass2.msg').setHTML('Пароли не совпадают');
+    err++;
+  } else {
+    $('pass2.msg').setStyle('display', 'none');
+  }
+  if (err > 0) {
+    error = 1;
+    return false;
+  }
+  error = 0;
+  return true;
+}
+function dispatch() {
+  if (!$('current') || $('current').value === '') {
+    if (typeof ShowBox === 'function') ShowBox("Ошибка", "Введите текущий пароль.", "red", "", true);
+    else alert("Введите текущий пароль.");
+    return false;
+  }
+  if (!checkYourAcctPass()) return false;
+  if (pendingAcctPass) return false;
+  pendingAcctPass = true;
+  xajax_CheckPassword({{ user_aid }}, $('current').value);
+}
+function checkYourSrvPass() {
+  if (!$('delspass') || $('delspass').checked == false) {
+    var err = 0;
+    if ($('spass1').value.length < {{ min_pass_len }}) {
+      $('spass1.msg').setStyle('display', 'block');
+      $('spass1.msg').setHTML('Пароль должен быть не менее {{ min_pass_len }} символов');
+      err++;
+    } else {
+      $('spass1.msg').setStyle('display', 'none');
+    }
+    if ($('spass2').value != "" && $('spass2').value != $('spass1').value) {
+      $('spass2.msg').setStyle('display', 'block');
+      $('spass2.msg').setHTML('Пароли не совпадают');
+      err++;
+    } else {
+      $('spass2.msg').setStyle('display', 'none');
+    }
+    if (err > 0) {
+      error = 1;
+      return false;
+    }
+    error = 0;
+    return true;
+  }
+  error = 0;
+  return true;
+}
+function finishSrvPassChange() {
+  if (checkYourSrvPass() && error == 0 && (!$('delspass') || $('delspass').checked == false)) {
+    xajax_ChangeSrvPassword({{ user_aid }}, $('spass2').value);
+  }
+  if ($('delspass') && $('delspass').checked == true) {
+    xajax_ChangeSrvPassword({{ user_aid }}, 'NULL');
+  }
+}
+function srvdispatch() {
+  {% if srvpwset %}
+  if (!$('scurrent') || $('scurrent').value === '') {
+    if (typeof ShowBox === 'function') ShowBox("Ошибка", "Введите текущий пароль.", "red", "", true);
+    else alert("Введите текущий пароль.");
+    return false;
+  }
+  if ((!$('delspass') || $('delspass').checked == false) && !checkYourSrvPass()) return false;
+  if (pendingSrvPass) return false;
+  pendingSrvPass = true;
+  xajax_CheckSrvPassword({{ user_aid }}, $('scurrent').value);
+  {% else %}
+  finishSrvPassChange();
+  {% endif %}
+}
+function checkmail() {
+  var err = 0;
+  if ($('email1').value == "") {
+    $('email1.msg').setStyle('display', 'block');
+    $('email1.msg').setHTML('Введите новый E-mail.');
+    err++;
+  } else {
+    $('email1.msg').setStyle('display', 'none');
+  }
+  if ($('email2').value == "") {
+    $('email2.msg').setStyle('display', 'block');
+    $('email2.msg').setHTML('Подтвердите новый E-mail.');
+    err++;
+  } else {
+    $('email2.msg').setStyle('display', 'none');
+  }
+  if (err == 0 && $('email2').value != $('email1').value) {
+    $('email2.msg').setStyle('display', 'block');
+    $('email2.msg').setHTML('Введённые E-mail адреса не совпадают.');
+    err++;
+  }
+  if ($('emailpw').value == "") {
+    $('emailpw.msg').setStyle('display', 'block');
+    $('emailpw.msg').setHTML('Введите ваш пароль.');
+    err++;
+  } else {
+    $('emailpw.msg').setStyle('display', 'none');
+  }
+  if (err > 0) {
+    error = 1;
+    return false;
+  }
+  error = 0;
+  if (error == 0) {
+    xajax_ChangeEmail({{ user_aid }}, $('email2').value, $('emailpw').value);
+  }
+}
+</script>
+{% endblock %}

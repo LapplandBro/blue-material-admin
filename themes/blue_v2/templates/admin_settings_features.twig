@@ -1,0 +1,51 @@
+<form action="index.php?p=admin&amp;c=settings" method="post">
+  <input type="hidden" name="sb_csrf" value="{{ sb_csrf }}">
+  <input type="hidden" name="settingsGroup" value="features">
+  <div class="form-page admin-form settings-page" id="group.features">
+    <header class="form-page-head">
+      <p class="form-page-kicker">Настройки</p>
+      <h2 class="form-page-title">Опции</h2>
+      <p class="form-page-lead">Кик, групповые баны, рехеш и прочее. Подсказки на «?».</p>
+    </header>
+    <div class="settings-toggles">
+      {% include 'partials/settings_toggle.twig' with { id: 'export_public', label: 'Экспорт банов', help_title: 'Экспорт банов', help_message: 'Публичная выгрузка списка банов для скачивания.' } %}
+      {% include 'partials/settings_toggle.twig' with { id: 'enable_kickit', label: 'Кик при бане', help_title: 'Кик при бане', help_message: 'Кикать игрока с сервера сразу после добавления бана в базу.' } %}
+      {% include 'partials/settings_toggle.twig' with { id: 'enable_groupbanning', label: 'Групповые баны', help_title: 'Групповые баны', help_message: 'Бан целой Steam-группы игрока.' } %}
+      {% include 'partials/settings_toggle.twig' with { id: 'enable_friendsbanning', label: 'Баны друзей', help_title: 'Баны друзей', help_message: 'Бан всех Steam-друзей выбранного игрока.' } %}
+      {% include 'partials/settings_toggle.twig' with { id: 'enable_fetchnicks', label: 'Никнеймы при массовом бане', help_title: 'Никнеймы при массовом бане', help_message: 'Если выключено, бан группы и друзей берёт steamid64 из XML Steam и пишет его в поле имени — быстрее и меньше запросов. Если включено — как раньше: ники со страниц сообщества.' } %}
+      {% include 'partials/settings_toggle.twig' with { id: 'enable_adminrehashing', label: 'Авто-рехеш админов', help_title: 'Авто-рехеш админов', help_message: 'Перезагружать права на серверах при любом изменении админов или групп.' } %}
+      {% include 'partials/settings_toggle.twig' with { id: 'enable_admininfo', label: 'Информация об администраторе', help_title: 'Информация об Администраторе', help_message: 'Показывает информацию (discord, вк, STEAMID) о забанившем игрока Администраторе в банлисте или мут/гаг листе.' } %}
+      {% include 'partials/settings_toggle.twig' with { id: 'allow_admininfo', label: 'Смена своей информации админом', help_title: 'Смена информации админом', help_message: 'Разрешить пользователю самому менять VK или Discord в своем профиле?' } %}
+      {% include 'partials/settings_toggle.twig' with { id: 'old_serverside', label: 'Совместимость с плагинами SB', help_title: 'Режим совместимости с плагинами SB', help_message: 'Переключает веб-панель в режим совместимости со старой серверной частью SourceBans.', checked: old_serverside } %}
+      {% include 'partials/settings_toggle.twig' with { id: 'map_autofetch', label: 'Превью карт с GameTracker', help_title: 'Превью карт с GameTracker', help_message: 'Если у карты нет вручную загруженной иконки в images/maps, браузер подгружает превью напрямую с GameTracker (без кеша на диске сервера). Если картинки там нет — показывается локальный unknown map (nomap.jpg).', checked: map_autofetch } %}
+      {% include 'partials/settings_toggle.twig' with { id: 'totp_enforce_owner', label: 'Обязательная 2FA для OWNER', help_title: 'Обязательная 2FA для OWNER', help_message: 'Владельцы панели (флаг OWNER) не смогут завершить вход по паролю или Steam, пока не настроят TOTP. Остальные админы подключают 2FA добровольно в разделе «Аккаунт».', checked: totp_enforce_owner } %}
+      {% include 'partials/settings_toggle.twig' with { id: 'admin_warns', name: 'admin_warns', label: 'Предупреждения', help_title: 'Предупреждения', help_message: 'Позволяет включить систему предупреждений для Администраторов.', checked: warnings_enabled } %}
+      {% include 'partials/settings_toggle.twig' with { id: 'twig_precompile', label: 'Предкомпиляция Twig', help_title: 'Предкомпиляция Twig', help_message: 'Пишет скомпилированные PHP-классы шаблонов в cache/twig_predcompiled. Ускоряет страницы; после правки .twig кеш обновится сам. Можно принудительно собрать или очистить в «Обслуживание системы» на вкладке «Главные».' } %}
+    </div>
+    <div class="form-grid settings-block">
+      <div class="form-field">
+        <label class="form-label" for="moder_group_st">{% include 'partials/help_icon.twig' with { title: 'Модерирование группы', message: 'Администратор может редактировать баны только на тех серверах, где у него есть права. Полезно для должности «управляющий сервером».' } %} Модерировать группу</label>
+        <select class="form-select" name="moder_group_st" id="moder_group_st">
+          <option value="0">Отключить</option>
+          {% for gr in wgroups %}
+          <option value="{{ gr.gid }}"{% if gr.gid == config_modergroup %} selected="selected"{% endif %}>{{ gr.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="admin_warns_max">Максимум предупреждений</label>
+        <input type="text" class="form-control" id="admin_warns_max" name="admin_warns_max" placeholder="Максимальное кол-во предупреждений" value="{{ maxWarnings }}">
+      </div>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-accent" id="fsettings">Сохранить</button>
+      <button type="button" class="btn btn-outline-secondary" id="fback" onclick="sbGo('index.php?p=admin&amp;c=settings')">Назад</button>
+    </div>
+  </div>
+</form>
+<script>
+document.getElementById('admin_warns').onclick = function() {
+  document.getElementById('admin_warns_max').disabled = !document.getElementById('admin_warns').checked;
+};
+document.getElementById('admin_warns').onclick();
+</script>

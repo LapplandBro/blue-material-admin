@@ -1,0 +1,242 @@
+.adminlist-dialog-sink,
+.adminlist-xajax-sink { display: none; }
+
+.adminlist-page-head { margin-bottom: 1rem; }
+.adminlist-kicker {
+  margin: 0 0 0.12rem;
+  color: var(--muted);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.adminlist-title {
+  margin: 0;
+  color: var(--text-heading);
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+.adminlist-sub {
+  margin: 0.2rem 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+.adminlist-empty {
+  padding: 1.1rem 1.15rem;
+  color: var(--muted);
+}
+
+.adminlist-game { overflow: hidden; }
+.adminlist-game + .adminlist-game { margin-top: 1rem; }
+.adminlist-game-head {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.7rem 1.05rem;
+  border-bottom: 1px solid var(--border-hairline);
+  background: rgba(8, 15, 31, 0.45);
+}
+.adminlist-game-ico .sb-ico,
+.adminlist-game-ico img {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
+.adminlist-game-meta { min-width: 0; }
+.adminlist-game-name {
+  margin: 0;
+  color: var(--text-heading);
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+.adminlist-game-count {
+  margin: 0.12rem 0 0;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.adminlist-server + .adminlist-server {
+  border-top: 1px solid var(--border-hairline);
+}
+.adminlist-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.7rem 1.05rem;
+  cursor: pointer;
+}
+.adminlist-toggle:hover {
+  background: rgba(30, 144, 255, 0.06);
+}
+.adminlist-map {
+  flex: 0 0 48px;
+  width: 48px;
+  height: 48px;
+  overflow: hidden;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-sm);
+  background: var(--bg-body);
+  box-shadow: 0 0 0 1px rgba(30, 144, 255, 0.06);
+}
+.adminlist-map img {
+  display: block;
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+}
+.adminlist-server-meta {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.adminlist-server-name {
+  color: var(--text-heading);
+  font-size: 0.92rem;
+  font-weight: 650;
+  line-height: 1.3;
+  word-break: break-word;
+}
+.adminlist-host-fallback { color: var(--muted); }
+.adminlist-server-addr {
+  margin-top: 0.12rem;
+  color: var(--muted);
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 0.74rem;
+}
+.adminlist-count {
+  flex: 0 0 auto;
+  padding: 0.16rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(61, 214, 140, 0.14);
+  color: var(--ok);
+  font-size: 0.72rem;
+  font-weight: 650;
+  white-space: nowrap;
+}
+.adminlist-chevron {
+  flex: 0 0 auto;
+  color: var(--muted);
+  transition: transform 0.2s ease;
+}
+.adminlist-toggle.active .adminlist-chevron,
+.adminlist-toggle.is-open .adminlist-chevron,
+.adminlist-server.open .adminlist-chevron {
+  transform: rotate(180deg);
+}
+
+.adminlist-body {
+  overflow: hidden;
+  background: var(--bg-sidebar);
+  border-top: 1px solid var(--border-hairline);
+}
+.adminlist-body.is-open {
+  visibility: visible;
+  opacity: 1;
+}
+.adminlist-admins {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(248px, 1fr));
+  gap: 0.5rem;
+  padding: 0.65rem 0.8rem 0.8rem;
+}
+.adminlist-admin {
+  display: flex;
+  gap: 0.55rem;
+  align-items: flex-start;
+  min-width: 0;
+  padding: 0.5rem 0.6rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-panel);
+}
+.adminlist-avatar-link { flex: 0 0 36px; }
+.adminlist-avatar {
+  display: block;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border-hairline);
+  border-radius: 50%;
+  object-fit: cover;
+  background: #101d35;
+}
+.adminlist-admin-main { flex: 1 1 auto; min-width: 0; }
+.adminlist-admin-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.4rem;
+}
+.adminlist-nick {
+  color: var(--text-heading);
+  font-weight: 650;
+  font-size: 0.88rem;
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+a.adminlist-nick:hover { color: var(--accent-hover); }
+.adminlist-imm {
+  flex: 0 0 auto;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(30, 144, 255, 0.16);
+  border: 1px solid rgba(30, 144, 255, 0.28);
+  color: var(--accent-hover);
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.adminlist-admin-sub {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.28rem 0.42rem;
+  margin-top: 0.22rem;
+}
+.adminlist-chip {
+  max-width: 100%;
+  padding: 0.08rem 0.4rem;
+  border-radius: 999px;
+  background: rgba(30, 144, 255, 0.12);
+  color: var(--accent);
+  font-size: 0.68rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.adminlist-chip-muted {
+  color: var(--muted);
+  background: rgba(126, 168, 212, 0.1);
+}
+.adminlist-contact {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  max-width: 100%;
+  color: var(--muted);
+  font-size: 0.72rem;
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+a.adminlist-contact:hover { color: var(--accent); }
+.adminlist-about {
+  display: -webkit-box;
+  margin: 0.28rem 0 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.75rem;
+  line-height: 1.35;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+@media (max-width: 575.98px) {
+  .adminlist-toggle { flex-wrap: wrap; gap: 0.5rem; }
+  .adminlist-server-meta { flex: 1 1 calc(100% - 4rem); }
+  .adminlist-count { margin-left: 3.6rem; }
+  .adminlist-admins { grid-template-columns: 1fr; }
+}

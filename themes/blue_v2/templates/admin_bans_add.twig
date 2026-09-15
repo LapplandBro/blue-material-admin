@@ -1,0 +1,99 @@
+{% if not permission_addban %}
+<div class="form-page">
+  <p class="form-flash form-flash--err">Доступ запрещён.</p>
+</div>
+{% else %}
+<div class="form-page admin-form" id="add-group1">
+  <header class="form-page-head">
+    <p class="form-page-kicker">Админка</p>
+    <h2 class="form-page-title">Новый бан</h2>
+    <p class="form-page-lead">Ник, SteamID или IP, срок, причина и демо. Демо: либо ссылка, либо файл — не оба сразу.</p>
+  </header>
+  <div class="form-grid" id="group.details">
+    <div class="form-field form-field--full">
+      <label class="form-label" for="nickname">Ник</label>
+      <input type="hidden" id="fromsub" value="">
+      <input type="text" class="form-control" id="nickname" name="nickname" tabindex="1" placeholder="Ник игрока">
+      <div id="nick.msg" class="msg-err"></div>
+    </div>
+    <div class="form-field">
+      <label class="form-label" for="type">Тип бана</label>
+      <select class="form-select" id="type" name="type">
+        <option value="0">Steam ID</option>
+        <option value="1">IP адрес</option>
+      </select>
+    </div>
+    <div class="form-field">
+      <label class="form-label" for="steam">Steam ID / ссылка</label>
+      <input type="text" class="form-control" id="steam" name="steam" tabindex="2" placeholder="STEAM_0:…, Steam64 или ссылка">
+      <div id="steam.msg" class="msg-err"></div>
+    </div>
+    <div class="form-field form-field--full">
+      <label class="form-label" for="ip">IP адрес</label>
+      <input type="text" class="form-control" id="ip" name="ip" tabindex="3" placeholder="Если бан по IP">
+      <div id="ip.msg" class="msg-err"></div>
+    </div>
+    <div class="form-field form-field--full">
+      <label class="form-label" for="listReason">Причина</label>
+      <select class="form-select" id="listReason" name="listReason" tabindex="4" onchange="changeReason(this[this.selectedIndex].value);">
+        <option value="" selected> — Выберите причину — </option>
+        <optgroup label="Читы">
+          <option value="Aimbot">Aimbot</option>
+          <option value="Antirecoil">Antirecoil</option>
+          <option value="Wallhack">Wallhack</option>
+          <option value="Spinhack">Spinhack</option>
+          <option value="Multi-Hack">Multi-Hack</option>
+          <option value="No Smoke">No Smoke</option>
+          <option value="No Flash">No Flash</option>
+        </optgroup>
+        <optgroup label="Поведение">
+          <option value="Убийство союзников">Убийство союзников</option>
+          <option value="Ослепление союзников">Ослепление союзников</option>
+          <option value="Спамил В Мик/Чат">Спамил В Мик/Чат</option>
+          <option value="Неуместный спрей">Неуместный спрей</option>
+          <option value="Неуместный язык">Неуместный язык</option>
+          <option value="Неуместный ник">Неуместный ник</option>
+          <option value="Игнорирование админа">Игнорирование админа</option>
+          <option value="Блокировка союзников">Блокировка союзников</option>
+          <option value="Мат/Оскорбления">Мат/Оскорбления</option>
+          <option value="Реклама">Реклама</option>
+        </optgroup>
+        {% if customreason %}
+        <optgroup label="Свои">
+          {% for creason in customreason %}
+          <option value="{{ creason }}">{{ creason }}</option>
+          {% endfor %}
+        </optgroup>
+        {% endif %}
+        <option value="other">Другая причина</option>
+      </select>
+      <div id="dreason" style="display:none;">
+        <input type="text" class="form-control mt-2" id="txtReason" name="txtReason" tabindex="4" placeholder="Своя причина бана…">
+      </div>
+      <div id="reason.msg" class="msg-err"></div>
+    </div>
+    <div class="form-field form-field--full">
+      <label class="form-label" for="banlength">Срок</label>
+      {% include 'partials/ban_length.twig' %}
+      <div id="length.msg" class="msg-err"></div>
+    </div>
+    <div class="form-field form-field--full">
+      <label class="form-label" for="demo_link">Ссылка на демо</label>
+      <input type="text" class="form-control" id="demo_link" name="demo_link" tabindex="5" placeholder="Необязательно">
+      <div id="demo_link.msg" class="msg-err"></div>
+    </div>
+    <div class="form-field form-field--full">
+      <label class="form-label">Файл демо</label>
+      <button type="button" class="btn btn-outline-secondary" id="udemo" onclick="childWindow=open('pages/admin.uploaddemo.php','upload','resizable=yes,scrollbars=yes,width=520,height=420');">Загрузить демо</button>
+      <div id="demo1.msg" class="form-note" style="display:none;">
+        <strong id="demo.msg"></strong>
+        <span>Успешно загружено</span>
+      </div>
+    </div>
+  </div>
+  <div class="form-actions">
+    <button type="button" class="btn btn-accent" id="aban" onclick="if (typeof sbBusy === 'function' &amp;&amp; sbBusy(this)) return; ConvertSteamID_3to2('steam');ProcessBan();">Добавить бан</button>
+    <button type="button" class="btn btn-outline-secondary" id="aback" onclick="sbGo('index.php?p=admin')">Назад</button>
+  </div>
+</div>
+{% endif %}

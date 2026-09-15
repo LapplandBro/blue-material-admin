@@ -1,0 +1,37 @@
+{% if not permission_addgroup %}
+<div class="form-page">
+  <p class="form-flash form-flash--err">Доступ запрещён.</p>
+</div>
+{% else %}
+<div class="form-page admin-form" id="add-group">
+  <header class="form-page-head">
+    <p class="form-page-kicker">Админка</p>
+    <h2 class="form-page-title">Новая группа</h2>
+    <p class="form-page-lead">Веб, серверные админы или группа серверов.</p>
+  </header>
+  <div class="form-grid" id="group.details">
+    <div class="form-field form-field--full">
+      <label class="form-label" for="groupname">Имя группы</label>
+      <input type="text" tabindex="1" class="form-control" id="groupname" name="groupname" placeholder="Имя группы">
+      <div id="name.msg" class="msg-err"></div>
+    </div>
+    <div class="form-field form-field--full">
+      <label class="form-label" for="grouptype">Тип группы</label>
+      <select class="form-select" onchange="UpdateGroupPermissionCheckBoxes()" name="grouptype" id="grouptype">
+        <option value="0">Выберите…</option>
+        <option value="1">Веб-группа</option>
+        <option value="2">Серверная группа админов</option>
+        <option value="3">Группа серверов</option>
+      </select>
+      <div id="type.msg" class="msg-err"></div>
+    </div>
+    <div class="form-field form-field--full">
+      <div id="perms"></div>
+    </div>
+  </div>
+  <div class="form-actions">
+    <button type="button" class="btn btn-accent" id="agroup" onclick="if (typeof sbBusy === 'function' &amp;&amp; sbBusy(this)) return; ProcessGroup();">Сохранить</button>
+    <button type="button" class="btn btn-outline-secondary" id="aback" onclick="sbAdminBack(0, 'index.php?p=admin&amp;c=groups')">Назад</button>
+  </div>
+</div>
+{% endif %}

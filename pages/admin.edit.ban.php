@@ -27,49 +27,76 @@
 
 if(!defined("IN_SB")){echo "Ошибка доступа!";die();}
 
-global $userbank, $theme; 
+global $userbank, $theme;
 
-if($GLOBALS['config']['config.modgroup'] != "0"){
+// Нельзя вызывать PageDie() внутри admin include: буфер ещё не обёрнут в wrap.twig —
+// получается «белая страница» без темы. Вместо die — flash + return.
+$sbBanEditFail = function ($msg, $redir = 'index.php?p=admin&c=bans') {
+	$msgSafe = htmlspecialchars((string)$msg, ENT_QUOTES, 'UTF-8');
+	$redirJs = json_encode((string)$redir, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
+	echo '<div class="form-page admin-form"><div class="form-flash form-flash--err" role="alert">'
+		. '<div class="form-flash-title">Ошибка</div><div class="form-flash-body">' . $msgSafe . '</div></div>'
+		. '<div class="form-actions"><a class="btn btn-outline-secondary" href="index.php?p=admin&amp;c=bans">К банам</a></div></div>';
+	echo '<script>setTimeout(function(){ if (typeof ShowBox === "function") ShowBox("Ошибка", '
+		. json_encode((string)$msg, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP)
+		. ', "red", ' . $redirJs . '); }, 200);</script>';
+};
+
+$modGroup = isset($GLOBALS['config']['config.modgroup']) ? (string)$GLOBALS['config']['config.modgroup'] : '0';
+if ($modGroup !== '0' && $modGroup !== '') {
 	$gid_groups = $GLOBALS['db']->GetOne("SELECT `gid` FROM `" . DB_PREFIX . "_admins` WHERE `aid` = ?", array((int)$userbank->GetAid()));
-
-	if($gid_groups == $GLOBALS['config']['config.modgroup']){
-		$_GET['id'] = (int)preg_replace("/[^0-9]/", '', isset($_GET['id']) ? (string)$_GET['id'] : '');
-		$srv_ban = $GLOBALS['db']->GetOne("SELECT `sid` FROM `" . DB_PREFIX . "_bans` WHERE `bid` = ?", array((int)$_GET['id']));
-		$amd_access = $GLOBALS['db']->GetOne("SELECT `server_id` FROM `" . DB_PREFIX . "_admins_servers_groups` WHERE `admin_id` = ? AND `server_id` = ?", array((int)$userbank->GetAid(), (int)$srv_ban));
-		if($srv_ban != $amd_access){
-			echo '<script>setTimeout(\'<script>ShowBox("Ошибка", "Вы имеете доступ только к редактированию банов на тех серверах, где у вас есть права управляющего!", "red", "");setTimeout(\'history.go(-1);\', 4000);\', 1200);</script>';
-			PageDie();
+	if ((string)$gid_groups === $modGroup) {
+		$editId = isset($_GET['id']) ? (int)preg_replace('/[^0-9]/', '', (string)$_GET['id']) : 0;
+		$srv_ban = (int)$GLOBALS['db']->GetOne("SELECT `sid` FROM `" . DB_PREFIX . "_bans` WHERE `bid` = ?", array($editId));
+		// Веб-бан / без сервера (sid 0 или NULL) — не ограничивать списком серверов модератора.
+		if ($srv_ban > 0) {
+			$amd_access = (int)$GLOBALS['db']->GetOne(
+				"SELECT `server_id` FROM `" . DB_PREFIX . "_admins_servers_groups` WHERE `admin_id` = ? AND `server_id` = ?",
+				array((int)$userbank->GetAid(), $srv_ban)
+			);
+			if ($amd_access !== $srv_ban) {
+				$sbBanEditFail('Вы имеете доступ только к редактированию банов на тех серверах, где у вас есть права управляющего!');
+				return;
+			}
 		}
 	}
 }
 
-
-if ($_GET['key'] != $_SESSION['banlist_postkey'])
+if (!isset($_GET['key'], $_SESSION['banlist_postkey']) || $_GET['key'] !== $_SESSION['banlist_postkey'])
 {
-	echo '<script>ShowBox("Ошибка", "Возможная попытка взлома (Несоответствие URL-ключа)!", "red", "index.php?p=admin&c=bans");</script>';
-	PageDie();
+	$sbBanEditFail('Возможная попытка взлома (Несоответствие URL-ключа)!');
+	return;
 }
-if(!isset($_GET['id']) || !is_numeric($_GET['id']))
+if (!isset($_GET['id']) || !is_numeric($_GET['id']))
 {
-	echo '<script>ShowBox("Ошибка", "Нет бана!", "red", "index.php?p=admin&c=bans");</script>';
-	PageDie();
+	$sbBanEditFail('Нет бана!');
+	return;
 }
-// defense in depth: is_numeric() above already blocks SQL metacharacters, but enforce int type too
 $_GET['id'] = (int)$_GET['id'];
 
 $res = $GLOBALS['db']->GetRow("
-    				SELECT bid, ba.ip, ba.type, ba.authid, ba.name, created, ends, length, reason, ba.aid, ba.sid, ad.user, ad.gid, CONCAT(se.ip,':',se.port), se.sid, mo.icon, dm.origname 
+    				SELECT ba.bid, ba.ip, ba.type, ba.authid, ba.name, ba.created, ba.ends, ba.length, ba.reason, ba.aid, ba.sid,
+    					ad.user, ad.gid, CONCAT(se.ip,':',se.port) AS server_addr, se.sid AS server_sid, mo.icon, dm.origname
     				FROM ".DB_PREFIX."_bans AS ba
     				LEFT JOIN ".DB_PREFIX."_admins AS ad ON ba.aid = ad.aid
     				LEFT JOIN ".DB_PREFIX."_servers AS se ON se.sid = ba.sid
     				LEFT JOIN ".DB_PREFIX."_demos AS dm ON dm.demid = ?
     				LEFT JOIN ".DB_PREFIX."_mods AS mo ON mo.mid = se.modid
-    				WHERE bid = ?", array((int)$_GET['id'], (int)$_GET['id']));
+    				WHERE ba.bid = ?", array((int)$_GET['id'], (int)$_GET['id']));
 
-if (!$userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_ALL_BANS)&&(!$userbank->HasAccess(ADMIN_EDIT_OWN_BANS) && $res[8]!=$userbank->GetAid())&&(!$userbank->HasAccess(ADMIN_EDIT_GROUP_BANS) && $res->fields['gid']!=$userbank->GetProperty('gid')))
+if (empty($res) || !isset($res['bid']))
 {
-	echo '<script>ShowBox("Ошибка", "Вы не имеете доступ к этому!", "red", "index.php?p=admin&c=bans");</script>';
-	PageDie();
+	$sbBanEditFail('Бан не найден!');
+	return;
+}
+
+$canEditBan = $userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_ALL_BANS)
+	|| ($userbank->HasAccess(ADMIN_EDIT_OWN_BANS) && (int)$res['aid'] === (int)$userbank->GetAid())
+	|| ($userbank->HasAccess(ADMIN_EDIT_GROUP_BANS) && (int)$res['gid'] === (int)$userbank->GetProperty('gid'));
+if (!$canEditBan)
+{
+	$sbBanEditFail('Вы не имеете доступ к этому!');
+	return;
 }
 
 isset($_GET["page"])?$pagelink = "&page=".$_GET["page"]:$pagelink = "";
@@ -233,15 +260,21 @@ if(isset($_POST['name']))
 				
 		if(!empty($_POST['dname']) and !$demo_linker)
 		{
+			$didSafe = sb_demo_filename_safe(isset($_POST['did']) ? $_POST['did'] : '');
+			if ($didSafe === '') {
+				$sbBanEditFail('Недопустимое имя файла демо.');
+				return;
+			}
 			$demoid = $GLOBALS['db']->GetRow("SELECT filename FROM `" . DB_PREFIX . "_demos` WHERE demid = ?", array((int)$_GET['id']));
-			@unlink(SB_DEMOS."/".$demoid['filename']);
+			if (!empty($demoid['filename']))
+				sb_unlink_demo($demoid['filename']);
 			$edit = $GLOBALS['db']->Execute("REPLACE INTO ".DB_PREFIX."_demos
 											(`demid`, `demtype`, `filename`, `origname`)
 											VALUES
 											(?,
 											'b',
 											?,
-											?)", array((int)$_GET['id'], $_POST['did'], $_POST['dname']));
+											?)", array((int)$_GET['id'], $didSafe, $_POST['dname']));
 			$res['dname'] = RemoveCode($_POST['dname']);
 		}
 		
@@ -293,19 +326,38 @@ if(!$res)
 	echo "<script>setTimeout(\"ShowBox('Ошибка', 'Произошла ошибка получения деталей. Возможно, этот бан был удален?', 'red', 'index.php?p=banlist".$pagelink."', false, 5000)\", 1000);</script>";
 }
 
-$theme->assign('demo_link_val', $res['origname']);
+$customReasons = false;
+if (!empty($GLOBALS['config']['bans.customreasons'])) {
+	$rawReasons = $GLOBALS['config']['bans.customreasons'];
+	if (is_array($rawReasons)) {
+		$customReasons = $rawReasons;
+	} else {
+		$decoded = sb_unserialize_array((string)$rawReasons);
+		$customReasons = is_array($decoded) ? $decoded : false;
+	}
+}
+$demoName = isset($res['origname']) ? $res['origname'] : '';
+$banDemoHtml = ($demoName !== '' && $demoName !== null) ? ('<b>'.htmlspecialchars((string)$demoName, ENT_QUOTES, 'UTF-8').'</b>') : '';
+
+$theme->assign('demo_link_val', $demoName);
 $theme->assign('ban_name', $res['name']);
 $theme->assign('ban_reason', $res['reason']);
 $theme->assign('ban_authid', trim($res['authid']));
 $theme->assign('ban_ip', $res['ip']);
-$theme->assign('ban_demo', (!empty($res['dname'])?"<b>".$res['dname']."</b>":""));
-$theme->assign('customreason', ((isset($GLOBALS['config']['bans.customreasons'])&&$GLOBALS['config']['bans.customreasons']!="")?unserialize($GLOBALS['config']['bans.customreasons']):false));
+$theme->assign('ban_demo', $banDemoHtml);
+$theme->assign('customreason', $customReasons);
 
-$theme->left_delimiter = "-{";
-$theme->right_delimiter = "}-";
-$theme->display('page_admin_edit_ban.tpl');
-$theme->left_delimiter = "{";
-$theme->right_delimiter = "}";
+if (function_exists('sb_ui_v2_fragment')) {
+	echo sb_ui_v2_fragment('admin_bans_edit.twig', array(
+		'demo_link_val' => $demoName,
+		'ban_name' => $res['name'],
+		'ban_reason' => $res['reason'],
+		'ban_authid' => trim($res['authid']),
+		'ban_ip' => $res['ip'],
+		'ban_demo' => $banDemoHtml,
+		'customreason' => $customReasons,
+	));
+}
 ?>
 <script type="text/javascript">window.addEvent('domready', function(){
 <?php echo $errorScript; ?>
@@ -314,5 +366,5 @@ function changeReason(szListValue)
 {
 	$('dreason').style.display = (szListValue == "other" ? "block" : "none");
 }
-selectLengthTypeReason('<?php echo (int)$res['length']; ?>', '<?php echo (int)$res['type']; ?>', '<?php echo htmlspecialchars(addslashes($res['reason'])); ?>');
+selectLengthTypeReason(<?php echo (int)$res['length']; ?>, <?php echo (int)$res['type']; ?>, <?php echo json_encode((string)$res['reason'], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>);
 </script>

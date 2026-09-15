@@ -25,7 +25,7 @@
 //
 // *************************************************************************
 
-if(!defined("IN_SB")){echo "You should not be here. Only follow links!";die();} 
+if(!defined("IN_SB")){echo "Ошибка доступа!";die();} 
 global $userbank, $theme;
 
 // SECURITY: the router (includes/admin.php) only calls CheckAdminAccess() for sub-sections (?c=...);
@@ -49,18 +49,30 @@ $counts = $GLOBALS['db']->GetRow("SELECT
 
 $demsi = getDirectorySize(SB_DEMOS);
 
-$theme->assign('access_admins', 	$userbank->HasAccess(ADMIN_OWNER|ADMIN_LIST_ADMINS|ADMIN_ADD_ADMINS|ADMIN_EDIT_ADMINS|ADMIN_DELETE_ADMINS));
-$theme->assign('access_servers', 	$userbank->HasAccess(ADMIN_OWNER|ADMIN_LIST_SERVERS|ADMIN_ADD_SERVER|ADMIN_EDIT_SERVERS|ADMIN_DELETE_SERVERS));
-$theme->assign('access_bans', 		$userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_BAN|ADMIN_EDIT_OWN_BANS|ADMIN_EDIT_GROUP_BANS|ADMIN_EDIT_ALL_BANS|ADMIN_BAN_PROTESTS|ADMIN_BAN_SUBMISSIONS));
-$theme->assign('access_recidivism', function_exists('RecidivismCanView') ? RecidivismCanView() : $userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_BAN|ADMIN_EDIT_OWN_BANS|ADMIN_EDIT_ALL_BANS|ADMIN_EDIT_GROUP_BANS));
-$theme->assign('access_parsec', function_exists('ParsecPanelCanView') ? ParsecPanelCanView() : false);
-$theme->assign('access_groups', 	$userbank->HasAccess( ADMIN_OWNER|ADMIN_LIST_GROUPS|ADMIN_ADD_GROUP|ADMIN_EDIT_GROUPS|ADMIN_DELETE_GROUPS ));
-$theme->assign('access_settings', 	$userbank->HasAccess(ADMIN_OWNER|ADMIN_WEB_SETTINGS));
-$theme->assign('access_mods', 		$userbank->HasAccess(ADMIN_OWNER|ADMIN_LIST_MODS|ADMIN_ADD_MODS|ADMIN_EDIT_MODS|ADMIN_DELETE_MODS ));
+$access_admins = $userbank->HasAccess(ADMIN_OWNER|ADMIN_LIST_ADMINS|ADMIN_ADD_ADMINS|ADMIN_EDIT_ADMINS|ADMIN_DELETE_ADMINS);
+$access_servers = $userbank->HasAccess(ADMIN_OWNER|ADMIN_LIST_SERVERS|ADMIN_ADD_SERVER|ADMIN_EDIT_SERVERS|ADMIN_DELETE_SERVERS);
+$access_bans = $userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_BAN|ADMIN_EDIT_OWN_BANS|ADMIN_EDIT_GROUP_BANS|ADMIN_EDIT_ALL_BANS|ADMIN_BAN_PROTESTS|ADMIN_BAN_SUBMISSIONS);
+$access_recidivism = function_exists('RecidivismCanView') ? RecidivismCanView() : $userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_BAN|ADMIN_EDIT_OWN_BANS|ADMIN_EDIT_ALL_BANS|ADMIN_EDIT_GROUP_BANS);
+$access_parsec = function_exists('ParsecPanelCanView') ? ParsecPanelCanView() : false;
+$access_groups = $userbank->HasAccess(ADMIN_OWNER|ADMIN_LIST_GROUPS|ADMIN_ADD_GROUP|ADMIN_EDIT_GROUPS|ADMIN_DELETE_GROUPS);
+$access_settings = $userbank->HasAccess(ADMIN_OWNER|ADMIN_WEB_SETTINGS);
+$access_mods = $userbank->HasAccess(ADMIN_OWNER|ADMIN_LIST_MODS|ADMIN_ADD_MODS|ADMIN_EDIT_MODS|ADMIN_DELETE_MODS);
 // Выпуск ваучеров — только владелец и только если система включена в настройках.
-$theme->assign('access_vouchers',	$userbank->HasAccess(ADMIN_OWNER) && isset($GLOBALS['config']['page.vay4er']) && (string)$GLOBALS['config']['page.vay4er'] === '1');
+$access_vouchers = $userbank->HasAccess(ADMIN_OWNER) && isset($GLOBALS['config']['page.vay4er']) && (string)$GLOBALS['config']['page.vay4er'] === '1';
+$access_menu = $userbank->HasAccess(ADMIN_OWNER);
+$demosize = sizeFormat($demsi['size']);
 
-$theme->assign('demosize', sizeFormat($demsi['size']));
+$theme->assign('access_admins', $access_admins);
+$theme->assign('access_servers', $access_servers);
+$theme->assign('access_bans', $access_bans);
+$theme->assign('access_recidivism', $access_recidivism);
+$theme->assign('access_parsec', $access_parsec);
+$theme->assign('access_groups', $access_groups);
+$theme->assign('access_settings', $access_settings);
+$theme->assign('access_mods', $access_mods);
+$theme->assign('access_vouchers', $access_vouchers);
+
+$theme->assign('demosize', $demosize);
 $theme->assign('total_admins', $counts['admins']);
 $theme->assign('total_bans', $counts['bans']);
 $theme->assign('total_blocks', $counts['blocks']);
@@ -70,4 +82,31 @@ $theme->assign('archived_protests', $counts['archiv_protests']);
 $theme->assign('total_submissions', $counts['subs']);
 $theme->assign('archived_submissions', $counts['archiv_subs']);
 
-$theme->display('page_admin.tpl');
+if (!function_exists('sb_ui_v2_render')) {
+	echo 'Нужен рендерер Blue V2.';
+	return;
+}
+
+sb_ui_v2_render('admin_hub.twig', array(
+	'title' => 'Панель управления — Blue Admin',
+	'access_admins' => $access_admins,
+	'access_servers' => $access_servers,
+	'access_bans' => $access_bans,
+	'access_recidivism' => $access_recidivism,
+	'access_parsec' => $access_parsec,
+	'access_groups' => $access_groups,
+	'access_settings' => $access_settings,
+	'access_mods' => $access_mods,
+	'access_vouchers' => $access_vouchers,
+	'access_menu' => $access_menu,
+	'demosize' => $demosize,
+	'total_admins' => $counts['admins'],
+	'total_bans' => $counts['bans'],
+	'total_blocks' => $counts['blocks'],
+	'total_servers' => $counts['servers'],
+	'total_protests' => $counts['protests'],
+	'archived_protests' => $counts['archiv_protests'],
+	'total_submissions' => $counts['subs'],
+	'archived_submissions' => $counts['archiv_subs'],
+));
+return;

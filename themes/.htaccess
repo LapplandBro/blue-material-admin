@@ -1,4 +1,4 @@
-# Тема: css/js/картинки нужны браузеру; .tpl / PHP скачивать и исполнять нельзя.
+# Тема: css/js/картинки нужны браузеру; PHP в themes/ исполнять нельзя.
 Options -Indexes
 
 <IfModule mod_authz_core.c>

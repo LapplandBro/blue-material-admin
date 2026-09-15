@@ -1,0 +1,33 @@
+<form action="index.php?p=admin&amp;c=settings" method="post" id="theme_form">
+  <input type="hidden" name="sb_csrf" value="{{ sb_csrf }}">
+  <input type="hidden" name="settingsGroup" value="mainsettings_themes">
+  <div class="form-page admin-form settings-page">
+    <header class="form-page-head">
+      <p class="form-page-kicker">Настройки</p>
+      <h2 class="form-page-title">Уведомления</h2>
+      <p class="form-page-lead">Тексты для главной, мониторинга и профиля. Пустое поле — уведомление выключено.</p>
+    </header>
+    <div class="form-grid">
+      <div class="form-field">
+        <label class="form-label" for="yvedom_1">{% include 'partials/help_icon.twig' with { title: 'Уведомление', message: 'Показывается при заходе на главную страницу.' } %} На главной</label>
+        <input type="text" class="form-control" id="yvedom_1" name="yvedom_1" value="{{ config_text_home }}" placeholder="Необязательно">
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="yvedom_2">{% include 'partials/help_icon.twig' with { title: 'Уведомление', message: 'Показывается администратору на странице мониторинга.' } %} В мониторинге</label>
+        <input type="text" class="form-control" id="yvedom_2" name="yvedom_2" value="{{ config_text_mon }}" placeholder="Необязательно">
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="yvedom_3">{% include 'partials/help_icon.twig' with { title: 'Уведомление', message: 'Первое уведомление в профиле пользователя.' } %} В профиле (1)</label>
+        <input type="text" class="form-control" id="yvedom_3" name="yvedom_3" value="{{ config_text_acc }}" placeholder="Необязательно">
+      </div>
+      <div class="form-field">
+        <label class="form-label" for="yvedom_4">{% include 'partials/help_icon.twig' with { title: 'Уведомление', message: 'Второе уведомление в профиле пользователя.' } %} В профиле (2)</label>
+        <input type="text" class="form-control" id="yvedom_4" name="yvedom_4" value="{{ config_text_acc2 }}" placeholder="Необязательно">
+      </div>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-accent" id="tsettings">Сохранить</button>
+      <button type="button" class="btn btn-outline-secondary" id="tback" onclick="sbGo('index.php?p=admin&amp;c=settings')">Назад</button>
+    </div>
+  </div>
+</form>

@@ -1,0 +1,113 @@
+{% if not permissions_submissions %}
+<div class="form-page">
+  <p class="form-flash form-flash--err">Нет доступа к архиву заявок.</p>
+</div>
+{% else %}
+<div id="submissions-archiv" class="panel">
+  <header class="form-page-head">
+    <p class="form-page-kicker">Админка</p>
+    <h2 class="form-page-title">Архив заявок</h2>
+    <p class="form-page-lead">{{ submission_count_archiv }} · клик по строке — детали</p>
+    <ul class="actions" id="banlist-nav">{{ asubmission_nav|raw }}</ul>
+  </header>
+  <div class="table-responsive table-cards-wrap">
+    <table class="table table-v2 table-cards">
+      <thead>
+        <tr>
+          <th>Ник</th>
+          <th>SteamID / IP</th>
+          <th class="text-end">Действия</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for sub in submission_list_archiv %}
+        <tr id="asid_{{ sub.subid }}" class="opener4 banlist-row"{% if sub.hostname == "" %} onclick="xajax_ServerHostPlayers('{{ sub.server }}', 'id', 'suba{{ sub.subid }}');"{% endif %}>
+          <td data-label="Ник">{{ sub.name|raw }}</td>
+          <td data-label="SteamID / IP">{% if sub.SteamId != "" %}{{ sub.SteamId }}{% else %}{{ sub.sip }}{% endif %}</td>
+          <td class="text-end" data-label="Действия">
+            <span class="admin-actions">
+              {% if sub.archiv != "2" and sub.archiv != "3" %}
+              <a class="admin-action" href="#" onclick="event.cancelBubble=true; xajax_SetupBan({{ sub.subid }}); return false;">Забанить</a>
+                {% if permissions_editsub %}
+              <a class="admin-action" href="#" onclick='event.cancelBubble=true; RemoveSubmission({{ sub.subid }}, {{ sub.name_js|raw }}, "2"); return false;'>Восстановить</a>
+                {% endif %}
+              {% endif %}
+              {% if permissions_editsub %}
+              <a class="admin-action admin-action--danger" href="#" onclick='event.cancelBubble=true; RemoveSubmission({{ sub.subid }}, {{ sub.name_js|raw }}, "0"); return false;'>Удалить</a>
+              {% endif %}
+              <a class="admin-action" href="index.php?p=admin&amp;c=bans&amp;o=email&amp;type=s&amp;id={{ sub.subid }}" onclick="event.cancelBubble=true;">Контакты</a>
+            </span>
+          </td>
+        </tr>
+        <tr id="asid_{{ sub.subid }}a" class="banlist-detail-row">
+          <td colspan="3">
+            <div class="opener4">
+              <div class="admin-ticket">
+                <div class="admin-detail-head">
+                  <div>
+                    <div class="admin-detail-title">Детали заявки</div>
+                    <div class="form-note">В архиве: {{ sub.archive }}</div>
+                  </div>
+                  <div class="admin-detail-actions">
+                    <span>{{ sub.demo|raw }}</span>
+                    <span>{{ sub.subaddcomment|raw }}</span>
+                  </div>
+                </div>
+                <div class="admin-facts admin-facts--ticket">
+                  <div class="admin-fact">
+                    <span class="admin-fact-label">Игрок</span>
+                    <span class="admin-fact-value">{{ sub.name|raw }}</span>
+                  </div>
+                  <div class="admin-fact">
+                    <span class="admin-fact-label">Добавлено</span>
+                    <span class="admin-fact-value">{{ sub.submitted }}</span>
+                  </div>
+                  <div class="admin-fact">
+                    <span class="admin-fact-label">SteamID</span>
+                    <span class="admin-fact-value">{% if sub.SteamId == "" %}<span class="admin-muted">не указан</span>{% else %}{{ sub.SteamId }}{% endif %}</span>
+                  </div>
+                  <div class="admin-fact">
+                    <span class="admin-fact-label">IP</span>
+                    <span class="admin-fact-value">{% if sub.sip == "" %}<span class="admin-muted">не указан</span>{% else %}{{ sub.sip }}{% endif %}</span>
+                  </div>
+                  <div class="admin-fact admin-fact--span">
+                    <span class="admin-fact-label">Причина</span>
+                    <span class="admin-fact-value">{{ sub.reason|raw }}</span>
+                  </div>
+                  <div class="admin-fact">
+                    <span class="admin-fact-label">Сервер</span>
+                    <span class="admin-fact-value" id="suba{{ sub.subid }}">{% if sub.hostname == "" %}<span class="admin-muted">Загрузка…</span>{% else %}{{ sub.hostname|raw }}{% endif %}</span>
+                  </div>
+                  <div class="admin-fact">
+                    <span class="admin-fact-label">Мод</span>
+                    <span class="admin-fact-value">{{ sub.mod }}</span>
+                  </div>
+                  <div class="admin-fact">
+                    <span class="admin-fact-label">Заявитель</span>
+                    <span class="admin-fact-value">{% if sub.subname == "" %}<span class="admin-muted">не указан</span>{% else %}{{ sub.subname }}{% endif %}</span>
+                  </div>
+                  <div class="admin-fact">
+                    <span class="admin-fact-label">IP заявителя</span>
+                    <span class="admin-fact-value">{{ sub.ip }}</span>
+                  </div>
+                  <div class="admin-fact admin-fact--span">
+                    <span class="admin-fact-label">В архив отправил</span>
+                    <span class="admin-fact-value">{% if sub.archivedby %}{{ sub.archivedby }}{% else %}<span class="admin-muted">админ удалён</span>{% endif %}</span>
+                  </div>
+                  {% include 'partials/admin_ticket_comments.twig' with { comments: sub.commentdata } %}
+                </div>
+              </div>
+            </div>
+          </td>
+        </tr>
+      {% else %}
+        <tr>
+          <td colspan="3" class="parsec-muted" data-label="">Заявок нет.</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+<script>InitAccordion('tr.opener4', 'div.opener4', 'submissions-archiv');</script>
+{% endif %}

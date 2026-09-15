@@ -1,0 +1,283 @@
+{% if permission_ok is defined and not permission_ok %}
+<div class="form-flash form-flash--err">У вас нет доступа к истории нарушений.</div>
+{% else %}
+
+<div class="recid-panel">
+
+<div class="form-page admin-form mb-3">
+  <header class="form-page-head">
+    <p class="form-page-kicker">Админка</p>
+    <h2 class="form-page-title">История нарушений</h2>
+    <p class="form-page-lead">Очки за баны, гаги и муты за {{ window_days }} дн. · автоперм с порога {{ thr_ban }} / {{ thr_gag }} / {{ thr_mute }}</p>
+  </header>
+  <form method="get" action="index.php" class="form-grid" id="recid-steam-form">
+    <input type="hidden" name="p" value="admin">
+    <input type="hidden" name="c" value="recidivism">
+    <div class="form-field form-field--full">
+      <label class="form-label" for="steam">Игрок</label>
+      <div class="input-group">
+        <input type="text" class="form-control" id="steam" name="steam" value="{{ steam_input }}" placeholder="STEAM_0:X:Y · [U:1:…] · Community ID">
+        <button type="submit" class="btn btn-accent">Открыть карточку</button>
+      </div>
+    </div>
+  </form>
+</div>
+
+{% if error_msg %}
+<div class="parsec-note parsec-note-warn mb-3">{{ error_msg }}</div>
+{% endif %}
+
+{% if tables_ok and player %}
+<div class="form-page admin-form mb-3">
+  <header class="form-page-head">
+    <h2 class="form-page-title">{% if player.name %}{{ player.name }}{% else %}Игрок без ника{% endif %}</h2>
+    <p class="form-page-lead">{{ player.authid }} · обновлено {{ player.updated_fmt }}</p>
+  </header>
+  {% if player.missing_row %}
+  <div class="parsec-note parsec-note-muted mb-3">В кэше очков записей ещё нет — показываем нули. Плагин заполнит строки при первом нарушении.</div>
+  {% endif %}
+  <p class="parsec-muted">Очки со временем чуть «съедаются» (за {{ window_days }} дней до нуля). Поэтому свежий бан на 4 может показывать 3.99 — так и задумано.</p>
+  <div class="recid-scores mb-3">
+    <div class="recid-score-box recid-box-ban">
+      <div class="recid-score-label">Бан</div>
+      <div class="recid-score-value">{{ player.points_ban }}</div>
+      <div class="recid-score-sub">порог {{ thr_ban }}</div>
+      <div class="recid-bar"><span style="width:{{ player.pct_ban }}%"></span></div>
+      {% if player.escalated_ban %}<div class="recid-score-note">авто-перм</div>{% endif %}
+    </div>
+    <div class="recid-score-box recid-box-gag">
+      <div class="recid-score-label">Гаг</div>
+      <div class="recid-score-value">{{ player.points_gag }}</div>
+      <div class="recid-score-sub">порог {{ thr_gag }}</div>
+      <div class="recid-bar"><span style="width:{{ player.pct_gag }}%"></span></div>
+      {% if player.escalated_gag %}<div class="recid-score-note">авто-перм</div>{% endif %}
+    </div>
+    <div class="recid-score-box recid-box-mute">
+      <div class="recid-score-label">Мут</div>
+      <div class="recid-score-value">{{ player.points_mute }}</div>
+      <div class="recid-score-sub">порог {{ thr_mute }}</div>
+      <div class="recid-bar"><span style="width:{{ player.pct_mute }}%"></span></div>
+      {% if player.escalated_mute %}<div class="recid-score-note">авто-пермамут</div>{% endif %}
+    </div>
+  </div>
+
+  <div class="parsec-stats mb-3">
+    <div class="parsec-stat">
+      <div class="parsec-stat-label">Сумма очков</div>
+      <div class="parsec-stat-value">{{ player.points_total }}</div>
+      <div class="parsec-stat-hint">все ветки</div>
+    </div>
+    <div class="parsec-stat">
+      <div class="parsec-stat-label">В группе</div>
+      <div class="parsec-stat-value">{{ player.family_size }}</div>
+      <div class="parsec-stat-hint">аккаунтов</div>
+    </div>
+    <div class="parsec-stat">
+      <div class="parsec-stat-label">Макс. в группе</div>
+      <div class="parsec-stat-value">
+        <div class="parsec-stat-bgm">
+          <span><em>Бан</em><b>{{ player.family_max_ban }}</b></span>
+          <span><em>Гаг</em><b>{{ player.family_max_gag }}</b></span>
+          <span><em>Мут</em><b>{{ player.family_max_mute }}</b></span>
+        </div>
+      </div>
+      <div class="parsec-stat-hint">для автоперма</div>
+    </div>
+    <div class="parsec-stat">
+      <div class="parsec-stat-label">Инциденты</div>
+      <div class="parsec-stat-value">{{ event_count }}</div>
+      <div class="parsec-stat-hint">за {{ window_days }} дн.</div>
+    </div>
+  </div>
+
+  {% if player.fingerprint_id %}
+  <div class="parsec-block mb-3">
+    <div class="parsec-block-title">Отпечаток ПК</div>
+    <div class="parsec-fp" title="{{ player.fingerprint_id }}">{{ player.fingerprint_fmt }}</div>
+    <div class="parsec-fp-meta mt-2">
+      {% if player.fp_is_banned %}
+      <span class="parsec-badge parsec-badge-danger">Группа: забанена</span>
+      {% else %}
+      <span class="parsec-badge parsec-badge-ok">Группа: не забанена</span>
+      {% endif %}
+      {% if player.family_size > 1 %}
+      <span class="parsec-meta-item">В группе <strong>{{ player.family_size }}</strong> акк.</span>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  <p class="parsec-links mb-0">
+    <a href="{{ player.community_url }}" target="_blank" rel="noopener">Профиль Steam</a>
+    <span class="parsec-sep">·</span>
+    <a href="{{ player.banlist_url }}">Баны</a>
+    <span class="parsec-sep">·</span>
+    <a href="{{ player.commslist_url }}">Муты / гаги</a>
+    <span class="parsec-sep">·</span>
+    <a href="{{ player.parsec_url }}">Связанные аккаунты</a>
+  </p>
+</div>
+
+{% if linked_accounts|length > 0 %}
+<div class="form-page admin-form mb-3">
+  <header class="form-page-head">
+    <h2 class="form-page-title">Связанные аккаунты</h2>
+    <p class="form-page-lead">{{ linked_accounts|length }} шт. · один ПК и/или облако</p>
+  </header>
+  <div class="table-responsive table-cards-wrap">
+    <table class="table table-striped parsec-table table-cards">
+      <thead>
+        <tr>
+          <th>Игрок</th>
+          <th>SteamID</th>
+          <th>Откуда связь</th>
+          <th class="text-end">Очки</th>
+          <th>Бан</th>
+          <th class="text-end">Действия</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for la in linked_accounts %}
+        <tr class="list-compact-row parsec-linked-row">
+          <td class="parsec-td-name" data-label="Игрок">{% if la.name %}<strong>{{ la.name }}</strong>{% else %}<span class="parsec-muted">без ника</span>{% endif %}</td>
+          <td class="parsec-td-steam" data-label="SteamID"><code>{{ la.authid }}</code></td>
+          <td class="parsec-td-source" data-label="Откуда связь">
+            {% for chip in la.source_chips %}
+            <span class="parsec-chip {{ chip.class }}">{{ chip.text }}</span>
+            {% endfor %}
+            {% if la.source_chips|length == 0 %}<span class="parsec-muted">—</span>{% endif %}
+          </td>
+          <td class="text-end parsec-td-points" data-label="Очки">{{ la.points_display }}</td>
+          <td class="parsec-td-ban" data-label="Бан">{% if la.active_ban %}<span class="parsec-badge parsec-badge-danger">забанен</span>{% else %}<span class="parsec-muted">нет</span>{% endif %}</td>
+          <td class="text-end parsec-td-actions" data-label="Действия">
+            <span class="admin-actions">
+              <a class="admin-action" href="{{ la.view_url }}">Нарушения</a>
+              <a class="admin-action" href="{{ la.parsec_url }}">Твинки</a>
+              <a class="admin-action" href="{{ la.banlist_url }}">Баны</a>
+            </span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<div class="form-page admin-form mb-3">
+  <header class="form-page-head">
+    <h2 class="form-page-title">Инциденты</h2>
+    <p class="form-page-lead">{{ event_count }} за {{ window_days }} дней</p>
+  </header>
+  <div class="table-responsive table-cards-wrap">
+    <table class="table table-striped parsec-table recid-events table-cards">
+      <thead>
+        <tr>
+          <th>Когда</th>
+          <th>Ветка</th>
+          <th class="text-end">Очки</th>
+          <th>Срок</th>
+          <th>Категория</th>
+          <th>Причина</th>
+          <th>Админ</th>
+          <th>Источник</th>
+          <th>Статус</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if event_count == 0 %}
+        <tr>
+          <td colspan="9" class="parsec-muted" data-label="">За последние {{ window_days }} дней инцидентов нет.</td>
+        </tr>
+        {% else %}
+        {% for ev in events %}
+        <tr class="list-compact-row recid-event-row{% if ev.is_revoked %} recid-row-revoked{% endif %}">
+          <td class="recid-td-date" data-label="Когда">{{ ev.created_fmt }}</td>
+          <td class="recid-td-track" data-label="Ветка"><span class="recid-track {{ ev.track_class }}">{{ ev.track_label }}</span></td>
+          <td class="text-end parsec-td-points" data-label="Очки" title="С учётом «съедания» со временем (вес {{ ev.decay_weight }})">
+            <strong>{{ ev.points_display }}</strong>
+            {% if ev.has_decay %}<div class="recid-points-raw">из {{ ev.points_raw_total }}</div>{% endif %}
+          </td>
+          <td class="recid-td-len" data-label="Срок">{{ ev.length_fmt }}</td>
+          <td class="recid-td-cat recid-td--optional" data-label="Категория">{{ ev.category_label }}</td>
+          <td class="recid-td-reason" data-label="Причина">{{ ev.reason }}</td>
+          <td class="recid-td-admin recid-td--optional" data-label="Админ">{{ ev.admin_display }}</td>
+          <td class="recid-td-source recid-td--optional" data-label="Источник">
+            {% if ev.source_link %}
+            <a href="{{ ev.source_link }}">{{ ev.source_label }}{% if ev.ma_bid %} #{{ ev.ma_bid }}{% endif %}</a>
+            {% else %}
+            {{ ev.source_label }}{% if ev.ma_bid %} #{{ ev.ma_bid }}{% endif %}
+            {% endif %}
+          </td>
+          <td class="recid-td-status" data-label="Статус">
+            {% if ev.is_revoked %}
+            <span class="parsec-badge parsec-badge-muted">Снято</span>
+            {% else %}
+            <span class="parsec-badge parsec-badge-ok">Активно</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% elseif tables_ok and not error_msg %}
+<div class="form-page admin-form mb-3">
+  <header class="form-page-head">
+    <h2 class="form-page-title">Кто накопил больше всех</h2>
+    <p class="form-page-lead">Топ по сумме очков · бан + гаг + мут</p>
+  </header>
+  <div class="table-responsive table-cards-wrap">
+    <table class="table table-striped parsec-table recid-top-table table-cards">
+      <thead>
+        <tr>
+          <th>Игрок</th>
+          <th>SteamID</th>
+          <th class="text-end">Всего</th>
+          <th colspan="3" class="text-end recid-th-scores">Бан · Гаг · Мут</th>
+          <th class="text-end recid-th-updated">Обновлено</th>
+          <th class="text-end"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if recent_players|length == 0 %}
+        <tr>
+          <td colspan="8" class="parsec-muted" data-label="">Пока пусто — введите SteamID выше или дождитесь данных с сервера.</td>
+        </tr>
+        {% else %}
+        {% for rp in recent_players %}
+        <tr class="list-compact-row recid-top-row">
+          <td class="parsec-td-name" data-label="Игрок">
+            {% if rp.name %}<strong>{{ rp.name }}</strong>{% else %}<span class="parsec-muted">без ника</span>{% endif %}
+            {% if rp.has_escalate %}<span class="parsec-chip parsec-chip-esc" title="Уже был автоперм">автоперм</span>{% endif %}
+          </td>
+          <td class="parsec-td-steam" data-label="SteamID"><code>{{ rp.authid }}</code></td>
+          <td class="text-end recid-td-total" data-label="Всего"><strong class="recid-top-total">{{ rp.points_total }}</strong></td>
+          <td class="recid-td-scores" colspan="3" data-label="Очки">
+            <div class="recid-top-scores">
+              <span class="recid-pill recid-pill-ban" title="Бан"><span class="recid-pill-k" aria-hidden="true">B</span>{{ rp.points_ban }}</span>
+              <span class="recid-pill recid-pill-gag" title="Гаг"><span class="recid-pill-k" aria-hidden="true">G</span>{{ rp.points_gag }}</span>
+              <span class="recid-pill recid-pill-mute" title="Мут"><span class="recid-pill-k" aria-hidden="true">M</span>{{ rp.points_mute }}</span>
+            </div>
+          </td>
+          <td class="text-end recid-td-date recid-td--optional" data-label="Обновлено">{{ rp.updated_fmt }}</td>
+          <td class="text-end parsec-td-actions" data-label="Действия">
+            <span class="admin-actions">
+              <a class="admin-action" href="{{ rp.view_url }}">Нарушения</a>
+              <a class="admin-action" href="{{ rp.parsec_url }}">Твинки</a>
+            </span>
+          </td>
+        </tr>
+        {% endfor %}
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+</div>
+{% endif %}

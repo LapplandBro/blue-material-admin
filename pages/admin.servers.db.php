@@ -34,8 +34,48 @@ if(!$userbank->HasAccess(ADMIN_OWNER))
 }
 else
 {
-	
-$srv_cfg = '"Databases"
+	$unlocked = false;
+	$flash_err = '';
+	$password_configured = function_exists('SbDbcfgViewPasswordConfigured')
+		? SbDbcfgViewPasswordConfigured()
+		: false;
+	$form_action = function_exists('sb_url')
+		? sb_url('admin', array('c' => 'servers', 'o' => 'dbsetup'))
+		: 'index.php?p=admin&c=servers&o=dbsetup';
+	$back_url = function_exists('sb_url')
+		? sb_url('admin', array('c' => 'servers'))
+		: 'index.php?p=admin&c=servers';
+	$csrf = function_exists('sb_csrf_token') ? sb_csrf_token() : '';
+
+	$adminUser = (string)$userbank->GetProperty('user');
+	$adminAid = (int)$userbank->GetAid();
+	$adminSteam = (string)$userbank->GetProperty('authid');
+
+	if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['dbcfg_unlock'])) {
+		$token = isset($_POST['csrf']) ? (string)$_POST['csrf'] : '';
+		if (!function_exists('sb_csrf_validate') || !sb_csrf_validate($token)) {
+			sb_csrf_fail_page(true);
+		} elseif (!$password_configured) {
+			$flash_err = 'Пароль не задан в config.php (SB_DBCFG_VIEW_PASSWORD).';
+			new CSystemLog('w', 'Просмотр databases.cfg',
+				$adminUser . ' (aid=' . $adminAid . ') пытался открыть конфиг БД, но SB_DBCFG_VIEW_PASSWORD не задан.');
+		} else {
+			$pass = isset($_POST['dbcfg_password']) ? (string)$_POST['dbcfg_password'] : '';
+			if (function_exists('SbDbcfgViewPasswordVerify') && SbDbcfgViewPasswordVerify($pass)) {
+				$unlocked = true;
+				new CSystemLog('m', 'Просмотр databases.cfg',
+					$adminUser . ' (aid=' . $adminAid . ', steam=' . $adminSteam . ') просмотрел конфиг БД SourceMod (databases.cfg).');
+			} else {
+				$flash_err = 'Неверный пароль.';
+				new CSystemLog('w', 'Просмотр databases.cfg',
+					$adminUser . ' (aid=' . $adminAid . ', steam=' . $adminSteam . ') ввёл неверный пароль просмотра конфига БД.');
+			}
+		}
+	}
+
+	$srv_cfg = '';
+	if ($unlocked) {
+		$srv_cfg = '"Databases"
 {
 	"driver_default"		"mysql"
 	
@@ -72,23 +112,36 @@ $srv_cfg = '"Databases"
 	}
 }
 ';
-$srv_cfg = str_replace("{server}", DB_HOST, $srv_cfg);
-$srv_cfg = str_replace("{user}", DB_USER, $srv_cfg);
-$srv_cfg = str_replace("{pass}", DB_PASS, $srv_cfg);
-$srv_cfg = str_replace("{db}", DB_NAME, $srv_cfg);
-$srv_cfg = str_replace("{prefix}", DB_PREFIX, $srv_cfg);
-$srv_cfg = str_replace("{port}", DB_PORT, $srv_cfg);	
-	
-if(strtolower(DB_HOST) == "localhost")
-{
-	ShowBox("Предупреждение локального сервера", "Вы указали, что ваш сервер MySQL работает на той же машине, что и веб-сервер, это хорошо, но, возможно, потребуется изменить следующий конфигурационный файл, чтобы установить удаленный доступ к вашему серверу MySQL." , "blue", "", true);
-}
+		$srv_cfg = str_replace("{server}", DB_HOST, $srv_cfg);
+		$srv_cfg = str_replace("{user}", DB_USER, $srv_cfg);
+		$srv_cfg = str_replace("{pass}", DB_PASS, $srv_cfg);
+		$srv_cfg = str_replace("{db}", DB_NAME, $srv_cfg);
+		$srv_cfg = str_replace("{prefix}", DB_PREFIX, $srv_cfg);
+		$srv_cfg = str_replace("{port}", DB_PORT, $srv_cfg);
 
-$theme->assign('conf', $srv_cfg);
-?>
-<div id="admin-page-content">
-	<div id="0">
-	<?php $theme->display('page_admin_servers_db.tpl'); ?>
-	</div>
-</div>
-<?php }
+		if (strtolower(DB_HOST) == "localhost") {
+			ShowBox(
+				"Предупреждение локального сервера",
+				"Вы указали, что ваш сервер MySQL работает на той же машине, что и веб-сервер, это хорошо, но, возможно, потребуется изменить следующий конфигурационный файл, чтобы установить удаленный доступ к вашему серверу MySQL.",
+				"blue",
+				"",
+				true
+			);
+		}
+	}
+
+	$theme->assign('unlocked', $unlocked);
+	$theme->assign('conf', $srv_cfg);
+	$theme->assign('flash_err', $flash_err);
+	$theme->assign('password_configured', $password_configured);
+	$theme->assign('form_action', $form_action);
+	$theme->assign('back_url', $back_url);
+	$theme->assign('csrf', $csrf);
+
+	echo '<div id="admin-page-content">';
+	echo '<div id="0" class="admin-pane is-on">';
+	$_f = sb_ui_v2_theme_fragment('admin_servers_db.twig');
+	if (is_string($_f) && $_f !== '') echo $_f;
+	echo '</div>';
+	echo '</div>';
+}

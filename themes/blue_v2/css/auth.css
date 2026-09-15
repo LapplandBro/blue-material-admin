@@ -1,0 +1,93 @@
+.login-card.auth-card-wide { max-width: 34rem; }
+.auth-help,
+.auth-note {
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+.auth-help { margin-top: 0.32rem; }
+.auth-note { margin: 0 0 0.7rem; }
+.auth-help a,
+.auth-note a { color: var(--muted); }
+.auth-help a:hover,
+.auth-note a:hover { color: var(--accent-hover); }
+.totp-setup { margin-bottom: 1rem; }
+.totp-qr {
+  display: block;
+  width: fit-content;
+  margin: 0 auto 0.95rem;
+  padding: 0.7rem;
+  background: #fff;
+  border-radius: var(--radius-sm);
+  box-shadow: 0 8px 24px rgba(2, 6, 18, 0.35);
+}
+.totp-qr img,
+.totp-qr canvas {
+  display: block;
+}
+.totp-secret-wrap { margin: 0 0 0.7rem; }
+.totp-secret {
+  display: inline-block;
+  font-size: 0.95rem;
+  letter-spacing: 0.06em;
+  word-break: break-all;
+  color: var(--text-heading);
+  padding: 0.35rem 0.55rem;
+}
+.recovery-codes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
+  gap: 0.35rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-mono);
+  font-size: 0.92rem;
+}
+.recovery-codes li {
+  margin: 0;
+  padding: 0.28rem 0.45rem;
+  background: var(--bg-input);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-sm);
+  color: var(--text-heading);
+  text-align: center;
+}
+.login-steam {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+.login-steam .bi { font-size: 1.15rem; line-height: 1; }
+.login-card .alert { margin-bottom: 0.9rem; }
+#msg-blue, #msg-red { font-size: 0.86rem; }
+
+@media (max-width: 767.98px) {
+  .login-screen {
+    padding: 1rem 0.75rem;
+    align-items: flex-start;
+  }
+
+  .login-card,
+  .login-card.auth-card-wide {
+    max-width: none;
+    width: 100%;
+    padding: 1.15rem 1rem 1.25rem;
+  }
+
+  .totp-qr img,
+  .totp-qr canvas {
+    max-width: min(220px, 100%);
+    height: auto;
+  }
+
+  .recovery-codes {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .recovery-codes {
+    grid-template-columns: 1fr;
+  }
+}

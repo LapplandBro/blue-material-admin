@@ -31,42 +31,38 @@ elseif($_GET['type'] == 'srv') $type_label = 'серверная группа а
 elseif($_GET['type'] == 'server') $type_label = 'группа серверов';
 ?>
 <div id="admin-page-content">
-<div class="card banlist-panel admin-form" id="add-group">
-	<div class="card-header">
-		<h2>Группа
-			<small><?php echo htmlspecialchars($type_label); ?> · имя и права</small>
-		</h2>
-	</div>
-	<div class="card-body card-padding p-b-0 form-horizontal" role="form">
-		<input type="hidden" id="group_id" value="<?php echo $_GET['id']?>" />
-		<div class="form-group m-b-5">
-			<label for="groupname" class="col-sm-3 control-label">Имя</label>
-			<div class="col-sm-9">
-				<div class="fg-line">
-					<input type="text" tabindex="1" class="form-control" id="groupname" name="groupname" placeholder="Имя группы" />
-				</div>
-				<div id="groupname.msg" style="color:#f44336;"></div>
-			</div>
+<div class="form-page admin-form" id="add-group">
+	<header class="form-page-head">
+		<p class="form-page-kicker">Админка</p>
+		<h2 class="form-page-title">Группа</h2>
+		<p class="form-page-lead"><?php echo htmlspecialchars($type_label); ?> · имя и права</p>
+	</header>
+	<div class="form-grid">
+		<input type="hidden" id="group_id" value="<?php echo (int)$_GET['id']; ?>" />
+		<div class="form-field form-field--full">
+			<label for="groupname" class="form-label">Имя</label>
+			<input type="text" tabindex="1" class="form-control" id="groupname" name="groupname" placeholder="Имя группы" />
+			<div id="groupname.msg" class="msg-err"></div>
 		</div>
 	</div>
 <?php if($_GET['type'] == "web")
 {?>
-	<div class="card-body card-padding p-t-0">
+	<div class="mb-3">
 		<?php echo str_replace("{title}", "Веб-права", @file_get_contents(TEMPLATES_PATH . "/groups.web.perm.php")) ;?>
 	</div>
 <?php }elseif($_GET['type'] == "srv"){
 	$permissions = str_replace("{title}", "Серверные права", @file_get_contents(TEMPLATES_PATH . "/groups.server.perm.php")) ;
 ?>
-	<div class="card-body card-padding p-t-0">
+	<div class="mb-3">
 		<?php echo $permissions; ?>
 	</div>
 
 	<?php
 	$overrides_list = $GLOBALS['db']->GetAll("SELECT * FROM `" . DB_PREFIX . "_srvgroups_overrides` WHERE group_id = ?", array($_GET['id']));
 	?>
-	<div class="card-body card-padding">
-		<h3 class="admin-hub-section-title">Переопределения</h3>
-		<div class="parsec-note parsec-note-muted m-b-15">
+	<div class="mb-3">
+		<h3 class="form-page-title">Переопределения</h3>
+		<div class="parsec-note parsec-note-muted mb-3">
 			Пустое имя + сохранение = удалить строку.
 			<a href="http://wiki.alliedmods.net/Adding_Groups_%28SourceMod%29" target="_blank" rel="noopener">Wiki</a>
 		</div>
@@ -122,17 +118,16 @@ elseif($_GET['type'] == 'server') $type_label = 'группа серверов';
 		</form>
 	</div>
 <?php } ?>
-	<div class="card-body card-padding text-center admin-manage-footer">
-		<button type="button" onclick="ProcessEditGroup('<?php echo $_GET['type']?>', $('groupname').value);" name="editgroup" class="btn bgm-blue btn-icon-text waves-effect" id="editgroup"><i class="zmdi zmdi-check-all"></i> Сохранить</button>
-		&nbsp;
-		<button type="button" onclick="sbGo('admin/groups')" name="back" class="btn bgm-bluegray btn-icon-text waves-effect" id="back"><i class="zmdi zmdi-undo"></i> Назад</button>
+	<div class="form-actions">
+		<button type="button" onclick="ProcessEditGroup('<?php echo htmlspecialchars($_GET['type'], ENT_QUOTES, 'UTF-8'); ?>', $('groupname').value);" name="editgroup" class="btn btn-accent" id="editgroup">Сохранить</button>
+		<button type="button" onclick="sbGo('index.php?p=admin&c=groups')" name="back" class="btn btn-outline-secondary" id="back">Назад</button>
 	</div>
 </div>
 </div>
 
 <script>
 <?php if($_GET['type'] == "web" || $_GET['type'] == "server"){?>
-		$('groupname').value = "<?php echo addslashes($web_group['name'])?>";
+		$('groupname').value = <?php echo json_encode((string)$web_group['name'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE); ?>;
 <?php }?>
 <?php if(!$userbank->HasAccess(ADMIN_OWNER)) { ?>
 	if($("wrootcheckbox")) {
@@ -181,9 +176,10 @@ $('p28').checked = <?php echo check_flag($web_flags, ADMIN_LIST_MODS) ? "true" :
 $('p29').checked = <?php echo check_flag($web_flags, ADMIN_ADD_MODS) ? "true" : "false"?>;
 $('p30').checked = <?php echo check_flag($web_flags, ADMIN_EDIT_MODS) ? "true" : "false"?>;
 $('p31').checked = <?php echo check_flag($web_flags, ADMIN_DELETE_MODS) ? "true" : "false"?>;
+if (typeof BindWebPermissionGroupSync === 'function') BindWebPermissionGroupSync();
 
 <?php }elseif($_GET['type'] == "srv"){?>
-$('groupname').value = "<?php echo addslashes($srv_group['name'])?>";
+$('groupname').value = <?php echo json_encode((string)$srv_group['name'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE); ?>;
 $('s14').checked = <?php echo strstr($srv_flags, SM_ROOT) ? "true" : "false"?>;
 $('s1').checked = <?php echo strstr($srv_flags, SM_RESERVED_SLOT) ? "true" : "false"?>;
 $('s23').checked = <?php echo strstr($srv_flags, SM_GENERIC) ? "true" : "false"?>;

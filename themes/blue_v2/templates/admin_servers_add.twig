@@ -1,0 +1,91 @@
+{% if not permission_addserver %}
+<div class="form-page">
+  <p class="form-flash form-flash--err">Доступ запрещен</p>
+</div>
+{% else %}
+<div class="form-page admin-form" id="add-group1">
+  <header class="form-page-head">
+    <p class="form-page-kicker">Админка</p>
+    <h2 class="form-page-title">{{ submit_text }}</h2>
+    <p class="form-page-lead">Адрес, RCON, мод и группы</p>
+  </header>
+  <input type="hidden" name="insert_type" value="add">
+  <div class="form-grid" id="group.details">
+    <div class="form-field form-field--full">
+      <label class="form-label" for="address">{% include 'partials/help_icon.twig' with { title: 'Адрес сервера', message: 'IP адрес сервера. Так же может использовоться домен.' } %} IP/Домен сервера</label>
+      <input type="hidden" id="fromsub" value="">
+      <input type="text" class="form-control" id="address" name="address" tabindex="1" value="{{ ip }}" placeholder="Введите данные">
+      <div id="address.msg" class="msg-err"></div>
+    </div>
+    <div class="form-field">
+      <label class="form-label" for="port">{% include 'partials/help_icon.twig' with { title: 'Порт сервера', message: 'Порт, на котором запускается сервер. По умолчанию: 27015' } %} Порт сервера</label>
+      <input type="text" class="form-control" id="port" name="port" tabindex="1" value="{% if port %}{{ port }}{% else %}27015{% endif %}" placeholder="Введите данные">
+      <div id="port.msg" class="msg-err"></div>
+    </div>
+    <div class="form-field">
+      <label class="form-label" for="rcon">{% include 'partials/help_icon.twig' with { title: 'RCON пароль', message: 'РКОН пароль вашего сервера. Находиться в конфиг файле server.cfg в кваре rcon_password. Используется Админами для администрирования серверов через ВЕБ интерфейс.' } %} RCON пароль</label>
+      <input type="text" class="form-control" id="rcon" name="rcon" tabindex="1" value="{{ rcon }}" placeholder="Введите данные">
+      <div id="rcon.msg" class="msg-err"></div>
+    </div>
+    <div class="form-field form-field--full">
+      <label class="form-label" for="rcon2">{% include 'partials/help_icon.twig' with { title: 'РКОН пароль', message: 'Подтвердите РКОН пароль' } %} Подтверждение RCON</label>
+      <input type="text" class="form-control" id="rcon2" name="rcon2" tabindex="1" value="{{ rcon }}" placeholder="Введите данные">
+      <div id="rcon2.msg" class="msg-err"></div>
+    </div>
+    <div class="form-field" id="admingroup">
+      <label class="form-label" for="mod">{% include 'partials/help_icon.twig' with { title: 'МОД сервера', message: 'Выберите МОД сервера.' } %} МОД сервера</label>
+      <select name="mod" id="mod" class="form-select" tabindex="5">
+        {% if not edit_server %}
+        <option value="-2">Выберите из списка...</option>
+        {% endif %}
+        {% for mod in modlist|default([]) %}
+        <option value="{{ mod.mid }}">{{ mod.name }}</option>
+        {% endfor %}
+      </select>
+      <div id="mod.msg" class="msg-err"></div>
+    </div>
+    <div class="form-field">
+      <label class="form-label" for="enabled">{% include 'partials/help_icon.twig' with { title: 'Видимость', message: 'Включение отображения сервера в списке серверов.' } %} Видимость</label>
+      <div class="form-check">
+        <input type="checkbox" class="form-check-input" id="enabled" name="enabled" checked="checked">
+        <label class="form-check-label" for="enabled">Показывать в списке</label>
+      </div>
+      <div id="enabled.msg" class="msg-err"></div>
+    </div>
+    <div class="form-field form-field--full">
+      <label class="form-label">{% include 'partials/help_icon.twig' with { title: 'Группы сервера', message: 'Выберите группы серверов. Используется для добавления администраторов на группу игровых серверов' } %} Группы серверов</label>
+      <div class="form-checkboxes">
+        {% for group in grouplist|default([]) %}
+        <div class="form-check">
+          <input type="checkbox" class="form-check-input" value="{{ group.gid }}" id="g_{{ group.gid }}" name="groups[]">
+          <label class="form-check-label" for="g_{{ group.gid }}">{{ group.name }} <i>(Группа сервера)</i></label>
+        </div>
+        {% endfor %}
+      </div>
+      <table width="100%" id="group.details-extra">
+        <tr id="nsgroup" valign="top" class="badentry"></tr>
+      </table>
+    </div>
+  </div>
+  <div class="form-actions">
+    {% if edit_server %}
+    <button type="button" class="btn btn-accent" id="aserver" onclick="if (typeof sbBusy === 'function' &amp;&amp; sbBusy(this)) return; process_edit_server();">{{ submit_text }}</button>
+    {% else %}
+    <button type="button" class="btn btn-accent" id="aserver" onclick="if (typeof sbBusy === 'function' &amp;&amp; sbBusy(this)) return; process_add_server();">{{ submit_text }}</button>
+    {% endif %}
+    <button type="button" class="btn btn-outline-secondary" id="aback" onclick="sbGo('index.php?p=admin&amp;c=servers')">Назад</button>
+  </div>
+</div>
+{% if edit_server %}
+<script>
+(function () {
+  var f = document.forms.editserver;
+  if (!f) return;
+  f.onsubmit = function () {
+    process_edit_server();
+    return false;
+  };
+})();
+</script>
+{% endif %}
+{% endif %}

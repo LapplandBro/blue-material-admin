@@ -1,24 +1,18 @@
-# Blue Material Admin за Caddy
+# Панель за Caddy
 
-На обычном shared hosting (Apache + `AllowOverride`) хватает `.htaccess` из корня панели — ЧПУ (`/banlist`, `/admin/bans`, …) работает само.
+На обычном хостинге с Apache хватает `.htaccess` из корня: адреса вроде `/banlist` и `/admin/bans` сами попадают в `index.php`.
 
-Если схема **Caddy → Apache (PHP)** и у Apache выключен `AllowOverride`, запросы вроде `/banlist` **не** попадают в `index.php`. Apache отдаёт 404/500, Caddy показывает свою error-page — сайт «сломан», хотя `index.php?p=banlist` открывается.
+Если снаружи стоит **Caddy**, а PHP крутит Apache, и у Apache выключен `AllowOverride`, красивые адреса **не** доходят до панели. Apache отдаёт 404, Caddy показывает свою ошибку. При этом `index.php?p=banlist` открывается — кажется, что «сломан сайт», хотя сломан только rewrite.
 
-## Что нужно
+## Как надо
 
-1. PHP-панель на бэкенде (Apache/`php-fpm` и т.п.).
-2. Caddy 2.x с `reverse_proxy` на этот бэкенд.
-3. **ЧПУ на Apache** (`AllowOverride All` + `.htaccess` или `RewriteRule` в vhost).
+1. PHP на бэкенде (Apache или php-fpm).  
+2. Caddy 2 только проксирует запрос назад.  
+3. ЧПУ делает **Apache** (`AllowOverride All` плюс `.htaccess`, либо правила в vhost).
 
-### Не делай rewrite ЧПУ в Caddy вместе с канонизацией в PHP
+Не дублируй ЧПУ в Caddy. Панель сама умеет редирект `index.php?p=banlist` → `/banlist`. Если Caddy перед этим переписывает `/banlist` обратно в `index.php`, получится бесконечный редирект.
 
-Панель умеет `301 index.php?p=banlist → /banlist`. Если Caddy до прокси переписывает `/banlist` в `/index.php?p=banlist`, получается петля:
-
-`/banlist` → rewrite → PHP 301 → `/banlist` → … → **ERR_TOO_MANY_REDIRECTS**
-
-Правильно: **только Apache** (внутренний rewrite, `REQUEST_URI` остаётся `/banlist`). В Caddy — только `reverse_proxy` + `X-Forwarded-*`.
-
-## Минимальный фрагмент Caddyfile (сайт панели)
+## Кусок Caddyfile
 
 ```caddy
 example.com, www.example.com {
@@ -34,9 +28,7 @@ example.com, www.example.com {
 }
 ```
 
-## Apache за Caddy (обязательно для ЧПУ)
-
-В `<VirtualHost>` бэкенда:
+## Apache сзади Caddy
 
 ```apache
 DocumentRoot /var/www/html
@@ -48,20 +40,22 @@ DocumentRoot /var/www/html
 </Directory>
 ```
 
-И модуль: `a2enmod rewrite` → `systemctl reload apache2`.
+Модуль rewrite должен быть включён.
 
-## `config.php`
+В `config.php` укажи внешний адрес сайта, без слэша в конце:
 
 ```php
-define('SB_WP_URL', 'https://example.com');  // без слэша в конце, https как снаружи
+define('SB_WP_URL', 'https://example.com');
 ```
 
-Caddy обязан слать `X-Forwarded-Proto` / `X-Forwarded-Host` (см. фрагмент выше), иначе куки Secure / редиректы поедут.
+Caddy обязан слать `X-Forwarded-Proto` и `X-Forwarded-Host`, иначе куки и редиректы поедут.
 
-## Проверка после деплоя
+## Проверка
+
+Нужен именно GET, не HEAD: канонизация в PHP на HEAD не срабатывает.
 
 ```bash
-# Важен GET (не curl -I / HEAD): HEAD не проходит через PHP-канонизацию.
 curl -s -o /dev/null -w "%{http_code} redirects:%{num_redirects}\n" -L --max-redirs 3 https://example.com/banlist
-# ожидается: 200 redirects:0
 ```
+
+Ожидается `200` и ноль редиректов.

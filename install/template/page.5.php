@@ -21,6 +21,7 @@ function sb_install_build_config($vars)
 
 	$protected = isset($vars['protected']) ? $vars['protected'] : '';
 	$parsecPass = isset($vars['parsec_pass']) ? $vars['parsec_pass'] : '';
+	$dbcfgPass = isset($vars['dbcfg_pass']) ? $vars['dbcfg_pass'] : '';
 	$hostingUrl = isset($vars['hosting_url']) ? $vars['hosting_url'] : '';
 	$hostingLabel = isset($vars['hosting_label']) && $vars['hosting_label'] !== ''
 		? $vars['hosting_label']
@@ -70,6 +71,12 @@ define('PARSEC_PANEL_WRITE_STEAMIDS', '" . $esc($protected) . "');
 
 /** Пароль разблокировки write-режима PARSEC (твинки). Пусто = задать позже. */
 define('PARSEC_PANEL_WRITE_PASSWORD', '" . $esc($parsecPass) . "');
+
+/**
+ * Пароль просмотра databases.cfg в админке (Серверы → конфиг БД).
+ * Отдельный от пароля веб-аккаунта и PARSEC_PANEL_WRITE_PASSWORD.
+ */
+define('SB_DBCFG_VIEW_PASSWORD', '" . $esc($dbcfgPass) . "');
 
 /** Пункт меню «Оплатить хостинг» (пустой URL = скрыть). */
 define('SB_HOSTING_PAY_URL', '" . $esc($hostingUrl) . "');
@@ -181,19 +188,22 @@ $configDirWritable = is_writable(dirname($configPath));
 $configFileWritable = file_exists($configPath) ? is_writable($configPath) : $configDirWritable;
 
 if (isset($_POST['postd']) && $_POST['postd']) {
-	if (empty($_POST['uname']) || empty($_POST['pass1']) || empty($_POST['pass2']) || empty($_POST['steam']) || empty($_POST['email'])) {
-		echo "<script>setTimeout(function(){ ShowBox('Ошибка', 'Все поля должны быть заполнены.', 'red', '', true); }, 200);</script>";
+	$dbcfgPassPost = isset($_POST['dbcfg_pass']) ? trim((string)$_POST['dbcfg_pass']) : '';
+	if (empty($_POST['uname']) || empty($_POST['pass1']) || empty($_POST['pass2']) || empty($_POST['steam']) || empty($_POST['email']) || $dbcfgPassPost === '') {
+		echo "<script>ShowBox('Ошибка', 'Все поля должны быть заполнены (включая пароль просмотра databases.cfg).', 'red', '', true);</script>";
 	} elseif ($_POST['pass1'] !== $_POST['pass2']) {
-		echo "<script>setTimeout(function(){ ShowBox('Ошибка', 'Пароли не совпадают.', 'red', '', true); }, 200);</script>";
+		echo "<script>ShowBox('Ошибка', 'Пароли не совпадают.', 'red', '', true);</script>";
+	} elseif (strlen($dbcfgPassPost) < 8) {
+		echo "<script>ShowBox('Ошибка', 'Пароль просмотра databases.cfg — минимум 8 символов.', 'red', '', true);</script>";
 	} elseif (!preg_match(STEAM_FORMAT, $_POST['steam'])) {
-		echo "<script>setTimeout(function(){ ShowBox('Ошибка', 'Некорректный STEAM ID (формат STEAM_X:Y:Z).', 'red', '', true); }, 200);</script>";
+		echo "<script>ShowBox('Ошибка', 'Некорректный STEAM ID (формат STEAM_X:Y:Z).', 'red', '', true);</script>";
 	} else {
 		require ROOT . '../includes/adodb/adodb.inc.php';
 		include_once ROOT . '../includes/adodb/adodb-errorhandler.inc.php';
 		$dsn = 'mysqli://' . $_POST['username'] . ':' . $_POST['password'] . '@' . $_POST['server'] . ':' . $_POST['port'] . '/' . $_POST['database'];
 		$db = ADONewConnection($dsn);
 		if (!$db) {
-			echo "<script>setTimeout(function(){ ShowBox('Ошибка', 'Нет соединения с БД. Проверьте данные.', 'red', '', true); }, 200);</script>";
+			echo "<script>ShowBox('Ошибка', 'Нет соединения с БД. Проверьте данные.', 'red', '', true);</script>";
 		} else {
 			$GLOBALS['db'] = $db;
 			$db->Execute('SET NAMES `utf8`');
@@ -246,6 +256,7 @@ if (isset($_POST['postd']) && $_POST['postd']) {
 				'sbwpurl' => isset($_POST['sb-wp-url']) ? $_POST['sb-wp-url'] : '',
 				'protected' => $_POST['steam'],
 				'parsec_pass' => isset($_POST['parsec_pass']) ? $_POST['parsec_pass'] : '',
+				'dbcfg_pass' => $dbcfgPassPost,
 				'hosting_url' => isset($_POST['hosting_url']) ? trim($_POST['hosting_url']) : '',
 				'hosting_label' => isset($_POST['hosting_label']) ? trim($_POST['hosting_label']) : 'Оплатить хостинг',
 				'hosting_newtab' => (isset($_POST['hosting_newtab']) && $_POST['hosting_newtab'] === 'on') ? 1 : 0,
@@ -277,7 +288,7 @@ if (isset($_POST['postd']) && $_POST['postd']) {
 						<div class="lv-item media"><div class="lv-avatar bgm-orange pull-left">2</div><div class="media-body"><div class="lv-title"><del>База данных</del></div></div></div>
 						<div class="lv-item media"><div class="lv-avatar bgm-orange pull-left">3</div><div class="media-body"><div class="lv-title"><del>Требования</del></div></div></div>
 						<div class="lv-item media"><div class="lv-avatar bgm-orange pull-left">4</div><div class="media-body"><div class="lv-title"><del>Таблицы</del></div></div></div>
-						<div class="lv-item media active"><div class="lv-avatar bgm-red pull-left">5</div><div class="media-body"><div class="lv-title">Готово</div><div class="lv-small"><i class="zmdi zmdi-badge-check c-green"></i> Финиш</div></div></div>
+						<div class="lv-item media active"><div class="lv-avatar bgm-red pull-left">5</div><div class="media-body"><div class="lv-title">Готово</div><div class="lv-small"><i class="bi bi-check-circle c-green"></i> Финиш</div></div></div>
 					</div>
 				</div>
 				<div class="ms-body">
@@ -317,21 +328,15 @@ if (isset($_POST['postd']) && $_POST['postd']) {
 
 						<div class="lv-header-alt clearfix"><div class="lvh-label"><span class="c-black">Обязательно: удаление установщика</span></div></div>
 						<div class="lv-body p-15">
-							<p>Папку <code>install/</code> нельзя оставлять на сервере. Нажми кнопку ниже — она снесёт установщик и одноразовый скрипт.</p>
+							<p>Папку <code>install/</code> нельзя оставлять на сервере. Сначала скопируйте <code>config.php</code> и <code>databases.cfg</code> — удаление установщика только по кнопке ниже.</p>
 							<?php if (!empty($cleanup['ok']) && !empty($cleanup['url'])): ?>
 								<p class="m-t-10">
-									<a class="btn bgm-red waves-effect btn-lg" id="btn-remove-setup"
+									<a class="btn bgm-red btn-lg" id="btn-remove-setup"
 									   href="<?php echo htmlspecialchars($cleanup['url'], ENT_QUOTES, 'UTF-8'); ?>">
 										Удалить установщик и продолжить
 									</a>
 								</p>
-								<p class="c-gray m-t-10">Через 60 секунд удаление запустится автоматически…</p>
-								<script>
-								(function () {
-									var url = <?php echo json_encode($cleanup['url'], JSON_UNESCAPED_UNICODE); ?>;
-									setTimeout(function () { window.location.replace(url); }, 60000);
-								})();
-								</script>
+								<p class="c-gray m-t-10">Автоперехода нет: удаление запускается только этой кнопкой.</p>
 							<?php else: ?>
 								<p class="c-red">Не удалось создать <code>remove_setup.php</code><?php echo !empty($cleanup['error']) ? ': ' . htmlspecialchars($cleanup['error'], ENT_QUOTES, 'UTF-8') : ''; ?>.</p>
 								<p>Удали вручную папку <code>install/</code> (и <code>updater/</code>, если есть), затем открой <a href="../index.php">сайт</a>.</p>
@@ -342,7 +347,7 @@ if (isset($_POST['postd']) && $_POST['postd']) {
 			</div>
 			<?php
 			if (strtolower($_POST['server']) === 'localhost' || $_POST['server'] === '127.0.0.1') {
-				echo '<script>setTimeout(function(){ ShowBox("Локальный MySQL", "Если игровой сервер на другой машине — в databases.cfg замените localhost на IP веб-сервера.", "blue", "", true); }, 400);</script>';
+				echo '<script>ShowBox("Локальный MySQL", "Если игровой сервер на другой машине — в databases.cfg замените localhost на IP веб-сервера.", "blue", "", true);</script>';
 			}
 		}
 	}
@@ -361,7 +366,7 @@ $web_cfg_preview = sb_install_build_config($cfgVars);
 				<div class="lv-item media"><div class="lv-avatar bgm-orange pull-left">2</div><div class="media-body"><div class="lv-title"><del>База данных</del></div></div></div>
 				<div class="lv-item media"><div class="lv-avatar bgm-orange pull-left">3</div><div class="media-body"><div class="lv-title"><del>Требования</del></div></div></div>
 				<div class="lv-item media"><div class="lv-avatar bgm-orange pull-left">4</div><div class="media-body"><div class="lv-title"><del>Таблицы</del></div></div></div>
-				<div class="lv-item media active"><div class="lv-avatar bgm-red pull-left">5</div><div class="media-body"><div class="lv-title">Администратор</div><div class="lv-small"><i class="zmdi zmdi-badge-check c-green"></i> Текущий шаг</div></div></div>
+				<div class="lv-item media active"><div class="lv-avatar bgm-red pull-left">5</div><div class="media-body"><div class="lv-title">Администратор</div><div class="lv-small"><i class="bi bi-check-circle c-green"></i> Текущий шаг</div></div></div>
 			</div>
 		</div>
 		<div class="ms-body">
@@ -399,6 +404,13 @@ $web_cfg_preview = sb_install_build_config($cfgVars);
 							<div class="col-sm-9"><div class="fg-line"><input type="email" class="form-control input-sm" id="email" name="email" placeholder="admin@example.com" /></div></div>
 						</div>
 					</div>
+					<div class="form-group">
+						<div class="row">
+							<label class="col-sm-3 control-label" for="dbcfg_pass"><?php echo HelpIcon('Пароль databases.cfg', 'SB_DBCFG_VIEW_PASSWORD — отдельный пароль для просмотра конфига БД SourceMod в админке. Обязателен, минимум 8 символов. Не путать с паролем аккаунта и паролем твинков.'); ?>Пароль databases.cfg</label>
+							<div class="col-sm-9"><div class="fg-line"><input type="password" class="form-control input-sm" id="dbcfg_pass" name="dbcfg_pass" placeholder="минимум 8 символов" autocomplete="new-password" required /></div></div>
+						</div>
+					</div>
+					<p class="c-gray m-b-0">Этот пароль попадёт в <code>config.php</code> и понадобится OWNER, чтобы снова открыть блок <code>databases.cfg</code> в админке.</p>
 				</div>
 
 				<div class="lv-header-alt clearfix"><div class="lvh-label"><span class="c-black">Опционально — config.php</span></div></div>
@@ -428,8 +440,8 @@ $web_cfg_preview = sb_install_build_config($cfgVars);
 							<div class="col-sm-9 p-t-10">
 								<div class="checkbox m-b-15">
 									<label for="hosting_newtab">
-										<input type="checkbox" name="hosting_newtab" id="hosting_newtab" hidden="hidden" checked="checked" />
-										<i class="input-helper"></i> Да
+										<input type="checkbox" name="hosting_newtab" id="hosting_newtab" checked="checked" />
+										Да
 									</label>
 								</div>
 							</div>
@@ -437,7 +449,7 @@ $web_cfg_preview = sb_install_build_config($cfgVars);
 					</div>
 
 					<div class="p-10" align="center">
-						<button type="button" onclick="CheckInput();" class="btn btn-primary waves-effect">Завершить установку</button>
+						<button type="button" onclick="CheckInput();" class="btn btn-primary">Завершить установку</button>
 					</div>
 				</div>
 			</div>
@@ -456,11 +468,12 @@ $web_cfg_preview = sb_install_build_config($cfgVars);
 <script>
 function CheckInput() {
 	var miss = 0;
-	['uname','pass1','pass2','steam','email'].forEach(function (id) {
+	['uname','pass1','pass2','steam','email','dbcfg_pass'].forEach(function (id) {
 		if (!$id(id) || !$id(id).value) miss++;
 	});
-	if (miss > 0) ShowBox('Ошибка', 'Все поля должны быть заполнены.', 'red', '', true);
+	if (miss > 0) ShowBox('Ошибка', 'Все поля должны быть заполнены (включая пароль databases.cfg).', 'red', '', true);
 	else if ($id('pass1').value !== $id('pass2').value) ShowBox('Ошибка', 'Пароли не совпадают.', 'red', '', true);
+	else if ($id('dbcfg_pass').value.length < 8) ShowBox('Ошибка', 'Пароль просмотра databases.cfg — минимум 8 символов.', 'red', '', true);
 	else $id('mfrm').submit();
 }
 window.sbInstallEnter = CheckInput;
