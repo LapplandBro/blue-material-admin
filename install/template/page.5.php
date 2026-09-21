@@ -200,7 +200,7 @@ if (isset($_POST['postd']) && $_POST['postd']) {
 	} else {
 		require ROOT . '../includes/adodb/adodb.inc.php';
 		include_once ROOT . '../includes/adodb/adodb-errorhandler.inc.php';
-		$dsn = 'mysqli://' . $_POST['username'] . ':' . $_POST['password'] . '@' . $_POST['server'] . ':' . $_POST['port'] . '/' . $_POST['database'];
+		$dsn = 'mysqli://' . rawurlencode($_POST['username']) . ':' . rawurlencode($_POST['password']) . '@' . $_POST['server'] . ':' . $_POST['port'] . '/' . $_POST['database'];
 		$db = ADONewConnection($dsn);
 		if (!$db) {
 			echo "<script>ShowBox('Ошибка', 'Нет соединения с БД. Проверьте данные.', 'red', '', true);</script>";

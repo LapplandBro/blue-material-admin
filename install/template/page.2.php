@@ -10,7 +10,7 @@
 		{
 			require(ROOT . "../includes/adodb/adodb.inc.php");
 			include_once(ROOT . "../includes/adodb/adodb-errorhandler.inc.php");
-			$server = "mysqli://" . $_POST['username'] . ":" . $_POST['password'] . "@" . $_POST['server'] . ":" . $_POST['port'] . "/" . $_POST['database'];
+			$server = "mysqli://" . rawurlencode($_POST['username']) . ":" . rawurlencode($_POST['password']) . "@" . $_POST['server'] . ":" . $_POST['port'] . "/" . $_POST['database'];
 			$db = ADONewConnection($server);
 			if(!$db) {
 				echo "<script>ShowBox('Ошибка', 'Ошибка соединения с сервером баз данных. Проверьте введённые данные.', 'red', '', true);</script>";
@@ -19,14 +19,14 @@
 			} else {
 				?>
 				<form action="index.php?step=3" method="post" name="send" id="send">
-					<input type="hidden" name="username" value="<?php echo $_POST['username']?>">
-					<input type="hidden" name="password" value="<?php echo $_POST['password']?>">
-					<input type="hidden" name="server" value="<?php echo $_POST['server']?>">
-					<input type="hidden" name="database" value="<?php echo $_POST['database']?>">
-					<input type="hidden" name="port" value="<?php echo $_POST['port']?>">
-					<input type="hidden" name="prefix" value="<?php echo $_POST['prefix']?>">
-					<input type="hidden" name="apikey" value="<?php echo $_POST['apikey']?>">
-					<input type="hidden" name="sb-wp-url" value="<?php echo $_POST['sb-wp-url']?>">
+					<input type="hidden" name="username" value="<?php echo htmlspecialchars($_POST['username'], ENT_QUOTES, 'UTF-8')?>">
+					<input type="hidden" name="password" value="<?php echo htmlspecialchars($_POST['password'], ENT_QUOTES, 'UTF-8')?>">
+					<input type="hidden" name="server" value="<?php echo htmlspecialchars($_POST['server'], ENT_QUOTES, 'UTF-8')?>">
+					<input type="hidden" name="database" value="<?php echo htmlspecialchars($_POST['database'], ENT_QUOTES, 'UTF-8')?>">
+					<input type="hidden" name="port" value="<?php echo htmlspecialchars($_POST['port'], ENT_QUOTES, 'UTF-8')?>">
+					<input type="hidden" name="prefix" value="<?php echo htmlspecialchars($_POST['prefix'], ENT_QUOTES, 'UTF-8')?>">
+					<input type="hidden" name="apikey" value="<?php echo htmlspecialchars($_POST['apikey'], ENT_QUOTES, 'UTF-8')?>">
+					<input type="hidden" name="sb-wp-url" value="<?php echo htmlspecialchars($_POST['sb-wp-url'], ENT_QUOTES, 'UTF-8')?>">
 				</form>
 				<script>
 				$id('send').submit();
@@ -111,7 +111,7 @@
 							<label for="server" class="col-sm-3 control-label"><?php echo HelpIcon("Сервер", "Введите IP или адрес сервера MySQL");?> Адрес сервера</label>
 							<div class="col-sm-9">
 								<div class="fg-line">
-									<input type="text" class="form-control input-sm" id="server" name="server" placeholder="Введите данные" value="<?php echo isset($_POST['server'])?$_POST['server']:'localhost';?>" />
+									<input type="text" class="form-control input-sm" id="server" name="server" placeholder="Введите данные" value="<?php echo isset($_POST['server'])?htmlspecialchars($_POST['server'], ENT_QUOTES, 'UTF-8'):'localhost';?>" />
 								</div>
 							</div>
 						</div>
@@ -120,7 +120,7 @@
 							<label for="port" class="col-sm-3 control-label"><?php echo HelpIcon("Порт сервера", "Введите порт, на котором работает MySQL");?> Порт сервера</label>
 							<div class="col-sm-9">
 								<div class="fg-line">
-									<input type="text" class="form-control input-sm" id="port" name="port" placeholder="Введите данные" value="<?php echo isset($_POST['port'])?$_POST['port']:3306;?>" />
+									<input type="text" class="form-control input-sm" id="port" name="port" placeholder="Введите данные" value="<?php echo isset($_POST['port'])?htmlspecialchars($_POST['port'], ENT_QUOTES, 'UTF-8'):3306;?>" />
 								</div>
 							</div>
 						</div>
@@ -129,7 +129,7 @@
 							<label for="username" class="col-sm-3 control-label"><?php echo HelpIcon("Имя пользователя", "Введите имя пользователя MySQL");?> Имя пользователя</label>
 							<div class="col-sm-9">
 								<div class="fg-line">
-									<input type="text" class="form-control input-sm" id="username" name="username" placeholder="Введите данные" value="<?php echo isset($_POST['username'])?$_POST['username']:'';?>" />
+									<input type="text" class="form-control input-sm" id="username" name="username" placeholder="Введите данные" value="<?php echo isset($_POST['username'])?htmlspecialchars($_POST['username'], ENT_QUOTES, 'UTF-8'):'';?>" />
 								</div>
 							</div>
 						</div>
@@ -138,7 +138,7 @@
 							<label for="password" class="col-sm-3 control-label"><?php echo HelpIcon("Пароль", "Введите пароль пользователя MySQL");?> Пароль</label>
 							<div class="col-sm-9">
 								<div class="fg-line">
-									<input type="password" class="form-control input-sm" id="password" name="password" placeholder="Введите данные" value="<?php echo isset($_POST['password'])?$_POST['password']:'';?>" />
+									<input type="password" class="form-control input-sm" id="password" name="password" placeholder="Введите данные" value="<?php echo isset($_POST['password'])?htmlspecialchars($_POST['password'], ENT_QUOTES, 'UTF-8'):'';?>" />
 								</div>
 							</div>
 						</div>
@@ -147,7 +147,7 @@
 							<label for="database" class="col-sm-3 control-label"><?php echo HelpIcon("База данных", "Введите имя базы данных");?> База данных</label>
 							<div class="col-sm-9">
 								<div class="fg-line">
-									<input type="text" class="form-control input-sm" id="database" name="database" placeholder="Введите данные" value="<?php echo isset($_POST['database'])?$_POST['database']:'';?>" />
+									<input type="text" class="form-control input-sm" id="database" name="database" placeholder="Введите данные" value="<?php echo isset($_POST['database'])?htmlspecialchars($_POST['database'], ENT_QUOTES, 'UTF-8'):'';?>" />
 								</div>
 							</div>
 						</div>
@@ -156,7 +156,7 @@
 							<label for="prefix" class="col-sm-3 control-label"><?php echo HelpIcon("Префикс", "Введите префикс таблиц");?> Префикс таблиц</label>
 							<div class="col-sm-9">
 								<div class="fg-line">
-									<input type="text" class="form-control input-sm" id="prefix" name="prefix" placeholder="Введите данные" value="<?php echo isset($_POST['prefix'])?$_POST['prefix']:'sb';?>" />
+									<input type="text" class="form-control input-sm" id="prefix" name="prefix" placeholder="Введите данные" value="<?php echo isset($_POST['prefix'])?htmlspecialchars($_POST['prefix'], ENT_QUOTES, 'UTF-8'):'sb';?>" />
 								</div>
 							</div>
 						</div>
@@ -165,7 +165,7 @@
 							<label for="apikey" class="col-sm-3 control-label"><?php echo HelpIcon("Steam API ключ", "Скопируйте и вставьте ваш Steam API ключ здесь. Он нужен для авторизации администраторов через Steam.");?> Steam API ключ (необязательно)</label>
 							<div class="col-sm-9">
 								<div class="fg-line">
-									<input type="text" class="form-control input-sm" id="apikey" name="apikey" placeholder="Введите данные" value="<?php echo isset($_POST['apikey'])?$_POST['apikey']:'';?>" />
+									<input type="text" class="form-control input-sm" id="apikey" name="apikey" placeholder="Введите данные" value="<?php echo isset($_POST['apikey'])?htmlspecialchars($_POST['apikey'], ENT_QUOTES, 'UTF-8'):'';?>" />
 								</div>
 							</div>
 						</div>
@@ -174,7 +174,7 @@
 							<label for="sb-wp-url" class="col-sm-3 control-label"><?php echo HelpIcon("Адрес SourceBans", "Адрес установки системы SourceBans. Пример: http://mysite.com/bans/");?> Адрес SourceBans</label>
 							<div class="col-sm-9">
 								<div class="fg-line">
-									<input type="text" class="form-control input-sm" id="sb-wp-url" name="sb-wp-url" placeholder="Введите данные" value="<?php echo isset($_POST['sb-wp-url'])?$_POST['sb-wp-url']:TryAutodetectURL();?>" />
+									<input type="text" class="form-control input-sm" id="sb-wp-url" name="sb-wp-url" placeholder="Введите данные" value="<?php echo htmlspecialchars(isset($_POST['sb-wp-url'])?$_POST['sb-wp-url']:TryAutodetectURL(), ENT_QUOTES, 'UTF-8');?>" />
 								</div>
 							</div>
 						</div>

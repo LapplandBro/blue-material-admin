@@ -6,19 +6,25 @@ $warnings = 0;
 if(isset($_POST['username'], $_POST['password'], $_POST['server'], $_POST['port'], $_POST['database'])) {
     require(ROOT . "../includes/adodb/adodb.inc.php");
     include_once(ROOT . "../includes/adodb/adodb-errorhandler.inc.php");
-    $server = "mysqli://" . $_POST['username'] . ":" . $_POST['password'] . "@" . $_POST['server'] . ":" . $_POST['port'] . "/" . $_POST['database'];
+    $server = "mysqli://" . rawurlencode($_POST['username']) . ":" . rawurlencode($_POST['password']) . "@" . $_POST['server'] . ":" . $_POST['port'] . "/" . $_POST['database'];
     $db = ADONewConnection($server);
-    $db->Execute("SET NAMES `utf8`");
-    $vars = $db->Execute("SHOW VARIABLES");
-    $sql_version = "";
-    while(!$vars->EOF)
-    {
-      if($vars->fields['Variable_name'] == "version")
-      {
-        $sql_version = $vars->fields['Value'];
-        break;
-      }
-      $vars->MoveNext();
+    if ($db) {
+        $db->Execute("SET NAMES `utf8`");
+        $vars = $db->Execute("SHOW VARIABLES");
+        $sql_version = "";
+        if ($vars) {
+            while(!$vars->EOF)
+            {
+              if($vars->fields['Variable_name'] == "version")
+              {
+                $sql_version = $vars->fields['Value'];
+                break;
+              }
+              $vars->MoveNext();
+            }
+        }
+    } else {
+        $sql_version = "НЕТ СОЕДИНЕНИЯ";
     }
 } else {
     $sql_version = "НЕТ СОЕДИНЕНИЯ";
@@ -289,24 +295,24 @@ $req_FS['Тема Blue V2 (themes/blue_v2)'] = [
 						{
 						?>
 						<form action="index.php?step=4" method="post" name="send" id="send">
-							<input type="hidden" name="username" value="<?php echo $_POST['username']?>">
-							<input type="hidden" name="password" value="<?php echo $_POST['password']?>">
-							<input type="hidden" name="server" value="<?php echo $_POST['server']?>">
-							<input type="hidden" name="database" value="<?php echo $_POST['database']?>">
-							<input type="hidden" name="port" value="<?php echo $_POST['port']?>">
-							<input type="hidden" name="prefix" value="<?php echo $_POST['prefix']?>">
-							<input type="hidden" name="apikey" value="<?php echo $_POST['apikey']?>">
-							<input type="hidden" name="sb-wp-url" value="<?php echo $_POST['sb-wp-url']?>">
+							<input type="hidden" name="username" value="<?php echo htmlspecialchars($_POST['username'], ENT_QUOTES, 'UTF-8')?>">
+							<input type="hidden" name="password" value="<?php echo htmlspecialchars($_POST['password'], ENT_QUOTES, 'UTF-8')?>">
+							<input type="hidden" name="server" value="<?php echo htmlspecialchars($_POST['server'], ENT_QUOTES, 'UTF-8')?>">
+							<input type="hidden" name="database" value="<?php echo htmlspecialchars($_POST['database'], ENT_QUOTES, 'UTF-8')?>">
+							<input type="hidden" name="port" value="<?php echo htmlspecialchars($_POST['port'], ENT_QUOTES, 'UTF-8')?>">
+							<input type="hidden" name="prefix" value="<?php echo htmlspecialchars($_POST['prefix'], ENT_QUOTES, 'UTF-8')?>">
+							<input type="hidden" name="apikey" value="<?php echo htmlspecialchars($_POST['apikey'], ENT_QUOTES, 'UTF-8')?>">
+							<input type="hidden" name="sb-wp-url" value="<?php echo htmlspecialchars($_POST['sb-wp-url'], ENT_QUOTES, 'UTF-8')?>">
 						</form>
 						<form action="index.php?step=3" method="post" name="sendback" id="sendback">
-							<input type="hidden" name="username" value="<?php echo $_POST['username']?>">
-							<input type="hidden" name="password" value="<?php echo $_POST['password']?>">
-							<input type="hidden" name="server" value="<?php echo $_POST['server']?>">
-							<input type="hidden" name="database" value="<?php echo $_POST['database']?>">
-							<input type="hidden" name="port" value="<?php echo $_POST['port']?>">
-							<input type="hidden" name="prefix" value="<?php echo $_POST['prefix']?>">
-							<input type="hidden" name="apikey" value="<?php echo $_POST['apikey']?>">
-							<input type="hidden" name="sb-wp-url" value="<?php echo $_POST['sb-wp-url']?>">
+							<input type="hidden" name="username" value="<?php echo htmlspecialchars($_POST['username'], ENT_QUOTES, 'UTF-8')?>">
+							<input type="hidden" name="password" value="<?php echo htmlspecialchars($_POST['password'], ENT_QUOTES, 'UTF-8')?>">
+							<input type="hidden" name="server" value="<?php echo htmlspecialchars($_POST['server'], ENT_QUOTES, 'UTF-8')?>">
+							<input type="hidden" name="database" value="<?php echo htmlspecialchars($_POST['database'], ENT_QUOTES, 'UTF-8')?>">
+							<input type="hidden" name="port" value="<?php echo htmlspecialchars($_POST['port'], ENT_QUOTES, 'UTF-8')?>">
+							<input type="hidden" name="prefix" value="<?php echo htmlspecialchars($_POST['prefix'], ENT_QUOTES, 'UTF-8')?>">
+							<input type="hidden" name="apikey" value="<?php echo htmlspecialchars($_POST['apikey'], ENT_QUOTES, 'UTF-8')?>">
+							<input type="hidden" name="sb-wp-url" value="<?php echo htmlspecialchars($_POST['sb-wp-url'], ENT_QUOTES, 'UTF-8')?>">
 						</form>
 						<?php
 						}
