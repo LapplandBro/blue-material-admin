@@ -281,16 +281,7 @@ if (isset($_POST['postd']) && $_POST['postd']) {
 			);
 			?>
 			<div class="card m-b-0" id="messages-main">
-				<div class="ms-menu">
-					<div class="ms-block p-10"><span class="c-black"><b>Процесс</b></span></div>
-					<div class="listview lv-user" id="install-progress">
-						<div class="lv-item media"><div class="lv-avatar bgm-orange pull-left">1</div><div class="media-body"><div class="lv-title"><del>Лицензия</del></div></div></div>
-						<div class="lv-item media"><div class="lv-avatar bgm-orange pull-left">2</div><div class="media-body"><div class="lv-title"><del>База данных</del></div></div></div>
-						<div class="lv-item media"><div class="lv-avatar bgm-orange pull-left">3</div><div class="media-body"><div class="lv-title"><del>Требования</del></div></div></div>
-						<div class="lv-item media"><div class="lv-avatar bgm-orange pull-left">4</div><div class="media-body"><div class="lv-title"><del>Таблицы</del></div></div></div>
-						<div class="lv-item media active"><div class="lv-avatar bgm-red pull-left">5</div><div class="media-body"><div class="lv-title">Готово</div><div class="lv-small"><i class="bi bi-check-circle c-green"></i> Финиш</div></div></div>
-					</div>
-				</div>
+				<?php $installStep = 5; $installFinished = true; include TEMPLATES_PATH . '/install-progress.php'; ?>
 				<div class="ms-body">
 					<div class="listview lv-message">
 						<div class="lv-header-alt clearfix"><div class="lvh-label"><span class="c-black">Установка завершена</span></div></div>
@@ -359,16 +350,7 @@ $web_cfg_preview = sb_install_build_config($cfgVars);
 ?>
 <form action="" name="mfrm" id="mfrm" method="post">
 	<div class="card m-b-0" id="messages-main">
-		<div class="ms-menu">
-			<div class="ms-block p-10"><span class="c-black"><b>Процесс</b></span></div>
-			<div class="listview lv-user" id="install-progress">
-				<div class="lv-item media"><div class="lv-avatar bgm-orange pull-left">1</div><div class="media-body"><div class="lv-title"><del>Лицензия</del></div></div></div>
-				<div class="lv-item media"><div class="lv-avatar bgm-orange pull-left">2</div><div class="media-body"><div class="lv-title"><del>База данных</del></div></div></div>
-				<div class="lv-item media"><div class="lv-avatar bgm-orange pull-left">3</div><div class="media-body"><div class="lv-title"><del>Требования</del></div></div></div>
-				<div class="lv-item media"><div class="lv-avatar bgm-orange pull-left">4</div><div class="media-body"><div class="lv-title"><del>Таблицы</del></div></div></div>
-				<div class="lv-item media active"><div class="lv-avatar bgm-red pull-left">5</div><div class="media-body"><div class="lv-title">Администратор</div><div class="lv-small"><i class="bi bi-check-circle c-green"></i> Текущий шаг</div></div></div>
-			</div>
-		</div>
+		<?php $installStep = 5; include TEMPLATES_PATH . '/install-progress.php'; ?>
 		<div class="ms-body">
 			<div class="listview lv-message">
 				<div class="lv-header-alt clearfix"><div class="lvh-label"><span class="c-black">Главный администратор</span></div></div>

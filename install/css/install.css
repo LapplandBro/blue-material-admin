@@ -32,6 +32,15 @@ body.install-v2 {
   grid-template-columns: 220px 1fr;
   min-height: calc(100vh - 52px - 48px);
 }
+.install-shell > #content {
+  min-width: 0;
+}
+#content .container {
+  max-width: 1180px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 0.25rem;
+}
 .install-side {
   background: #0a1225;
   border-right: 1px solid #152040;
@@ -101,6 +110,20 @@ body.install-v2 {
   min-height: 520px;
   background: #0c1528;
 }
+#messages-main > form {
+  display: contents;
+}
+#messages-main .ms-body {
+  min-width: 0;
+  overflow: auto;
+}
+#messages-main .ms-menu .media-body {
+  flex: 1;
+  min-width: 0;
+}
+#messages-main .ms-menu .lv-item.completed .lv-title {
+  color: #9ec0e8;
+}
 #messages-main .ms-menu {
   background: #0a1225;
   border-right: 1px solid #152040;
@@ -151,6 +174,7 @@ body.install-v2 {
 }
 .bgm-red { background: #c62828 !important; }
 .bgm-orange { background: #ef6c00 !important; }
+.bgm-green { background: #2e7d32 !important; }
 .c-green { color: #81c784 !important; }
 .c-blue { color: #4da3ff !important; }
 .c-red { color: #ff8a80 !important; }
@@ -201,9 +225,36 @@ body.install-v2 {
   background-color: #111c30;
   color: #ddeeff;
 }
-#messages-main table { color: #ddeeff; }
+#messages-main table { color: #ddeeff; width: 100%; margin-bottom: 0; }
 #messages-main table td,
-#messages-main table th { border-color: #152040; }
+#messages-main table th { border-color: #152040; vertical-align: middle; }
+#messages-main table thead th {
+  background: #0a1225;
+  color: #9ec0e8;
+  font-weight: 600;
+  border-bottom-width: 1px;
+}
+#messages-main table tbody tr:hover td:not(.success):not(.danger):not(.active) {
+  background: rgba(18, 40, 72, 0.35);
+}
+#messages-main table td.success {
+  background: #1b5e20 !important;
+  color: #e8f5e9 !important;
+}
+#messages-main table td.danger {
+  background: #b71c1c !important;
+  color: #ffebee !important;
+}
+#messages-main table td.active {
+  background: #455a64 !important;
+  color: #eceff1 !important;
+}
+#messages-main table td.req-muted {
+  color: #5a80a8;
+}
+.install-req-scroll {
+  overflow-x: auto;
+}
 #messages-main pre,
 #messages-main code {
   background: #111c30;

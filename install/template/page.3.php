@@ -3,38 +3,34 @@ if(!defined("IN_SB")){echo "You should not be here. Only follow links!";die();}
 $errors = 0;
 $warnings = 0;
 
-if(isset($_POST['username'], $_POST['password'], $_POST['server'], $_POST['port'], $_POST['database'])) {
+$sql_connected = false;
+$sql_version = '';
+
+if (isset($_POST['username'], $_POST['password'], $_POST['server'], $_POST['port'], $_POST['database'])) {
     require(ROOT . "../includes/adodb/adodb.inc.php");
     include_once(ROOT . "../includes/adodb/adodb-errorhandler.inc.php");
     $server = "mysqli://" . rawurlencode($_POST['username']) . ":" . rawurlencode($_POST['password']) . "@" . $_POST['server'] . ":" . $_POST['port'] . "/" . $_POST['database'];
     $db = ADONewConnection($server);
     if ($db) {
+        $sql_connected = true;
         $db->Execute("SET NAMES `utf8`");
-        $vars = $db->Execute("SHOW VARIABLES");
-        $sql_version = "";
-        if ($vars) {
-            while(!$vars->EOF)
-            {
-              if($vars->fields['Variable_name'] == "version")
-              {
-                $sql_version = $vars->fields['Value'];
-                break;
-              }
-              $vars->MoveNext();
+        $row = $db->GetRow('SELECT VERSION() AS v');
+        if ($row && isset($row['v'])) {
+            $sql_version = (string) $row['v'];
+        } else {
+            $vars = $db->Execute('SHOW VARIABLES LIKE \'version\'');
+            if ($vars && !$vars->EOF && isset($vars->fields['Value'])) {
+                $sql_version = (string) $vars->fields['Value'];
             }
         }
-    } else {
-        $sql_version = "НЕТ СОЕДИНЕНИЯ";
     }
-} else {
-    $sql_version = "НЕТ СОЕДИНЕНИЯ";
 }
 
 // В дальнейшем, в установщик будет интегрироваться мульти-язычность.
 // Потому эти переменные заведены под мульти-язычность. Здесь с течением времени, будут вызовы функций "переводчика".
 $disabled   = 'Выкл.';
 $enabled    = 'Вкл.';
-$unknown    = 'Н/А';
+$unknown    = '—';
 $yes        = 'Да';
 $no         = 'Нет';
 
@@ -64,6 +60,27 @@ $gendirdata = function($dirname, $dirpath, $required, $recommended, $display, &$
   return $data;
 };
 
+/**
+ * MySQL 5.7+ или MariaDB 10.2+ (по строке VERSION()).
+ */
+function sb_install_mysql_version_ok($version)
+{
+  $version = strtolower(trim((string) $version));
+  if ($version === '') {
+    return false;
+  }
+  if (strpos($version, 'mariadb') !== false) {
+    if (preg_match('/(\d+\.\d+\.\d+)/', $version, $m)) {
+      return version_compare($m[1], '10.2', '>=');
+    }
+    return false;
+  }
+  if (preg_match('/(\d+\.\d+\.\d+)/', $version, $m)) {
+    return version_compare($m[1], '5.7', '>=');
+  }
+  return version_compare($version, '5.7', '>=');
+}
+
 $requirements = [
   /**
    * О структуре массива
@@ -73,10 +90,10 @@ $requirements = [
    */
   'Требования PHP' => [
     'Версия PHP'  =>  [
-      'required'    => '7.1',
-      'recommended' => '7.1.33',
+      'required'    => '7.4',
+      'recommended' => '8.1+',
 
-      'result'      => (version_compare(PHP_VERSION, '7.1') != -1),
+      'result'      => (version_compare(PHP_VERSION, '7.4', '>=')),
       /* Так же возможен ключ "is_warning", наличие которого заставляет установщик превратить "ошибку" в "предупреждение", в случае не успешной проверки */
 
       // Если является массивом, то:
@@ -117,16 +134,34 @@ $requirements = [
 
       'result'      => extension_loaded('xml'),
       'display'     => [$enabled, $disabled]
+    ],
+
+    'Расширение MySQLi' => [
+      'required'    => $yes,
+      'recommended' => $unknown,
+
+      'result'      => extension_loaded('mysqli'),
+      'display'     => [$yes, $no]
+    ],
+
+    'Расширение mbstring' => [
+      'required'    => $yes,
+      'recommended' => $unknown,
+
+      'result'      => extension_loaded('mbstring'),
+      'display'     => [$yes, $no]
     ]
   ],
 
   'Требования MySQL'  => [
-    'Версия сервера'  => [
-      'required'      => '5.0',
-      'recommended'   => '5.5',
+    'Версия сервера (MySQL / MariaDB)'  => [
+      'required'      => 'MySQL 5.7+ или MariaDB 10.2+',
+      'recommended'   => 'MySQL 8.0+ / MariaDB 10.6+',
 
-      'result'        => (version_compare($sql_version, '5') != -1),
-      'display'       => [$yes, $no]
+      'result'        => ($sql_connected && $sql_version !== '' && sb_install_mysql_version_ok($sql_version)),
+      'display'       => $sql_connected
+        ? ($sql_version !== '' ? $sql_version : 'Не удалось определить')
+        : 'Нет соединения (вернитесь к шагу 2)'
     ]
   ],
 
@@ -164,54 +199,7 @@ $req_FS['Тема Blue V2 (themes/blue_v2)'] = [
 ];
 ?>
 <div class="card m-b-0" id="messages-main">
-		<div class="ms-menu">
-			<div class="ms-block p-10">
-				<span class="c-black"><b>Процесс</b></span>
-			</div>
-
-			<div class="listview lv-user" id="install-progress">
-				<div class="lv-item media">
-					<div class="lv-avatar bgm-orange pull-left">1</div>
-					<div class="media-body">
-						<div class="lv-title"><del>Шаг: Лицензия</del></div>
-						<div class="lv-small"><i class="bi bi-x-circle c-red"></i> <del>Предыдущий шаг</del></div>
-					</div>
-				</div>
-
-				<div class="lv-item media">
-					<div class="lv-avatar bgm-orange pull-left">2</div>
-					<div class="media-body">
-						<div class="lv-title"><del>Шаг: База данных</del></div>
-						<div class="lv-small"><i class="bi bi-x-circle c-red"></i> <del>Предыдущий шаг</del></div>
-					</div>
-				</div>
-
-				<div class="lv-item media active">
-					<div class="lv-avatar bgm-red pull-left">3</div>
-					<div class="media-body">
-						<div class="lv-title">Шаг: Системные требования</div>
-						<div class="lv-small"><i class="bi bi-check-circle c-green"></i> Текущий шаг</div>
-					</div>
-				</div>
-
-				<div class="lv-item media">
-					<div class="lv-avatar bgm-orange pull-left">4</div>
-					<div class="media-body">
-						<div class="lv-title">Шаг: Создание таблиц</div>
-						<div class="lv-small"><i class="bi bi-clock c-blue"></i> Следующий шаг</div>
-					</div>
-				</div>
-
-				<div class="lv-item media">
-					<div class="lv-avatar bgm-orange pull-left">5</div>
-					<div class="media-body">
-						<div class="lv-title">Шаг: Установка</div>
-						<div class="lv-small"><i class="bi bi-clock c-blue"></i> Следующий шаг</div>
-					</div>
-				</div>
-			</div>
-		</div>
-		
+<?php $installStep = 3; include TEMPLATES_PATH . '/install-progress.php'; ?>
 		<div class="ms-body" id="submit-main-full">
 			<div class="listview lv-message">
 				<div class="lv-header-alt clearfix">
@@ -221,7 +209,7 @@ $req_FS['Тема Blue V2 (themes/blue_v2)'] = [
 				</div>
 
 				<div class="lv-body p-15">
-					На этой странице перечислены все требования для работы веб-панели SourceBans. Система сверит их с текущими данными. На этой странице будут также перечислены некоторые рекомендациями.
+					Здесь перечислены обязательные и рекомендуемые параметры PHP, MySQL и файловой системы. Зелёная ячейка в колонке «Значение сервера» означает успешную проверку, красная — блокирующую ошибку, серая — предупреждение (установка возможна, но часть функций может не работать).
 				</div>
 
         <!-- Installer Logic and Checks -->
@@ -232,8 +220,8 @@ $req_FS['Тема Blue V2 (themes/blue_v2)'] = [
 					</div>
 				</div>
 				<div class="lv-body p-15">
-					<div class="col-sm-12">
-						<table class="table table-hover">
+					<div class="col-sm-12 install-req-scroll">
+						<table class="table table-hover install-req-table">
 							<thead>
 								<tr>
 									<th width="30%">Настройка</th>
@@ -245,38 +233,37 @@ $req_FS['Тема Blue V2 (themes/blue_v2)'] = [
 							<tbody>
 <?php foreach ($data as $key => $values): ?>
 								<tr>
-									<td><?= $key ?></td>
-									<td><?= $values['recommended'] ?></td>
-									<td><?= $values['required'] ?></td>
-									<?php 
-                    $class = "";
+									<td><?= htmlspecialchars($key, ENT_QUOTES, 'UTF-8') ?></td>
+									<td class="req-muted"><?= htmlspecialchars($values['recommended'], ENT_QUOTES, 'UTF-8') ?></td>
+									<td><?= htmlspecialchars($values['required'], ENT_QUOTES, 'UTF-8') ?></td>
+									<?php
+                    $class = '';
                     $drawable = $values['display'];
-										if ($values['result']) {
-                      $class = 'success c-white';
-
-                      if (is_array($drawable))
+                    if ($values['result']) {
+                      $class = 'success';
+                      if (is_array($drawable)) {
                         $drawable = $drawable[0];
-                    } else if (isset($values['is_warning'])) {
+                      }
+                    } elseif (isset($values['is_warning'])) {
                       $class = 'active';
                       $warnings++;
-
-                      if (is_array($drawable))
+                      if (is_array($drawable)) {
                         $drawable = $drawable[1];
+                      }
                     } else {
-                      $class = "danger c-white";
+                      $class = 'danger';
                       $errors++;
-
-                      if (is_array($drawable))
+                      if (is_array($drawable)) {
                         $drawable = $drawable[1];
+                      }
                     }
+                    $drawable = htmlspecialchars((string) $drawable, ENT_QUOTES, 'UTF-8');
 									?><td class="<?= $class ?>"><?= $drawable ?></td>
 								</tr>
 <?php endforeach; ?>
 							</tbody>
 						</table>
 					</div>
-          <?php /** Я без понятия, зачем этот &nbsp; здесь, но, видимо, он какую-то роль играет... */ ?>
-          &nbsp;
 				</div>
 <?php endforeach; ?>
 				<div class="lv-body p-15">
@@ -328,7 +315,6 @@ $req_FS['Тема Blue V2 (themes/blue_v2)'] = [
 			</div>
 		</div>
 	</div>
-</div>
 
 <script type="text/javascript">
 <?php if ($errors > 0): ?>

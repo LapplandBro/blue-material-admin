@@ -1,0 +1,58 @@
+<?php
+if (!defined('IN_SB')) {
+	echo 'You should not be here. Only follow links!';
+	die();
+}
+
+$installStep = isset($installStep) ? (int) $installStep : 1;
+if ($installStep < 1 || $installStep > 5) {
+	$installStep = 1;
+}
+$installFinished = !empty($installFinished);
+
+$steps = [
+	1 => 'Шаг: Лицензия',
+	2 => 'Шаг: База данных',
+	3 => 'Шаг: Системные требования',
+	4 => 'Шаг: Создание таблиц',
+	5 => 'Шаг: Установка',
+];
+?>
+<div class="ms-menu">
+	<div class="ms-block p-10">
+		<span class="c-black"><b>Процесс</b></span>
+	</div>
+
+	<div class="listview lv-user" id="install-progress">
+<?php foreach ($steps as $num => $label):
+	$itemClass = 'lv-item media';
+	if ($num === $installStep) {
+		$itemClass .= ' active';
+	} elseif ($num < $installStep) {
+		$itemClass .= ' completed';
+	}
+
+	if ($num === $installStep) {
+		$avatarClass = 'bgm-red';
+		$statusIcon = 'bi-check-circle c-green';
+		$statusText = ($installFinished && $num === 5) ? 'Завершено' : 'Текущий шаг';
+	} elseif ($num < $installStep) {
+		$avatarClass = 'bgm-green';
+		$statusIcon = 'bi-check-circle c-green';
+		$statusText = 'Выполнено';
+	} else {
+		$avatarClass = 'bgm-orange';
+		$statusIcon = 'bi-clock c-blue';
+		$statusText = 'Следующий шаг';
+	}
+?>
+		<div class="<?= $itemClass ?>">
+			<div class="lv-avatar <?= $avatarClass ?> pull-left"><?= (int) $num ?></div>
+			<div class="media-body">
+				<div class="lv-title"><?= htmlspecialchars($label, ENT_QUOTES, 'UTF-8') ?></div>
+				<div class="lv-small"><i class="bi <?= $statusIcon ?>"></i> <?= htmlspecialchars($statusText, ENT_QUOTES, 'UTF-8') ?></div>
+			</div>
+		</div>
+<?php endforeach; ?>
+	</div>
+</div>
