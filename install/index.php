@@ -3,7 +3,7 @@
 //  SourceBans++ installer entry
 // *************************************************************************
 
-if (version_compare(PHP_VERSION, '7.4', '<')) {
+if (version_compare(PHP_VERSION, '8.0', '<')) {
 	header('Content-Type: text/plain; charset=UTF-8');
 	echo "Для установки требуется PHP 7.4 или новее.\n";
 	echo 'Сейчас установлена версия ' . PHP_VERSION;
