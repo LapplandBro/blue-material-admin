@@ -3099,11 +3099,14 @@ function sb_can_manage_admin($targetAid)
 	if (!$userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_ADMINS))
 		return false;
 
+	$actorIsOwner = $userbank->HasAccess(ADMIN_OWNER);
 	$auth = $userbank->GetProperty('authid', $targetAid);
-	if (!empty($auth) && in_array($auth, sb_protected_steamids(), true))
+	// Защищённый SteamID и чужой OWNER закрыты для остальных.
+	// Сам владелец должен уметь выдать себе сервер и группы — иначе панель 403.
+	if (!$actorIsOwner && !empty($auth) && in_array($auth, sb_protected_steamids(), true))
 		return false;
 
-	if (!$userbank->HasAccess(ADMIN_OWNER) && $userbank->HasAccess(ADMIN_OWNER, $targetAid))
+	if (!$actorIsOwner && $userbank->HasAccess(ADMIN_OWNER, $targetAid))
 		return false;
 
 	return true;
