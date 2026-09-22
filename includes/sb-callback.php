@@ -1564,7 +1564,7 @@ function AddAdmin_pay($mask, $srv_mask, $a_name, $a_steam, $a_email, $a_password
 }
 
 
-function AddAdmin($mask, $srv_mask, $a_name, $a_steam, $a_email, $a_password, $a_password2,	$a_sg, $a_wg, $a_serverpass, $a_webname, $a_servername, $server, $singlesrv, $a_period, $discord, $comment, $vk)
+function AddAdmin($mask, $srv_mask, $a_name, $a_steam, $a_email, $a_password, $a_password2,	$a_sg, $a_wg, $a_serverpass, $a_webname, $a_servername, $server, $singlesrv, $a_period, $discord, $comment, $vk, $telegram = '')
 {
 	$objResponse = new xajaxResponse();
 	global $userbank, $username;
@@ -1575,6 +1575,8 @@ function AddAdmin($mask, $srv_mask, $a_name, $a_steam, $a_email, $a_password, $a
 		return $objResponse;
 	}
 	$vk = str_replace(array("http://","https://","/","vk.com"), "", $vk);
+	if (function_exists('sb_admin_telegram_clean'))
+		$telegram = sb_admin_telegram_clean($telegram);
 	$a_name = RemoveCode($a_name);
 	$a_steam = RemoveCode($a_steam);
 	$a_email = RemoveCode($a_email);
@@ -1620,7 +1622,35 @@ function AddAdmin($mask, $srv_mask, $a_name, $a_steam, $a_email, $a_password, $a
 		}
 	}
 	// If they didnt type a steamid
-	if((empty($a_steam) || strlen($a_steam) < 10))
+	$steamOptional = function_exists('sb_admin_steam_optional') && sb_admin_steam_optional();
+	if ($steamOptional)
+	{
+		$a_steam = trim((string)$a_steam);
+		if (strlen($a_steam) > 64)
+			$a_steam = substr($a_steam, 0, 64);
+		if ($a_steam !== '' && is_taken("admins", "authid", $a_steam))
+		{
+			$admins = $userbank->GetAllAdmins();
+			$name = '';
+			foreach($admins as $admin)
+			{
+				if($admin['authid'] == $a_steam)
+				{
+					$name = $admin['user'];
+					break;
+				}
+			}
+			$error++;
+			$objResponse->addAssign("steam.msg", "innerHTML", "Этот Steam ID уже используется админом ".htmlspecialchars(addslashes($name)).".");
+			$objResponse->addScript("$('steam.msg').setStyle('display', 'block');");
+		}
+		else
+		{
+			$objResponse->addAssign("steam.msg", "innerHTML", "");
+			$objResponse->addScript("$('steam.msg').setStyle('display', 'none');");
+		}
+	}
+	else if((empty($a_steam) || strlen($a_steam) < 10))
 	{
 		$error++;
 		$objResponse->addAssign("steam.msg", "innerHTML", "Введите Steam ID или Community ID админа.");
@@ -1962,7 +1992,9 @@ function AddAdmin($mask, $srv_mask, $a_name, $a_steam, $a_email, $a_password, $a
 
 	
 	// Add the admin
-	$aid = $userbank->AddAdmin($a_name, $a_steam, $a_password, $a_email, $web_group, $mask, $server_admin_group, $srv_mask, $immunity, $a_serverpass, $period, $discord, $comment, $vk);
+	if (function_exists('sb_ensure_admins_telegram_column'))
+		sb_ensure_admins_telegram_column();
+	$aid = $userbank->AddAdmin($a_name, $a_steam, $a_password, $a_email, $web_group, $mask, $server_admin_group, $srv_mask, $immunity, $a_serverpass, $period, $discord, $comment, $vk, $telegram);
 	
 	if($aid > -1)
 	{

@@ -1453,7 +1453,7 @@ public void GroupsDone(Database db, DBResultSet dbRs, const char[] sError, any i
 			FROM `%s_admins_servers_groups` AS asg LEFT JOIN `%s_admins` AS a ON a.`aid` = asg.`admin_id` \
 			WHERE (`expired` > UNIX_TIMESTAMP() OR `expired` = 0 OR `expired` = NULL) \
 			AND `authid` != 'STEAM_ID_SERVER' \
-			AND ((`server_id` = %!s OR `srv_group_id` = ANY (SELECT `group_id` FROM `%s_servers_groups` \
+			AND ((`server_id` = %!s OR `srv_group_id` IN (SELECT `group_id` FROM `%s_servers_groups` \
 			WHERE `server_id` = %!s))) GROUP BY `aid`, `authid`, `srv_password`, `srv_group`, `srv_flags`, `user`", 
 		g_sDatabasePrefix, g_sDatabasePrefix, g_sDatabasePrefix, g_sDatabasePrefix, sServer, g_sDatabasePrefix, sServer);
 #if MADEBUG

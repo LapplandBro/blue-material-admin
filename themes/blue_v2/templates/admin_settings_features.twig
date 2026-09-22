@@ -37,6 +37,35 @@
         <input type="text" class="form-control" id="admin_warns_max" name="admin_warns_max" placeholder="Максимальное кол-во предупреждений" value="{{ maxWarnings }}">
       </div>
     </div>
+    <section class="settings-card" aria-labelledby="settings-admins-title">
+      <h3 class="form-section-title" id="settings-admins-title">Админы</h3>
+      <p class="settings-card-lead">Привязка к серверам и что видно в профиле. Сохраняется вместе с остальными опциями.</p>
+      <div class="form-grid settings-card-grid">
+        <div class="form-field">
+          <label class="form-label" for="server_assign_mode">{% include 'partials/help_icon.twig' with { title: 'Привязка к игре', message: 'По серверам: группа серверов при сохранении раскладывается в конкретные серверы — админка в игре работает. Как группу: привязка хранится как группа серверов.' } %} Как привязывать админа к игре</label>
+          <select class="form-select" name="server_assign_mode" id="server_assign_mode">
+            <option value="servers"{% if server_assign_mode == 'servers' %} selected="selected"{% endif %}>По серверам</option>
+            <option value="group"{% if server_assign_mode == 'group' %} selected="selected"{% endif %}>Как группу серверов</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="admin_nick_link">{% include 'partials/help_icon.twig' with { title: 'Клик по нику', message: 'Куда ведёт клик по нику администратора в списке.' } %} Куда ведёт клик по нику</label>
+          <select class="form-select" name="admin_nick_link" id="admin_nick_link">
+            <option value="steam"{% if admin_nick_link == 'steam' %} selected="selected"{% endif %}>Steam</option>
+            <option value="vk"{% if admin_nick_link == 'vk' %} selected="selected"{% endif %}>ВКонтакте</option>
+            <option value="tg"{% if admin_nick_link == 'tg' %} selected="selected"{% endif %}>Telegram</option>
+            <option value="none"{% if admin_nick_link == 'none' %} selected="selected"{% endif %}>Никуда</option>
+          </select>
+        </div>
+      </div>
+      <div class="settings-toggles settings-toggles--card">
+        {% include 'partials/settings_toggle.twig' with { id: 'admin_show_steam', label: 'Показывать Steam в профиле', help_title: 'Steam в профиле', help_message: 'Показывать Steam в профиле администратора.', checked: admin_show_steam } %}
+        {% include 'partials/settings_toggle.twig' with { id: 'admin_show_vk', label: 'Показывать VK в профиле', help_title: 'VK в профиле', help_message: 'Показывать ВКонтакте в профиле администратора.', checked: admin_show_vk } %}
+        {% include 'partials/settings_toggle.twig' with { id: 'admin_show_discord', label: 'Показывать Discord в профиле', help_title: 'Discord в профиле', help_message: 'Показывать Discord в профиле администратора.', checked: admin_show_discord } %}
+        {% include 'partials/settings_toggle.twig' with { id: 'admin_show_tg', label: 'Показывать Telegram в профиле', help_title: 'Telegram в профиле', help_message: 'Показывать Telegram в профиле администратора.', checked: admin_show_tg } %}
+        {% include 'partials/settings_toggle.twig' with { id: 'admin_steam_optional', label: 'SteamID не обязателен', help_title: 'SteamID не обязателен', help_message: 'Для CSS v34 и похожих, где Steam невалиден. SteamID можно не указывать.', checked: admin_steam_optional, span: true } %}
+      </div>
+    </section>
     <div class="form-actions">
       <button type="submit" class="btn btn-accent" id="fsettings">Сохранить</button>
       <button type="button" class="btn btn-outline-secondary" id="fback" onclick="sbGo('index.php?p=admin&amp;c=settings')">Назад</button>

@@ -61,6 +61,10 @@ function SteamID2CommunityID($steamid)
 }
 } 
 
+// Колонка telegram — при показе списка и формы добавления. Повторный ALTER не нужен.
+if (function_exists('sb_ensure_admins_telegram_column'))
+	sb_ensure_admins_telegram_column();
+
 // List Page
 $admin_list = array();
 foreach($admins AS $admin)
@@ -72,19 +76,27 @@ foreach($admins AS $admin)
 	$admin['server_group'] = $userbank->GetProperty("srv_groups", $admin['aid']);
 	
 	// Add contakt
-	$admin['vk_profile'] = $userbank->GetProperty("vk", $admin['aid']);
+	$admin['vk_profile'] = function_exists('sb_admin_vk_slug') ? sb_admin_vk_slug($userbank->GetProperty("vk", $admin['aid'])) : (string)$userbank->GetProperty("vk", $admin['aid']);
 	if($admin['vk_profile'] == ""){
 		$admin['vk_profile'] = "Нет данных";
 	}else{
-		$admin['vk_profile'] = htmlspecialchars($admin['vk_profile']);
-		$admin['vk_profile'] = "<a href='https://vk.com/" .$admin['vk_profile'] . "'>" . $admin['vk_profile'] . "</a>";
+		$vkSafe = htmlspecialchars($admin['vk_profile'], ENT_QUOTES, 'UTF-8');
+		$admin['vk_profile'] = "<a href='https://vk.com/" . $vkSafe . "' target='_blank' rel='noopener'>" . $vkSafe . "</a>";
 	}
 	
 	$admin['sk_profile'] = $userbank->GetProperty("discord", $admin['aid']);
-	if($admin['sk_profile'] == ""){
+	if($admin['sk_profile'] == "" || $admin['sk_profile'] === false){
 		$admin['sk_profile'] = "Нет данных";
 	}else{
-		$admin['sk_profile'] = htmlspecialchars($admin['sk_profile']);
+		$admin['sk_profile'] = htmlspecialchars($admin['sk_profile'], ENT_QUOTES, 'UTF-8');
+	}
+
+	$tgRaw = function_exists('sb_admin_telegram_clean') ? sb_admin_telegram_clean($userbank->GetProperty("telegram", $admin['aid'])) : '';
+	if($tgRaw === ''){
+		$admin['tg_profile'] = "Нет данных";
+	}else{
+		$tgSafe = htmlspecialchars($tgRaw, ENT_QUOTES, 'UTF-8');
+		$admin['tg_profile'] = "<a href='https://t.me/" . $tgSafe . "' target='_blank' rel='noopener'>" . $tgSafe . "</a>";
 	}
 	
 	$admin['comment_profile'] = $userbank->GetProperty("comment", $admin['aid']);
@@ -93,8 +105,23 @@ foreach($admins AS $admin)
 	}
 	
 	$admin['email_profile'] = $userbank->GetProperty("email", $admin['aid']);
-	$admin['communityid_profile'] = SteamID2CommunityID($userbank->GetProperty("authid", $admin['aid']));
-	$admin['steam_id_amd'] = $userbank->GetProperty("authid", $admin['aid']);
+	$authRaw = $userbank->GetProperty("authid", $admin['aid']);
+	if ($authRaw === false || $authRaw === null)
+		$authRaw = '';
+	$authRaw = trim((string)$authRaw);
+	$admin['steam_id_amd'] = ($authRaw === '') ? 'Нет данных' : $authRaw;
+	$admin['steam_profile_url'] = '';
+	$admin['communityid_profile'] = '';
+	if (function_exists('sb_admin_looks_like_steam') && sb_admin_looks_like_steam($authRaw)
+		&& (!function_exists('sb_admin_show_contact') || sb_admin_show_contact('config.admin_show_steam')))
+	{
+		$cid = SteamID2CommunityID($authRaw);
+		if ($cid !== '' && $cid !== false && $cid !== null)
+		{
+			$admin['communityid_profile'] = $cid;
+			$admin['steam_profile_url'] = 'https://steamcommunity.com/profiles/' . $cid;
+		}
+	}
 	// Add contakt
 	
 	if(empty($admin['web_group']) || $admin['web_group']==" ")
@@ -246,6 +273,11 @@ echo '<div id="0" class="admin-pane is-on">';
 	$theme->assign('btn_rem', $btn_rem);
 	$theme->assign('btn_href', $btn_href);
 	$theme->assign('show_expired_admins', $show_expired_admins);
+	$theme->assign('admin_show_steam', !function_exists('sb_admin_show_contact') || sb_admin_show_contact('config.admin_show_steam'));
+	$theme->assign('admin_show_vk', !function_exists('sb_admin_show_contact') || sb_admin_show_contact('config.admin_show_vk'));
+	$theme->assign('admin_show_discord', !function_exists('sb_admin_show_contact') || sb_admin_show_contact('config.admin_show_discord'));
+	$theme->assign('admin_show_tg', !function_exists('sb_admin_show_contact') || sb_admin_show_contact('config.admin_show_tg'));
+	$theme->assign('admin_steam_optional', function_exists('sb_admin_steam_optional') && sb_admin_steam_optional());
 	$theme->assign('allow_warnings', (isset($GLOBALS['config']['admin.warns']) && $GLOBALS['config']['admin.warns'] == "1"));
 	$theme->assign('maxWarnings', isset($GLOBALS['config']['admin.warns.max']) ? $GLOBALS['config']['admin.warns.max'] : 0);
 	require TEMPLATES_PATH . "/admin.admins.search.php";

@@ -65,8 +65,9 @@ if (!is_array($servers))
 	$servers = array();
 if (!is_array($mods))
 	$mods = array();
+$tgSql = (function_exists('sb_admins_has_telegram_column') && sb_admins_has_telegram_column()) ? 'a.telegram, ' : '';
 $admins = $GLOBALS['db']->GetAll(sprintf(
-    "SELECT a.aid, a.user, a.authid, a.srv_group, a.expired, a.vk, a.discord, a.comment,
+    "SELECT a.aid, a.user, a.authid, a.srv_group, a.expired, a.vk, a.discord, %sa.comment,
             CASE WHEN gr.server_id = -1 THEN sgrp.server_id ELSE gr.server_id END AS srv,
             a.immunity AS adm_immunity, sg.immunity AS sg_immunity
      FROM `%s_admins` a
@@ -74,7 +75,7 @@ $admins = $GLOBALS['db']->GetAll(sprintf(
      LEFT JOIN `%s_servers_groups` sgrp
        ON gr.server_id = -1 AND sgrp.group_id = gr.srv_group_id
      LEFT JOIN `%s_srvgroups` sg ON sg.name = a.srv_group",
-    DB_PREFIX, DB_PREFIX, DB_PREFIX, DB_PREFIX
+    $tgSql, DB_PREFIX, DB_PREFIX, DB_PREFIX, DB_PREFIX
 ));
 if (!is_array($admins))
 	$admins = array();
@@ -104,12 +105,36 @@ for ($iServer = 0; $iServer < $iServerCount; $iServer++) {
     for ($iAdmin = 0; $iAdmin < $iAdminCount; $iAdmin++) {
         $administrator = $admins[$iAdmin];
         if ($administrator['srv'] == $servers[$iServer]['sid'] && !IsExpired($administrator)) {
-            $administrator['avatar'] = GetUserAvatar($administrator['authid']);
-            $administrator['authid'] = SteamIDToCommunityID($administrator['authid']);
-            // Don't dump a wall of filler text into the UI
+            $rawAuth = trim((string)$administrator['authid']);
+            $rawVk = isset($administrator['vk']) ? $administrator['vk'] : '';
+            $rawTg = isset($administrator['telegram']) ? $administrator['telegram'] : '';
+            $administrator['avatar'] = GetUserAvatar($rawAuth);
+            $cid = '';
+            $steamProfile = '';
+            if (function_exists('sb_admin_show_contact') && sb_admin_show_contact('config.admin_show_steam')
+                && function_exists('sb_admin_looks_like_steam') && sb_admin_looks_like_steam($rawAuth))
+            {
+                $got = SteamIDToCommunityID($rawAuth);
+                if ($got)
+                {
+                    $cid = (string)$got;
+                    $steamProfile = 'https://steamcommunity.com/profiles/' . $cid;
+                }
+            }
+            $administrator['authid'] = $cid;
+            $administrator['nick_url'] = function_exists('sb_admin_nick_url')
+                ? sb_admin_nick_url($rawAuth, $rawVk, $rawTg, $steamProfile)
+                : $steamProfile;
             $administrator['comment'] = trim((string)$administrator['comment']);
-            $administrator['discord'] = trim((string)$administrator['discord']);
-            $administrator['vk'] = trim((string)$administrator['vk']);
+            $administrator['discord'] = (function_exists('sb_admin_show_contact') && sb_admin_show_contact('config.admin_show_discord'))
+                ? trim((string)$administrator['discord'])
+                : '';
+            $administrator['vk'] = (function_exists('sb_admin_show_contact') && sb_admin_show_contact('config.admin_show_vk') && function_exists('sb_admin_vk_slug'))
+                ? sb_admin_vk_slug($rawVk)
+                : '';
+            $administrator['telegram'] = (function_exists('sb_admin_show_contact') && sb_admin_show_contact('config.admin_show_tg') && function_exists('sb_admin_telegram_clean'))
+                ? sb_admin_telegram_clean($rawTg)
+                : '';
                 
             $servers[$iServer]['adminlist'][$administrator['aid']] = $administrator;
         }

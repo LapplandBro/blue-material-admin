@@ -69,10 +69,11 @@ class CUserManager
 		if(isset($this->admins[$aid]) && !empty($this->admins[$aid]))
 			return $this->admins[$aid];
 		// Not in the manager, so we need to get them from DB
+		$tgCol = (function_exists('sb_admins_has_telegram_column') && sb_admins_has_telegram_column()) ? "adm.telegram telegram, " : "";
 		$res = $GLOBALS['db']->GetRow("SELECT adm.user user, adm.authid authid, adm.password password, adm.gid gid, adm.email email, adm.validate validate, adm.extraflags extraflags, 
 									   adm.immunity admimmunity,sg.immunity sgimmunity, adm.srv_password srv_password, adm.srv_group srv_group, adm.srv_flags srv_flags,sg.flags sgflags,
 									   wg.flags wgflags, wg.name wgname, adm.lastvisit lastvisit, adm.expired expired, adm.discord discord, adm.comment comment, adm.vk vk,
-									   adm.web_session web_session
+									   ".$tgCol."adm.web_session web_session
 									   FROM " . DB_PREFIX . "_admins AS adm
 									   LEFT JOIN " . DB_PREFIX . "_groups AS wg ON adm.gid = wg.gid
 									   LEFT JOIN " . DB_PREFIX . "_srvgroups AS sg ON adm.srv_group = sg.name
@@ -106,6 +107,7 @@ class CUserManager
 		$user['discord'] = $res['discord'];
 		$user['comment'] = $res['comment'];
 		$user['vk'] = $res['vk'];
+		$user['telegram'] = isset($res['telegram']) ? $res['telegram'] : '';
 		$user['web_session'] = isset($res['web_session']) ? $res['web_session'] : '';
 		$this->admins[$aid] = $user;
 		return $user;
@@ -380,11 +382,109 @@ class CUserManager
 	}
 	
 	
-	function AddAdmin($name, $steam, $password, $email, $web_group, $web_flags, $srv_group, $srv_flags, $immunity, $srv_password, $period, $discord, $comment, $vk)
-	{		
-		$add_admin = $GLOBALS['db']->Prepare("INSERT INTO ".DB_PREFIX."_admins(user, authid, password, gid, email, extraflags, immunity, srv_group, srv_flags, srv_password, expired, discord, comment, vk)
-											 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
-		$GLOBALS['db']->Execute($add_admin,array($name, $steam, $this->hash_password($password), $web_group, $email, $web_flags, $immunity, $srv_group, $srv_flags, $srv_password, $period, $discord, $comment, $vk));
+	function AddAdmin($name, $steam, $password, $email, $web_group, $web_flags, $srv_group, $srv_flags, $immunity, $srv_password, $period, $discord, $comment, $vk, $telegram = '')
+	{
+		$telegram = function_exists('sb_admin_telegram_clean') ? sb_admin_telegram_clean($telegram) : (string)$telegram;
+		if (function_exists('sb_admins_has_telegram_column') && sb_admins_has_telegram_column())
+		{
+			$add_admin = $GLOBALS['db']->Prepare("INSERT INTO ".DB_PREFIX."_admins(user, authid, password, gid, email, extraflags, immunity, srv_group, srv_flags, srv_password, expired, discord, comment, vk, telegram)
+												 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+			$GLOBALS['db']->Execute($add_admin,array($name, $steam, $this->hash_password($password), $web_group, $email, $web_flags, $immunity, $srv_group, $srv_flags, $srv_password, $period, $discord, $comment, $vk, $telegram));
+		}
+		else
+		{
+			$add_admin = $GLOBALS['db']->Prepare("INSERT INTO ".DB_PREFIX."_admins(user, authid, password, gid, email, extraflags, immunity, srv_group, srv_flags, srv_password, expired, discord, comment, vk)
+												 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+			$GLOBALS['db']->Execute($add_admin,array($name, $steam, $this->hash_password($password), $web_group, $email, $web_flags, $immunity, $srv_group, $srv_flags, $srv_password, $period, $discord, $comment, $vk));
+		}
 		return ($add_admin) ? (int)$GLOBALS['db']->Insert_ID() : -1;
 	}
+}
+
+function sb_admins_has_telegram_column()
+{
+	static $has = false;
+	if ($has)
+		return true;
+	if (!isset($GLOBALS['db']))
+		return false;
+	$has = (bool)@$GLOBALS['db']->GetOne("SHOW COLUMNS FROM `" . DB_PREFIX . "_admins` LIKE 'telegram'");
+	return $has;
+}
+
+function sb_ensure_admins_telegram_column()
+{
+	if (sb_admins_has_telegram_column())
+		return;
+	if (!isset($GLOBALS['db']))
+		return;
+	@$GLOBALS['db']->Execute("ALTER TABLE `" . DB_PREFIX . "_admins` ADD `telegram` VARCHAR(128) NULL");
+}
+
+function sb_admin_cfg($key, $default)
+{
+	if (!isset($GLOBALS['config'][$key]) || $GLOBALS['config'][$key] === null || $GLOBALS['config'][$key] === '')
+		return $default;
+	return (string)$GLOBALS['config'][$key];
+}
+
+function sb_admin_show_contact($key)
+{
+	return sb_admin_cfg($key, '1') !== '0';
+}
+
+function sb_admin_steam_optional()
+{
+	return sb_admin_cfg('config.admin_steam_optional', '0') === '1';
+}
+
+function sb_admin_looks_like_steam($authid)
+{
+	return (bool)preg_match('/^STEAM_[0-9]:[01]:[0-9]+$/', trim((string)$authid));
+}
+
+function sb_admin_vk_slug($vk)
+{
+	$vk = trim(stripslashes((string)$vk));
+	$vk = html_entity_decode($vk, ENT_QUOTES, 'UTF-8');
+	$vk = preg_replace('#^https?://#i', '', $vk);
+	$vk = preg_replace('#^(www\.)?vk\.(com|ru)/#i', '', $vk);
+	$vk = preg_replace('/[?#].*$/', '', $vk);
+	$vk = str_replace(array('/', '\\', 'vk.com', 'vk.ru'), '', $vk);
+	$vk = preg_replace('/[^a-zA-Z0-9_.\-]/', '', $vk);
+	return $vk;
+}
+
+function sb_admin_telegram_clean($tg)
+{
+	$tg = trim(stripslashes((string)$tg));
+	$tg = html_entity_decode($tg, ENT_QUOTES, 'UTF-8');
+	$tg = preg_replace('#^https?://#i', '', $tg);
+	$tg = preg_replace('#^(www\.)?(t\.me|telegram\.me)/#i', '', $tg);
+	$tg = ltrim($tg, '@');
+	$tg = substr($tg, 0, strcspn($tg, "/?# \t\r\n"));
+	$tg = preg_replace('/[^A-Za-z0-9_]/', '', $tg);
+	if (strlen($tg) > 128)
+		$tg = substr($tg, 0, 128);
+	return $tg;
+}
+
+function sb_admin_nick_url($authid, $vk, $telegram, $steamProfileUrl)
+{
+	$mode = strtolower(trim(sb_admin_cfg('config.admin_nick_link', 'steam')));
+	if ($mode === 'none')
+		return '';
+	if ($mode === 'vk')
+	{
+		$slug = sb_admin_vk_slug($vk);
+		return ($slug === '') ? '' : ('https://vk.com/' . $slug);
+	}
+	if ($mode === 'tg')
+	{
+		$nick = sb_admin_telegram_clean($telegram);
+		return ($nick === '') ? '' : ('https://t.me/' . $nick);
+	}
+	if (!sb_admin_show_contact('config.admin_show_steam') || !sb_admin_looks_like_steam($authid))
+		return '';
+	return (string)$steamProfileUrl;
 }

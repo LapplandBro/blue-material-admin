@@ -335,6 +335,16 @@ else
 			$map_autofetch = (isset($_POST['map_autofetch']) && $_POST['map_autofetch'] == "on" ? 1 : 0);
 			$totp_enforce_owner = (isset($_POST['totp_enforce_owner']) && $_POST['totp_enforce_owner'] == "on" ? 1 : 0);
 			$twig_precompile = (isset($_POST['twig_precompile']) && $_POST['twig_precompile'] == "on" ? 1 : 0);
+
+			$server_assign_mode = (isset($_POST['server_assign_mode']) && $_POST['server_assign_mode'] === 'group') ? 'group' : 'servers';
+			$admin_nick_link = isset($_POST['admin_nick_link']) ? (string)$_POST['admin_nick_link'] : 'steam';
+			if (!in_array($admin_nick_link, array('steam', 'vk', 'tg', 'none'), true))
+				$admin_nick_link = 'steam';
+			$admin_show_steam = (isset($_POST['admin_show_steam']) && $_POST['admin_show_steam'] == "on" ? 1 : 0);
+			$admin_show_vk = (isset($_POST['admin_show_vk']) && $_POST['admin_show_vk'] == "on" ? 1 : 0);
+			$admin_show_discord = (isset($_POST['admin_show_discord']) && $_POST['admin_show_discord'] == "on" ? 1 : 0);
+			$admin_show_tg = (isset($_POST['admin_show_tg']) && $_POST['admin_show_tg'] == "on" ? 1 : 0);
+			$admin_steam_optional = (isset($_POST['admin_steam_optional']) && $_POST['admin_steam_optional'] == "on" ? 1 : 0);
 			
 			$edit = $GLOBALS['db']->Execute("REPLACE INTO ".DB_PREFIX."_settings (`value`, `setting`) VALUES
 											(" . (int)$exportpub . ", 'config.exportpublic'),
@@ -351,7 +361,14 @@ else
 											(" . (int)$_POST['admin_warns_max'] . ", 'admin.warns.max'),
 											(" . (int)$map_autofetch . ", 'feature.map_autofetch'),
 											(" . (int)$totp_enforce_owner . ", 'config.totp.enforce_owner'),
-											(" . (int)$twig_precompile . ", 'config.twig.precompile');");
+											(" . (int)$twig_precompile . ", 'config.twig.precompile'),
+											(" . $GLOBALS['db']->qstr($server_assign_mode) . ", 'config.server_assign_mode'),
+											(" . $GLOBALS['db']->qstr($admin_nick_link) . ", 'config.admin_nick_link'),
+											(" . (int)$admin_show_steam . ", 'config.admin_show_steam'),
+											(" . (int)$admin_show_vk . ", 'config.admin_show_vk'),
+											(" . (int)$admin_show_discord . ", 'config.admin_show_discord'),
+											(" . (int)$admin_show_tg . ", 'config.admin_show_tg'),
+											(" . (int)$admin_steam_optional . ", 'config.admin_steam_optional');");
 
 			if ($edit) {
 				if ((int)$twig_precompile === 1 && function_exists('sb_ui_v2_twig_precompile_all')) {
@@ -535,6 +552,19 @@ else
 		$theme->assign('totp_enforce_owner', (!empty($GLOBALS['config']['config.totp.enforce_owner']) && $GLOBALS['config']['config.totp.enforce_owner'] == "1"));
 		$theme->assign('maxWarnings', $GLOBALS['config']['admin.warns.max']);
 		$theme->assign('warnings_enabled', ($GLOBALS['config']['admin.warns'] == "1"));
+		$serverAssignMode = isset($GLOBALS['config']['config.server_assign_mode']) ? (string)$GLOBALS['config']['config.server_assign_mode'] : 'servers';
+		if ($serverAssignMode !== 'group')
+			$serverAssignMode = 'servers';
+		$adminNickLink = isset($GLOBALS['config']['config.admin_nick_link']) ? (string)$GLOBALS['config']['config.admin_nick_link'] : 'steam';
+		if (!in_array($adminNickLink, array('steam', 'vk', 'tg', 'none'), true))
+			$adminNickLink = 'steam';
+		$theme->assign('server_assign_mode', $serverAssignMode);
+		$theme->assign('admin_nick_link', $adminNickLink);
+		$theme->assign('admin_show_steam', (!isset($GLOBALS['config']['config.admin_show_steam']) || $GLOBALS['config']['config.admin_show_steam'] == "1"));
+		$theme->assign('admin_show_vk', (!isset($GLOBALS['config']['config.admin_show_vk']) || $GLOBALS['config']['config.admin_show_vk'] == "1"));
+		$theme->assign('admin_show_discord', (!isset($GLOBALS['config']['config.admin_show_discord']) || $GLOBALS['config']['config.admin_show_discord'] == "1"));
+		$theme->assign('admin_show_tg', (!isset($GLOBALS['config']['config.admin_show_tg']) || $GLOBALS['config']['config.admin_show_tg'] == "1"));
+		$theme->assign('admin_steam_optional', (isset($GLOBALS['config']['config.admin_steam_optional']) && $GLOBALS['config']['config.admin_steam_optional'] == "1"));
 		sb_ui_v2_theme_fragment('admin_settings_features.twig');
 	echo '</div>';
 	#########/[Features Page]###############
@@ -643,6 +673,18 @@ else
 	setChecked('enable_admininfo', <?php echo $sbCfgInt('config.enableadmininfos', 1); ?>);
 	setChecked('allow_admininfo', <?php echo $sbCfgInt('config.changeadmininfos', 1); ?>);
 	setChecked('enable_adminrehashing', <?php echo $sbCfgInt('config.enableadminrehashing', 1); ?>);
+	setChecked('admin_show_steam', <?php echo $sbCfgInt('config.admin_show_steam', 1); ?>);
+	setChecked('admin_show_vk', <?php echo $sbCfgInt('config.admin_show_vk', 1); ?>);
+	setChecked('admin_show_discord', <?php echo $sbCfgInt('config.admin_show_discord', 1); ?>);
+	setChecked('admin_show_tg', <?php echo $sbCfgInt('config.admin_show_tg', 1); ?>);
+	setChecked('admin_steam_optional', <?php echo $sbCfgInt('config.admin_steam_optional', 0); ?>);
+	setValue('server_assign_mode', <?php echo json_encode((isset($GLOBALS['config']['config.server_assign_mode']) && (string)$GLOBALS['config']['config.server_assign_mode'] === 'group') ? 'group' : 'servers', JSON_UNESCAPED_UNICODE); ?>);
+	setValue('admin_nick_link', <?php
+		$sbNickLink = isset($GLOBALS['config']['config.admin_nick_link']) ? (string)$GLOBALS['config']['config.admin_nick_link'] : 'steam';
+		if (!in_array($sbNickLink, array('steam', 'vk', 'tg', 'none'), true))
+			$sbNickLink = 'steam';
+		echo json_encode($sbNickLink, JSON_UNESCAPED_UNICODE);
+	?>);
 	setValue('moder_group_st', <?php echo json_encode((string)$sbCfg('config.modgroup', '0'), JSON_UNESCAPED_UNICODE); ?>);
 })();
 

@@ -52,6 +52,11 @@ $adminGroup = $GLOBALS['db']->GetAll('SELECT id FROM '.DB_PREFIX.'_srvgroups sg,
 
 $server_grp = isset($adminGroup[0]['id'])?$adminGroup[0]['id']:0;
 
+// config.server_assign_mode: 'servers' | 'group'. Нет ключа — отдельные серверы.
+$serverAssignMode = 'servers';
+if(isset($GLOBALS['config']['config.server_assign_mode']) && (string)$GLOBALS['config']['config.server_assign_mode'] === 'group')
+	$serverAssignMode = 'group';
+
 	
 if(isset($_POST['editadminserver']))
 {
@@ -64,24 +69,64 @@ if(isset($_POST['editadminserver']))
 
 	// clear old stuffs
 	$GLOBALS['db']->Execute("DELETE FROM ".DB_PREFIX."_admins_servers_groups WHERE admin_id = ?", array($aid));
-	if(isset($_POST['servers']) && is_array($_POST['servers']) && count($_POST['servers']) > 0) {
-		foreach($_POST['servers'] AS $s)
+	$pre = $GLOBALS['db']->Prepare("INSERT INTO ".DB_PREFIX."_admins_servers_groups(admin_id,group_id,srv_group_id,server_id) VALUES (?,?,?,?)");
+	if($serverAssignMode === 'group')
+	{
+		if(isset($_POST['servers']) && is_array($_POST['servers']) && count($_POST['servers']) > 0) {
+			foreach($_POST['servers'] AS $s)
+			{
+				$GLOBALS['db']->Execute($pre,array($aid,
+												   $server_grp,
+												   -1,
+												   (int)substr($s,1)));
+			}
+		}
+		if(isset($_POST['group']) && is_array($_POST['group']) && count($_POST['group']) > 0) {
+			foreach($_POST['group'] AS $g)
+			{
+				$GLOBALS['db']->Execute($pre,array($aid,
+												   $server_grp,
+												   (int)substr($g,1),
+												   -1));
+			}
+		}
+	}
+	else
+	{
+		// Режим servers: группы разворачиваются в серверы из _servers_groups.
+		// Строка server_id=-1 не пишется, дубли с явно отмеченными серверами отбрасываются.
+		$assignServers = array();
+		if(isset($_POST['servers']) && is_array($_POST['servers'])) {
+			foreach($_POST['servers'] AS $s)
+			{
+				$sid = (int)substr($s,1);
+				if($sid > 0)
+					$assignServers[$sid] = true;
+			}
+		}
+		if(isset($_POST['group']) && is_array($_POST['group'])) {
+			foreach($_POST['group'] AS $g)
+			{
+				$gid = (int)substr($g,1);
+				if($gid <= 0)
+					continue;
+				$members = $GLOBALS['db']->GetAll("SELECT `server_id` FROM `".DB_PREFIX."_servers_groups` WHERE `group_id` = ?", array($gid));
+				if(!is_array($members))
+					continue;
+				foreach($members as $member)
+				{
+					$sid = (int)$member['server_id'];
+					if($sid > 0)
+						$assignServers[$sid] = true;
+				}
+			}
+		}
+		foreach(array_keys($assignServers) AS $sid)
 		{
-			$pre = $GLOBALS['db']->Prepare("INSERT INTO ".DB_PREFIX."_admins_servers_groups(admin_id,group_id,srv_group_id,server_id) VALUES (?,?,?,?)");
 			$GLOBALS['db']->Execute($pre,array($aid,
 											   $server_grp,
 											   -1,
-											   (int)substr($s,1)));
-		}
-	}
-	if(isset($_POST['group']) && is_array($_POST['group']) && count($_POST['group']) > 0) {
-		foreach($_POST['group'] AS $g)
-		{
-			$pre = $GLOBALS['db']->Prepare("INSERT INTO ".DB_PREFIX."_admins_servers_groups(admin_id,group_id,srv_group_id,server_id) VALUES (?,?,?,?)");
-			$GLOBALS['db']->Execute($pre,array($aid,
-											   $server_grp,
-											   (int)substr($g,1),
-											   -1));
+											   (int)$sid));
 		}
 	}
 	if(isset($GLOBALS['config']['config.enableadminrehashing']) && $GLOBALS['config']['config.enableadminrehashing'] == 1)
@@ -138,6 +183,7 @@ $theme->assign('row_count', $rowcount);
 $theme->assign('group_list', $group_list);
 $theme->assign('server_list', $server_list);
 $theme->assign('assigned_servers', $servers);
+$theme->assign('server_assign_mode', $serverAssignMode);
 $theme->assign('sb_csrf', function_exists('sb_csrf_token') ? sb_csrf_token() : '');
 
 sb_ui_v2_theme_fragment('admin_edit_admins_servers.twig');

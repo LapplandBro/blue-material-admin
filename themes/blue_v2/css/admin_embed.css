@@ -445,6 +445,38 @@
   gap: 0.65rem 0.85rem;
   margin-top: 0.85rem;
 }
+.settings-card {
+  margin-top: 1.35rem;
+  padding: 1rem 1.05rem 1.05rem;
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md, 12px);
+  background: rgba(8, 15, 31, 0.45);
+}
+.settings-card .form-section-title {
+  margin: 0 0 0.35rem;
+}
+.settings-card-lead {
+  margin: 0 0 0.9rem;
+  max-width: 46rem;
+  color: var(--text-muted, #8ea0bd);
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+.settings-card-grid {
+  margin-top: 0;
+  align-items: end;
+}
+.settings-card-grid .form-label {
+  min-height: 2.7rem;
+  display: flex;
+  align-items: flex-end;
+}
+.settings-toggles--card {
+  margin-top: 0.9rem;
+}
+.settings-toggle--span {
+  grid-column: 1 / -1;
+}
 .settings-toggle {
   display: flex;
   align-items: flex-start;

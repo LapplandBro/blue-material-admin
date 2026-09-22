@@ -45,25 +45,39 @@
             <div class="opener">
               <div class="admin-detail">
                 <div class="admin-facts">
+                  {% if admin_show_steam is not defined or admin_show_steam %}
                   <div class="admin-fact">
                     <span class="admin-fact-label">Steam</span>
                     <span class="admin-fact-value">
                       {{ admin.steam_id_amd }}
-                      · <a href="http://steamcommunity.com/profiles/{{ admin.communityid_profile }}" target="_blank" rel="noopener">профиль</a>
+                      {% if admin.steam_profile_url %}
+                      · <a href="{{ admin.steam_profile_url }}" target="_blank" rel="noopener">профиль</a>
+                      {% endif %}
                     </span>
                   </div>
+                  {% endif %}
+                  {% if admin_show_discord is not defined or admin_show_discord %}
                   <div class="admin-fact">
                     <span class="admin-fact-label">Discord</span>
                     <span class="admin-fact-value">{{ admin.sk_profile|raw }}</span>
                   </div>
+                  {% endif %}
                   <div class="admin-fact">
                     <span class="admin-fact-label">E-mail</span>
                     <span class="admin-fact-value">{{ admin.email_profile }} {% if admin.email_profile %}(<a href="mailto:{{ admin.email_profile }}">написать</a>){% endif %}</span>
                   </div>
+                  {% if admin_show_vk is not defined or admin_show_vk %}
                   <div class="admin-fact">
                     <span class="admin-fact-label">VK</span>
                     <span class="admin-fact-value">{{ admin.vk_profile|raw }}</span>
                   </div>
+                  {% endif %}
+                  {% if admin_show_tg is not defined or admin_show_tg %}
+                  <div class="admin-fact">
+                    <span class="admin-fact-label">Telegram</span>
+                    <span class="admin-fact-value">{{ admin.tg_profile|default('Нет данных')|raw }}</span>
+                  </div>
+                  {% endif %}
                   <div class="admin-fact">
                     <span class="admin-fact-label">Комментарий</span>
                     <span class="admin-fact-value">{{ admin.comment_profile }}</span>

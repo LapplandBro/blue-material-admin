@@ -6,6 +6,11 @@
         <p class="form-page-kicker">Редактирование</p>
         <h2 class="form-page-title">Доступ к серверам</h2>
         <p class="form-page-lead">Где этот админ работает.</p>
+        {% if server_assign_mode == 'group' %}
+        <p class="form-page-lead">Режим «группа»: отмеченная группа сохранится как группа серверов.</p>
+        {% else %}
+        <p class="form-page-lead">Режим «серверы»: отмеченная группа запишется отдельными серверами из этой группы.</p>
+        {% endif %}
       </header>
       <div class="form-checkboxes" id="group.details">
         {% if row_count < 1 %}

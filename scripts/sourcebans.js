@@ -290,6 +290,8 @@ function sbLoc(page, q) {
 	if (typeof document === 'undefined' || !document.addEventListener)
 		return;
 	document.addEventListener('click', function (e) {
+		if (!e)
+			return;
 		var a = e.target;
 		while (a && a.nodeName !== 'A')
 			a = a.parentNode;
@@ -301,6 +303,15 @@ function sbLoc(page, q) {
 		var hashIdx = href.indexOf('#^');
 		if (hashIdx < 0)
 			return;
+		// Не левая кнопка и модификаторы — браузеру (новая вкладка и т.п.).
+		if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey)
+			return;
+		// Синтетический click не должен дойти до onclick="SwapPane".
+		if (e.isTrusted === false) {
+			e.preventDefault();
+			e.stopPropagation();
+			return;
+		}
 		var hash = href.substring(hashIdx); // #^N или #^N~…
 		var pathPart = href.substring(0, hashIdx);
 		if (pathPart !== '') {
@@ -327,6 +338,9 @@ function sbLoc(page, q) {
 		var tabMatch = hash.match(/^#\^(\d+)/);
 		if (tabMatch && typeof SwapPane === 'function')
 			SwapPane(tabMatch[1]);
+		var sub = hash.match(/^#\^\d+~([A-Za-z])(\d+)/);
+		if (sub && typeof Swap2ndPane === 'function')
+			Swap2ndPane(sub[2], sub[1]);
 	}, true);
 
 	// Голый href="#id" с <base href> уводит на главную (/#id). Модалки игроков и якоря
@@ -363,40 +377,78 @@ function sbLoc(page, q) {
 		sbFixEmptyFormActions();
 })();
 
+function sbAdminPaneById(id)
+{
+	id = String(id);
+	var nodes, i, root, scoped;
+	root = document.getElementById('admin-page-wrap')
+		|| document.querySelector('.admin-embed-body')
+		|| document.getElementById('cpanel')
+		|| document.getElementById('admin-page-content');
+	scoped = (root && root.querySelectorAll) ? root.querySelectorAll('.admin-pane') : [];
+	nodes = scoped.length ? scoped : document.querySelectorAll('.admin-pane');
+	for (i = 0; i < nodes.length; i++) {
+		if (String(nodes[i].id) === id)
+			return nodes[i];
+	}
+	return null;
+}
+
 function ProcessAdminTabs()
 {
-	var url = window.location.toString();
-	var tabNo = -1;
-	var tabMatch = url.match(/#\^(\d+)/);
-	if (tabMatch) {
-		tabNo = tabMatch[1];
-		// getElementById('0') is valid; tab-0 / pane 0 must not be treated as missing.
-		if (tabNo !== '' && (document.getElementById('tab-' + tabNo) || document.getElementById(tabNo)))
-			SwapPane(tabNo);
-		else
-			tabNo = -1;
+	// Повторный вызов (футер + extra_js, ajax, второй прогон скрипта) не должен
+	// заново читать hash и уводить с вкладки, которую уже открыл пользователь.
+	if (ProcessAdminTabs._done)
+		return ProcessAdminTabs._tab;
+
+	var hash = '';
+	try { hash = window.location.hash || ''; } catch (eHash) { hash = ''; }
+
+	var hasPanes = false;
+	try {
+		hasPanes = !!document.querySelector('.admin-pane, #admin-page-menu');
+	} catch (ePane) { hasPanes = false; }
+
+	// Только явный фрагмент #^N. Пустой hash и чужой # (не с начала фрагмента)
+	// вкладку не меняют — серверная .is-on / CSS уже показывают нужную панель.
+	var tabMatch = hash.match(/^#\^(\d+)/);
+	if (!tabMatch) {
+		if (hasPanes && !document.querySelector('.admin-pane.is-on')) {
+			var allPanes = document.querySelectorAll('.admin-pane');
+			var anyShown = false;
+			var pi;
+			for (pi = 0; pi < allPanes.length; pi++) {
+				if (allPanes[pi].style.display !== 'none') {
+					anyShown = true;
+					break;
+				}
+			}
+			if (!anyShown && allPanes.length)
+				SwapPane(String(allPanes[0].id) !== '' ? allPanes[0].id : '0');
+		}
+		if (hasPanes)
+			ProcessAdminTabs._done = true;
+		ProcessAdminTabs._tab = -1;
+		return -1;
 	}
 
-	if (tabNo === -1) {
-		var current = document.querySelector('.admin-pane.is-on');
-		var first = document.querySelector('.admin-embed-body .admin-pane')
-			|| document.querySelector('.admin-pane')
-			|| document.getElementById('0');
-		if (current && String(current.id) !== '')
-			SwapPane(current.id);
-		else if (first && first.classList && first.classList.contains('admin-pane'))
-			SwapPane(String(first.id) !== '' ? first.id : '0');
-		else if (first)
-			first.style.display = 'block';
+	var tabNo = tabMatch[1];
+	var pane = sbAdminPaneById(tabNo);
+	if (!pane) {
+		// Вкладки на странице есть, а #^N — нет: не падать на первую панель.
+		if (hasPanes && !document.getElementById('tab-' + tabNo))
+			ProcessAdminTabs._done = true;
+		ProcessAdminTabs._tab = -1;
+		return -1;
 	}
 
-	var upos = url.indexOf('~');
-	if (upos !== -1) {
-		var utabType = url.charAt(upos + 1);
-		var utabNo = url.charAt(upos + 2);
-		Swap2ndPane(utabNo, utabType);
-	}
+	SwapPane(tabNo);
+	var sub = hash.match(/^#\^\d+~([A-Za-z])(\d+)/);
+	if (sub)
+		Swap2ndPane(sub[2], sub[1]);
 
+	ProcessAdminTabs._done = true;
+	ProcessAdminTabs._tab = tabNo;
 	return tabNo;
 }
 
@@ -471,10 +523,25 @@ function SwapPane(id)
 			}
 		}
 	}
-	if (!show && panes.length)
-		show = panes[0];
-	if (!show && all.length)
-		show = all[0];
+	if (!show) {
+		// Запрошенной панели нет. Если какая-то уже открыта — не перескакивать
+		// на первую (так страница сама «открывала» другую вкладку).
+		var keepList = panes.length ? panes : all;
+		var keepOn = null;
+		var ki;
+		for (ki = 0; ki < keepList.length; ki++) {
+			if (keepList[ki].classList && keepList[ki].classList.contains('is-on')) {
+				keepOn = keepList[ki];
+				break;
+			}
+		}
+		if (keepOn)
+			return;
+		if (panes.length)
+			show = panes[0];
+		else if (all.length)
+			show = all[0];
+	}
 
 	if (show && panes.length) {
 		var inList = false;
@@ -883,6 +950,57 @@ function sbRemoveAdminRow(aid)
 		el = document.getElementById(ids[i]);
 		if (el && el.parentNode)
 			el.parentNode.removeChild(el);
+	}
+}
+
+function sbFillSteamGroups(rows)
+{
+	var table = document.getElementById("steamGroupsTable");
+	var text = document.getElementById("steamGroupsText");
+	var wrap = document.getElementById("steamGroups");
+	if (!rows || !rows.length) {
+		if (text) {
+			text.style.display = "";
+			text.innerHTML = "<i>Нет групп…</i>";
+		}
+		return;
+	}
+	if (text)
+		text.style.display = "none";
+	if (wrap)
+		wrap.style.display = "block";
+	if (!table)
+		return;
+	var tb = table.tBodies.length ? table.tBodies[0] : table.appendChild(document.createElement("tbody"));
+	while (tb.firstChild)
+		tb.removeChild(tb.firstChild);
+	var i, r, tr, td, input, a, span, slug, name;
+	for (i = 0; i < rows.length; i++) {
+		r = rows[i] || {};
+		slug = r.url != null ? String(r.url) : "";
+		name = r.name != null ? String(r.name) : slug;
+		tr = tb.insertRow(-1);
+		td = tr.insertCell(-1);
+		td.setAttribute("data-label", "");
+		input = document.createElement("input");
+		input.type = "checkbox";
+		input.id = "chkb_" + i;
+		input.value = slug;
+		td.appendChild(input);
+		td = tr.insertCell(-1);
+		td.setAttribute("data-label", "Группа");
+		a = document.createElement("a");
+		a.href = "https://steamcommunity.com/groups/" + encodeURIComponent(slug);
+		a.target = "_blank";
+		a.rel = "noopener";
+		a.appendChild(document.createTextNode(name));
+		td.appendChild(a);
+		td.appendChild(document.createTextNode(" ("));
+		span = document.createElement("span");
+		span.id = "membcnt_" + i;
+		span.appendChild(document.createTextNode(r.members != null ? String(r.members) : "0"));
+		td.appendChild(span);
+		td.appendChild(document.createTextNode(" уч.)"));
 	}
 }
 
@@ -1298,6 +1416,11 @@ function ProcessAddAdmin()
   	
   	if(document.getElementById('a_useserverpass').checked)
   		server_a_pass = document.getElementById('a_serverpass').value;
+
+	var telegramVal = '';
+	var telegramEl = document.getElementById('telegram');
+	if (telegramEl)
+		telegramVal = telegramEl.value;
   
 	if(document.getElementById('webname') && !document.getElementById('servername'))
 	xajax_AddAdmin(Mask,srvMask, document.getElementById('adminname').value, //Admin name
@@ -1315,7 +1438,8 @@ function ProcessAddAdmin()
 					period,
 					document.getElementById('discord').value,
 					document.getElementById('comment').value,
-					document.getElementById('vk').value); //server / server group
+					document.getElementById('vk').value,
+					telegramVal); //server / server group
 	else if(!document.getElementById('webname') && document.getElementById('servername'))
 	xajax_AddAdmin(Mask,srvMask, document.getElementById('adminname').value, //Admin name
 					document.getElementById('steam').value, //Admin Steam
@@ -1332,7 +1456,8 @@ function ProcessAddAdmin()
 					period,
 					document.getElementById('discord').value,
 					document.getElementById('comment').value,
-					document.getElementById('vk').value);
+					document.getElementById('vk').value,
+					telegramVal);
 	else if(document.getElementById('webname') && document.getElementById('servername'))
 	xajax_AddAdmin(Mask,srvMask, document.getElementById('adminname').value, //Admin name
 					document.getElementById('steam').value, //Admin Steam
@@ -1349,7 +1474,8 @@ function ProcessAddAdmin()
 					period,
 					document.getElementById('discord').value,
 					document.getElementById('comment').value,
-					document.getElementById('vk').value);
+					document.getElementById('vk').value,
+					telegramVal);
 	else
 	xajax_AddAdmin(Mask,srvMask, document.getElementById('adminname').value, //Admin name
 					document.getElementById('steam').value, //Admin Steam
@@ -1366,7 +1492,8 @@ function ProcessAddAdmin()
 					period,
 					document.getElementById('discord').value,
 					document.getElementById('comment').value,
-					document.getElementById('vk').value);
+					document.getElementById('vk').value,
+					telegramVal);
 
 					
 }
@@ -1852,9 +1979,12 @@ function sbSessionExtend(opts) {
 	sbSessionExtend._watch = setTimeout(function () {
 		if (!window.SB_SESSION || !window.SB_SESSION._extending)
 			return;
+		var lastChance = !!window.SB_SESSION._lastChance;
 		window.SB_SESSION._extending = false;
 		sbSessionDialogIdle();
-		if (window.SB_SESSION._lastChance)
+		/* Ping не вернулся. Не reload. Диалог только если срок уже вышел
+		   (expire помечает _lastChance, пока тихий ping ещё в полёте). */
+		if (lastChance)
 			sbSessionExpired();
 	}, 12000);
 	var btn = document.getElementById("sb-session-extend");
@@ -1873,10 +2003,12 @@ function sbSessionExtend(opts) {
 		window.SB_SESSION._extending = false;
 		if (sbSessionExtend._watch)
 			clearTimeout(sbSessionExtend._watch);
+		/* PingSession не вызвался (нет sbApi или тот же запрос уже в полёте).
+		   Раньше при !silent был window.location.reload(): после POST браузер
+		   слал форму снова, и страница уезжала на другой адрес или вкладку.
+		   Тихий keepalive и кнопка «Продлить» остаются здесь; истёкший срок — диалог. */
 		if (opts.lastChance)
 			sbSessionExpired();
-		else if (!opts.silent)
-			window.location.reload();
 		else
 			sbSessionDialogIdle();
 	}
@@ -1963,9 +2095,13 @@ function sbSessionSchedule() {
 	}
 
 	sbSessionSchedule._expire = setTimeout(function () {
-		if (window.SB_SESSION && window.SB_SESSION._extending)
+		if (window.SB_SESSION && window.SB_SESSION._extending) {
+			/* Уже идёт тихий ping — не второй вызов и не reload.
+			   Если он не вернётся, watch покажет диалог. */
+			window.SB_SESSION._lastChance = true;
 			return;
-		sbSessionExtend({ lastChance: true, silent: !!document.getElementById("sb-session-dialog") });
+		}
+		sbSessionExtend({ lastChance: true, silent: true });
 	}, remaining);
 
 	var untilWarn = remaining - warnBefore;

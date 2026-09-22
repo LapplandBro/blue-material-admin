@@ -34,6 +34,11 @@ if(!isset($_GET['id']))
 }
 $_GET['id'] = (int)$_GET['id'];
 
+if (function_exists('sb_ensure_admins_telegram_column'))
+	sb_ensure_admins_telegram_column();
+if (isset($userbank->admins[$_GET['id']]))
+	unset($userbank->admins[$_GET['id']]);
+
 if(!$userbank->GetProperty("user", $_GET['id']))
 {
 	$log = new CSystemLog("e", "Получение данных администратора не удалось", "Не могу найти данные для администратора с идентификатором '".$_GET['id']."'");
@@ -135,7 +140,30 @@ if(isset($_POST['adminname']))
 	}
 	
 	// If they didnt type a steamid
-	if((empty($a_steam) || strlen($a_steam) < 10))
+	$steamOptional = function_exists('sb_admin_steam_optional') && sb_admin_steam_optional();
+	if ($steamOptional)
+	{
+		$a_steam = trim($a_steam);
+		if (strlen($a_steam) > 64)
+			$a_steam = substr($a_steam, 0, 64);
+		if ($a_steam !== '' && $a_steam != $userbank->GetProperty('authid', $_GET['id']) && is_taken("admins", "authid", $a_steam))
+		{
+			$admins = $userbank->GetAllAdmins();
+			$name = '';
+			foreach($admins as $admin)
+			{
+				if($admin['authid'] == $a_steam)
+				{
+					$name = $admin['user'];
+					break;
+				}
+			}
+			$error++;
+			$errorScript .= "$('steam.msg').innerHTML = 'Администратор ".htmlspecialchars(addslashes($name))." уже использует этот Steam ID.';";
+			$errorScript .= "$('steam.msg').setStyle('display', 'block');";
+		}
+	}
+	else if((empty($a_steam) || strlen($a_steam) < 10))
 	{
 		$error++;
 		$errorScript .= "$('steam.msg').innerHTML = 'Введите Steam ID или Community ID администратора.';";
@@ -350,6 +378,17 @@ if(isset($_POST['adminname']))
 									WHERE `aid` = ?", array($vk_save, $_GET['id']));
 		}
 		// ADM vk //
+
+		if (function_exists('sb_admin_show_contact') && sb_admin_show_contact('config.admin_show_tg')
+			&& function_exists('sb_admins_has_telegram_column') && sb_admins_has_telegram_column())
+		{
+			$tg_save = function_exists('sb_admin_telegram_clean')
+				? sb_admin_telegram_clean(RemoveCode(isset($_POST['telegram']) ? $_POST['telegram'] : ''))
+				: '';
+			$edit = $GLOBALS['db']->Execute("UPDATE ".DB_PREFIX."_admins SET
+									`telegram` = ?
+									WHERE `aid` = ?", array($tg_save, $_GET['id']));
+		}
 		
 		// ADM comment //
 		if($p_comment)
@@ -431,6 +470,10 @@ else
 	// Add vk //
 	$a_vk = $userbank->GetProperty("vk", $_GET['id']);
 	// Add vk //
+
+	$a_telegram = $userbank->GetProperty("telegram", $_GET['id']);
+	if ($a_telegram === false || $a_telegram === null)
+		$a_telegram = '';
 	
 	// ADM TIME //
 	$a_expired = $userbank->GetProperty("expired", $_GET['id']);
@@ -455,6 +498,8 @@ if (!isset($a_vk))
 	$a_vk = isset($_POST['vk']) ? $_POST['vk'] : '';
 if (!isset($a_discord))
 	$a_discord = isset($_POST['discord']) ? $_POST['discord'] : '';
+if (!isset($a_telegram))
+	$a_telegram = isset($_POST['telegram']) ? $_POST['telegram'] : '';
 
 $theme->assign('change_pass', ($userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_ADMINS|ADMIN_DELETE_ADMINS) || $_GET['id'] == $userbank->GetAid()));
 $theme->assign('user', $a_name);
@@ -464,6 +509,9 @@ $theme->assign('expired_text', $a_expired_text);
 $theme->assign('comment', $a_comment);
 $theme->assign('vk', $a_vk);
 $theme->assign('discord', $a_discord);
+$theme->assign('telegram', $a_telegram);
+$theme->assign('admin_show_tg', !function_exists('sb_admin_show_contact') || sb_admin_show_contact('config.admin_show_tg'));
+$theme->assign('admin_steam_optional', function_exists('sb_admin_steam_optional') && sb_admin_steam_optional());
 $theme->assign('a_spass', $a_serverpass);
 $theme->assign('totp_enabled_admin', function_exists('sb_totp_is_enabled') && sb_totp_is_enabled((int)$_GET['id']));
 $theme->assign('totp_admin_msg', $totp_admin_msg);
