@@ -395,11 +395,13 @@ function AddGroup($name, $type, $bitmask, $srvflags)
 	}
 
 	$error = 0;
+	$name = is_string($name) ? trim($name) : '';
 	$query = $GLOBALS['db']->GetRow("SELECT `gid` FROM `" . DB_PREFIX . "_groups` WHERE `name` = ?", array($name));
 	$query2 = $GLOBALS['db']->GetRow("SELECT `id` FROM `" . DB_PREFIX . "_srvgroups` WHERE `name` = ?", array($name));
-	if(strlen($name) == 0 || count($query) > 0 || count($query2) > 0)
+	$nameTaken = (is_array($query) && isset($query['gid'])) || (is_array($query2) && isset($query2['id']));
+	if($name === '' || strstr($name, ',') || $nameTaken)
 	{
-		if(strlen($name) == 0)
+		if($name === '')
 		{
 			$objResponse->addScript("$('name.msg').setStyle('display', 'block');");
 			$objResponse->addScript("$('name.msg').setHTML('Введите имя для группы.');");
@@ -410,7 +412,7 @@ function AddGroup($name, $type, $bitmask, $srvflags)
 			$objResponse->addScript("$('name.msg').setHTML('В имени группы не может быть запятой.');");
 			$error++;
 		}
-		else if(count($query) > 0 || count($query2) > 0){
+		else if($nameTaken){
 			$objResponse->addScript("$('name.msg').setStyle('display', 'block');");
 			$objResponse->addScript("$('name.msg').setHTML('Имя группы уже используется \'" . addslashes($name) . "\'');");
 			$error++;
@@ -419,6 +421,10 @@ function AddGroup($name, $type, $bitmask, $srvflags)
 			$objResponse->addScript("$('name.msg').setStyle('display', 'none');");
 			$objResponse->addScript("$('name.msg').setHTML('');");
 		}
+	}
+	else {
+		$objResponse->addScript("$('name.msg').setStyle('display', 'none');");
+		$objResponse->addScript("$('name.msg').setHTML('');");
 	}
 	if($type == "0")
 	{
@@ -431,15 +437,20 @@ function AddGroup($name, $type, $bitmask, $srvflags)
 		$objResponse->addScript("$('type.msg').setHTML('');");
 	}
 	if($error > 0)
+	{
+		$objResponse->addScript("if(typeof sbIdleLast==='function')sbIdleLast();");
 		return $objResponse;
+	}
 
 	$bitmask = function_exists('sb_clamp_web_flags_to_actor') ? sb_clamp_web_flags_to_actor((int)$bitmask) : ((int)$bitmask & ~ADMIN_OWNER);
 
 	$query = $GLOBALS['db']->GetRow("SELECT MAX(gid) AS next_gid FROM `" . DB_PREFIX . "_groups`");
+	$nextGid = (is_array($query) && isset($query['next_gid'])) ? ((int)$query['next_gid'] + 1) : 1;
+	$saved = false;
 	if($type == "1")
 	{
 		// add the web group
-		$query1 = $GLOBALS['db']->Execute("INSERT INTO `" . DB_PREFIX . "_groups` (`gid`, `type`, `name`, `flags`) VALUES (". (int)($query['next_gid']+1) .", '" . (int)$type . "', ?, '" . (int)$bitmask . "')", array($name));
+		$saved = (bool)$GLOBALS['db']->Execute("INSERT INTO `" . DB_PREFIX . "_groups` (`gid`, `type`, `name`, `flags`) VALUES (". $nextGid .", '" . (int)$type . "', ?, '" . (int)$bitmask . "')", array($name));
 	}
 	elseif($type == "2")
 	{
@@ -454,17 +465,25 @@ function AddGroup($name, $type, $bitmask, $srvflags)
 			$srvflags = sb_clamp_srv_flags_to_actor($srvflags, $immunity);
 		$add_group = $GLOBALS['db']->Prepare("INSERT INTO ".DB_PREFIX."_srvgroups(immunity,flags,name,groups_immune)
 					VALUES (?,?,?,?)");
-		$GLOBALS['db']->Execute($add_group,array($immunity, $srvflags, $name, " "));
+		$saved = (bool)$GLOBALS['db']->Execute($add_group,array($immunity, $srvflags, $name, " "));
 	}
 	elseif($type == "3")
 	{
 		// We need to add the server into the table
-		$query1 = $GLOBALS['db']->Execute("INSERT INTO `" . DB_PREFIX . "_groups` (`gid`, `type`, `name`, `flags`) VALUES (". ($query['next_gid']+1) .", '3', ?, '0')", array($name));
+		$saved = (bool)$GLOBALS['db']->Execute("INSERT INTO `" . DB_PREFIX . "_groups` (`gid`, `type`, `name`, `flags`) VALUES (". $nextGid .", '3', ?, '0')", array($name));
+	}
+
+	if(!$saved)
+	{
+		$objResponse->addScript("if(typeof sbIdleLast==='function')sbIdleLast();");
+		$objResponse->addScript("ShowBox('Ошибка', 'Не удалось записать группу. Проверьте имя и права, затем повторите.', 'red', '', true);");
+		return $objResponse;
 	}
 
 	$log = new CSystemLog("m", "Группа создана", "Новая группа ($name) успешно создана");
-    $objResponse->addScript("ShowBox('Группа создана', 'Группа была успешно создана.', 'green', 'index.php?p=admin&c=groups', true);");
-    $objResponse->addScript("TabToReload();");
+	if (function_exists('sb_ui_flash_set'))
+		sb_ui_flash_set('Группа создана', 'Группа сохранена. Список ролей обновлён.', 'green', 2200);
+	$objResponse->addScript("if(typeof sbNavigateOrReload==='function')sbNavigateOrReload('index.php?p=admin&c=groups');else window.location.href='index.php?p=admin&c=groups';");
 	return $objResponse;
 }
 
@@ -514,8 +533,11 @@ function RemoveGroup($gid, $type)
 	{
 		if(isset($rehashing))
 			$objResponse->addScript("ShowRehashBox('".implode(",", $allservers)."', 'Группа удалена', 'Выбранная группа была успешно удалена из базы данных', 'green', 'index.php?p=admin&c=groups', true);");
-		else
-			$objResponse->addScript("ShowBox('Группа удалена', 'Выбранная группа была успешно удалена из базы данных', 'green', 'index.php?p=admin&c=groups', true);");
+		else {
+			if (function_exists('sb_ui_flash_set'))
+				sb_ui_flash_set('Группа удалена', 'Группа удалена. Список ролей обновлён.', 'green', 2200);
+			$objResponse->addScript("if(typeof sbNavigateOrReload==='function')sbNavigateOrReload('index.php?p=admin&c=groups');else window.location.href='index.php?p=admin&c=groups';");
+		}
 		$log = new CSystemLog("m", "Группа удалена", "Группа (" . $gid . ") удалена");
 	}
 	else
@@ -3027,13 +3049,18 @@ function EditGroup($gid, $web_flags, $srv_flags, $type, $name, $overrides, $newO
 				}
 			}
 			$objResponse->addScript("ShowRehashBox('".implode(",", $allservers)."', 'Группа обновлена', 'Группа успешно обновлена', 'green', 'index.php?p=admin&c=groups');TabToReload();");
-		} else
-			$objResponse->addScript("ShowBox('Группа обновлена', 'Группа успешно обновлена', 'green', 'index.php?p=admin&c=groups');TabToReload();");
+		} else {
+			if (function_exists('sb_ui_flash_set'))
+				sb_ui_flash_set('Группа обновлена', 'Группа сохранена. Список ролей обновлён.', 'green', 2200);
+			$objResponse->addScript("if(typeof sbNavigateOrReload==='function')sbNavigateOrReload('index.php?p=admin&c=groups');else window.location.href='index.php?p=admin&c=groups';");
+		}
 		$log = new CSystemLog("m", "Группа обновлена", "Группа ($name) была обновлена");
 		return $objResponse;
 	}
 
-	$objResponse->addScript("ShowBox('Группа обновлена', 'Группа успешно обновлена', 'green', 'index.php?p=admin&c=groups');TabToReload();");
+	if (function_exists('sb_ui_flash_set'))
+		sb_ui_flash_set('Группа обновлена', 'Группа сохранена. Список ролей обновлён.', 'green', 2200);
+	$objResponse->addScript("if(typeof sbNavigateOrReload==='function')sbNavigateOrReload('index.php?p=admin&c=groups');else window.location.href='index.php?p=admin&c=groups';");
 	$log = new CSystemLog("m", "Группа обновлена", "Группа ($name) обновлена");
 	return $objResponse;
 }

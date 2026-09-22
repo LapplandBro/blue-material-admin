@@ -12,7 +12,7 @@
   <div class="form-grid" id="group.details">
     <div class="form-field form-field--full">
       <label class="form-label" for="groupname">Имя группы</label>
-      <input type="text" tabindex="1" class="form-control" id="groupname" name="groupname" placeholder="Имя группы">
+      <input type="text" tabindex="1" class="form-control" id="groupname" name="groupname" placeholder="Имя группы" oninput="var m=document.getElementById('name.msg'); if(m){m.textContent=''; m.style.display='none';} var b=document.getElementById('agroup'); if(b &amp;&amp; typeof sbIdle==='function') sbIdle(b);">
       <div id="name.msg" class="msg-err"></div>
     </div>
     <div class="form-field form-field--full">

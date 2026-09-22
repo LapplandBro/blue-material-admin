@@ -18,10 +18,13 @@ $_GET['id'] = (int)$_GET['id'];
 
 $web_group = $GLOBALS['db']->GetRow("SELECT flags, name FROM ".DB_PREFIX."_groups WHERE gid = ?", array((int)$_GET['id']));
 $srv_group = $GLOBALS['db']->GetRow("SELECT flags, name, immunity FROM ".DB_PREFIX."_srvgroups WHERE id = ?", array((int)$_GET['id']));
+if (!is_array($web_group))
+	$web_group = array();
+if (!is_array($srv_group))
+	$srv_group = array();
 
-
-$web_flags = intval($web_group[0]);
-$srv_flags = isset($srv_group[0]) ? $srv_group[0] : '';
+$web_flags = isset($web_group['flags']) ? (int)$web_group['flags'] : 0;
+$srv_flags = isset($srv_group['flags']) ? (string)$srv_group['flags'] : '';
 
 $name = $userbank->GetProperty("user", $_GET['id']);
 
@@ -127,7 +130,7 @@ elseif($_GET['type'] == 'server') $type_label = 'группа серверов';
 
 <script>
 <?php if($_GET['type'] == "web" || $_GET['type'] == "server"){?>
-		$('groupname').value = <?php echo json_encode((string)$web_group['name'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE); ?>;
+		$('groupname').value = <?php echo json_encode(isset($web_group['name']) ? (string)$web_group['name'] : '', JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE); ?>;
 <?php }?>
 <?php if(!$userbank->HasAccess(ADMIN_OWNER)) { ?>
 	if($("wrootcheckbox")) {
@@ -179,7 +182,7 @@ $('p31').checked = <?php echo check_flag($web_flags, ADMIN_DELETE_MODS) ? "true"
 if (typeof BindWebPermissionGroupSync === 'function') BindWebPermissionGroupSync();
 
 <?php }elseif($_GET['type'] == "srv"){?>
-$('groupname').value = <?php echo json_encode((string)$srv_group['name'], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE); ?>;
+$('groupname').value = <?php echo json_encode(isset($srv_group['name']) ? (string)$srv_group['name'] : '', JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE); ?>;
 $('s14').checked = <?php echo strstr($srv_flags, SM_ROOT) ? "true" : "false"?>;
 $('s1').checked = <?php echo strstr($srv_flags, SM_RESERVED_SLOT) ? "true" : "false"?>;
 $('s23').checked = <?php echo strstr($srv_flags, SM_GENERIC) ? "true" : "false"?>;
@@ -203,6 +206,6 @@ $('s20').checked = <?php echo strstr($srv_flags, SM_CUSTOM4) ? "true" : "false"?
 $('s21').checked = <?php echo strstr($srv_flags, SM_CUSTOM5) ? "true" : "false"?>;
 $('s22').checked = <?php echo strstr($srv_flags, SM_CUSTOM6) ? "true" : "false"?>;
 
-$('immunity').value = <?php echo $srv_group['immunity'] ? (int)$srv_group['immunity'] : "0"?>;
+$('immunity').value = <?php echo !empty($srv_group['immunity']) ? (int)$srv_group['immunity'] : 0?>;
 <?php }?>
 </script>

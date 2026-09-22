@@ -62,6 +62,7 @@ if (function_exists('sb_ui_v2_enabled') && sb_ui_v2_enabled()) {
 		$flash = 'Права администратора отозваны за превышение полномочий.';
 	sb_ui_v2_render('login.twig', array(
 		'title' => 'Вход — Blue Admin',
+		'login_redir' => $login_redir,
 		'redir_js' => 'DoLogin('.json_encode($login_redir).');',
 		'steam_allowed' => ($at != 1),
 		'login_allowed' => ($at != 2),

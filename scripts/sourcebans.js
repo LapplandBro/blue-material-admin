@@ -827,6 +827,7 @@ function DoLogin(redir)
 				 rem ? rem.checked : false,
 				 redir,
 				 nopw);
+	return false;
 }
 
 function SlideUp(id)
@@ -1025,8 +1026,9 @@ function BoxToSrvMask()
 			string += "t";
 		if(document.getElementById('s14').checked)
 			string += "z";
-		if(document.getElementById('immunity').value)
-			string += "#" + $('immunity').value;
+		var imm = document.getElementById('immunity');
+		if(imm && imm.value)
+			string += "#" + imm.value;
 	}
 	return string;
 }
@@ -1191,9 +1193,18 @@ function BindWebPermissionGroupSync()
 
 function ProcessGroup()
 {
-	var Mask = BoxToMask();
-	var Smask = BoxToSrvMask();
-	xajax_AddGroup(document.getElementById('groupname').value, document.getElementById('grouptype').value, Mask, Smask);
+	try {
+		var Mask = BoxToMask();
+		var Smask = BoxToSrvMask();
+		var nameEl = document.getElementById('groupname');
+		var typeEl = document.getElementById('grouptype');
+		xajax_AddGroup(nameEl ? nameEl.value : '', typeEl ? typeEl.value : '0', Mask, Smask);
+	} catch (e) {
+		if (typeof sbIdleLast === 'function')
+			sbIdleLast();
+		if (typeof ShowBox === 'function')
+			ShowBox('Ошибка', 'Не удалось собрать права группы. Обновите страницу и повторите.', 'red', '', true);
+	}
 }
 
 function update_web()
@@ -2384,6 +2395,9 @@ function RemoveMod(name, id)
 
 function UpdateGroupPermissionCheckBoxes()
 {
+	var saveBtn = document.getElementById('agroup');
+	if (saveBtn && typeof sbIdle === 'function')
+		sbIdle(saveBtn);
 	$('perms').setHTML('');
 	if(document.getElementById('grouptype').value != 3 && document.getElementById('grouptype').value != 0) {
 		$('type.msg').setHTML('Ждите...');

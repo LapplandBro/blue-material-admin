@@ -22,7 +22,7 @@
       <div class="alert alert-danger">{{ flash }}</div>
     {% endif %}
     {% if login_allowed %}
-    <form onsubmit="{{ redir_js|raw }} return false;" action="#" method="post">
+    <form action="index.php?p=login" method="post" data-redir="{{ login_redir|default('p=account')|e('html_attr') }}" onsubmit="try{DoLogin(this.getAttribute('data-redir'));}catch(err){} return false;">
       <div class="field">
         <label class="form-label" for="loginUsername">Логин</label>
         <input class="form-control" type="text" id="loginUsername" name="username" autocomplete="username" required>
