@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS `{prefix}_admins` (
   `totp_enabled` tinyint(1) NOT NULL default '0',
   `totp_confirmed_at` int(11) NULL default NULL,
   `totp_recovery_codes` text NULL,
+  `web_session` varchar(64) NULL default NULL,
   PRIMARY KEY  (`aid`),
   UNIQUE KEY `user` (`user`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;

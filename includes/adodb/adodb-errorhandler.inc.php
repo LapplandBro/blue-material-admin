@@ -76,5 +76,9 @@ function ADODB_Error_Handler($dbms, $fn, $errno, $errmsg, $p1, $p2, &$thisConnec
 
 
 	//print "<p>$s</p>";
+	// Установщик сам читает ErrorNo()/ErrorMsg(). E_USER_ERROR обрывает скрипт
+	// на Unknown database и Duplicate entry до возврата false из Connect/Execute.
+	if (defined('IN_INSTALL') && ADODB_ERROR_HANDLER_TYPE == E_USER_ERROR)
+		return;
 	trigger_error($s,ADODB_ERROR_HANDLER_TYPE);
 }

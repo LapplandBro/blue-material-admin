@@ -25,24 +25,24 @@ $steps = [
 
 	<div class="listview lv-user" id="install-progress">
 <?php foreach ($steps as $num => $label):
+	$done = ($num < $installStep) || ($installFinished && $num === $installStep);
+	$current = ($num === $installStep) && !$installFinished;
 	$itemClass = 'lv-item media';
-	if ($num === $installStep) {
-		$itemClass .= ' active';
-	} elseif ($num < $installStep) {
-		$itemClass .= ' completed';
-	}
 
-	if ($num === $installStep) {
-		$avatarClass = 'bgm-red';
-		$statusIcon = 'bi-check-circle c-green';
-		$statusText = ($installFinished && $num === 5) ? 'Завершено' : 'Текущий шаг';
-	} elseif ($num < $installStep) {
+	if ($current) {
+		$itemClass .= ' active';
+		$avatarClass = 'bgm-accent';
+		$statusIcon = 'bi-record-circle step-current';
+		$statusText = 'Текущий шаг';
+	} elseif ($done) {
+		$itemClass .= ' completed';
 		$avatarClass = 'bgm-green';
 		$statusIcon = 'bi-check-circle c-green';
-		$statusText = 'Выполнено';
+		$statusText = ($installFinished && $num === $installStep) ? 'Завершено' : 'Выполнено';
 	} else {
-		$avatarClass = 'bgm-orange';
-		$statusIcon = 'bi-clock c-blue';
+		$itemClass .= ' upcoming';
+		$avatarClass = 'bgm-muted';
+		$statusIcon = 'bi-circle step-muted';
 		$statusText = 'Следующий шаг';
 	}
 ?>

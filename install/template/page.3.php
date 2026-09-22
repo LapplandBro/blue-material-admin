@@ -3,16 +3,29 @@ if(!defined("IN_SB")){echo "You should not be here. Only follow links!";die();}
 $errors = 0;
 $warnings = 0;
 
+if (!isset($_SESSION['sb_install']) || !is_array($_SESSION['sb_install']))
+    $_SESSION['sb_install'] = array();
+
 $sql_connected = false;
 $sql_version = '';
+$sql_error = '';
 
-if (isset($_POST['username'], $_POST['password'], $_POST['server'], $_POST['port'], $_POST['database'])) {
-    require(ROOT . "../includes/adodb/adodb.inc.php");
-    include_once(ROOT . "../includes/adodb/adodb-errorhandler.inc.php");
-    $server = "mysqli://" . rawurlencode($_POST['username']) . ":" . rawurlencode($_POST['password']) . "@" . $_POST['server'] . ":" . $_POST['port'] . "/" . $_POST['database'];
-    $db = ADONewConnection($server);
-    if ($db) {
+if (isset($_POST['apikey']))
+    $_SESSION['sb_install']['apikey'] = (string)$_POST['apikey'];
+if (isset($_POST['sb-wp-url']))
+    $_SESSION['sb_install']['sbwpurl'] = (string)$_POST['sb-wp-url'];
+
+$server = isset($_SESSION['sb_install']['server']) ? (string)$_SESSION['sb_install']['server'] : '';
+$username = isset($_SESSION['sb_install']['username']) ? (string)$_SESSION['sb_install']['username'] : '';
+$password = isset($_SESSION['sb_install']['password']) ? (string)$_SESSION['sb_install']['password'] : '';
+$port = isset($_SESSION['sb_install']['port']) ? (string)$_SESSION['sb_install']['port'] : '';
+$database = isset($_SESSION['sb_install']['database']) ? (string)$_SESSION['sb_install']['database'] : '';
+
+if ($server !== '' && $username !== '' && $port !== '' && $database !== '') {
+    $conn = sb_install_mysqli_connect($server, $username, $password, $port, $database);
+    if (!empty($conn['ok']) && isset($conn['db']) && is_object($conn['db'])) {
         $sql_connected = true;
+        $db = $conn['db'];
         $db->Execute("SET NAMES `utf8`");
         $row = $db->GetRow('SELECT VERSION() AS v');
         if ($row && isset($row['v'])) {
@@ -23,8 +36,16 @@ if (isset($_POST['username'], $_POST['password'], $_POST['server'], $_POST['port
                 $sql_version = (string) $vars->fields['Value'];
             }
         }
+    } else {
+        $sql_error = sb_install_db_error_text($conn);
     }
 }
+
+$apikeyVal = isset($_SESSION['sb_install']['apikey']) ? (string)$_SESSION['sb_install']['apikey'] : '';
+if (isset($_SESSION['sb_install']['sbwpurl']))
+    $urlVal = (string)$_SESSION['sb_install']['sbwpurl'];
+else
+    $urlVal = (string)TryAutodetectURL();
 
 // В дальнейшем, в установщик будет интегрироваться мульти-язычность.
 // Потому эти переменные заведены под мульти-язычность. Здесь с течением времени, будут вызовы функций "переводчика".
@@ -161,7 +182,7 @@ $requirements = [
       'result'        => ($sql_connected && $sql_version !== '' && sb_install_mysql_version_ok($sql_version)),
       'display'       => $sql_connected
         ? ($sql_version !== '' ? $sql_version : 'Не удалось определить')
-        : 'Нет соединения (вернитесь к шагу 2)'
+        : ($sql_error !== '' ? $sql_error : 'Нет соединения (вернитесь к шагу 2)')
     ]
   ],
 
@@ -257,7 +278,7 @@ $req_FS['Тема Blue V2 (themes/blue_v2)'] = [
                         $drawable = $drawable[1];
                       }
                     }
-                    $drawable = htmlspecialchars((string) $drawable, ENT_QUOTES, 'UTF-8');
+                    $drawable = htmlspecialchars((string) $drawable, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 									?><td class="<?= $class ?>"><?= $drawable ?></td>
 								</tr>
 <?php endforeach; ?>
@@ -268,49 +289,30 @@ $req_FS['Тема Blue V2 (themes/blue_v2)'] = [
 <?php endforeach; ?>
 				<div class="lv-body p-15">
 					<div class="col-sm-12">
-						<?php /* WhiteWolf: This is a hack to make sure the user didn't refresh the page, in the future we should tell them what they did. */
-							if(!isset($_POST['username'], $_POST['password'], $_POST['server'], $_POST['database'], $_POST['port'], $_POST['prefix'])) {
-						?>
-						<form action="index.php?step=2" method="post" name="send" id="send">
-							<!-- We don't even include the body here, since the javascript shouldn't let them go forward -->
+						<form action="index.php?step=4" method="post" name="send" id="send" autocomplete="off">
+							<div class="form-group col-sm-12">
+								<label for="apikey" class="col-sm-3 control-label"><?php echo HelpIcon("Steam API ключ", "Ключ нужен для авторизации администраторов через Steam. Можно оставить пустым и указать позже."); ?> Steam API ключ</label>
+								<div class="col-sm-9">
+									<div class="fg-line">
+										<input type="text" class="form-control input-sm" id="apikey" name="apikey" autocomplete="off" value="<?php echo htmlspecialchars($apikeyVal, ENT_QUOTES, 'UTF-8'); ?>" />
+									</div>
+								</div>
+							</div>
+							<div class="form-group col-sm-12">
+								<label for="sb-wp-url" class="col-sm-3 control-label"><?php echo HelpIcon("Адрес SourceBans", "Адрес установки. Пример: http://mysite.com/bans/"); ?> Адрес SourceBans</label>
+								<div class="col-sm-9">
+									<div class="fg-line">
+										<input type="text" class="form-control input-sm" id="sb-wp-url" name="sb-wp-url" autocomplete="off" value="<?php echo htmlspecialchars($urlVal, ENT_QUOTES, 'UTF-8'); ?>" />
+									</div>
+								</div>
+							</div>
+							<div class="p-10" align="center">
+								<button type="button" onclick="next()" class="btn btn-primary" name="button">Далее</button>
+								<button type="submit" class="btn btn-info" name="recheck" value="1" formaction="index.php?step=3">Перепроверить</button>
+								<a href="index.php?step=2" class="btn btn-info">Назад</a>
+							</div>
 						</form>
-						<form action="index.php?step=2" method="post" name="sendback" id="sendback">
-						</form>
-						<?php
-						}
-						else
-						{
-						?>
-						<form action="index.php?step=4" method="post" name="send" id="send">
-							<input type="hidden" name="username" value="<?php echo htmlspecialchars($_POST['username'], ENT_QUOTES, 'UTF-8')?>">
-							<input type="hidden" name="password" value="<?php echo htmlspecialchars($_POST['password'], ENT_QUOTES, 'UTF-8')?>">
-							<input type="hidden" name="server" value="<?php echo htmlspecialchars($_POST['server'], ENT_QUOTES, 'UTF-8')?>">
-							<input type="hidden" name="database" value="<?php echo htmlspecialchars($_POST['database'], ENT_QUOTES, 'UTF-8')?>">
-							<input type="hidden" name="port" value="<?php echo htmlspecialchars($_POST['port'], ENT_QUOTES, 'UTF-8')?>">
-							<input type="hidden" name="prefix" value="<?php echo htmlspecialchars($_POST['prefix'], ENT_QUOTES, 'UTF-8')?>">
-							<input type="hidden" name="apikey" value="<?php echo htmlspecialchars($_POST['apikey'], ENT_QUOTES, 'UTF-8')?>">
-							<input type="hidden" name="sb-wp-url" value="<?php echo htmlspecialchars($_POST['sb-wp-url'], ENT_QUOTES, 'UTF-8')?>">
-						</form>
-						<form action="index.php?step=3" method="post" name="sendback" id="sendback">
-							<input type="hidden" name="username" value="<?php echo htmlspecialchars($_POST['username'], ENT_QUOTES, 'UTF-8')?>">
-							<input type="hidden" name="password" value="<?php echo htmlspecialchars($_POST['password'], ENT_QUOTES, 'UTF-8')?>">
-							<input type="hidden" name="server" value="<?php echo htmlspecialchars($_POST['server'], ENT_QUOTES, 'UTF-8')?>">
-							<input type="hidden" name="database" value="<?php echo htmlspecialchars($_POST['database'], ENT_QUOTES, 'UTF-8')?>">
-							<input type="hidden" name="port" value="<?php echo htmlspecialchars($_POST['port'], ENT_QUOTES, 'UTF-8')?>">
-							<input type="hidden" name="prefix" value="<?php echo htmlspecialchars($_POST['prefix'], ENT_QUOTES, 'UTF-8')?>">
-							<input type="hidden" name="apikey" value="<?php echo htmlspecialchars($_POST['apikey'], ENT_QUOTES, 'UTF-8')?>">
-							<input type="hidden" name="sb-wp-url" value="<?php echo htmlspecialchars($_POST['sb-wp-url'], ENT_QUOTES, 'UTF-8')?>">
-						</form>
-						<?php
-						}
-						?>
 					</div>
-					&nbsp;
-					<div class="p-10" align="center">
-						<button type="button" onclick="next()" class="btn btn-primary" name="button">Далее</button>
-						<button type="button" onclick="$id('sendback').submit();" class="btn btn-info" name="button">Перепроверить</button>
-					</div>
-					<input type="hidden" name="postd" value="1">
 				</div>
 			</div>
 		</div>

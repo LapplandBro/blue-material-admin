@@ -1,4 +1,4 @@
-INSERT INTO `{prefix}_mods` (`mid`, `name`, `icon`, `modfolder`, `steam_universe`) VALUES
+INSERT IGNORE INTO `{prefix}_mods` (`mid`, `name`, `icon`, `modfolder`, `steam_universe`) VALUES
 (1, 'Web', 'web.png', 'NULL', '0'),
 (2, 'Half-Life 2 Deathmatch', 'hl2dm.png', 'hl2mp', '0'),
 (3, 'Counter-Strike: Source', 'csource.png', 'cstrike', '0'),
@@ -28,7 +28,7 @@ INSERT INTO `{prefix}_mods` (`mid`, `name`, `icon`, `modfolder`, `steam_universe
 
 UPDATE `{prefix}_mods` SET `mid` = '0' WHERE `name` = 'Web';
 
-INSERT INTO `{prefix}_settings` (`setting`, `value`) VALUES
+INSERT IGNORE INTO `{prefix}_settings` (`setting`, `value`) VALUES
 ('dash.intro.text', '<center><p>SourceBans успешно установлена.</p><p>Добро пожаловать!</p></center>'),
 ('dash.lognopopup', '0'),
 ('banlist.bansperpage', '20'),
@@ -102,14 +102,14 @@ INSERT INTO `{prefix}_settings` (`setting`, `value`) VALUES
 ('smtp.charset', 'utf-8'),
 ('smtp.from', '');
 
-INSERT INTO `{prefix}_admins` (
+INSERT IGNORE INTO `{prefix}_admins` (
 `aid`, `user`, `authid`, `password`, `gid`, `email`, `validate`, `extraflags`, `immunity`, `expired`)
 VALUES (
 NULL, 'CONSOLE', 'STEAM_ID_SERVER', '', '0', '', NULL, '0', 0, 0);
 
 UPDATE `{prefix}_admins` SET `aid` = '0' WHERE `authid` = 'STEAM_ID_SERVER';
 
-INSERT INTO `{prefix}_menu` (`id`, `text`, `description`, `url`, `system`, `enabled`, `newtab`, `priority`) VALUES
+INSERT IGNORE INTO `{prefix}_menu` (`id`, `text`, `description`, `url`, `system`, `enabled`, `newtab`, `priority`) VALUES
 (1, '<i class=''zmdi zmdi-home zmdi-hc-fw''></i> Главная', 'Главная страница. Список серверов, последних банов и блоков.', 'index.php?p=home', 1, 1, 0, 1000),
 (2, '<i class=''zmdi zmdi-input-composite zmdi-hc-fw''></i> Серверы', 'Список всех серверов и их текущий статус.', 'index.php?p=servers', 1, 1, 0, 999),
 (3, '<i class=''zmdi zmdi-lock-outline zmdi-hc-fw''></i> Баны', 'Список всех когда-либо выданных банов.', 'index.php?p=banlist', 1, 1, 0, 998),

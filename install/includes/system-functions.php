@@ -167,8 +167,7 @@ function AddTab($title, $url, $desc, $active=false)
  */
 function BuildPageTabs()
 {
-	AddTab('<i class="bi bi-globe"></i> SourceBans', "http://www.sourcebans.net", "");
-	AddTab('<i class="bi bi-plugin"></i> SourceMod', "http://www.sourcemod.net", "");
+	/* Шаги мастера остаются в прогрессе карточки. Внешние ссылки с бокового меню не выводятся. */
 }
 
 /**

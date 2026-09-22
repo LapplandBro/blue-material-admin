@@ -11,6 +11,7 @@
 	<link href="../themes/blue_v2/vendor/sweetalert/sweet-alert.css" rel="stylesheet" />
 	<link href="css/install.css" rel="stylesheet" />
 	<script src="scripts/install.js"></script>
+	<script src="../themes/blue_v2/vendor/sweetalert/sweet-alert.min.js"></script>
 </head>
 <body class="install-v2">
 	<header id="header" class="install-top">
@@ -18,8 +19,5 @@
 	</header>
 	<div id="main" class="install-shell">
 		<aside id="sidebar" class="install-side">
-			<div class="install-side-head">
-				<img src="../images/default-avatar.jpg" alt="" width="36" height="36" />
-				<span>Установщик</span>
-			</div>
+			<p class="install-side-note">Установщик</p>
 			<ul class="main-menu install-nav">

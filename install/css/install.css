@@ -28,8 +28,7 @@ body.install-v2 {
 .install-brand:hover { color: #7cc1ff; }
 
 .install-shell {
-  display: grid;
-  grid-template-columns: 220px 1fr;
+  display: block;
   min-height: calc(100vh - 52px - 48px);
 }
 .install-shell > #content {
@@ -42,9 +41,12 @@ body.install-v2 {
   padding: 0 0.25rem;
 }
 .install-side {
-  background: #0a1225;
-  border-right: 1px solid #152040;
-  padding: 1rem 0.85rem;
+  display: none;
+}
+.install-side-note {
+  margin: 0;
+  color: #9ec0e8;
+  font-weight: 650;
 }
 .install-side-head {
   display: flex;
@@ -91,8 +93,10 @@ body.install-v2 {
 
 .install-foot {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
-  gap: 1rem;
+  align-items: center;
+  gap: 0.45rem 1rem;
   padding: 0.7rem 1.1rem;
   background: #0c1528;
   border-top: 1px solid #1a2d50;
@@ -107,7 +111,6 @@ body.install-v2 {
   overflow: hidden;
   border: 1px solid #152040;
   border-radius: 10px;
-  min-height: 520px;
   background: #0c1528;
 }
 #messages-main > form {
@@ -144,12 +147,10 @@ body.install-v2 {
   gap: 0.7rem;
   padding: 0.65rem 0.9rem;
   border-bottom: 1px solid #12203a;
+  cursor: default;
 }
 #messages-main .ms-menu .lv-item.active {
   background: #122848;
-}
-#messages-main .ms-menu .lv-item:not(.active):hover {
-  background: #101c34;
 }
 #messages-main .ms-menu .lv-title,
 #messages-main .ms-menu .lv-title del {
@@ -159,6 +160,10 @@ body.install-v2 {
 #messages-main .ms-menu .lv-small del {
   color: #5a80a8;
   font-size: 0.8rem;
+}
+#messages-main .ms-menu .lv-item.upcoming .lv-title,
+#messages-main .ms-menu .lv-item.upcoming .lv-small {
+  color: #6d87a8;
 }
 #messages-main .ms-menu .lv-avatar,
 .lv-avatar {
@@ -175,6 +180,10 @@ body.install-v2 {
 .bgm-red { background: #c62828 !important; }
 .bgm-orange { background: #ef6c00 !important; }
 .bgm-green { background: #2e7d32 !important; }
+.bgm-accent { background: #1e90ff !important; }
+.bgm-muted { background: #142033 !important; color: #7f96b3 !important; }
+.step-current { color: #7cc1ff !important; }
+.step-muted { color: #6d87a8 !important; }
 .c-green { color: #81c784 !important; }
 .c-blue { color: #4da3ff !important; }
 .c-red { color: #ff8a80 !important; }
@@ -205,7 +214,6 @@ body.install-v2 {
 
 #messages-main .form-group {
   margin-bottom: 12px;
-  overflow: hidden;
 }
 #messages-main .control-label {
   padding-top: 8px;
@@ -324,13 +332,52 @@ body.install-v2 {
 .col-sm-12 { width: 100%; }
 .col-sm-6 { width: 50%; float: left; }
 .col-sm-3, .col-sm-9 { display: block; }
-@media (min-width: 768px) {
-  #messages-main .form-group.col-sm-12 {
-    display: grid;
-    grid-template-columns: 220px 1fr;
-    gap: 8px 12px;
-    align-items: center;
-  }
+
+#messages-main .col-sm-3,
+#messages-main .col-sm-9 {
+  width: auto;
+  max-width: 100%;
+  min-width: 0;
+  flex: none;
+  float: none;
+  padding-left: 0;
+  padding-right: 0;
+}
+#messages-main .form-group.col-sm-12,
+#messages-main .form-group > .row {
+  display: grid;
+  grid-template-columns: minmax(9rem, 220px) minmax(0, 1fr);
+  gap: 8px 12px;
+  align-items: center;
+  width: 100%;
+  max-width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+  float: none;
+}
+#messages-main .col-sm-12.p-l-0,
+#messages-main .col-sm-12:has(> .col-sm-6) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  width: 100%;
+  float: none;
+  clear: both;
+}
+#messages-main .col-sm-12.p-l-0 > .col-sm-6,
+#messages-main .col-sm-12:has(> .col-sm-6) > .col-sm-6 {
+  width: auto;
+  max-width: 100%;
+  float: none;
+  flex: 1 1 12rem;
+}
+#messages-main .col-sm-12.p-l-0 > .col-sm-6[align="right"],
+#messages-main .col-sm-12:has(> .col-sm-6) > .col-sm-6[align="right"] {
+  flex: 0 0 auto;
+  margin-left: auto;
+  text-align: right;
 }
 
 .checkbox label {
@@ -392,9 +439,16 @@ body.install-v2 .sweet-alert .icon.success .line {
 }
 
 @media (max-width: 900px) {
-  .install-shell,
   #messages-main { grid-template-columns: 1fr; }
-  .install-side { border-right: 0; border-bottom: 1px solid #152040; }
   #messages-main .ms-menu { border-right: 0; border-bottom: 1px solid #152040; }
+  #messages-main .form-group.col-sm-12,
+  #messages-main .form-group > .row {
+    grid-template-columns: 1fr;
+  }
   .col-sm-6 { width: 100%; float: none; }
+  #messages-main .col-sm-12.p-l-0 > .col-sm-6[align="right"],
+  #messages-main .col-sm-12:has(> .col-sm-6) > .col-sm-6[align="right"] {
+    margin-left: 0;
+    text-align: left;
+  }
 }
