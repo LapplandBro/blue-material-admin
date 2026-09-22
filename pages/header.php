@@ -90,46 +90,6 @@ if (!empty($body_css))
 	$theme_css_parts[] = 'body.sb-theme-body{'.implode(';', $body_css).';}';
 $theme_css = implode("\n", $theme_css_parts);
 
-/////////
-/////////
-/////////
-
-function toCommunityID($id) {
-    if (preg_match('/^STEAM_/', $id)) {
-        $parts = explode(':', $id);
-        return bcadd(bcadd(bcmul($parts[2], '2'), '76561197960265728'), $parts[1]);
-    } elseif (is_numeric($id) && strlen($id) < 16) {
-        return bcadd($id, '76561197960265728');
-    } else {
-        return $id; // We have no idea what this is, so just return it.
-    }
-}
-
-$res = $GLOBALS['db']->Execute("SELECT authid, vk, comment, discord, user FROM `".DB_PREFIX."_admins` WHERE `support` = '1'");
-$supports = array();
-while (!$res->EOF)
-{
-    $suppurt_inf = array();
-	
-	$suppurt_inf['user'] = stripslashes($res->fields['user']);
-	$suppurt_inf['comment'] = $res->fields['comment'];
-	$suppurt_inf['vk'] = $res->fields['vk'];
-	$suppurt_inf['discord'] = $res->fields['discord'];
-	$suppurt_inf['authid'] = toCommunityID($res->fields['authid']);
-	$suppurt_inf['avatarka'] = GetUserAvatar($res->fields['authid']);
-
-	
-	array_push($supports,$suppurt_inf);
-	$res->MoveNext();
-}
-
-
-$theme->assign('supports_list', $supports);
-$theme->assign('supports_count', count($supports));
-////////
-////////
-////////
-
 $theme->assign('avatar', GetUserAvatar($userbank->GetProperty('authid')));
 $theme->assign('theme_css', $theme_css);
 $theme->assign('theme_color_attr', $theme_color_attr);

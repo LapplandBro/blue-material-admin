@@ -3452,6 +3452,81 @@ function sb_comms_type_icon_html($type, $size = 16)
 }
 
 /**
+ * A2S_INFO с дисковым кэшем на $ttl секунд.
+ * Свежий кэш не тратит лимит. Протухший при лимите отдаётся ещё до 10 минут.
+ * Иначе ok=0 и вызывающий показывает ip:port, а не вечную «загрузку».
+ *
+ * @return array{ok:int,HostName:string,Players:int,MaxPlayers:int,Map:string,Os:string,Secure:int,ts:int}
+ */
+function sb_server_a2s_info($ip, $port, $ttl = 60)
+{
+	$ip = trim((string)$ip);
+	$port = (int)$port;
+	$empty = array(
+		'ok' => 0, 'HostName' => '', 'Players' => 0, 'MaxPlayers' => 0,
+		'Map' => '', 'Os' => '', 'Secure' => 0, 'ts' => 0,
+	);
+	if ($ip === '' || $port <= 0)
+		return $empty;
+
+	$dir = (defined('ROOT') ? ROOT : dirname(__FILE__) . '/../') . 'data/cache/a2s';
+	if (!is_dir($dir))
+		@mkdir($dir, 0755, true);
+	$path = $dir . '/' . hash('sha256', strtolower($ip) . ':' . $port) . '.json';
+	$now = time();
+	$ttl = (int)$ttl;
+	if ($ttl < 15)
+		$ttl = 15;
+
+	$cached = null;
+	if (is_file($path)) {
+		$raw = @file_get_contents($path);
+		$data = ($raw !== false && $raw !== '') ? json_decode($raw, true) : null;
+		if (is_array($data) && isset($data['ts'])) {
+			$cached = $data;
+			if (($now - (int)$data['ts']) < $ttl)
+				return $cached;
+		}
+	}
+
+	$limited = function_exists('sb_rate_limit_hit') && sb_rate_limit_hit('server_a2s', 30, 60);
+	if ($limited) {
+		if (is_array($cached) && ($now - (int)$cached['ts']) < 600)
+			return $cached;
+		return $empty;
+	}
+
+	if (!class_exists('CServerControl')) {
+		$ctl = (defined('INCLUDES_PATH') ? INCLUDES_PATH : dirname(__FILE__) . '/') . '/CServerControl.php';
+		if (is_file($ctl))
+			require_once $ctl;
+	}
+	$info = false;
+	if (class_exists('CServerControl')) {
+		try {
+			$sinfo = new CServerControl();
+			$sinfo->Connect($ip, $port);
+			$info = $sinfo->GetInfo();
+		} catch (Throwable $e) {
+			$info = false;
+		}
+	}
+
+	$store = array(
+		'ok' => ($info && !empty($info['HostName'])) ? 1 : 0,
+		'HostName' => ($info && isset($info['HostName'])) ? (string)$info['HostName'] : '',
+		'Players' => ($info && isset($info['Players'])) ? (int)$info['Players'] : 0,
+		'MaxPlayers' => ($info && isset($info['MaxPlayers'])) ? (int)$info['MaxPlayers'] : 0,
+		'Map' => ($info && isset($info['Map'])) ? (string)$info['Map'] : '',
+		'Os' => ($info && isset($info['Os'])) ? (string)$info['Os'] : '',
+		'Secure' => ($info && !empty($info['Secure'])) ? 1 : 0,
+		'ts' => $now,
+	);
+	@file_put_contents($path, json_encode($store));
+	return $store;
+}
+
+/**
  * URL превью карты для <img src>.
  * Приоритет: локальный файл (ручная загрузка) → внешний GameTracker (без скачивания на диск) → nomap.jpg.
  * Внешний URL грузит браузер сам; при 404 срабатывает onerror → nomap.
@@ -3534,6 +3609,15 @@ function reencodeImage($filePath, $imageType)
  */
 function sb_upload_require_csrf()
 {
+	// Popup (pages/admin.upload*.php) не идёт через index.php, где сессия
+	// уже стартовала. Без session_start() $_SESSION пуст и свежий токен
+	// всегда «протухает» — пользователь видит «окно открыто слишком долго».
+	if (session_status() !== PHP_SESSION_ACTIVE) {
+		if (function_exists('sb_session_start'))
+			sb_session_start();
+		elseif (function_exists('session_start'))
+			@session_start();
+	}
 	$token = isset($_POST['sb_csrf']) ? $_POST['sb_csrf'] : '';
 	if (!function_exists('sb_csrf_validate') || !sb_csrf_validate($token)) {
 		$log = new CSystemLog("w", "CSRF", "Отклонена загрузка файла: неверный CSRF-токен (" . (isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '?') . ").");

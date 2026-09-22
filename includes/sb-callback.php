@@ -42,7 +42,7 @@ $sbAjax->setRequestURI(defined('SB_AJAX_URI') ? SB_AJAX_URI : './index.php');
 $xajax = $sbAjax;
 global $userbank;
 
-$methods = array('admin' => array('AddMod', 'RemoveMod', 'AddGroup', 'RemoveGroup', 'RemoveAdmin', 'RemoveSubmission', 'RemoveServer', 'UpdateGroupPermissions', 'UpdateAdminPermissions', 'AddAdmin', 'SetupEditServer', 'AddServerGroupName', 'AddServer', 'AddBan', 'RehashAdmins', 'EditGroup', 'RemoveProtest', 'SendRcon', 'EditAdminPerms', 'AddComment', 'EditComment', 'RemoveComment', 'PrepareReban', 'Maintenance', 'KickPlayer', 'GroupBan', 'BanMemberOfGroup', 'GetGroups', 'BanFriends', 'SendMessage', 'ViewCommunityProfile', 'SetupBan', 'CheckPassword', 'ChangePassword', 'CheckSrvPassword', 'ChangeSrvPassword', 'ChangeEmail', 'SendMail', 'AddBlock', 'PrepareReblock', 'PrepareBlockFromBan', 'removeExpiredAdmins', 'AddSupport', 'ChangeAdminsInfos', 'InstallMOD', 'PastePlayerData', 'AddWarning', 'RemoveWarning'), 'default' => array('Plogin', 'ServerHostPlayers', 'ServerHostProperty', 'ServerHostPlayers_list', 'ServerPlayers', 'LostPassword', 'RefreshServer', 'AddAdmin_pay', 'RehashAdmins_pay', 'PingSession'));
+$methods = array('admin' => array('AddMod', 'RemoveMod', 'AddGroup', 'RemoveGroup', 'RemoveAdmin', 'RemoveSubmission', 'RemoveServer', 'UpdateGroupPermissions', 'UpdateAdminPermissions', 'AddAdmin', 'SetupEditServer', 'AddServerGroupName', 'AddServer', 'AddBan', 'RehashAdmins', 'EditGroup', 'RemoveProtest', 'SendRcon', 'EditAdminPerms', 'AddComment', 'EditComment', 'RemoveComment', 'PrepareReban', 'Maintenance', 'KickPlayer', 'GroupBan', 'BanMemberOfGroup', 'GetGroups', 'BanFriends', 'SendMessage', 'ViewCommunityProfile', 'SetupBan', 'CheckPassword', 'ChangePassword', 'CheckSrvPassword', 'ChangeSrvPassword', 'ChangeEmail', 'SendMail', 'AddBlock', 'PrepareReblock', 'PrepareBlockFromBan', 'removeExpiredAdmins', 'ChangeAdminsInfos', 'InstallMOD', 'PastePlayerData', 'AddWarning', 'RemoveWarning'), 'default' => array('Plogin', 'ServerHostPlayers', 'ServerHostProperty', 'ServerHostPlayers_list', 'ServerPlayers', 'LostPassword', 'RefreshServer', 'AddAdmin_pay', 'RehashAdmins_pay', 'PingSession'));
 
 if ($userbank->is_logged_in()
 	|| (isset($_COOKIE['aid'], $_COOKIE['password']) && $userbank->CheckLogin($_COOKIE['password'], $_COOKIE['aid'])))
@@ -61,39 +61,6 @@ function InstallMOD($modfolder, $status = 0) {
     return $objResponse;
 }
 
-function AddSupport($aid)
-{
-	$objResponse = new xajaxResponse();
-    global $userbank, $username;
-	$aid = (int)$aid;
-    if(!$userbank->is_logged_in())
-	{
-		$objResponse->redirect("index.php?p=login&m=no_access", 0);
-		$log = new CSystemLog("w", "Ошибка доступа", $username . " пытается назначить администратора ".$userbank->GetProperty('user', $aid)." в Support-List, не имея на это прав.");
-		return $objResponse;
-	}elseif(!$userbank->HasAccess(ADMIN_OWNER)){
-		$objResponse->addScript('ShowBox("Ошибка!", "У Вас недостаточно прав для выполнения этой операции!", "red", "index.php");');
-		$log = new CSystemLog("w", "Ошибка доступа", $username . " пытался назначить администратора в Support-List, не имея на это прав.");
-		return $objResponse;
-	}
-	
-
-	$res = $GLOBALS['db']->GetOne("SELECT `support` FROM `".DB_PREFIX."_admins` WHERE `aid` = '".$aid."'");
-	if($res == "1"){
-		$chek = "0";
-		$chek1 = "убран";
-	}else{
-		$chek = "1";
-		$chek1 = "добавлен";
-	}	
-	$query = $GLOBALS['db']->Execute("UPDATE `" . DB_PREFIX . "_admins` SET `support` = ? WHERE `aid` = '".$aid."'", array((int)$chek));
-	if($query) {
-		$objResponse->addScript('ShowBox("Support-List", "Администратор был '.$chek1.', обновите страницу, чтобы увидеть результат, либо продолжайте дальнейшую работу.", "blue", "", true);');
-		$log = new CSystemLog("m", "Support-List изменён", $username . " " . $chek1 . " администратора (" . $userbank->GetProperty('user', $aid) . ") в Support-List.");
-	}
-	
-	return $objResponse;
-}
 function removeExpiredAdmins()
 {
 	global $userbank, $username;
@@ -2047,11 +2014,7 @@ function ServerHostPlayers($sid, $type="servers", $obId="", $tplsid="", $open=""
 {
 	$objResponse = new xajaxResponse();
 	global $userbank;
-	// Soft rate-limit по IP: опрос игровых серверов (A2S) дёшево дёргать через xajax в цикле,
-	// не давая при этом реально мешать обычному использованию (авто-обновление списка серверов).
-	if (function_exists('sb_rate_limit_hit') && sb_rate_limit_hit('server_host_players', 24, 60))
-		return $objResponse;
-	require INCLUDES_PATH.'/CServerControl.php';
+	require_once INCLUDES_PATH.'/CServerControl.php';
 	
 	$sid = (int)$sid;
 
@@ -2059,9 +2022,17 @@ function ServerHostPlayers($sid, $type="servers", $obId="", $tplsid="", $open=""
 	if(empty($res[1]) || empty($res[2]))
 		return $objResponse;
 	$info = array();
-	$sinfo = new CServerControl();
-	$sinfo->Connect($res[1], $res[2]);
-	$info = $sinfo->GetInfo();
+	$cached = function_exists('sb_server_a2s_info') ? sb_server_a2s_info($res[1], $res[2], 60) : array('ok' => 0);
+	if (!empty($cached['ok'])) {
+		$info = array(
+			'HostName' => $cached['HostName'],
+			'Players' => $cached['Players'],
+			'MaxPlayers' => $cached['MaxPlayers'],
+			'Map' => $cached['Map'],
+			'Os' => $cached['Os'],
+			'Secure' => $cached['Secure'],
+		);
+	}
 	// SECURITY FIX: $info['HostName'] приходит как есть из ответа A2S_INFO игрового сервера
 	// (полностью подконтролен тому, кто администрирует/настраивает этот сервер) и раньше
 	// вставлялся как сырой innerHTML здесь и во всех остальных вызовах
@@ -2094,6 +2065,8 @@ function ServerHostPlayers($sid, $type="servers", $obId="", $tplsid="", $open=""
 					$objResponse->addScript("sbSetDisplay('sinfo_$sid', true);sbSetDisplay('noplayer_$sid', false);");
 					$playercount = 0;
 					if(!defined('IN_HOME')) {
+						$sinfo = new CServerControl();
+						$sinfo->Connect($res[1], $res[2]);
 						$players = $sinfo->GetPlayers();
 						if ($players !== false) {
 							$needAddPlayerManaging = false;
@@ -2163,7 +2136,7 @@ function ServerHostPlayers($sid, $type="servers", $obId="", $tplsid="", $open=""
 		{
 			$objResponse->addAssign("$obId", "innerHTML", htmlspecialchars(trunc($info['HostName'], $trunchostname, false)));
 		}else{
-			$objResponse->addAssign("$obId", "innerHTML", "<b>!!!</b> <i>Ошибка соединения</i> (<i>" . $res[1] . ":" . $res[2]. "</i>) <b>!!!</b>");
+			$objResponse->addAssign("$obId", "innerHTML", htmlspecialchars($res[1] . ':' . $res[2], ENT_QUOTES, 'UTF-8'));
 		}
 	}
 	else
@@ -2192,11 +2165,10 @@ function ServerHostProperty($sid, $obId, $obProp, $trunchostname)
 	$res = $GLOBALS['db']->GetRow("SELECT ip, port FROM ".DB_PREFIX."_servers WHERE sid = $sid");
 	if(empty($res[0]) || empty($res[1]))
 		return $objResponse;
-	$info = array();
-	
-	$sinfo = new CServerControl();
-	$sinfo->Connect($res[0], $res[1]);
-	$info = $sinfo->GetInfo();
+	$info = false;
+	$cached = function_exists('sb_server_a2s_info') ? sb_server_a2s_info($res[0], $res[1], 60) : array('ok' => 0);
+	if (!empty($cached['ok']))
+		$info = array('HostName' => $cached['HostName']);
     
     if($info) {
         // SECURITY FIX: HostName - недоверенные данные с игрового сервера; при записи в

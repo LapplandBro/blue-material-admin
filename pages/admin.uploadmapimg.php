@@ -110,26 +110,19 @@ if (isset($_POST['upload']))
 
 			$ext = $allowed[$type];
 			$original_basename = basename($original);
-			$clean_name = preg_replace('/[^a-zA-Z0-9._-]/', '', $original_basename);
-			if ($clean_name === '' || $clean_name !== $original_basename) {
-				$msg_lines[] = sprintf('Имя файла %s содержит недопустимые символы. Загрузка отклонена.', $safe_label);
-				$log = new CSystemLog("w", "Подозрительное имя файла", "Попытка загрузить файл с недопустимыми символами: " . $original);
-				continue;
-			}
-
-			$stem = pathinfo($clean_name, PATHINFO_FILENAME);
+			$stem = pathinfo($original_basename, PATHINFO_FILENAME);
+			$stem = preg_replace('/[^a-zA-Z0-9._-]+/', '_', $stem);
+			$stem = trim((string)$stem, '._-');
 			if ($stem === '' || strpos($stem, '.') !== false) {
-				$msg_lines[] = sprintf('Имя файла %s недопустимо (двойное расширение или пустое имя).', $safe_label);
+				$msg_lines[] = sprintf('Имя файла %s недопустимо. Назовите файл как карту, например de_dust2.jpg.', $safe_label);
 				continue;
 			}
 
 			$filename = $stem . '.' . $ext;
 			$destination = rtrim(SB_MAP_LOCATION, '/\\') . DIRECTORY_SEPARATOR . $filename;
 
-			if (file_exists($destination)) {
-				$msg_lines[] = sprintf('Файл с именем %s уже существует. Загрузка отклонена.', htmlspecialchars($filename, ENT_QUOTES, 'UTF-8'));
-				continue;
-			}
+			if (file_exists($destination))
+				@unlink($destination);
 
 			if (!@move_uploaded_file($tmp, $destination)) {
 				$msg_lines[] = sprintf('Не удалось сохранить файл %s.', $safe_label);

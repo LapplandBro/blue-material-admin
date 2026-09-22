@@ -110,15 +110,6 @@
                     <span class="admin-fact-label">Веб-права</span>
                     <span class="admin-fact-value admin-fact-flags">{{ admin.web_flag_string|raw }}</span>
                   </div>
-                  <div class="admin-fact">
-                    <span class="admin-fact-label">Support-List</span>
-                    <span class="admin-fact-value">
-                      <label class="form-check">
-                        <input class="form-check-input" type="checkbox" id="add_support_{{ admin.aid }}" name="add_support_{{ admin.aid }}" tabindex="9" onclick="xajax_AddSupport({{ admin.aid }});">
-                        <span class="form-check-label">В список авторов рефорка</span>
-                      </label>
-                    </span>
-                  </div>
                 </div>
                 <aside class="admin-aside">
                   {% if admin.avatar %}
@@ -152,10 +143,5 @@
     </table>
   </div>
 </div>
-<script type="text/javascript">
-  {% for kek in checked_if|default([]) %}
-  $("add_support_{{ kek.kid }}").checked = 1;
-  {% endfor %}
-</script>
 <script type="text/javascript">InitAccordion('tr.opener', 'div.opener', 'content');</script>
 {% endif %}

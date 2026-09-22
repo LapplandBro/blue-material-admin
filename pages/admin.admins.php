@@ -246,23 +246,8 @@ if($show_expired_admins) {
 	$btn_rem = '';
 }
 
-$res = $GLOBALS['db']->Execute("SELECT aid FROM `".DB_PREFIX."_admins` WHERE `support` = '1'");
-$checked = array();
-if (is_object($res))
-{
-	while (!$res->EOF)
-	{
-		$chek_in = array();
-		$chek_in['kid'] = $res->fields['aid'];
-		array_push($checked,$chek_in);
-		$res->MoveNext();
-	}
-}
-
-
 echo '<div id="admin-page-content">';
 echo '<div id="0" class="admin-pane is-on">';
-	$theme->assign('checked_if', $checked);
 	$theme->assign('permission_listadmin', $userbank->HasAccess(ADMIN_OWNER|ADMIN_LIST_ADMINS));
 	$theme->assign('permission_editadmin', $userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_ADMINS));
 	$theme->assign('permission_deleteadmin', $userbank->HasAccess(ADMIN_OWNER|ADMIN_DELETE_ADMINS));

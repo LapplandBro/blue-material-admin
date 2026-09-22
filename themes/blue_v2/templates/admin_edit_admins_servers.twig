@@ -25,7 +25,7 @@
           {% for server in server_list %}
           <label class="form-check" for="server_{{ server.sid }}">
             <input class="form-check-input" type="checkbox" name="servers[]" id="server_{{ server.sid }}" value="s{{ server.sid }}">
-            <span class="form-check-label" id="server_host_{{ server.sid }}"><i>Получение имени сервера…</i></span>
+            <span class="form-check-label" id="server_host_{{ server.sid }}">{{ server.ip }}:{{ server.port }}</span>
           </label>
           {% endfor %}
         {% endif %}
