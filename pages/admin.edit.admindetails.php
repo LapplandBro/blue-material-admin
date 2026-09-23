@@ -379,8 +379,9 @@ if(isset($_POST['adminname']))
 		}
 		// ADM vk //
 
-		if (function_exists('sb_admin_show_contact') && sb_admin_show_contact('config.admin_show_tg')
-			&& function_exists('sb_admins_has_telegram_column') && sb_admins_has_telegram_column())
+		if (function_exists('sb_ensure_admins_telegram_column'))
+			sb_ensure_admins_telegram_column();
+		if (function_exists('sb_admins_has_telegram_column') && sb_admins_has_telegram_column())
 		{
 			$tg_save = function_exists('sb_admin_telegram_clean')
 				? sb_admin_telegram_clean(RemoveCode(isset($_POST['telegram']) ? $_POST['telegram'] : ''))

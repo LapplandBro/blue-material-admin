@@ -65,13 +65,11 @@
       <input type="text" tabindex="10" class="form-control" id="vk" name="vk" placeholder="Не обязательно">
       <div id="vk.msg" class="msg-err"></div>
     </div>
-    {% if admin_show_tg is not defined or admin_show_tg %}
-    <div class="form-field">
+    <div class="form-field form-field--full">
       <label class="form-label" for="telegram">Telegram</label>
       <input type="text" tabindex="11" class="form-control" id="telegram" name="telegram" placeholder="Ник без @">
       <div id="telegram.msg" class="msg-err"></div>
     </div>
-    {% endif %}
     <div class="form-field form-field--full">
       <label class="form-label" for="comment">Комментарий</label>
       <textarea tabindex="10" class="form-control" id="comment" name="comment" rows="3" placeholder="Не обязательно. HTML не нужен."></textarea>
