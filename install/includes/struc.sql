@@ -315,3 +315,34 @@ CREATE TABLE IF NOT EXISTS `{prefix}_cron` (
   `lastexec` int(11) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+
+CREATE TABLE IF NOT EXISTS `{prefix}_server_samples` (
+  `sid` int(6) NOT NULL,
+  `ts` int(11) NOT NULL,
+  `players` smallint NOT NULL DEFAULT 0,
+  `maxplayers` smallint NOT NULL DEFAULT 0,
+  `map` varchar(64) NOT NULL DEFAULT '',
+  `up` tinyint(1) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`sid`, `ts`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+
+CREATE TABLE IF NOT EXISTS `{prefix}_server_hourly` (
+  `sid` int(6) NOT NULL,
+  `hour_ts` int(11) NOT NULL,
+  `samples` smallint NOT NULL DEFAULT 0,
+  `players_sum` int NOT NULL DEFAULT 0,
+  `players_max` smallint NOT NULL DEFAULT 0,
+  `up_samples` smallint NOT NULL DEFAULT 0,
+  PRIMARY KEY (`sid`, `hour_ts`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+
+CREATE TABLE IF NOT EXISTS `{prefix}_server_hour_profile` (
+  `sid` int(6) NOT NULL,
+  `hour_of_day` tinyint NOT NULL,
+  `avg_players` decimal(8,2) NOT NULL DEFAULT 0,
+  `samples` int NOT NULL DEFAULT 0,
+  PRIMARY KEY (`sid`, `hour_of_day`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;

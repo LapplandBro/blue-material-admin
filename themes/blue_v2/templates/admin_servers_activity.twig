@@ -1,0 +1,50 @@
+{% import _self as activity_ui %}
+{% macro chart(title, rows, modifier) %}
+{% set rows = rows|default([]) %}
+{% set row_max = rows|reduce((carry, bar) => (bar.avg is not null and bar.avg > carry) ? bar.avg : carry, 0) %}
+<section class="activity-chart {{ modifier }}">
+  <h3 class="activity-chart-title">{{ title }}</h3>
+  <div class="activity-scroll">
+    <div class="activity-bars"{% if rows|length > 0 %} style="grid-template-columns: repeat({{ rows|length }}, minmax(1.55rem, 1fr)); min-width: {{ (rows|length * 1.55)|number_format(2, '.', '') }}rem;"{% endif %}>
+      {% for bar in rows %}
+      {% set caption = bar.label is not null and bar.label != '' ? bar.label : bar.hour %}
+      <div class="activity-col">
+        <div class="activity-track">
+          {% if bar.avg is not null and row_max > 0 %}
+          <div class="activity-bar" style="height: {{ ((bar.avg / row_max) * 100)|number_format(1, '.', '') }}%;" title="{{ caption }}, среднее {{ bar.avg|number_format(1, ',', '') }}"></div>
+          {% elseif bar.avg is not null %}
+          <div class="activity-bar is-empty" title="{{ caption }}, среднее {{ bar.avg|number_format(1, ',', '') }}"></div>
+          {% else %}
+          <div class="activity-bar is-empty" title="{{ caption }}"></div>
+          {% endif %}
+        </div>
+        <span class="activity-hour">{% if bar.hour is not null and bar.hour is divisible by(3) %}{{ caption }}{% endif %}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endmacro %}
+<div class="form-page activity-page">
+  <header class="form-page-head">
+    <p class="form-page-kicker">Админка</p>
+    <h2 class="form-page-title">Активность</h2>
+  </header>
+  {% if not activity.ready or activity.servers|default([]) is empty %}
+  <p class="activity-empty">Сбор ещё не запущен.</p>
+  <ol class="activity-steps">
+    <li>Галочка «Собирать онлайн по часам» в Настройки → Опции.</li>
+    <li>Задание раз в пять минут: <code>php cron/collect_online.php</code></li>
+  </ol>
+  {% else %}
+  <nav class="activity-servers" aria-label="Серверы">
+    {% for server in activity.servers %}
+    {% set server_label = server.label is not null and server.label != '' ? server.label : (server.ip ~ ':' ~ server.port) %}
+    <a class="activity-server{% if server.sid == activity.selected %} is-selected{% endif %}" href="index.php?p=admin&amp;c=servers&amp;asrv={{ server.sid }}#^2">{{ server_label }}</a>
+    {% endfor %}
+  </nav>
+  <p class="activity-peak">Пик за сегодня: <strong>{% if activity.peak_today is null %}пока нет{% else %}{{ activity.peak_today }}{% endif %}</strong></p>
+  {{ activity_ui.chart('Последние сутки', activity.day, 'activity-chart--day') }}
+  {{ activity_ui.chart('Когда обычно играют', activity.profile, 'activity-chart--usual') }}
+  {% endif %}
+</div>

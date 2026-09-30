@@ -258,6 +258,8 @@ else
 				$serverTabMenu->addMenuItem("Список серверов",0);	
 			if($userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_SERVER ) )
 				$serverTabMenu->addMenuItem("Добавить новый сервер",1);
+			if($userbank->HasAccess(ADMIN_OWNER|ADMIN_LIST_SERVERS))
+				$serverTabMenu->addMenuItem("Активность", 2);
 			$serverTabMenu->outputMenu();
 			// ====================[ ADMIN SIDE MENU END ] ===================
 			

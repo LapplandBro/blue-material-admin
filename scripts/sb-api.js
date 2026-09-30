@@ -280,6 +280,15 @@
 
 	var inflight = {};
 	var waitCount = 0;
+	var heavyActive = 0;
+	var heavyQueue = [];
+	var HEAVY = {
+		ServerHostPlayers: 1,
+		ServerHostProperty: 1,
+		ServerHostPlayers_list: 1,
+		ServerPlayers: 1,
+		RefreshServer: 1
+	};
 
 	function waitDelta(n) {
 		waitCount += n;
@@ -307,6 +316,22 @@
 	}
 
 	function send(action, args) {
+		if (HEAVY[action] && heavyActive >= 2) {
+			heavyQueue.push([action, args]);
+			return true;
+		}
+		return sendNow(action, args);
+	}
+
+	function pumpHeavy() {
+		var job;
+		while (heavyActive < 2 && heavyQueue.length) {
+			job = heavyQueue.shift();
+			sendNow(job[0], job[1]);
+		}
+	}
+
+	function sendNow(action, args) {
 		if (!IDENT.test(String(action == null ? '' : action)))
 			return false;
 
@@ -325,6 +350,8 @@
 		if (inflight[key] && (Date.now() - inflight[key]) < 8000)
 			return false;
 		inflight[key] = Date.now();
+		if (HEAVY[action])
+			heavyActive++;
 
 		var payload = { action: action, args: args || [], csrf: csrfToken() };
 		var body = JSON.stringify(payload);
@@ -340,7 +367,10 @@
 			if (!inflight[key])
 				return;
 			delete inflight[key];
+			if (HEAVY[action] && heavyActive > 0)
+				heavyActive--;
 			waitDelta(-1);
+			pumpHeavy();
 		}
 
 		function onText(status, text) {

@@ -791,7 +791,7 @@ echo '<div id="admin-page-content">';
 		sb_admin_echo_twig_fragment('admin_bans_groups.twig', array(
 			'permission_addban' => $permAddBan,
 			'groupbanning_enabled' => $groupBanOn,
-			'list_steam_groups' => isset($_GET['fid']) ? $_GET['fid'] : false,
+			'list_steam_groups' => isset($_GET['fid']) ? (string)$_GET['fid'] : '',
 			'player_name' => '',
 		));
 	echo '</div>';

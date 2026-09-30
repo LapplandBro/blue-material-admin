@@ -111,4 +111,38 @@ echo '<div id="1" class="admin-pane">';
 $_f = sb_ui_v2_theme_fragment('admin_servers_add.twig');
 if (is_string($_f) && $_f !== '') echo $_f;
 echo '</div>';
+if ($userbank->HasAccess(ADMIN_OWNER|ADMIN_LIST_SERVERS)) {
+	// Только чтение уже посчитанных строк. Опрос серверов и запись здесь не делаются.
+	$activity = array(
+		'ready' => false,
+		'servers' => array(),
+		'selected' => 0,
+		'day' => array(),
+		'profile' => array(),
+		'peak_today' => null,
+	);
+	if (is_file(INCLUDES_PATH . '/sb-online.php'))
+		require_once INCLUDES_PATH . '/sb-online.php';
+	if (function_exists('sb_online_admin_view')) {
+		$asrv = isset($_GET['asrv']) ? (int)$_GET['asrv'] : 0;
+		$view = sb_online_admin_view($asrv);
+		if (is_array($view)) {
+			foreach (array('ready', 'servers', 'selected', 'day', 'profile', 'peak_today') as $activity_key) {
+				if (array_key_exists($activity_key, $view))
+					$activity[$activity_key] = $view[$activity_key];
+			}
+		}
+	}
+	if (!is_array($activity['servers']))
+		$activity['servers'] = array();
+	if (!is_array($activity['day']))
+		$activity['day'] = array();
+	if (!is_array($activity['profile']))
+		$activity['profile'] = array();
+	$theme->assign('activity', $activity);
+	echo '<div id="2" class="admin-pane">';
+	$_f = sb_ui_v2_theme_fragment('admin_servers_activity.twig');
+	if (is_string($_f) && $_f !== '') echo $_f;
+	echo '</div>';
+}
 echo '</div>';

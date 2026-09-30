@@ -2106,3 +2106,140 @@ div.opener5 > .admin-ticket {
   background: rgba(8, 15, 31, 0.5) !important;
   color: var(--text-heading) !important;
 }
+
+.admin-embed-body .activity-page.form-page {
+  max-width: none;
+  min-width: 0;
+}
+.admin-embed-body .activity-empty {
+  margin: 0 0 0.75rem;
+  color: var(--text);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+.admin-embed-body .activity-steps {
+  margin: 0;
+  padding-left: 1.2rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+.admin-embed-body .activity-steps li + li {
+  margin-top: 0.35rem;
+}
+.admin-embed-body .activity-steps code {
+  color: var(--text-heading);
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 0.86em;
+}
+.admin-embed-body .activity-servers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0 0 0.95rem;
+}
+.admin-embed-body .activity-server {
+  display: inline-block;
+  max-width: 100%;
+  padding: 0.32rem 0.7rem;
+  border: 1px solid var(--border-hairline);
+  border-radius: 0.5rem;
+  background: rgba(8, 15, 31, 0.55);
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 650;
+  line-height: 1.3;
+  text-decoration: none;
+}
+.admin-embed-body .activity-server:hover {
+  color: var(--text-heading);
+  background: var(--accent-soft);
+}
+.admin-embed-body .activity-server:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.admin-embed-body .activity-server.is-selected {
+  color: #fff;
+  background: rgba(30, 144, 255, 0.18);
+  border-color: var(--accent);
+}
+.admin-embed-body .activity-peak {
+  margin: 0 0 1rem;
+  color: var(--text);
+  font-size: 0.92rem;
+}
+.admin-embed-body .activity-peak strong {
+  color: var(--text-heading);
+  font-weight: 700;
+}
+.admin-embed-body .activity-chart + .activity-chart {
+  margin-top: 1.1rem;
+}
+.admin-embed-body .activity-chart-title {
+  margin: 0 0 0.5rem;
+  color: var(--text-heading);
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+.admin-embed-body .activity-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 0.2rem;
+}
+.admin-embed-body .activity-bars {
+  display: grid;
+  align-items: end;
+  gap: 0.22rem;
+  width: 100%;
+}
+.admin-embed-body .activity-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+  gap: 0.28rem;
+}
+.admin-embed-body .activity-track {
+  position: relative;
+  width: 100%;
+  height: 7.5rem;
+  background: rgba(8, 15, 31, 0.55);
+  border: 1px solid var(--border-hairline);
+  border-radius: 0.28rem;
+}
+.admin-embed-body .activity-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 0;
+  background: var(--accent);
+  border-radius: 0.2rem 0.2rem 0 0;
+}
+.admin-embed-body .activity-chart--usual .activity-bar {
+  background: var(--ok);
+}
+.admin-embed-body .activity-bar.is-empty {
+  height: 0;
+  background: transparent;
+}
+.admin-embed-body .activity-hour {
+  display: block;
+  min-height: 0.85rem;
+  color: var(--muted);
+  font-size: 0.62rem;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+}
+@media (max-width: 767.98px) {
+  .admin-embed-body .activity-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .admin-embed-body .activity-page {
+    overflow: hidden;
+  }
+}

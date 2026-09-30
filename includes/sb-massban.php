@@ -25,16 +25,99 @@ function sb_steam_community_ctx()
 	));
 }
 
+function sb_steam_http_get($url, $timeout = 15)
+{
+	$url = (string)$url;
+	if ($url === '' || !preg_match('#^https://steamcommunity\.com/#i', $url))
+		return '';
+	$ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+	$raw = false;
+	if (function_exists('curl_init')) {
+		$ch = curl_init($url);
+		$opts = array(
+			CURLOPT_RETURNTRANSFER => true,
+			CURLOPT_CONNECTTIMEOUT => (int)$timeout,
+			CURLOPT_TIMEOUT => (int)$timeout,
+			CURLOPT_USERAGENT => $ua,
+			CURLOPT_HTTPHEADER => array('Accept: text/xml,application/xml,text/html;q=0.9,*/*;q=0.8'),
+			CURLOPT_SSL_VERIFYPEER => true,
+		);
+		if (!ini_get('open_basedir'))
+			$opts[CURLOPT_FOLLOWLOCATION] = true;
+		curl_setopt_array($ch, $opts);
+		$body = curl_exec($ch);
+		$code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+		curl_close($ch);
+		if (is_string($body) && $body !== '' && $code >= 200 && $code < 400)
+			$raw = $body;
+	}
+	if ($raw === false || $raw === '') {
+		$body = @file_get_contents($url, false, sb_steam_community_ctx());
+		if (is_string($body) && $body !== '')
+			$raw = $body;
+	}
+	return is_string($raw) ? $raw : '';
+}
+
 function sb_steam_xml_load($url)
 {
-	$raw = @file_get_contents($url, false, sb_steam_community_ctx());
-	if (!is_string($raw) || $raw === '' || stripos($raw, '<html') !== false)
+	$raw = sb_steam_http_get($url);
+	if ($raw === '' || stripos($raw, '<html') !== false)
 		return false;
 	$raw = preg_replace('/&(?!(?:amp|lt|gt|quot|apos|#\d+|#x[0-9a-fA-F]+);)/', '', $raw);
 	if (function_exists('strip_31_ascii'))
 		$raw = strip_31_ascii($raw);
 	$xml = @simplexml_load_string($raw);
 	return ($xml === false) ? false : $xml;
+}
+
+function sb_steam_groups_from_xml($xml)
+{
+	$rows = array();
+	if (!is_object($xml))
+		return $rows;
+	$nodes = $xml->xpath('//groups/group');
+	if (!is_array($nodes))
+		return $rows;
+	foreach ($nodes as $node) {
+		$url = trim((string)$node->groupURL);
+		if ($url === '')
+			continue;
+		$name = trim((string)$node->groupName);
+		$cnt = trim((string)$node->memberCount);
+		$rows[$url] = array(
+			'url' => $url,
+			'name' => ($name !== '') ? $name : $url,
+			'members' => ($cnt !== '') ? $cnt : '0',
+		);
+	}
+	return $rows;
+}
+
+function sb_steam_groups_from_html($html)
+{
+	$rows = array();
+	$html = (string)$html;
+	if ($html === '' || !preg_match_all('#<a\s([^>]*\blinkTitle\b[^>]*)>([^<]*)</a>#i', $html, $blocks, PREG_SET_ORDER))
+		return $rows;
+	foreach ($blocks as $block) {
+		if (!preg_match('#href=["\']https://steamcommunity\.com/groups/([^"\']+)["\']#i', $block[1], $href))
+			continue;
+		$url = rawurldecode(trim($href[1], '/'));
+		if ($url === '' || isset($rows[$url]))
+			continue;
+		$name = html_entity_decode(trim($block[2]), ENT_QUOTES, 'UTF-8');
+		$members = '0';
+		$pos = strpos($html, $block[0]);
+		if ($pos !== false && preg_match('#>([\d\s,]+)\s+Members<#i', substr($html, $pos, 1200), $mc))
+			$members = preg_replace('/\D+/', '', $mc[1]);
+		$rows[$url] = array(
+			'url' => $url,
+			'name' => ($name !== '') ? $name : $url,
+			'members' => ($members !== '') ? $members : '0',
+		);
+	}
+	return $rows;
 }
 
 function sb_massban_js($value)

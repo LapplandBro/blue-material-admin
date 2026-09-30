@@ -2067,7 +2067,14 @@ function ServerHostPlayers($sid, $type="servers", $obId="", $tplsid="", $open=""
 					if(!defined('IN_HOME')) {
 						$sinfo = new CServerControl();
 						$sinfo->Connect($res[1], $res[2]);
-						$players = $sinfo->GetPlayers();
+						if (function_exists('sb_db_release'))
+							sb_db_release();
+						try {
+							$players = $sinfo->GetPlayers();
+						} finally {
+							if (function_exists('sb_db_ensure'))
+								sb_db_ensure();
+						}
 						if ($players !== false) {
 							$needAddPlayerManaging = false;
 							if ($userbank->is_logged_in() && function_exists('sb_admin_has_server_access') && sb_admin_has_server_access((int)$sid)) {

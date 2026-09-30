@@ -334,6 +334,7 @@ else
 			
 			$map_autofetch = (isset($_POST['map_autofetch']) && $_POST['map_autofetch'] == "on" ? 1 : 0);
 			$totp_enforce_owner = (isset($_POST['totp_enforce_owner']) && $_POST['totp_enforce_owner'] == "on" ? 1 : 0);
+			$online_collect = (isset($_POST['online_collect']) && $_POST['online_collect'] == "on" ? 1 : 0);
 			$twig_precompile = (isset($_POST['twig_precompile']) && $_POST['twig_precompile'] == "on" ? 1 : 0);
 
 			$server_assign_mode = (isset($_POST['server_assign_mode']) && $_POST['server_assign_mode'] === 'group') ? 'group' : 'servers';
@@ -361,6 +362,7 @@ else
 											(" . (int)$_POST['admin_warns_max'] . ", 'admin.warns.max'),
 											(" . (int)$map_autofetch . ", 'feature.map_autofetch'),
 											(" . (int)$totp_enforce_owner . ", 'config.totp.enforce_owner'),
+											(" . (int)$online_collect . ", 'config.online_collect'),
 											(" . (int)$twig_precompile . ", 'config.twig.precompile'),
 											(" . $GLOBALS['db']->qstr($server_assign_mode) . ", 'config.server_assign_mode'),
 											(" . $GLOBALS['db']->qstr($admin_nick_link) . ", 'config.admin_nick_link'),
@@ -550,6 +552,7 @@ else
 		// Настройка ещё не сохранялась ни разу -> считаем автозагрузку карт включённой по умолчанию.
 		$theme->assign('map_autofetch', (!isset($GLOBALS['config']['feature.map_autofetch']) || $GLOBALS['config']['feature.map_autofetch'] == "1"));
 		$theme->assign('totp_enforce_owner', (!empty($GLOBALS['config']['config.totp.enforce_owner']) && $GLOBALS['config']['config.totp.enforce_owner'] == "1"));
+		$theme->assign('online_collect', (!isset($GLOBALS['config']['config.online_collect']) || $GLOBALS['config']['config.online_collect'] == "1"));
 		$theme->assign('maxWarnings', $GLOBALS['config']['admin.warns.max']);
 		$theme->assign('warnings_enabled', ($GLOBALS['config']['admin.warns'] == "1"));
 		$serverAssignMode = isset($GLOBALS['config']['config.server_assign_mode']) ? (string)$GLOBALS['config']['config.server_assign_mode'] : 'servers';

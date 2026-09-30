@@ -100,7 +100,8 @@ INSERT IGNORE INTO `{prefix}_settings` (`setting`, `value`) VALUES
 ('smtp.host', ''),
 ('smtp.password', ''),
 ('smtp.charset', 'utf-8'),
-('smtp.from', '');
+('smtp.from', ''),
+('config.online_collect', '1');
 
 INSERT IGNORE INTO `{prefix}_admins` (
 `aid`, `user`, `authid`, `password`, `gid`, `email`, `validate`, `extraflags`, `immunity`, `expired`)

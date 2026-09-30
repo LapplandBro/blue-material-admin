@@ -66,6 +66,13 @@
         {% include 'partials/settings_toggle.twig' with { id: 'admin_steam_optional', label: 'SteamID не обязателен', help_title: 'SteamID не обязателен', help_message: 'Для CSS v34 и похожих, где Steam невалиден. SteamID можно не указывать.', checked: admin_steam_optional, span: true } %}
       </div>
     </section>
+    <section class="settings-card" aria-labelledby="settings-activity-title">
+      <h3 class="form-section-title" id="settings-activity-title">Активность</h3>
+      <p class="settings-card-lead">Сбор идёт заданием по расписанию. Открытие вкладки «Серверы» не опрашивает.</p>
+      <div class="settings-toggles settings-toggles--card">
+        {% include 'partials/settings_toggle.twig' with { id: 'online_collect', label: 'Собирать онлайн по часам', help_title: 'Собирать онлайн по часам', help_message: 'Без задания php cron/collect_online.php раз в пять минут цифры не копятся. Снятая галочка останавливает опрос, уже собранное остаётся.', checked: online_collect, span: true } %}
+      </div>
+    </section>
     <div class="form-actions">
       <button type="submit" class="btn btn-accent" id="fsettings">Сохранить</button>
       <button type="button" class="btn btn-outline-secondary" id="fback" onclick="sbGo('index.php?p=admin&amp;c=settings')">Назад</button>

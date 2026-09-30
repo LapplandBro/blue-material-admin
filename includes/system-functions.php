@@ -3455,10 +3455,11 @@ function sb_comms_type_icon_html($type, $size = 16)
  * A2S_INFO с дисковым кэшем на $ttl секунд.
  * Свежий кэш не тратит лимит. Протухший при лимите отдаётся ещё до 10 минут.
  * Иначе ok=0 и вызывающий показывает ip:port, а не вечную «загрузку».
+ * $bypassLimit — не звать sb_rate_limit_hit (сбор по расписанию).
  *
  * @return array{ok:int,HostName:string,Players:int,MaxPlayers:int,Map:string,Os:string,Secure:int,ts:int}
  */
-function sb_server_a2s_info($ip, $port, $ttl = 60)
+function sb_server_a2s_info($ip, $port, $ttl = 60, $bypassLimit = false)
 {
 	$ip = trim((string)$ip);
 	$port = (int)$port;
@@ -3489,7 +3490,9 @@ function sb_server_a2s_info($ip, $port, $ttl = 60)
 		}
 	}
 
-	$limited = function_exists('sb_rate_limit_hit') && sb_rate_limit_hit('server_a2s', 30, 60);
+	$limited = false;
+	if (!$bypassLimit)
+		$limited = function_exists('sb_rate_limit_hit') && sb_rate_limit_hit('server_a2s', 30, 60);
 	if ($limited) {
 		if (is_array($cached) && ($now - (int)$cached['ts']) < 600)
 			return $cached;
@@ -3502,6 +3505,11 @@ function sb_server_a2s_info($ip, $port, $ttl = 60)
 			require_once $ctl;
 	}
 	$info = false;
+	$released = false;
+	if (function_exists('sb_db_release')) {
+		sb_db_release();
+		$released = true;
+	}
 	if (class_exists('CServerControl')) {
 		try {
 			$sinfo = new CServerControl();
@@ -3511,6 +3519,8 @@ function sb_server_a2s_info($ip, $port, $ttl = 60)
 			$info = false;
 		}
 	}
+	if ($released && function_exists('sb_db_ensure'))
+		sb_db_ensure();
 
 	$store = array(
 		'ok' => ($info && !empty($info['HostName'])) ? 1 : 0,

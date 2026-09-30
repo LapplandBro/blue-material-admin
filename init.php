@@ -486,12 +486,22 @@ error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED & ~E_STRICT);
 //  Setup our DB
 // ---------------------------------------------------
 include_once(INCLUDES_PATH . "/adodb/adodb.inc.php");
+// До errorhandler: иначе CONNECT при max_user_connections становится E_USER_ERROR
+// и роняет страницу раньше, чем мы успеваем повторить попытку.
+if (!defined('ADODB_ERROR_HANDLER'))
+	define('ADODB_ERROR_HANDLER', 'sb_adodb_error_handler');
 include_once(INCLUDES_PATH . "/adodb/adodb-errorhandler.inc.php");
-$GLOBALS['db'] = ADONewConnection("mysqli://".DB_USER.':'.DB_PASS.'@'.DB_HOST.':'.DB_PORT.'/'.DB_NAME);
+
+// Одна вкладка на главной шлёт опрос каждого сервера отдельно. Пока PHP-сессия
+// не взята, эти запросы параллельно открывают MySQL и упираются в лимит хостинга (5).
+if (PHP_SAPI !== 'cli' && session_status() !== PHP_SESSION_ACTIVE)
+	sb_session_start();
+
+$GLOBALS['db'] = sb_db_open(5);
 $GLOBALS['log'] = new CSystemLog();
 
 if( !is_object($GLOBALS['db']) )
-				die();
+	sb_db_unavailable();
 
 // БАГ-ФИКС: adodb-errorhandler.inc.php подключался, но $db->raiseErrorFn никогда реально не
 // назначался - поэтому ошибки запросов (Execute() вернувший false) проходили молча: ни в лог,
@@ -500,6 +510,61 @@ if( !is_object($GLOBALS['db']) )
 // Вешаем свой обработчик - пишет каждую ошибку ADOdb (Execute/Connect/...) в системный лог,
 // не прерывая при этом выполнение скрипта (в отличие от дефолтного ADODB_Error_Handler,
 // который по умолчанию кидает E_USER_ERROR и завершает страницу).
+function sb_db_dsn()
+{
+	return "mysqli://".DB_USER.':'.DB_PASS.'@'.DB_HOST.':'.DB_PORT.'/'.DB_NAME;
+}
+
+function sb_db_open($attempts = 5)
+{
+	$attempts = (int)$attempts;
+	if ($attempts < 1)
+		$attempts = 1;
+	$db = null;
+	for ($i = 0; $i < $attempts; $i++) {
+		$db = ADONewConnection(sb_db_dsn());
+		if (is_object($db))
+			return $db;
+		if ($i + 1 < $attempts)
+			usleep(200000 * ($i + 1));
+	}
+	return $db;
+}
+
+function sb_db_release()
+{
+	if (empty($GLOBALS['db']) || !is_object($GLOBALS['db']))
+		return;
+	if (method_exists($GLOBALS['db'], 'Close'))
+		@$GLOBALS['db']->Close();
+}
+
+function sb_db_ensure()
+{
+	if (!empty($GLOBALS['db']) && is_object($GLOBALS['db']) && !empty($GLOBALS['db']->_connectionID))
+		return true;
+	$db = sb_db_open(4);
+	if (!is_object($db))
+		return false;
+	$GLOBALS['db'] = $db;
+	$GLOBALS['db']->raiseErrorFn = 'sb_adodb_error_handler';
+	@$GLOBALS['db']->Execute("SET NAMES utf8");
+	return true;
+}
+
+function sb_db_unavailable()
+{
+	if (!headers_sent()) {
+		http_response_code(503);
+		header('Content-Type: text/html; charset=utf-8');
+		header('Retry-After: 3');
+	}
+	echo '<!DOCTYPE html><html lang="ru"><head><meta charset="utf-8"><title>Сайт занят</title></head><body>';
+	echo '<p>База данных сейчас занята: на хостинге мало одновременных соединений. Обновите страницу через пару секунд.</p>';
+	echo '</body></html>';
+	exit;
+}
+
 function sb_adodb_error_handler($dbms, $fn, $errno, $errmsg, $p1, $p2, &$thisConnection)
 {
 	static $inHandler = false;
@@ -512,7 +577,8 @@ function sb_adodb_error_handler($dbms, $fn, $errno, $errmsg, $p1, $p2, &$thisCon
 		$details .= " -- SQL: " . $p1;
 
 	error_log("ADOdb error " . $details);
-	if (class_exists('CSystemLog'))
+	$connectBusy = ($fn === 'CONNECT' || $fn === 'PCONNECT' || (int)$errno === 1226 || (int)$errno === 1040 || (int)$errno === 1203);
+	if (!$connectBusy && class_exists('CSystemLog') && !empty($GLOBALS['db']) && is_object($GLOBALS['db']) && !empty($GLOBALS['db']->_connectionID))
 		new CSystemLog("e", "Ошибка базы данных", $details);
 
 	$inHandler = false;
