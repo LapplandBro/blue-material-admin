@@ -56,11 +56,56 @@ function sb_online_ensure_tables()
 		$GLOBALS['db']->Execute($sql);
 }
 
+function sb_online_status_path()
+{
+	$dir = (defined('ROOT') ? ROOT : dirname(__FILE__) . '/../') . 'data/cache';
+	return $dir . '/online_collect_status.json';
+}
+
+function sb_online_status_read()
+{
+	$path = sb_online_status_path();
+	if (!is_file($path))
+		return null;
+	$raw = @file_get_contents($path);
+	if ($raw === false || $raw === '')
+		return null;
+	$data = json_decode($raw, true);
+	return is_array($data) ? $data : null;
+}
+
+function sb_online_status_write($message, $ok = true)
+{
+	$dir = dirname(sb_online_status_path());
+	if (!is_dir($dir))
+		@mkdir($dir, 0755, true);
+	$payload = array(
+		'ts' => time(),
+		'ok' => $ok ? 1 : 0,
+		'message' => (string)$message,
+	);
+	@file_put_contents(sb_online_status_path(), json_encode($payload, JSON_UNESCAPED_UNICODE));
+}
+
+function sb_online_status_text()
+{
+	$st = sb_online_status_read();
+	if (!is_array($st) || empty($st['ts']))
+		return 'Задание ещё ни разу не завершилось. Пустые клетки — это не ноль игроков: замера в базе нет.';
+	$when = date('d.m.Y H:i', (int)$st['ts']);
+	$msg = isset($st['message']) ? trim((string)$st['message']) : '';
+	if ($msg === '')
+		$msg = 'без подробностей';
+	return 'Последний запуск задания: ' . $when . '. ' . $msg;
+}
+
 function sb_online_collect()
 {
-	$skip = array('enabled' => true, 'servers' => 0, 'ok' => 0, 'down' => 0);
-	if (!sb_online_collect_enabled())
-		return array('enabled' => false, 'servers' => 0, 'ok' => 0, 'down' => 0);
+	$skip = array('enabled' => true, 'servers' => 0, 'ok' => 0, 'down' => 0, 'saved' => 0, 'error' => '');
+	if (!sb_online_collect_enabled()) {
+		sb_online_status_write('Сбор выключен галочкой в настройках.', false);
+		return array('enabled' => false, 'servers' => 0, 'ok' => 0, 'down' => 0, 'saved' => 0, 'error' => '');
+	}
 	// Из браузера не опрашиваем и не пишем — только cron/collect_online.php.
 	if (php_sapi_name() !== 'cli' || !isset($GLOBALS['db']) || !defined('DB_PREFIX'))
 		return $skip;
@@ -68,16 +113,37 @@ function sb_online_collect()
 	$dir = (defined('ROOT') ? ROOT : dirname(__FILE__) . '/../') . 'data/cache';
 	if (!is_dir($dir))
 		@mkdir($dir, 0755, true);
-	$fh = @fopen($dir . '/online_collect.lock', 'c');
-	if (!$fh)
-		return $skip;
-	if (!flock($fh, LOCK_EX | LOCK_NB)) {
-		fclose($fh);
-		return array('enabled' => true, 'servers' => 0, 'ok' => 0, 'down' => 0, 'busy' => true);
+	$stamp = $dir . '/online_collect.stamp';
+	if (is_file($stamp) && (time() - (int)@filemtime($stamp)) < 180) {
+		$prev = sb_online_status_read();
+		if (!is_array($prev) || empty($prev['ts']) || (time() - (int)$prev['ts']) > 180)
+			sb_online_status_write('Предыдущий запуск ещё не закончился, новый пропущен.', false);
+		return array('enabled' => true, 'servers' => 0, 'ok' => 0, 'down' => 0, 'saved' => 0, 'error' => '', 'busy' => true);
 	}
+	@file_put_contents($stamp, (string)getmypid());
 
 	try {
+		@ini_set('default_socket_timeout', '3');
+		if (function_exists('set_time_limit'))
+			@set_time_limit(120);
+		if (function_exists('sb_db_ensure') && !sb_db_ensure()) {
+			$msg = 'Нет соединения с базой, замеры не записаны.';
+			sb_online_status_write($msg, false);
+			return array('enabled' => true, 'servers' => 0, 'ok' => 0, 'down' => 0, 'saved' => 0, 'error' => $msg);
+		}
+
 		sb_online_ensure_tables();
+
+		if (!function_exists('sb_server_a2s_info')) {
+			$sf = (defined('INCLUDES_PATH') ? INCLUDES_PATH : dirname(__FILE__)) . '/system-functions.php';
+			if (is_file($sf))
+				require_once $sf;
+		}
+		if (!function_exists('sb_server_a2s_info')) {
+			$msg = 'Не найдена функция опроса серверов (includes/system-functions.php).';
+			sb_online_status_write($msg, false);
+			return array('enabled' => true, 'servers' => 0, 'ok' => 0, 'down' => 0, 'saved' => 0, 'error' => $msg);
+		}
 
 		$rows = $GLOBALS['db']->GetAll(
 			"SELECT `sid`, `ip`, `port` FROM `" . DB_PREFIX . "_servers` WHERE `enabled` = 1"
@@ -93,6 +159,8 @@ function sb_online_collect()
 
 		$ok = 0;
 		$down = 0;
+		$saved = 0;
+		$writeError = '';
 		$seen = array();
 		foreach ($rows as $srv) {
 			if (!is_array($srv))
@@ -103,7 +171,7 @@ function sb_online_collect()
 			if ($sid <= 0)
 				continue;
 
-			$info = sb_server_a2s_info($ip, $port, 60, true);
+			$info = sb_server_a2s_info($ip, $port, 60, true, true);
 			$players = 0;
 			$maxplayers = 0;
 			$map = '';
@@ -120,14 +188,24 @@ function sb_online_collect()
 			$players = sb_online_clamp_small($players);
 			$maxplayers = sb_online_clamp_small($maxplayers);
 			$map = sb_online_clip_map($map);
+			$mapSql = $GLOBALS['db']->qstr($map);
 
-			$GLOBALS['db']->Execute(
+			$wrote = $GLOBALS['db']->Execute(
 				"INSERT INTO `" . DB_PREFIX . "_server_samples` (`sid`,`ts`,`players`,`maxplayers`,`map`,`up`) VALUES ("
-				. $sid . "," . $ts . "," . $players . "," . $maxplayers . "," . $GLOBALS['db']->qstr($map) . "," . $up
-				. ") ON DUPLICATE KEY UPDATE `players` = VALUES(`players`), `maxplayers` = VALUES(`maxplayers`), `map` = VALUES(`map`), `up` = VALUES(`up`)"
+				. $sid . "," . $ts . "," . $players . "," . $maxplayers . "," . $mapSql . "," . $up
+				. ") ON DUPLICATE KEY UPDATE `players` = " . $players
+				. ", `maxplayers` = " . $maxplayers
+				. ", `map` = " . $mapSql
+				. ", `up` = " . $up
 			);
+			if ($wrote === false) {
+				if ($writeError === '' && method_exists($GLOBALS['db'], 'ErrorMsg'))
+					$writeError = (string)$GLOBALS['db']->ErrorMsg();
+				continue;
+			}
 			sb_online_refresh_hour($sid, $hourTs);
 			$seen[$sid] = true;
+			$saved++;
 		}
 
 		foreach (array_keys($seen) as $sid)
@@ -142,15 +220,38 @@ function sb_online_collect()
 			"DELETE FROM `" . DB_PREFIX . "_server_hourly` WHERE `hour_ts` < " . $hourlyCut
 		);
 
+		$total = $ok + $down;
+		if ($total === 0) {
+			$msg = 'Включённых серверов нет, записывать нечего.';
+			sb_online_status_write($msg, false);
+			return array('enabled' => true, 'servers' => 0, 'ok' => 0, 'down' => 0, 'saved' => 0, 'error' => $msg);
+		}
+		if ($saved === 0) {
+			$msg = 'Серверы опрошены, но в базу не записалось ни одного замера.';
+			if ($writeError !== '')
+				$msg .= ' ' . $writeError;
+			sb_online_status_write($msg, false);
+			return array('enabled' => true, 'servers' => $total, 'ok' => $ok, 'down' => $down, 'saved' => 0, 'error' => $msg);
+		}
+
+		$msg = 'Записано серверов: ' . $saved . ' из ' . $total . ', ответили: ' . $ok . ', молчат: ' . $down . '.';
+		if ($writeError !== '')
+			$msg .= ' Часть записей не легла: ' . $writeError;
+		sb_online_status_write($msg, $writeError === '');
 		return array(
 			'enabled' => true,
-			'servers' => $ok + $down,
+			'servers' => $total,
 			'ok' => $ok,
 			'down' => $down,
+			'saved' => $saved,
+			'error' => $writeError,
 		);
+	} catch (Throwable $e) {
+		$msg = 'Сбор оборвался: ' . $e->getMessage();
+		sb_online_status_write($msg, false);
+		return array('enabled' => true, 'servers' => 0, 'ok' => 0, 'down' => 0, 'saved' => 0, 'error' => $msg);
 	} finally {
-		flock($fh, LOCK_UN);
-		fclose($fh);
+		@unlink($stamp);
 	}
 }
 
@@ -180,6 +281,7 @@ function sb_online_admin_view($sid = 0)
 		'day' => sb_online_day_rows(array()),
 		'profile' => sb_online_profile_rows(array()),
 		'peak_today' => null,
+		'status_text' => sb_online_status_text(),
 	);
 	if (!isset($GLOBALS['db']) || !defined('DB_PREFIX'))
 		return $empty;
@@ -274,6 +376,7 @@ function sb_online_admin_view($sid = 0)
 		'day' => $day,
 		'profile' => $profile,
 		'peak_today' => $peak,
+		'status_text' => sb_online_status_text(),
 	);
 }
 

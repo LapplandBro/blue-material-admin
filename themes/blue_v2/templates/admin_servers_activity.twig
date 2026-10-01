@@ -30,6 +30,9 @@
     <p class="form-page-kicker">Админка</p>
     <h2 class="form-page-title">Активность</h2>
   </header>
+  {% if activity.status_text %}
+  <p class="activity-note">{{ activity.status_text }}</p>
+  {% endif %}
   {% if not activity.ready or activity.servers|default([]) is empty %}
   <p class="activity-empty">Сбор ещё не запущен.</p>
   <ol class="activity-steps">

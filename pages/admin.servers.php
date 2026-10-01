@@ -120,6 +120,7 @@ if ($userbank->HasAccess(ADMIN_OWNER|ADMIN_LIST_SERVERS)) {
 		'day' => array(),
 		'profile' => array(),
 		'peak_today' => null,
+		'status_text' => '',
 	);
 	if (is_file(INCLUDES_PATH . '/sb-online.php'))
 		require_once INCLUDES_PATH . '/sb-online.php';
@@ -127,7 +128,7 @@ if ($userbank->HasAccess(ADMIN_OWNER|ADMIN_LIST_SERVERS)) {
 		$asrv = isset($_GET['asrv']) ? (int)$_GET['asrv'] : 0;
 		$view = sb_online_admin_view($asrv);
 		if (is_array($view)) {
-			foreach (array('ready', 'servers', 'selected', 'day', 'profile', 'peak_today') as $activity_key) {
+			foreach (array('ready', 'servers', 'selected', 'day', 'profile', 'peak_today', 'status_text') as $activity_key) {
 				if (array_key_exists($activity_key, $view))
 					$activity[$activity_key] = $view[$activity_key];
 			}

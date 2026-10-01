@@ -73,14 +73,9 @@ class Socket extends BaseSocket
 	 */
 	public function Read( ) : Buffer
 	{
-		if( $this->Socket === null )
-		{
-			throw new SocketException( 'Not connected.', SocketException::NOT_CONNECTED );
-		}
-
-		$Data = fread( $this->Socket, self::MaxPacketLength );
+		$Data = $this->ReadChunk( );
 		$Buffer = new Buffer( );
-		$Buffer->Set( $Data === false ? '' : $Data );
+		$Buffer->Set( $Data );
 
 		$this->ReadInternal( $Buffer, [ $this, 'Sherlock' ] );
 
@@ -89,12 +84,7 @@ class Socket extends BaseSocket
 
 	public function Sherlock( Buffer $Buffer ) : bool
 	{
-		if( $this->Socket === null )
-		{
-			throw new SocketException( 'Not connected.', SocketException::NOT_CONNECTED );
-		}
-
-		$Data = fread( $this->Socket, self::MaxPacketLength );
+		$Data = $this->ReadChunk( );
 
 		if( $Data === false || strlen( $Data ) < 4 )
 		{
@@ -104,5 +94,32 @@ class Socket extends BaseSocket
 		$Buffer->Set( $Data );
 
 		return $Buffer->ReadInt32( ) === -2;
+	}
+
+	/**
+	 * UDP fread без ожидания через stream_select на части хостингов не смотрит
+	 * на stream_set_timeout и может висеть до убийства процесса.
+	 *
+	 * @throws SocketException
+	 */
+	private function ReadChunk( ) : string
+	{
+		if( $this->Socket === null )
+		{
+			throw new SocketException( 'Not connected.', SocketException::NOT_CONNECTED );
+		}
+
+		$read = array( $this->Socket );
+		$write = null;
+		$except = null;
+		$seconds = $this->Timeout > 0 ? $this->Timeout : 2;
+		$ready = @stream_select( $read, $write, $except, $seconds );
+		if( $ready === false || $ready === 0 )
+		{
+			throw new SocketException( 'Timed out while reading.', SocketException::CONNECTION_FAILED );
+		}
+
+		$Data = fread( $this->Socket, self::MaxPacketLength );
+		return $Data === false ? '' : $Data;
 	}
 }

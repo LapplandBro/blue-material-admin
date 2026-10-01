@@ -3459,7 +3459,7 @@ function sb_comms_type_icon_html($type, $size = 16)
  *
  * @return array{ok:int,HostName:string,Players:int,MaxPlayers:int,Map:string,Os:string,Secure:int,ts:int}
  */
-function sb_server_a2s_info($ip, $port, $ttl = 60, $bypassLimit = false)
+function sb_server_a2s_info($ip, $port, $ttl = 60, $bypassLimit = false, $holdDb = false)
 {
 	$ip = trim((string)$ip);
 	$port = (int)$port;
@@ -3506,7 +3506,9 @@ function sb_server_a2s_info($ip, $port, $ttl = 60, $bypassLimit = false)
 	}
 	$info = false;
 	$released = false;
-	if (function_exists('sb_db_release')) {
+	// Сбор по cron держит одно соединение: на хостинге лимит 5, и после
+	// отпускания его часто уже не вернуть — замер тогда молча не пишется.
+	if (!$holdDb && function_exists('sb_db_release')) {
 		sb_db_release();
 		$released = true;
 	}
