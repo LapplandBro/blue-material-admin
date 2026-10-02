@@ -3122,17 +3122,34 @@ function sb_actor_is_protected_steamid()
 	return $authid !== '' && in_array($authid, sb_protected_steamids(), true);
 }
 
-/** Прямые веб/серверные флаги добавляются поверх группы, поэтому их задаёт только незащищённый владелец. */
+/** Свой extraflags, без флагов веб-группы. Роль с ADMIN_OWNER сюда не попадает. */
+function sb_actor_own_extraflags()
+{
+	global $userbank;
+	if (!isset($userbank) || !is_object($userbank) || empty($GLOBALS['db']) || !defined('DB_PREFIX'))
+		return 0;
+	$aid = (int)$userbank->GetAid();
+	if ($aid <= 0)
+		return 0;
+	return (int)$GLOBALS['db']->GetOne(
+		"SELECT `extraflags` FROM `" . DB_PREFIX . "_admins` WHERE `aid` = ?",
+		array($aid)
+	);
+}
+
+/**
+ * Прямые флаги добавляются поверх роли.
+ * Можно защищённому SteamID и тому, у кого ADMIN_OWNER записан на самом аккаунте.
+ * Тот же флаг только из веб-группы права не даёт.
+ */
 function sb_can_assign_admin_perms()
 {
 	global $userbank;
 	if (!isset($userbank) || !is_object($userbank))
 		return false;
-	if (!$userbank->HasAccess(ADMIN_OWNER))
-		return false;
 	if (sb_actor_is_protected_steamid())
-		return false;
-	return true;
+		return true;
+	return (sb_actor_own_extraflags() & ADMIN_OWNER) !== 0;
 }
 
 /** Сброс auth-кук без session_destroy (безопасно при bootstrap). */
@@ -3167,7 +3184,7 @@ function sb_clamp_web_flags_to_actor($flags)
 	$flags = (int)$flags;
 	if (!isset($userbank) || !is_object($userbank))
 		return $flags & ~ADMIN_OWNER;
-	if ($userbank->HasAccess(ADMIN_OWNER))
+	if ($userbank->HasAccess(ADMIN_OWNER) || (function_exists('sb_actor_is_protected_steamid') && sb_actor_is_protected_steamid()))
 		return $flags;
 	$mine = (int)$userbank->GetProperty('extraflags');
 	return $flags & $mine & ~ADMIN_OWNER;
@@ -3184,7 +3201,7 @@ function sb_clamp_srv_flags_to_actor($srv_flags, &$immunity)
 	global $userbank;
 	$srv_flags = (string)$srv_flags;
 	$immunity = (int)$immunity;
-	if (isset($userbank) && is_object($userbank) && $userbank->HasAccess(ADMIN_OWNER))
+	if (isset($userbank) && is_object($userbank) && ($userbank->HasAccess(ADMIN_OWNER) || (function_exists('sb_actor_is_protected_steamid') && sb_actor_is_protected_steamid())))
 		return $srv_flags;
 	$mineFlags = (isset($userbank) && is_object($userbank)) ? (string)$userbank->GetProperty('srv_flags') : '';
 	$mineImm = (isset($userbank) && is_object($userbank)) ? (int)$userbank->GetProperty('srv_immunity') : 0;

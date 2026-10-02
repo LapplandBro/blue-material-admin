@@ -1531,12 +1531,58 @@
   word-break: break-word;
 }
 .admin-fact-value a { color: var(--accent); }
-.admin-fact-flags .clist {
-  margin: 0;
-  padding-left: 1.1rem;
-  font-size: 0.82rem;
+.admin-fact:has(> .admin-fact-flags) {
+  align-items: start;
 }
-.admin-fact-flags .c-blue { color: var(--accent); margin: 0 0 0.25rem; font-size: 0.78rem; }
+.admin-fact:has(> .admin-fact-flags) .admin-fact-label {
+  padding-top: 0.16rem;
+}
+.admin-fact-flags {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+}
+.admin-fact-flags .c-blue {
+  display: none;
+}
+.admin-fact-flags .clist {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.22rem 0.28rem;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.admin-fact-flags .clist > li {
+  display: inline-block;
+  box-sizing: border-box;
+  max-width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0.08rem 0.42rem;
+  list-style: none;
+  border: 1px solid var(--border-hairline);
+  border-radius: 0.28rem;
+  background: rgba(8, 15, 31, 0.55);
+  color: var(--text);
+  font-size: 0.74rem;
+  font-weight: 600;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 575.98px) {
+  .admin-fact-flags .clist {
+    gap: 0.18rem 0.22rem;
+  }
+  .admin-fact-flags .clist > li {
+    padding: 0.06rem 0.34rem;
+    font-size: 0.7rem;
+  }
+}
 .admin-server-chips {
   display: flex;
   flex-wrap: wrap;

@@ -2840,27 +2840,21 @@ function EditAdminPerms($aid, $web_flags, $srv_flags)
 
 	$objResponse = new xajaxResponse();
 	global $userbank, $username;
-	// Прямые флаги добавляются поверх роли — только настоящий владелец. Защищённый SteamID назначает права через роли.
+	// Прямые флаги добавляются поверх роли. Роль с ADMIN_OWNER этого не даёт.
 	if(!function_exists('sb_can_assign_admin_perms') || !sb_can_assign_admin_perms())
 	{
-		if(function_exists('sb_actor_is_protected_steamid') && sb_actor_is_protected_steamid())
-		{
-			$objResponse->addAlert("Этому SteamID нельзя выдавать прямые флаги, даже с правами владельца. Права назначаются только через роли.");
-			$log = new CSystemLog("w", "Ошибка доступа", $username . " (защищённый SteamID) пытался изменить привилегии напрямую.");
-			return $objResponse;
-		}
-		$objResponse->addAlert("Прямые флаги выдаёт только владелец. Они добавляются поверх роли. Остальным — через роли (группы).");
-		$log = new CSystemLog("w", "Ошибка доступа", $username . " пытался изменить привилегии напрямую, не будучи владельцем.");
+		$objResponse->addAlert("Прямые флаги выдают только владелец и защищённый SteamID. Роль с правами владельца этого не даёт.");
+		$log = new CSystemLog("w", "Ошибка доступа", $username . " пытался изменить привилегии напрямую без личного флага владельца.");
 		return $objResponse;
 	}
-	if(!$userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_ADMINS))
+	if(!$userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_ADMINS) && !(function_exists('sb_can_assign_admin_perms') && sb_can_assign_admin_perms()))
 	{
 		$objResponse->redirect("index.php?p=login&m=no_access", 0);
 		$log = new CSystemLog("w", "Ошибка доступа", $username . " пытался изменить разрешения админа, не имея на это прав.");
 		return $objResponse;
 	}
 
-	if(!$userbank->HasAccess(ADMIN_OWNER) && ((int)$web_flags & ADMIN_OWNER))
+	if(!$userbank->HasAccess(ADMIN_OWNER) && !(function_exists('sb_actor_is_protected_steamid') && sb_actor_is_protected_steamid()) && ((int)$web_flags & ADMIN_OWNER))
 	{
 			$objResponse->redirect("index.php?p=login&m=no_access", 0);
 			$log = new CSystemLog("w", "Ошибка доступа", $username . " пытался выдать ADMIN_OWNER, не имея на это прав.");
