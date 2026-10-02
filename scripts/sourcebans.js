@@ -1504,6 +1504,9 @@ function ProcessEditAdminPermissions()
 	var srvMask = BoxToSrvMask();
 	var aid = $('admin_id').value;
 
+	if (!confirm("Вы выполняете небезопасное действие. Прямые флаги добавятся поверх роли. Продолжить?"))
+		return;
+
 	if($('immunity'))
 	{
 	 	if(IsNumeric($('immunity').value))

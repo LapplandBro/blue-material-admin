@@ -23,12 +23,19 @@ if(!$userbank->GetProperty("user", $_GET['id']))
 }
 
 $_GET['id'] = (int)$_GET['id'];
-// sb_can_manage_admin: помимо OWNER|EDIT_ADMINS, не даёт не-OWNER админу просматривать/редактировать
-// привилегии OWNER-администратора или администратора с защищённым SteamID (SB_PROTECTED_STEAMIDS).
-if(!$userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_ADMINS) || !function_exists('sb_can_manage_admin') || !sb_can_manage_admin($_GET['id']))
+// Прямые флаги добавляются поверх роли. Выдаёт только настоящий владелец. Защищённый SteamID — только через роли.
+if(!function_exists('sb_can_assign_admin_perms') || !sb_can_assign_admin_perms())
 {
-	$log = new CSystemLog("w", "Попытка взлома", $userbank->GetProperty("user") . " пытался редактировать разрешения ".$userbank->GetProperty('user', $_GET['id'])." , не имея на это прав.");
-	echo '<div class="parsec-note parsec-note-danger">Нет прав на изменение привилегий.</div>';
+	if(function_exists('sb_actor_is_protected_steamid') && sb_actor_is_protected_steamid())
+	{
+		echo '<div class="parsec-note parsec-note-danger">Этому SteamID нельзя выдавать прямые флаги, даже с правами владельца. Права назначаются только через роли.</div>';
+		$log = new CSystemLog("w", "Ошибка доступа", $userbank->GetProperty("user") . " (защищённый SteamID) пытался открыть прямое редактирование привилегий.");
+	}
+	else
+	{
+		echo '<div class="parsec-note parsec-note-danger">Прямые флаги выдаёт только владелец. Они добавляются поверх роли. Остальным — через роли (группы).</div>';
+		$log = new CSystemLog("w", "Ошибка доступа", $userbank->GetProperty("user") . " пытался открыть прямое редактирование привилегий без прав владельца.");
+	}
 	PageDie();
 }
 

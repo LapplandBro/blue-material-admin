@@ -118,7 +118,9 @@
                   {% if permission_editadmin %}
                   <nav class="admin-aside-links">
                     <a href="index.php?p=admin&amp;c=admins&amp;o=editdetails&amp;id={{ admin.aid }}">Детали</a>
+                    {% if permission_editperms %}
                     <a href="index.php?p=admin&amp;c=admins&amp;o=editpermissions&amp;id={{ admin.aid }}">Привилегии</a>
+                    {% endif %}
                     <a href="index.php?p=admin&amp;c=admins&amp;o=editservers&amp;id={{ admin.aid }}">Сервер</a>
                     <a href="index.php?p=admin&amp;c=admins&amp;o=editgroup&amp;id={{ admin.aid }}">Группа</a>
                     {% if allow_warnings %}

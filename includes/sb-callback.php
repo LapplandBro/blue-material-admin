@@ -120,38 +120,37 @@ function Plogin($username, $password, $remember, $redirect, $nopass)
 	global $userbank;
 	$objResponse = new xajaxResponse();
 	if (empty($password)) {
-		ShowBox_ajx("Информация", "Не введён пароль. Введите пароль, и повторите попытку ещё раз.", "blue", $objResponse, "", true);
+		$objResponse->addRedirect('index.php?p=login&m=nopass', 0);
 		return $objResponse;
 	}
 	// auth.type: 2 = только Steam - вход по логину/паролю запрещён настройками сайта.
 	$at = isset($GLOBALS['config']['auth.type']) ? $GLOBALS['config']['auth.type'] : 0;
 	if ($at == 2) {
-		ShowBox_ajx("Вход неудался", "Вход по логину и паролю отключён. Используйте вход через Steam.", "red", $objResponse, "", true);
+		$objResponse->addRedirect('index.php?p=login&m=steamonly', 0);
 		return $objResponse;
 	}
 	// Антибрутфорс: 8 попыток / 15 минут с одного IP.
 	if (function_exists('sb_rate_limit_hit') && sb_rate_limit_hit('plogin', 8, 900)) {
-		ShowBox_ajx("Слишком много попыток", "Подождите несколько минут и попробуйте снова.", "red", $objResponse, "", true);
+		$objResponse->addRedirect('index.php?p=login&m=rate', 0);
 		return $objResponse;
 	}
 	$q = $GLOBALS['db']->GetRow("SELECT `aid`, `password`, `expired` FROM `" . DB_PREFIX . "_admins` WHERE `user` = ?", array($username));
 	$aid = $q ? (int)$q[0] : 0;
 	if($q && strlen($q[1]) == 0 && count($q) != 0)
 	{
-		$objResponse->addScript('ShowBox("Информация", "Вы не можете залогиниться. Не установлен пароль.", "blue", "", true);');
+		$objResponse->addRedirect('index.php?p=login&m=nopwset', 0);
 		return $objResponse;
 	} else if(!$q || !$userbank->verify_password($password, $aid))
 	{
 		// БАГ-ФИКС: раньше неудачные попытки входа не логировались вообще - невозможно было
 		// увидеть перебор паролей (брутфорс) или понять, кто и когда пытался зайти под чужим логином.
 		$log = new CSystemLog("w", "Неудачный вход", "Неудачная попытка входа под логином '" . htmlspecialchars($username) . "' с IP " . $_SERVER["REMOTE_ADDR"] . ".");
-		if($nopass!=1)
-			$objResponse->addScript('ShowBox("Вход неудался", "Неверно введены имя пользователя или пароль.<br \> Если Вы забыли свой пароль, Используйте ссылку <a href=\"lostpassword\" title=\"Забыл пароль\">Забыл пароль.</a>", "red", "", true);');
+		$objResponse->addRedirect('index.php?p=login&m=bad', 0);
 		return $objResponse;
 	}
 	else if($q[2] > 0 && $q[2] < time())
 	{
-		$objResponse->addScript('ShowBox("Превышение полномочий", "Запись администратора истёкла, или сработала защита сайта, обратитесь к владельцу сайта.", "red", "", true);');
+		$objResponse->addRedirect('index.php?p=login&m=expired', 0);
 		return $objResponse;
 	}
 	else {
@@ -2841,6 +2840,19 @@ function EditAdminPerms($aid, $web_flags, $srv_flags)
 
 	$objResponse = new xajaxResponse();
 	global $userbank, $username;
+	// Прямые флаги добавляются поверх роли — только настоящий владелец. Защищённый SteamID назначает права через роли.
+	if(!function_exists('sb_can_assign_admin_perms') || !sb_can_assign_admin_perms())
+	{
+		if(function_exists('sb_actor_is_protected_steamid') && sb_actor_is_protected_steamid())
+		{
+			$objResponse->addAlert("Этому SteamID нельзя выдавать прямые флаги, даже с правами владельца. Права назначаются только через роли.");
+			$log = new CSystemLog("w", "Ошибка доступа", $username . " (защищённый SteamID) пытался изменить привилегии напрямую.");
+			return $objResponse;
+		}
+		$objResponse->addAlert("Прямые флаги выдаёт только владелец. Они добавляются поверх роли. Остальным — через роли (группы).");
+		$log = new CSystemLog("w", "Ошибка доступа", $username . " пытался изменить привилегии напрямую, не будучи владельцем.");
+		return $objResponse;
+	}
 	if(!$userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_ADMINS))
 	{
 		$objResponse->redirect("index.php?p=login&m=no_access", 0);

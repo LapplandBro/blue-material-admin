@@ -55,11 +55,18 @@ $theme->assign('login_allowed', ($at != 2));
 // === Authorization by type -  END  ===
 
 if (function_exists('sb_ui_v2_enabled') && sb_ui_v2_enabled()) {
-	$flash = '';
-	if (isset($_GET['m']) && $_GET['m'] == 'no_access')
-		$flash = 'У вас нет доступа к этой странице. Войдите в аккаунт.';
-	elseif (isset($_GET['m']) && $_GET['m'] == 'overreach')
-		$flash = 'Права администратора отозваны за превышение полномочий.';
+	$login_flashes = array(
+		'no_access' => 'У вас нет доступа к этой странице. Войдите в аккаунт.',
+		'overreach' => 'Права администратора отозваны за превышение полномочий.',
+		'bad' => 'Неверно введены имя пользователя или пароль.',
+		'nopass' => 'Не введён пароль. Введите пароль и попробуйте ещё раз.',
+		'nopwset' => 'Для этого аккаунта не задан пароль.',
+		'rate' => 'Слишком много попыток. Подождите несколько минут и попробуйте снова.',
+		'expired' => 'Запись администратора истекла, или сработала защита сайта. Обратитесь к владельцу сайта.',
+		'steamonly' => 'Вход по логину и паролю отключён. Используйте вход через Steam.',
+	);
+	$login_m = isset($_GET['m']) ? (string)$_GET['m'] : '';
+	$flash = isset($login_flashes[$login_m]) ? $login_flashes[$login_m] : '';
 	sb_ui_v2_render('login.twig', array(
 		'title' => 'Вход — Blue Admin',
 		'login_redir' => $login_redir,

@@ -5,6 +5,7 @@
       <h2 class="form-page-title">Привилегии</h2>
       <p class="form-page-lead">{{ admin_perm_name }} · свои флаги вне групп.</p>
     </header>
+    <div class="parsec-note parsec-note-warn mb-3">Вы выполняете небезопасное действие. Прямые флаги добавляются поверх роли и обходят систему ролей.</div>
     <input type="hidden" id="admin_id" value="{{ admin_perm_id }}">
     <div class="admin-perms-block">
       {{ web_perms_html|raw }}

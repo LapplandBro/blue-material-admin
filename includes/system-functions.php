@@ -3112,6 +3112,29 @@ function sb_can_manage_admin($targetAid)
 	return true;
 }
 
+/** Текущий аккаунт в SB_PROTECTED_STEAMIDS. */
+function sb_actor_is_protected_steamid()
+{
+	global $userbank;
+	if (!isset($userbank) || !is_object($userbank))
+		return false;
+	$authid = trim((string)$userbank->GetProperty('authid'));
+	return $authid !== '' && in_array($authid, sb_protected_steamids(), true);
+}
+
+/** Прямые веб/серверные флаги добавляются поверх группы, поэтому их задаёт только незащищённый владелец. */
+function sb_can_assign_admin_perms()
+{
+	global $userbank;
+	if (!isset($userbank) || !is_object($userbank))
+		return false;
+	if (!$userbank->HasAccess(ADMIN_OWNER))
+		return false;
+	if (sb_actor_is_protected_steamid())
+		return false;
+	return true;
+}
+
 /** Сброс auth-кук без session_destroy (безопасно при bootstrap). */
 function sb_clear_auth_cookies()
 {

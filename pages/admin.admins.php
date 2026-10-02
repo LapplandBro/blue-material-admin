@@ -250,6 +250,7 @@ echo '<div id="admin-page-content">';
 echo '<div id="0" class="admin-pane is-on">';
 	$theme->assign('permission_listadmin', $userbank->HasAccess(ADMIN_OWNER|ADMIN_LIST_ADMINS));
 	$theme->assign('permission_editadmin', $userbank->HasAccess(ADMIN_OWNER|ADMIN_EDIT_ADMINS));
+	$theme->assign('permission_editperms', function_exists('sb_can_assign_admin_perms') && sb_can_assign_admin_perms());
 	$theme->assign('permission_deleteadmin', $userbank->HasAccess(ADMIN_OWNER|ADMIN_DELETE_ADMINS));
 	$theme->assign('admin_count', $admin_count);
 	$theme->assign('admin_nav', $admin_nav);

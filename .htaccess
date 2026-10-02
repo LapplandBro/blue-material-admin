@@ -60,11 +60,9 @@ ErrorDocument 504 /errors/504.html
 	RewriteCond %{HTTP_USER_AGENT} (Amazonbot|GPTBot|GPT-Bot|DotBot|MJ12bot|Bytespider|CCBot|ClaudeBot|Claude-Web) [NC]
 	RewriteRule .* - [F,L]
 
-	# Блокировка страницы Edit Permissions (Material Admin 1.1.5.4)
-	# Предотвращает перезапись прав групп через p=admin&c=admins&o=editpermissions
-	RewriteCond %{QUERY_STRING} (^|&)c=admins(&|$) [NC]
-	RewriteCond %{QUERY_STRING} (^|&)o=editpermissions(&|$) [NC]
-	RewriteRule ^index\.php$ - [F,L]
+	# o=editpermissions больше не режется 403. Apache не видит сессию и SteamID,
+	# поэтому запрет здесь закрывал вкладку и владельцу. Кто может ставить
+	# прямые флаги, решает PHP (sb_can_assign_admin_perms).
 
 	# ЧПУ: /banlist → index.php?p=banlist, /admin/bans → index.php?p=admin&c=bans
 	# Если панель в подпапке — раскомментируй: RewriteBase /подпапка/
