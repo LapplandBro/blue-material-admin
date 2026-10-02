@@ -177,7 +177,7 @@ function sb_online_collect()
 			$map = '';
 			$up = 0;
 			if (is_array($info) && !empty($info['ok'])) {
-				$players = isset($info['Players']) ? (int)$info['Players'] : 0;
+				$players = sb_online_human_players($info);
 				$maxplayers = isset($info['MaxPlayers']) ? (int)$info['MaxPlayers'] : 0;
 				$map = isset($info['Map']) ? (string)$info['Map'] : '';
 				$up = 1;
@@ -489,6 +489,19 @@ function sb_online_profile_rows($byHour)
 		);
 	}
 	return $profile;
+}
+
+function sb_online_human_players($info)
+{
+	$players = (is_array($info) && isset($info['Players'])) ? (int)$info['Players'] : 0;
+	$bots = (is_array($info) && isset($info['Bots'])) ? (int)$info['Bots'] : 0;
+	if ($players < 0)
+		$players = 0;
+	if ($bots < 0)
+		$bots = 0;
+	if ($bots > $players)
+		$bots = $players;
+	return $players - $bots;
 }
 
 function sb_online_clamp_small($n)

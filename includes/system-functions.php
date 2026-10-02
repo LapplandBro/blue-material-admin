@@ -3497,14 +3497,14 @@ function sb_comms_type_icon_html($type, $size = 16)
  * Иначе ok=0 и вызывающий показывает ip:port, а не вечную «загрузку».
  * $bypassLimit — не звать sb_rate_limit_hit (сбор по расписанию).
  *
- * @return array{ok:int,HostName:string,Players:int,MaxPlayers:int,Map:string,Os:string,Secure:int,ts:int}
+ * @return array{ok:int,HostName:string,Players:int,MaxPlayers:int,Bots:int,Map:string,Os:string,Secure:int,ts:int}
  */
 function sb_server_a2s_info($ip, $port, $ttl = 60, $bypassLimit = false, $holdDb = false)
 {
 	$ip = trim((string)$ip);
 	$port = (int)$port;
 	$empty = array(
-		'ok' => 0, 'HostName' => '', 'Players' => 0, 'MaxPlayers' => 0,
+		'ok' => 0, 'HostName' => '', 'Players' => 0, 'MaxPlayers' => 0, 'Bots' => 0,
 		'Map' => '', 'Os' => '', 'Secure' => 0, 'ts' => 0,
 	);
 	if ($ip === '' || $port <= 0)
@@ -3523,7 +3523,7 @@ function sb_server_a2s_info($ip, $port, $ttl = 60, $bypassLimit = false, $holdDb
 	if (is_file($path)) {
 		$raw = @file_get_contents($path);
 		$data = ($raw !== false && $raw !== '') ? json_decode($raw, true) : null;
-		if (is_array($data) && isset($data['ts'])) {
+		if (is_array($data) && isset($data['ts']) && array_key_exists('Bots', $data)) {
 			$cached = $data;
 			if (($now - (int)$data['ts']) < $ttl)
 				return $cached;
@@ -3569,6 +3569,7 @@ function sb_server_a2s_info($ip, $port, $ttl = 60, $bypassLimit = false, $holdDb
 		'HostName' => ($info && isset($info['HostName'])) ? (string)$info['HostName'] : '',
 		'Players' => ($info && isset($info['Players'])) ? (int)$info['Players'] : 0,
 		'MaxPlayers' => ($info && isset($info['MaxPlayers'])) ? (int)$info['MaxPlayers'] : 0,
+		'Bots' => ($info && isset($info['Bots'])) ? (int)$info['Bots'] : 0,
 		'Map' => ($info && isset($info['Map'])) ? (string)$info['Map'] : '',
 		'Os' => ($info && isset($info['Os'])) ? (string)$info['Os'] : '',
 		'Secure' => ($info && !empty($info['Secure'])) ? 1 : 0,
