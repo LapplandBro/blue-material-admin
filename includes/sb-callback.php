@@ -2724,7 +2724,7 @@ function CheckPassword($aid, $pass)
 	return $objResponse;
 }
 
-function ChangeAdminsInfos($aid, $vk, $discord)
+function ChangeAdminsInfos($aid, $vk, $discord, $telegram = null)
 {
 	global $userbank;
 	$objResponse = new xajaxResponse();
@@ -2747,10 +2747,28 @@ function ChangeAdminsInfos($aid, $vk, $discord)
 	$vk = str_replace(array("http://","https://","/","vk.com"), "", $vk);
 	$discord = RemoveCode($discord);
 
-	$GLOBALS['db']->Execute("UPDATE `".DB_PREFIX."_admins` SET `vk` = ?, `discord` = ? WHERE `aid` = ?", array($vk, $discord, (int)$aid));
+	$params = array($vk, $discord);
+	$sql = "UPDATE `".DB_PREFIX."_admins` SET `vk` = ?, `discord` = ?";
+	$logTg = '';
+	if ($telegram !== null)
+	{
+		if (function_exists('sb_ensure_admins_telegram_column'))
+			sb_ensure_admins_telegram_column();
+		$telegram = RemoveCode($telegram);
+		if (function_exists('sb_admin_telegram_clean'))
+			$telegram = sb_admin_telegram_clean($telegram);
+		if (function_exists('sb_admins_has_telegram_column') && sb_admins_has_telegram_column())
+		{
+			$sql .= ", `telegram` = ?";
+			$params[] = $telegram;
+			$logTg = ", telegram: ".$telegram;
+		}
+	}
+	$params[] = (int)$aid;
+	$GLOBALS['db']->Execute($sql." WHERE `aid` = ?", $params);
 	$admname = $GLOBALS['db']->GetRow("SELECT user FROM `".DB_PREFIX."_admins` WHERE aid = ?", array((int)$aid));
 	$objResponse->addScript("ShowBox('Информация', 'Ваши данные были успешно обновлены!', 'green', 'index.php?p=account');");
-	$log = new CSystemLog("m", "Данные связи изменены", "У адмнистратора ".$admname['user']." успешно были изменены данные на (vk: ".$vk.", discord: ".$discord.")");
+	$log = new CSystemLog("m", "Данные связи изменены", "У адмнистратора ".$admname['user']." успешно были изменены данные на (vk: ".$vk.", discord: ".$discord.$logTg.")");
 	return $objResponse;
 }
 function ChangePassword($aid, $pass, $current = '')
@@ -3104,20 +3122,20 @@ function SendRcon($sid, $command, $output)
 
 	if(empty($command))
 	{
-		$objResponse->addScript("$('cmd').value=''; $('cmd').disabled='';$('rcon_btn').disabled=''");
+		$objResponse->addScript("$('cmd').value=''; sbRconIdle(false);");
 		return $objResponse;
 	}
 	if($command == "clr")
 	{
 		$objResponse->addAssign("rcon_con", "innerHTML", "<div class=\"rcon-line rcon-line--sys\">Консоль очищена. Введи команду ниже.</div>");
-		$objResponse->addScript("scroll.toBottom(); $('cmd').value=''; $('cmd').disabled='';$('rcon_btn').disabled=''");
+		$objResponse->addScript("scroll.toBottom(); $('cmd').value=''; sbRconIdle(false);");
 		return $objResponse;
 	}
     
     if(stripos($command, "rcon_password") !== false)
 	{
 		$objResponse->addAppend("rcon_con", "innerHTML", "<div class=\"rcon-line rcon-line--err\">Ошибка: нельзя подбирать rcon_password через эту консоль.</div>");
-		$objResponse->addScript("scroll.toBottom(); $('cmd').value=''; $('cmd').disabled='';$('rcon_btn').disabled=''");
+		$objResponse->addScript("scroll.toBottom(); $('cmd').value=''; sbRconIdle(false);");
 		return $objResponse;
 	}
     
@@ -3127,14 +3145,14 @@ function SendRcon($sid, $command, $output)
 	if(empty($rcon['rcon']))
 	{
 		$objResponse->addAppend("rcon_con", "innerHTML", "<div class=\"rcon-line rcon-line--err\">Ошибка: нет RCON-пароля. Задай его в «Изменить» у сервера.</div>");
-		$objResponse->addScript("scroll.toBottom(); $('cmd').value='Задать РКОН пароль.'; $('cmd').disabled=true; $('rcon_btn').disabled=true");
+		$objResponse->addScript("scroll.toBottom(); $('cmd').value='Задать РКОН пароль.'; sbRconIdle(true);");
 		return $objResponse;
 	}
     if(!$test = @fsockopen($rcon['ip'], $rcon['port'], $errno, $errstr, 2))
     {
         @fclose($test);
 		$objResponse->addAppend("rcon_con", "innerHTML", "<div class=\"rcon-line rcon-line--err\">Ошибка: нет связи с сервером.</div>");
-		$objResponse->addScript("scroll.toBottom(); $('cmd').value=''; $('cmd').disabled='';$('rcon_btn').disabled=''");
+		$objResponse->addScript("scroll.toBottom(); $('cmd').value=''; sbRconIdle(false);");
 		return $objResponse;
 	}
     @fclose($test);
@@ -3147,7 +3165,7 @@ function SendRcon($sid, $command, $output)
 	{
 		$GLOBALS['db']->Execute("UPDATE ".DB_PREFIX."_servers SET rcon = '' WHERE sid = '".$sid."';");
 		$objResponse->addAppend("rcon_con", "innerHTML", "<div class=\"rcon-line rcon-line--err\">Ошибка: неверный RCON-пароль. Обнови пароль у сервера — иначе сервер может заблокировать консоль.</div>");
-		$objResponse->addScript("scroll.toBottom(); $('cmd').value='Сменить РКОН пароль.'; $('cmd').disabled=true; $('rcon_btn').disabled=true");
+		$objResponse->addScript("scroll.toBottom(); $('cmd').value='Сменить РКОН пароль.'; sbRconIdle(true);");
 		return $objResponse;
 	}
 	$ret = $r->SendCommand($command);
@@ -3185,7 +3203,7 @@ function SendRcon($sid, $command, $output)
 		}
 	}
 	$objResponse->addAppend("rcon_con", "innerHTML", $textAppend);
-	$objResponse->addScript("scroll.toBottom(); $('cmd').value=''; $('cmd').disabled=''; $('rcon_btn').disabled=''");
+	$objResponse->addScript("scroll.toBottom(); $('cmd').value=''; sbRconIdle(false);");
 	$log = new CSystemLog("m", "РКОН отправлен", "РКОН был отправлен на сервер (".$rcon['ip'].":".$rcon['port']."). Команда: $command", true, true);
 	return $objResponse;
 }

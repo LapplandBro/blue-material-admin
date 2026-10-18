@@ -144,8 +144,12 @@
           <label class="form-label" for="current_discord">Discord</label>
           <input type="text" class="form-control" id="current_discord" name="current_discord"{% if discord %} value="{{ discord }}"{% else %} placeholder="Логин Discord"{% endif %}>
         </div>
+        <div class="field">
+          <label class="form-label" for="current_telegram">Telegram</label>
+          <input type="text" class="form-control" id="current_telegram" name="current_telegram"{% if telegram %} value="{{ telegram }}"{% else %} placeholder="Ник без @"{% endif %}>
+        </div>
         <div class="account-form-actions">
-          <button type="button" class="btn btn-accent" onclick="xajax_ChangeAdminsInfos({{ user_aid }}, $('current_vk').value, $('current_discord').value);">Сохранить</button>
+          <button type="button" class="btn btn-accent" onclick="xajax_ChangeAdminsInfos({{ user_aid }}, $('current_vk').value, $('current_discord').value, $('current_telegram').value);">Сохранить</button>
         </div>
       </div>
     </div>

@@ -95,6 +95,9 @@ if (isset($_SERVER['REQUEST_METHOD']) && strtoupper((string)$_SERVER['REQUEST_ME
 if ($totp_setup_secret === '' && !empty($_SESSION['sb_totp_acct_secret']) && !sb_totp_is_enabled($aid))
 	$totp_setup_secret = $_SESSION['sb_totp_acct_secret'];
 		
+if (function_exists('sb_ensure_admins_telegram_column'))
+	sb_ensure_admins_telegram_column();
+
 $allow_change_infos = $GLOBALS['config']['config.changeadmininfos'];
 $v2 = function_exists('sb_ui_v2_enabled') && sb_ui_v2_enabled();
 if (!$v2) {
@@ -230,8 +233,14 @@ if (isset($GLOBALS['db']) && is_object($GLOBALS['db'])) {
 $theme->assign('allow_change_inf',		$allow_change_infos);
 $theme->assign('srvpwset',				$srvpwset);
 $theme->assign('email',					$res->fields['email']);
-$theme->assign('vk',					$userbank->GetProperty("vk", $userbank->GetAid()));
-$theme->assign('discord',				$userbank->GetProperty("discord", $userbank->GetAid()));
+$account_vk = $userbank->GetProperty("vk", $userbank->GetAid());
+$account_discord = $userbank->GetProperty("discord", $userbank->GetAid());
+$account_telegram = $userbank->GetProperty("telegram", $userbank->GetAid());
+if ($account_telegram === false || $account_telegram === null)
+	$account_telegram = '';
+$theme->assign('vk',					$account_vk);
+$theme->assign('discord',				$account_discord);
+$theme->assign('telegram',				$account_telegram);
 $theme->assign('user_aid',				$userbank->GetAid());
 $theme->assign('user_name',				$userbank->GetProperty("user"));
 $theme->assign('user_steam',			$userbank->GetProperty("authid"));
@@ -257,8 +266,9 @@ if ($v2) {
 		'allow_change_inf' => $allow_change_infos,
 		'srvpwset' => $srvpwset,
 		'email' => $res->fields['email'],
-		'vk' => $userbank->GetProperty("vk", $userbank->GetAid()),
-		'discord' => $userbank->GetProperty("discord", $userbank->GetAid()),
+		'vk' => $account_vk,
+		'discord' => $account_discord,
+		'telegram' => $account_telegram,
 		'user_aid' => $userbank->GetAid(),
 		'user_name' => $userbank->GetProperty("user"),
 		'user_steam' => $userbank->GetProperty("authid"),

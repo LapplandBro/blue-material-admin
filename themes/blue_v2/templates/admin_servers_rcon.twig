@@ -32,18 +32,48 @@
 	});
 })();
 
+function sbRconIdle(lock)
+{
+	var cmd = document.getElementById('cmd');
+	var btn = document.getElementById('rcon_btn');
+	lock = !!lock;
+	if (cmd) {
+		cmd.disabled = lock;
+		if (!lock && cmd.value === 'Выполняю…')
+			cmd.value = '';
+	}
+	if (!btn)
+		return;
+	btn.disabled = lock;
+	if (lock) {
+		if (btn.setAttribute)
+			btn.setAttribute('data-sb-busy', '1');
+	} else if (btn.removeAttribute) {
+		btn.removeAttribute('data-sb-busy');
+	}
+}
+
 function SendRcon()
 {
-	var cmd = $('cmd');
-	var btn = $('rcon_btn');
+	var cmd = document.getElementById('cmd');
+	var btn = document.getElementById('rcon_btn');
 	if (!cmd || cmd.disabled) return;
 	if (cmd.value === 'Выполняю…') return;
-	if (typeof sbBusy === 'function' && sbBusy(btn)) return;
+	if (btn && ((btn.getAttribute && btn.getAttribute('data-sb-busy')) || btn.disabled)) return;
 	var val = cmd.value;
 	cmd.disabled = true;
-	if (btn) btn.disabled = true;
+	if (btn) {
+		btn.disabled = true;
+		if (btn.setAttribute)
+			btn.setAttribute('data-sb-busy', '1');
+	}
 	cmd.value = 'Выполняю…';
-	xajax_SendRcon('{{ id }}', val, true);
+	var sent = (typeof xajax_SendRcon === 'function') ? xajax_SendRcon('{{ id }}', val, true) : false;
+	if (sent === false) {
+		sbRconIdle(false);
+		if (cmd)
+			cmd.value = val;
+	}
 }
 
 var scroll = {
