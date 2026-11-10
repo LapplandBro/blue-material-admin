@@ -34,7 +34,9 @@ if(!function_exists('sb_can_assign_admin_perms') || !sb_can_assign_admin_perms()
 
 $web_root = $userbank->HasAccess(ADMIN_OWNER, $_GET['id']);
 $steam = trim($userbank->GetProperty("authid", $_GET['id']));
-$web_flags = intval($userbank->GetProperty("extraflags", $_GET['id']));
+// Свои extraflags из колонки. GetProperty складывает их с флагами веб-группы,
+// и галочки роли при сохранении записывались бы как личные.
+$web_flags = (is_array($admin) && isset($admin['extraflags'])) ? (int)$admin['extraflags'] : 0;
 $name = $userbank->GetProperty("user", $_GET['id']);
 
 $theme->assign('admin_perm_name', $name);
