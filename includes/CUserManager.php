@@ -83,7 +83,6 @@ class CUserManager
 			return 0;  // ohnoes some type of db error
 		
 		$user = array();	
-		//$user['user'] = stripslashes($res[0]);
 		$user['aid'] = $aid; //immediately obvious
 		$user['user'] = $res['user'];
 		$user['authid'] = $res['authid'];	

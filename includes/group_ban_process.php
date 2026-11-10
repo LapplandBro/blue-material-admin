@@ -292,8 +292,6 @@ while ($current_member_index < $total_members) {
     // Move to the next chunk\'s starting index
     $current_member_index = $end_index;
 
-    // Optional: Add a small sleep to be gentle on resources or APIs
-    // usleep(100000); // Sleep for 100 milliseconds between chunks
 }
 
 // --- Finalize ---\necho "Group ban process finished for: " . $grpurl . "\\n";\necho "Processed: " . $processed_count . ", Errors: " . $error_count . "\\n";\n\n$log_message = "CLI Ban: Finished group ban for \'" . $grpurl . "\' initiated by " . $username . ". Processed: " . $processed_count . ", Errors: " . $error_count . ".";\n$log_type = $error_count > 0 ? "w" : "m";\n$log = new CSystemLog($log_type, "Group Ban Process Finished", $log_message);\n\n// Restore original admin context\n$userbank->LoadAdmin($original_admin_id);\n\nexit(0); // Indicate success\n\n?>

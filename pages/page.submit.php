@@ -244,7 +244,6 @@ else
 	if ($validsubmit)
 	{
 		$filename = md5($SteamID.time());
-		//echo SB_DEMOS."/".$filename;
 		$demo = move_uploaded_file($_FILES['demo_file']['tmp_name'],SB_DEMOS."/".$filename);
 		if($demo || empty($_FILES['demo_file']['name']))
 		{
@@ -315,7 +314,6 @@ else
 	}
 }
 
-//$mod_list = $GLOBALS['db']->GetAssoc("SELECT mid,name FROM ".DB_PREFIX."_mods WHERE `mid` > 0 AND `enabled`= 1 ORDER BY mid ");
 //serverlist
 $server_list = $GLOBALS['db']->Execute("SELECT sid, ip, port FROM `" . DB_PREFIX . "_servers` WHERE enabled = 1 ORDER BY modid, sid");
 $servers = array();

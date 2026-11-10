@@ -155,10 +155,8 @@ window.addEvent('domready', function(){
 					this.fx = new Fx.Style(this.toolTip, 'opacity', {duration: 300, wait: false}).set(0);
 				},
 				onShow: function(toolTip) {
-					//this.fx.start(1);
 				},
 				onHide: function(toolTip) {
-					//this.fx.start(0);
 				}
 			});
 			var Tips4 = new Tips($$('.perm'), {
@@ -167,7 +165,7 @@ window.addEvent('domready', function(){
 		}); 
 		<?php 
 	if(isset($GLOBALS['NavRewrite']) && $userbank->is_logged_in())
-		echo "$('nav').setHTML('" .  $GLOBALS['NavRewrite'] . "');"//$('content_title').setHTML('<?php  echo $GLOBALS['TitleRewrite']');
+		echo "$('nav').setHTML('" .  $GLOBALS['NavRewrite'] . "');"
 	?>
 	<?php if(isset($GLOBALS['enable']))
 	{?>

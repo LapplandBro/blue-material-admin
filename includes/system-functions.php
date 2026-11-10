@@ -3580,6 +3580,131 @@ function sb_server_a2s_info($ip, $port, $ttl = 60, $bypassLimit = false, $holdDb
 }
 
 /**
+ * Папка мода — Minecraft. Java, PE и короткое mc пингуются одним TCP-запросом.
+ */
+function sb_server_mod_is_minecraft($modfolder)
+{
+	$folder = strtolower(trim((string)$modfolder));
+	return ($folder === 'minecraft' || $folder === 'minecraftpe' || $folder === 'mc');
+}
+
+/**
+ * На уже установленной базе строки Minecraft нет: она лежит только в install.
+ * Добавляет её один раз, чтобы игру можно было выбрать у сервера.
+ */
+function sb_ensure_minecraft_mod()
+{
+	if (!isset($GLOBALS['db']) || !defined('DB_PREFIX'))
+		return;
+	$exists = $GLOBALS['db']->GetOne(
+		"SELECT `mid` FROM `" . DB_PREFIX . "_mods` WHERE `modfolder` IN ('minecraft','minecraftpe','mc') OR `name` = 'Minecraft' LIMIT 1"
+	);
+	if ($exists)
+		return;
+	$GLOBALS['db']->Execute(
+		"INSERT INTO `" . DB_PREFIX . "_mods` (`name`, `icon`, `modfolder`, `steam_universe`) VALUES ('Minecraft', 'web.png', 'minecraft', 0)"
+	);
+}
+
+/**
+ * Живой статус: для Minecraft — Server List Ping, иначе A2S_INFO.
+ * Форма ответа та же, что у sb_server_a2s_info. Аргументы ttl / bypass / holdDb
+ * уходят в выбранный опрос без изменений.
+ *
+ * @return array{ok:int,HostName:string,Players:int,MaxPlayers:int,Bots:int,Map:string,Os:string,Secure:int,ts:int}
+ */
+function sb_server_live_info($ip, $port, $modfolder = '', $ttl = 60, $bypassLimit = false, $holdDb = false)
+{
+	if (sb_server_mod_is_minecraft($modfolder))
+		return sb_server_mc_info($ip, $port, $ttl, $bypassLimit, $holdDb);
+	return sb_server_a2s_info($ip, $port, $ttl, $bypassLimit, $holdDb);
+}
+
+/**
+ * Minecraft Server List Ping с тем же TTL, лимитом и ключом Bots, что A2S.
+ * Свой файл в data/cache/mc: неуспешный A2S не подменяет ответ Minecraft.
+ * Players — полный онлайн (боты не вычитаются). Пустой слот "nobody" снимает
+ * клиент. Bots = 0, пока JSON сам не отдал отдельное поле.
+ *
+ * @return array{ok:int,HostName:string,Players:int,MaxPlayers:int,Bots:int,Map:string,Os:string,Secure:int,ts:int}
+ */
+function sb_server_mc_info($ip, $port, $ttl = 60, $bypassLimit = false, $holdDb = false)
+{
+	$ip = trim((string)$ip);
+	$port = (int)$port;
+	$empty = array(
+		'ok' => 0, 'HostName' => '', 'Players' => 0, 'MaxPlayers' => 0, 'Bots' => 0,
+		'Map' => '', 'Os' => '', 'Secure' => 0, 'ts' => 0,
+	);
+	if ($ip === '' || $port <= 0)
+		return $empty;
+
+	$dir = (defined('ROOT') ? ROOT : dirname(__FILE__) . '/../') . 'data/cache/mc';
+	if (!is_dir($dir))
+		@mkdir($dir, 0755, true);
+	$path = $dir . '/' . hash('sha256', 'mc:' . strtolower($ip) . ':' . $port) . '.json';
+	$now = time();
+	$ttl = (int)$ttl;
+	if ($ttl < 15)
+		$ttl = 15;
+
+	$cached = null;
+	if (is_file($path)) {
+		$raw = @file_get_contents($path);
+		$data = ($raw !== false && $raw !== '') ? json_decode($raw, true) : null;
+		if (is_array($data) && isset($data['ts']) && array_key_exists('Bots', $data)) {
+			$cached = $data;
+			if (($now - (int)$data['ts']) < $ttl)
+				return $cached;
+		}
+	}
+
+	$limited = false;
+	if (!$bypassLimit)
+		$limited = function_exists('sb_rate_limit_hit') && sb_rate_limit_hit('server_a2s', 30, 60);
+	if ($limited) {
+		if (is_array($cached) && ($now - (int)$cached['ts']) < 600)
+			return $cached;
+		return $empty;
+	}
+
+	if (!class_exists('MinecraftStatus', false)) {
+		$mcFile = (defined('INCLUDES_PATH') ? INCLUDES_PATH : dirname(__FILE__) . '/') . '/MinecraftStatus.php';
+		if (is_file($mcFile))
+			require_once $mcFile;
+	}
+	$info = null;
+	$released = false;
+	if (!$holdDb && function_exists('sb_db_release')) {
+		sb_db_release();
+		$released = true;
+	}
+	if (class_exists('MinecraftStatus', false)) {
+		try {
+			$info = MinecraftStatus::query($ip, $port, 2);
+		} catch (Throwable $e) {
+			$info = null;
+		}
+	}
+	if ($released && function_exists('sb_db_ensure'))
+		sb_db_ensure();
+
+	$store = array(
+		'ok' => (is_array($info) && !empty($info['HostName'])) ? 1 : 0,
+		'HostName' => (is_array($info) && isset($info['HostName'])) ? (string)$info['HostName'] : '',
+		'Players' => (is_array($info) && isset($info['Players'])) ? (int)$info['Players'] : 0,
+		'MaxPlayers' => (is_array($info) && isset($info['MaxPlayers'])) ? (int)$info['MaxPlayers'] : 0,
+		'Bots' => (is_array($info) && isset($info['Bots'])) ? (int)$info['Bots'] : 0,
+		'Map' => (is_array($info) && isset($info['Map'])) ? (string)$info['Map'] : '',
+		'Os' => '',
+		'Secure' => 0,
+		'ts' => $now,
+	);
+	@file_put_contents($path, json_encode($store));
+	return $store;
+}
+
+/**
  * URL превью карты для <img src>.
  * Приоритет: локальный файл (ручная загрузка) → внешний GameTracker (без скачивания на диск) → nomap.jpg.
  * Внешний URL грузит браузер сам; при 404 срабатывает onerror → nomap.

@@ -231,11 +231,6 @@ if(isset($_POST['adminname']))
 			$errorScript .= "$('email.msg').innerHTML = 'Этот email уже используется ".htmlspecialchars(addslashes($name)).".';";
 			$errorScript .= "$('email.msg').setStyle('display', 'block');";
 		}
-		/*else if(!validate_email($a_email))
-			$error++;
-			$errorScript .= "$('email.msg').innerHTML = 'Please enter a valid email address.';";
-			$errorScript .= "$('email.msg').setStyle('display', 'block');";
-		}*/
 	}
 	
 	// Only validate passwords, if admin has access to edit it at all

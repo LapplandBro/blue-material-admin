@@ -167,6 +167,8 @@ if(isset($_POST['address']))
 	}
 }
 
+if (function_exists('sb_ensure_minecraft_mod'))
+	sb_ensure_minecraft_mod();
 $modlist = $GLOBALS['db']->GetAll("SELECT mid, name FROM `" . DB_PREFIX . "_mods` WHERE `mid` > 0 AND `enabled` = 1 ORDER BY name ASC");
 if (!is_array($modlist))
 	$modlist = array();

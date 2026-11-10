@@ -449,11 +449,12 @@ else
 				$modTabMenu->addMenuItem("Список МОДов",0);
 			if($userbank->HasAccess(ADMIN_OWNER|ADMIN_ADD_MODS ) ) {
 				$modTabMenu->addMenuItem("Добавить МОД",1);
-				// $modTabMenu->addMenuItem("Установить МОД из репозитория",2,"","index.php?p=admin&c=mods&o=repo", true);
 			}
 			$modTabMenu->outputMenu();
 			// ====================[ ADMIN SIDE MENU END ] ===================	
 			
+			if (function_exists('sb_ensure_minecraft_mod'))
+				sb_ensure_minecraft_mod();
 			$mod_list = $GLOBALS['db']->GetAll("SELECT * FROM `" . DB_PREFIX . "_mods` WHERE mid > 0 ORDER BY name ASC") ;
 			if (!is_array($mod_list))
 				$mod_list = array();
@@ -471,11 +472,6 @@ else
 			include TEMPLATES_PATH . "/admin.edit.mod.php";
 			RewritePageTitle("Редактировать детали МОДа");
 		}
-		/*elseif($_GET['o'] == "repo")
-		{
-			include TEMPLATES_PATH . "/admin.mod.repo.php";
-			RewritePageTitle("Установить МОД из репозитория");
-		}*/
 	}
 	elseif($_GET['c'] == "settings")
 	 // ###################[ Settings ]##################################################################

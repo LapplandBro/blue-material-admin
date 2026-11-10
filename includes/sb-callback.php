@@ -2021,7 +2021,14 @@ function ServerHostPlayers($sid, $type="servers", $obId="", $tplsid="", $open=""
 	if(empty($res[1]) || empty($res[2]))
 		return $objResponse;
 	$info = array();
-	$cached = function_exists('sb_server_a2s_info') ? sb_server_a2s_info($res[1], $res[2], 60) : array('ok' => 0);
+	$modfolder = (is_array($res) && isset($res['modfolder'])) ? $res['modfolder'] : ((is_array($res) && isset($res[4])) ? $res[4] : '');
+	$isMc = function_exists('sb_server_mod_is_minecraft') && sb_server_mod_is_minecraft($modfolder);
+	if (function_exists('sb_server_live_info'))
+		$cached = sb_server_live_info($res[1], $res[2], $modfolder, 60);
+	elseif (function_exists('sb_server_a2s_info'))
+		$cached = sb_server_a2s_info($res[1], $res[2], 60);
+	else
+		$cached = array('ok' => 0);
 	if (!empty($cached['ok'])) {
 		$info = array(
 			'HostName' => $cached['HostName'],
@@ -2063,7 +2070,8 @@ function ServerHostPlayers($sid, $type="servers", $obId="", $tplsid="", $open=""
 				} else {
 					$objResponse->addScript("sbSetDisplay('sinfo_$sid', true);sbSetDisplay('noplayer_$sid', false);");
 					$playercount = 0;
-					if(!defined('IN_HOME')) {
+					// У Minecraft нет списка игроков A2S — не ждём таймаут UDP.
+					if(!defined('IN_HOME') && !$isMc) {
 						$sinfo = new CServerControl();
 						$sinfo->Connect($res[1], $res[2]);
 						if (function_exists('sb_db_release'))
@@ -2161,18 +2169,23 @@ function ServerHostProperty($sid, $obId, $obProp, $trunchostname)
 {
     $objResponse = new xajaxResponse();
 	global $userbank;
-	require INCLUDES_PATH.'/CServerControl.php';
-	
+
 	$sid = (int)$sid;
     $obId = htmlspecialchars($obId);
     $obProp = htmlspecialchars($obProp);
     $trunchostname = (int)$trunchostname;
 
-	$res = $GLOBALS['db']->GetRow("SELECT ip, port FROM ".DB_PREFIX."_servers WHERE sid = $sid");
+	$res = $GLOBALS['db']->GetRow("SELECT se.ip, se.port, md.modfolder FROM ".DB_PREFIX."_servers se LEFT JOIN ".DB_PREFIX."_mods md ON md.mid = se.modid WHERE se.sid = $sid");
 	if(empty($res[0]) || empty($res[1]))
 		return $objResponse;
 	$info = false;
-	$cached = function_exists('sb_server_a2s_info') ? sb_server_a2s_info($res[0], $res[1], 60) : array('ok' => 0);
+	$modfolder = (is_array($res) && isset($res['modfolder'])) ? $res['modfolder'] : '';
+	if (function_exists('sb_server_live_info'))
+		$cached = sb_server_live_info($res[0], $res[1], $modfolder, 60);
+	elseif (function_exists('sb_server_a2s_info'))
+		$cached = sb_server_a2s_info($res[0], $res[1], 60);
+	else
+		$cached = array('ok' => 0);
 	if (!empty($cached['ok']))
 		$info = array('HostName' => $cached['HostName']);
     
@@ -2214,13 +2227,20 @@ function ServerHostPlayers_list($sid, $type="servers", $obId="")
 	{
 		$sid = $clean[$i];
 
-		$res = $GLOBALS['db']->GetRow("SELECT sid, ip, port FROM ".DB_PREFIX."_servers WHERE sid = $sid");
+		$res = $GLOBALS['db']->GetRow("SELECT se.sid, se.ip, se.port, md.modfolder FROM ".DB_PREFIX."_servers se LEFT JOIN ".DB_PREFIX."_mods md ON md.mid = se.modid WHERE se.sid = $sid");
 		if(empty($res[1]) || empty($res[2]))
 			return $objResponse;
 		$info = array();
-		$sinfo = new CServerControl();
-		$sinfo->Connect($res[1], $res[2]);
-		$info = $sinfo->GetInfo();
+		$modfolder = (is_array($res) && isset($res['modfolder'])) ? $res['modfolder'] : '';
+		if (function_exists('sb_server_live_info')) {
+			$cached = sb_server_live_info($res[1], $res[2], $modfolder, 60);
+			if (!empty($cached['ok']))
+				$info = array('HostName' => $cached['HostName']);
+		} else {
+			$sinfo = new CServerControl();
+			$sinfo->Connect($res[1], $res[2]);
+			$info = $sinfo->GetInfo();
+		}
 
 		if($info)
 			$ret .= htmlspecialchars(trunc($info['HostName'], 48, false)) . "<br />";

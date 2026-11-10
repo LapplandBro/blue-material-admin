@@ -111,12 +111,8 @@
 				$ve_info->m_cmdport = $vent_server['queryPort'];
 				/////////
 				$rc = $ve_info->Request();
-			//	if ($rc) {
-			//		echo "CVentriloStatus->Request() failed. <strong>$ve_info->m_error</strong><br /><br />\n";
-			//	} else {
 					$ve_channels = $ve_info->m_channelcount;
 					$ve_slots = $ve_info->m_clientcount.'/'.$ve_info->m_maxclients;
-			//	}
 		?>  
 			<tr class="bg1">
 				<td class="fHeading">

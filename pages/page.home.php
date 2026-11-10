@@ -29,8 +29,6 @@ global $theme;
 if(!defined("IN_SB")){echo "Ошибка доступа!";die();}
 define('IN_HOME', true);
 
-//$GLOBALS['TitleRewrite'] = "HOME";
-
 $res = $GLOBALS['db']->Execute("SELECT count(name) FROM ".DB_PREFIX."_banlog");
 $totalstopped = (int)$res->fields[0];
 

@@ -260,6 +260,9 @@
   var bar = document.getElementById('page-progress');
   var hideTimer = 0;
   var stuckTimer = 0;
+  var loaderEpoch = 0;
+  var navLoaderOn = false;
+  var bootSettled = false;
   function reduceMotion() {
     return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   }
@@ -291,20 +294,29 @@
       window.clearTimeout(stuckTimer);
       stuckTimer = 0;
     }
+    var epoch = ++loaderEpoch;
+    navLoaderOn = true;
     if (loader) {
       loader.hidden = false;
-      if (typeof window.requestAnimationFrame === 'function')
-        window.requestAnimationFrame(function () { loader.classList.add('is-on'); });
-      else
+      var arm = function () {
+        if (epoch !== loaderEpoch) return;
         loader.classList.add('is-on');
+      };
+      if (typeof window.requestAnimationFrame === 'function')
+        window.requestAnimationFrame(arm);
+      else
+        arm();
     }
     showBar();
+    if (!bootSettled) return;
     stuckTimer = window.setTimeout(function () {
       stuckTimer = 0;
+      if (epoch !== loaderEpoch) return;
       hideLoader();
     }, 2500);
   }
   function hideLoader() {
+    ++loaderEpoch;
     if (stuckTimer) {
       window.clearTimeout(stuckTimer);
       stuckTimer = 0;
@@ -313,25 +325,41 @@
       window.clearTimeout(hideTimer);
       hideTimer = 0;
     }
-    if (loader) {
-      loader.hidden = false;
-      loader.classList.add('is-on');
-    }
-    document.documentElement.classList.remove('page-booting');
+    var root = document.documentElement;
+    var booting = root.classList.contains('page-booting');
+    root.classList.remove('page-booting');
     hideBar();
+    navLoaderOn = false;
     if (!loader) return;
-    if (typeof window.requestAnimationFrame === 'function')
-      window.requestAnimationFrame(function () { loader.classList.remove('is-on'); });
-    else
+    var classOn = loader.classList.contains('is-on');
+    var attrHidden = !!loader.hidden;
+    var visible = booting || (classOn && !attrHidden);
+    if (!visible || (attrHidden && !classOn)) {
       loader.classList.remove('is-on');
-    hideTimer = window.setTimeout(function () {
-      if (!loader.classList.contains('is-on')) {
-        loader.hidden = true;
-        loader.style.opacity = '';
-        loader.style.transition = '';
-      }
-      hideTimer = 0;
-    }, motionMs());
+      loader.hidden = true;
+      loader.style.opacity = '';
+      loader.style.transition = '';
+      return;
+    }
+    if (attrHidden) loader.hidden = false;
+    var epoch = loaderEpoch;
+    var drop = function () {
+      if (epoch !== loaderEpoch) return;
+      loader.classList.remove('is-on');
+      hideTimer = window.setTimeout(function () {
+        hideTimer = 0;
+        if (epoch !== loaderEpoch) return;
+        if (!loader.classList.contains('is-on')) {
+          loader.hidden = true;
+          loader.style.opacity = '';
+          loader.style.transition = '';
+        }
+      }, motionMs());
+    };
+    if (typeof window.requestAnimationFrame === 'function')
+      window.requestAnimationFrame(drop);
+    else
+      drop();
   }
   function isNavHref(href) {
     if (!href) return false;
@@ -392,6 +420,8 @@
     showBar();
   }, true);
   function bootDone() {
+    if (bootSettled) return;
+    bootSettled = true;
     hideLoader();
   }
   if (document.readyState === 'complete')
@@ -404,10 +434,17 @@
         bootDone();
     });
   window.addEventListener('pageshow', function (e) {
-    if (e.persisted) bootDone();
+    if (!e.persisted) return;
+    var leftOn = navLoaderOn
+      || document.documentElement.classList.contains('page-booting')
+      || (loader && !loader.hidden && loader.classList.contains('is-on'));
+    if (!leftOn) return;
+    hideLoader();
   });
-  window.addEventListener('pagehide', hideLoader);
-  window.setTimeout(bootDone, 8000);
+  window.addEventListener('pagehide', function (e) {
+    if (e.persisted) return;
+    hideLoader();
+  });
 
   var trigger = document.getElementById('menu-trigger');
   var backdrop = document.getElementById('sidebar-backdrop');

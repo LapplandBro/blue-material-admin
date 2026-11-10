@@ -54,6 +54,20 @@ function sb_online_ensure_tables()
 	);
 	foreach ($tables as $sql)
 		$GLOBALS['db']->Execute($sql);
+
+	// Таблица часа уже могла существовать без счётчика ответов.
+	// Новые установки получают колонку в CREATE, сюда не попадают.
+	$hourly = $p . '_server_hourly';
+	$hasUp = (bool)@$GLOBALS['db']->GetOne("SHOW COLUMNS FROM `{$hourly}` LIKE 'up_samples'");
+	if ($hasUp)
+		return;
+	$GLOBALS['db']->Execute(
+		"ALTER TABLE `{$hourly}` ADD `up_samples` smallint NOT NULL DEFAULT 0"
+	);
+	// Старые часы не обнуляем: отдельного счётчика ответов у них не было.
+	$GLOBALS['db']->Execute(
+		"UPDATE `{$hourly}` SET `up_samples` = `samples` WHERE `up_samples` = 0 AND `samples` > 0"
+	);
 }
 
 function sb_online_status_path()
@@ -134,19 +148,21 @@ function sb_online_collect()
 
 		sb_online_ensure_tables();
 
-		if (!function_exists('sb_server_a2s_info')) {
+		if (!function_exists('sb_server_live_info') && !function_exists('sb_server_a2s_info')) {
 			$sf = (defined('INCLUDES_PATH') ? INCLUDES_PATH : dirname(__FILE__)) . '/system-functions.php';
 			if (is_file($sf))
 				require_once $sf;
 		}
-		if (!function_exists('sb_server_a2s_info')) {
+		if (!function_exists('sb_server_live_info') && !function_exists('sb_server_a2s_info')) {
 			$msg = 'Не найдена функция опроса серверов (includes/system-functions.php).';
 			sb_online_status_write($msg, false);
 			return array('enabled' => true, 'servers' => 0, 'ok' => 0, 'down' => 0, 'saved' => 0, 'error' => $msg);
 		}
 
 		$rows = $GLOBALS['db']->GetAll(
-			"SELECT `sid`, `ip`, `port` FROM `" . DB_PREFIX . "_servers` WHERE `enabled` = 1"
+			"SELECT s.`sid`, s.`ip`, s.`port`, m.`modfolder` FROM `" . DB_PREFIX . "_servers` s"
+			. " LEFT JOIN `" . DB_PREFIX . "_mods` m ON m.`mid` = s.`modid`"
+			. " WHERE s.`enabled` = 1"
 		);
 		if (!is_array($rows))
 			$rows = array();
@@ -168,10 +184,17 @@ function sb_online_collect()
 			$sid = isset($srv['sid']) ? (int)$srv['sid'] : 0;
 			$ip = isset($srv['ip']) ? (string)$srv['ip'] : '';
 			$port = isset($srv['port']) ? (int)$srv['port'] : 0;
+			$modfolder = (isset($srv['modfolder']) && is_string($srv['modfolder'])) ? $srv['modfolder'] : '';
 			if ($sid <= 0)
 				continue;
 
-			$info = sb_server_a2s_info($ip, $port, 60, true, true);
+			// holdDb остаётся true: на хостинге 5 соединений, и крон не отпускает
+			// своё на время UDP — новое часто уже не дают. Папку мода понимает
+			// живой опрос; пока его нет, спрашиваем прежним A2S.
+			if (function_exists('sb_server_live_info'))
+				$info = sb_server_live_info($ip, $port, $modfolder, 60, true, true);
+			else
+				$info = sb_server_a2s_info($ip, $port, 60, true, true);
 			$players = 0;
 			$maxplayers = 0;
 			$map = '';
@@ -185,27 +208,31 @@ function sb_online_collect()
 			} else {
 				$down++;
 			}
-			$players = sb_online_clamp_small($players);
-			$maxplayers = sb_online_clamp_small($maxplayers);
-			$map = sb_online_clip_map($map);
-			$mapSql = $GLOBALS['db']->qstr($map);
 
-			$wrote = $GLOBALS['db']->Execute(
-				"INSERT INTO `" . DB_PREFIX . "_server_samples` (`sid`,`ts`,`players`,`maxplayers`,`map`,`up`) VALUES ("
-				. $sid . "," . $ts . "," . $players . "," . $maxplayers . "," . $mapSql . "," . $up
-				. ") ON DUPLICATE KEY UPDATE `players` = " . $players
-				. ", `maxplayers` = " . $maxplayers
-				. ", `map` = " . $mapSql
-				. ", `up` = " . $up
-			);
-			if ($wrote === false) {
-				if ($writeError === '' && method_exists($GLOBALS['db'], 'ErrorMsg'))
-					$writeError = (string)$GLOBALS['db']->ErrorMsg();
-				continue;
+			// Молчание не пишем как 0 игроков. Среднее и пик часа берут только ответы.
+			if ($up === 1) {
+				$players = sb_online_clamp_small($players);
+				$maxplayers = sb_online_clamp_small($maxplayers);
+				$map = sb_online_clip_map($map);
+				$mapSql = $GLOBALS['db']->qstr($map);
+
+				$wrote = $GLOBALS['db']->Execute(
+					"INSERT INTO `" . DB_PREFIX . "_server_samples` (`sid`,`ts`,`players`,`maxplayers`,`map`,`up`) VALUES ("
+					. $sid . "," . $ts . "," . $players . "," . $maxplayers . "," . $mapSql . "," . $up
+					. ") ON DUPLICATE KEY UPDATE `players` = " . $players
+					. ", `maxplayers` = " . $maxplayers
+					. ", `map` = " . $mapSql
+					. ", `up` = " . $up
+				);
+				if ($wrote === false) {
+					if ($writeError === '' && method_exists($GLOBALS['db'], 'ErrorMsg'))
+						$writeError = (string)$GLOBALS['db']->ErrorMsg();
+				} else {
+					$saved++;
+				}
 			}
 			sb_online_refresh_hour($sid, $hourTs);
 			$seen[$sid] = true;
-			$saved++;
 		}
 
 		foreach (array_keys($seen) as $sid)
@@ -217,8 +244,21 @@ function sb_online_collect()
 			"DELETE FROM `" . DB_PREFIX . "_server_samples` WHERE `ts` < " . $sampleCut
 		);
 		$GLOBALS['db']->Execute(
+			"DELETE FROM `" . DB_PREFIX . "_server_samples` WHERE `up` = 0"
+		);
+		$GLOBALS['db']->Execute(
 			"DELETE FROM `" . DB_PREFIX . "_server_hourly` WHERE `hour_ts` < " . $hourlyCut
 		);
+		// За последние 7 дней сырые точки ещё есть. Час без единого ответа убираем.
+		// Старше этого сырых точек нет, и такие часы не трогаем.
+		$GLOBALS['db']->Execute(
+			"DELETE h FROM `" . DB_PREFIX . "_server_hourly` h"
+			. " LEFT JOIN `" . DB_PREFIX . "_server_samples` s"
+			. " ON s.`sid` = h.`sid` AND s.`up` = 1"
+			. " AND s.`ts` >= h.`hour_ts` AND s.`ts` < h.`hour_ts` + 3600"
+			. " WHERE h.`hour_ts` >= " . $sampleCut . " AND s.`sid` IS NULL"
+		);
+		sb_online_rebuild_recent_hours();
 
 		$total = $ok + $down;
 		if ($total === 0) {
@@ -226,7 +266,7 @@ function sb_online_collect()
 			sb_online_status_write($msg, false);
 			return array('enabled' => true, 'servers' => 0, 'ok' => 0, 'down' => 0, 'saved' => 0, 'error' => $msg);
 		}
-		if ($saved === 0) {
+		if ($saved === 0 && ($ok > 0 || $writeError !== '')) {
 			$msg = 'Серверы опрошены, но в базу не записалось ни одного замера.';
 			if ($writeError !== '')
 				$msg .= ' ' . $writeError;
@@ -234,7 +274,9 @@ function sb_online_collect()
 			return array('enabled' => true, 'servers' => $total, 'ok' => $ok, 'down' => $down, 'saved' => 0, 'error' => $msg);
 		}
 
-		$msg = 'Записано серверов: ' . $saved . ' из ' . $total . ', ответили: ' . $ok . ', молчат: ' . $down . '.';
+		$msg = 'Записано ответов: ' . $saved . ' из ' . $total . ', ответили: ' . $ok . ', молчат: ' . $down . '.';
+		if ($down > 0)
+			$msg .= ' Молчание не записано как ноль игроков.';
 		if ($writeError !== '')
 			$msg .= ' Часть записей не легла: ' . $writeError;
 		sb_online_status_write($msg, $writeError === '');
@@ -286,6 +328,8 @@ function sb_online_admin_view($sid = 0)
 	if (!isset($GLOBALS['db']) || !defined('DB_PREFIX'))
 		return $empty;
 
+	sb_online_ensure_tables();
+
 	$list = @$GLOBALS['db']->GetAll(
 		"SELECT `sid`, `ip`, `port` FROM `" . DB_PREFIX . "_servers` ORDER BY `sid` ASC"
 	);
@@ -335,7 +379,7 @@ function sb_online_admin_view($sid = 0)
 		$current = (int)strtotime(date('Y-m-d H:00:00'));
 		$from = (int)strtotime('-23 hours', $current);
 		$hourRows = @$GLOBALS['db']->GetAll(
-			"SELECT `hour_ts`, `samples`, `players_sum`, `players_max` FROM `" . $hourlyTbl . "` WHERE `sid` = "
+			"SELECT `hour_ts`, `samples`, `players_sum`, `players_max`, `up_samples` FROM `" . $hourlyTbl . "` WHERE `sid` = "
 			. $selected . " AND `hour_ts` >= " . $from . " AND `hour_ts` <= " . $current
 		);
 		$byTs = array();
@@ -364,6 +408,7 @@ function sb_online_admin_view($sid = 0)
 		$peakRaw = @$GLOBALS['db']->GetOne(
 			"SELECT MAX(`players_max`) FROM `" . $hourlyTbl . "` WHERE `sid` = " . $selected
 			. " AND `hour_ts` >= " . (int)strtotime('today')
+			. " AND `up_samples` > 0"
 		);
 		if ($peakRaw !== null && $peakRaw !== false && $peakRaw !== '')
 			$peak = (int)$peakRaw;
@@ -380,26 +425,70 @@ function sb_online_admin_view($sid = 0)
 	);
 }
 
+function sb_online_rebuild_recent_hours()
+{
+	$dir = dirname(sb_online_status_path());
+	$flag = $dir . '/online_hourly_rebuilt.stamp';
+	if (is_file($flag))
+		return;
+
+	$rows = @$GLOBALS['db']->GetAll(
+		"SELECT `sid`, `ts` FROM `" . DB_PREFIX . "_server_samples` WHERE `up` = 1"
+	);
+	$hours = array();
+	$sids = array();
+	if (is_array($rows)) {
+		foreach ($rows as $row) {
+			if (!is_array($row))
+				continue;
+			$sid = isset($row['sid']) ? (int)$row['sid'] : 0;
+			$ts = isset($row['ts']) ? (int)$row['ts'] : 0;
+			if ($sid <= 0 || $ts <= 0)
+				continue;
+			$hourTs = (int)strtotime(date('Y-m-d H:00:00', $ts));
+			$hours[$sid . ':' . $hourTs] = array($sid, $hourTs);
+			$sids[$sid] = true;
+		}
+	}
+	foreach ($hours as $pair)
+		sb_online_refresh_hour($pair[0], $pair[1]);
+	foreach (array_keys($sids) as $sid)
+		sb_online_refresh_profile((int)$sid);
+
+	if (!is_dir($dir))
+		@mkdir($dir, 0755, true);
+	@file_put_contents($flag, (string)time());
+}
+
 function sb_online_refresh_hour($sid, $hourTs)
 {
 	$sid = (int)$sid;
 	$hourTs = (int)$hourTs;
+	// Только ответы. Молчание (up=0) не входит ни в сумму, ни в пик, ни в делитель.
 	$agg = $GLOBALS['db']->GetRow(
-		"SELECT COUNT(*) AS samples, COALESCE(SUM(`players`),0) AS players_sum, COALESCE(MAX(`players`),0) AS players_max, COALESCE(SUM(`up`),0) AS up_samples"
+		"SELECT COUNT(*) AS samples, COALESCE(SUM(`players`),0) AS players_sum, COALESCE(MAX(`players`),0) AS players_max"
 		. " FROM `" . DB_PREFIX . "_server_samples` WHERE `sid` = " . $sid
 		. " AND `ts` >= " . $hourTs . " AND `ts` < " . ($hourTs + 3600)
+		. " AND `up` = 1"
 	);
 	if (!is_array($agg))
 		return;
 	$samples = sb_online_clamp_small(isset($agg['samples']) ? (int)$agg['samples'] : 0);
+	if ($samples <= 0) {
+		// Час без ответа не оставляем нулём: пустая клетка, а не «никто не играл».
+		$GLOBALS['db']->Execute(
+			"DELETE FROM `" . DB_PREFIX . "_server_hourly` WHERE `sid` = " . $sid
+			. " AND `hour_ts` = " . $hourTs
+		);
+		return;
+	}
 	$playersSum = isset($agg['players_sum']) ? (int)$agg['players_sum'] : 0;
 	if ($playersSum < 0)
 		$playersSum = 0;
 	$playersMax = sb_online_clamp_small(isset($agg['players_max']) ? (int)$agg['players_max'] : 0);
-	$upSamples = sb_online_clamp_small(isset($agg['up_samples']) ? (int)$agg['up_samples'] : 0);
 	$GLOBALS['db']->Execute(
 		"REPLACE INTO `" . DB_PREFIX . "_server_hourly` (`sid`,`hour_ts`,`samples`,`players_sum`,`players_max`,`up_samples`) VALUES ("
-		. $sid . "," . $hourTs . "," . $samples . "," . $playersSum . "," . $playersMax . "," . $upSamples . ")"
+		. $sid . "," . $hourTs . "," . $samples . "," . $playersSum . "," . $playersMax . "," . $samples . ")"
 	);
 }
 
@@ -408,8 +497,9 @@ function sb_online_refresh_profile($sid)
 	$sid = (int)$sid;
 	$since = (int)strtotime('-14 days');
 	$rows = $GLOBALS['db']->GetAll(
-		"SELECT `hour_ts`, `samples`, `players_sum` FROM `" . DB_PREFIX . "_server_hourly`"
+		"SELECT `hour_ts`, `players_sum`, `up_samples` FROM `" . DB_PREFIX . "_server_hourly`"
 		. " WHERE `sid` = " . $sid . " AND `hour_ts` >= " . $since
+		. " AND `up_samples` > 0"
 	);
 	if (!is_array($rows))
 		return;
@@ -420,18 +510,29 @@ function sb_online_refresh_profile($sid)
 	foreach ($rows as $row) {
 		if (!is_array($row) || !isset($row['hour_ts']))
 			continue;
+		$good = isset($row['up_samples']) ? (int)$row['up_samples'] : 0;
+		if ($good <= 0)
+			continue;
 		$h = (int)date('G', (int)$row['hour_ts']);
 		if ($h < 0 || $h > 23)
 			continue;
-		$bucket[$h]['players_sum'] += isset($row['players_sum']) ? (int)$row['players_sum'] : 0;
-		$bucket[$h]['samples'] += isset($row['samples']) ? (int)$row['samples'] : 0;
+		$sum = isset($row['players_sum']) ? (int)$row['players_sum'] : 0;
+		if ($sum < 0)
+			$sum = 0;
+		$bucket[$h]['players_sum'] += $sum;
+		$bucket[$h]['samples'] += $good;
 	}
 
 	for ($h = 0; $h < 24; $h++) {
 		$samples = $bucket[$h]['samples'];
-		if ($samples < 0)
-			$samples = 0;
-		$avg = ($samples > 0) ? ($bucket[$h]['players_sum'] / $samples) : 0.0;
+		if ($samples <= 0) {
+			$GLOBALS['db']->Execute(
+				"DELETE FROM `" . DB_PREFIX . "_server_hour_profile` WHERE `sid` = " . $sid
+				. " AND `hour_of_day` = " . $h
+			);
+			continue;
+		}
+		$avg = $bucket[$h]['players_sum'] / $samples;
 		$GLOBALS['db']->Execute(
 			"REPLACE INTO `" . DB_PREFIX . "_server_hour_profile` (`sid`,`hour_of_day`,`avg_players`,`samples`) VALUES ("
 			. $sid . "," . $h . "," . sprintf('%.2f', round($avg, 2)) . "," . $samples . ")"
@@ -454,11 +555,17 @@ function sb_online_day_rows($byTs)
 		$avg = null;
 		$max = null;
 		if (isset($byTs[$hts]) && is_array($byTs[$hts])) {
-			$samples = isset($byTs[$hts]['samples']) ? (int)$byTs[$hts]['samples'] : 0;
-			if ($samples > 0 && isset($byTs[$hts]['players_sum']))
-				$avg = (float)round(((int)$byTs[$hts]['players_sum']) / $samples, 2);
-			if (isset($byTs[$hts]['players_max']))
-				$max = (int)$byTs[$hts]['players_max'];
+			$row = $byTs[$hts];
+			// up_samples — число ответов. Ноль ответов даёт пустую клетку, даже если
+			// в старой строке молчание уже лежало как игроки = 0.
+			if (array_key_exists('up_samples', $row))
+				$good = (int)$row['up_samples'];
+			else
+				$good = isset($row['samples']) ? (int)$row['samples'] : 0;
+			if ($good > 0 && isset($row['players_sum']))
+				$avg = (float)round(((int)$row['players_sum']) / $good, 2);
+			if ($good > 0 && isset($row['players_max']))
+				$max = (int)$row['players_max'];
 		}
 		$day[] = array(
 			'hour' => (int)date('G', $hts),

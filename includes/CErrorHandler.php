@@ -58,7 +58,6 @@ class CErrorHandler {
                 $log = new CSystemLog("e", "PHP Error", $msg);
         
                 // SourceBans Fatal Error Handler //
-                // include(INCLUDES_PATH.'/FatalErrorHandler.php');
                 $this->DrawErrorMessage($msg, $log->parent_function);
                 // SourceBans Fatal Error Handler //
 
